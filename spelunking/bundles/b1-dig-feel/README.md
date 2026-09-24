@@ -34,9 +34,12 @@ Design source: *Playtest Bundles → Bundle 1* and *Controls & Genre* in [spelun
 
 **Out (later bundles or never):** darkness and glow, moon bugs, Demolitionist and Ghost, base, heat, raids, art beyond coloured squares.
 
-**Open before building:**
-- Torchlight has nothing to reveal until b2's darkness. Default: keep the tap, show the beam, no gameplay effect yet.
-- Surface strip size and home position. Default: 4 sky rows + 3 solid crust rows above the terrain, home at x = 0.
+**Decided 2026-09-25 (b1.1):**
+- Zipline and torchlight are cut from b1.1. The Engineer is the baseline character: walk, mine, build, climb down. Zipline comes in b1.2, torchlight with b2's darkness. At a 2+ ledge you climb down or mine.
+- Keyboard: both models, as in the concept doc. The numpad (or a single key press) sets an intent, like a swipe. WASD held moves with soft stops. A/B test them.
+- Surface strip: 4 sky rows + 3 solid crust rows above the terrain, home at x = 0. There's no torchlight tap.
+- Swipes use pointer events (mouse and touch share one recogniser) and commit at a distance threshold, not on release. A swipe made mid-tile is applied at the next tile boundary.
+- Juice sits behind a master switch. Judge the stop rules with it off first (guide 02 §2.11).
 
 ## 3. Tunables
 
