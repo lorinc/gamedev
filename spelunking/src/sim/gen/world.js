@@ -13,10 +13,11 @@ export const Tile = /** @type {const} */ ({
   Hard: 3,
   Ore: 4,
   Loot: 5,
+  Built: 6, // placed by the player, never generated
 })
 /** @typedef {(typeof Tile)[keyof typeof Tile]} Tile */
 
-export const TILE_NAMES = /** @type {const} */ (['sky', 'open', 'soft', 'hard', 'ore', 'loot'])
+export const TILE_NAMES = /** @type {const} */ (['sky', 'open', 'soft', 'hard', 'ore', 'loot', 'built'])
 
 /** @param {number} t @returns {boolean} */
 export function isOpen(t) {

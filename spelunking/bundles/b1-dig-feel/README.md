@@ -74,7 +74,7 @@ Current values live in `presets/`. Each build ships with the preset it was teste
 
 | Build | Date | Link | Preset | Changes |
 |---|---|---|---|---|
-| b1.1 | – | – | – | first playable |
+| b1.1 | 2026-09-25 | `b1.html` (local / LAN) | defaults `452828` | first playable |
 
 ## 5. Playtest log
 

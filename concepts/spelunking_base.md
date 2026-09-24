@@ -736,7 +736,7 @@ Design rule: every individual mechanic stays simple; complexity comes from simpl
 
 ### Playtest Bundles
 
-Test only the riskiest bets, one playable bundle at a time, before building month-one content. Built on the real stack (TypeScript + Vite + PixiJS + Tweakpane; see [toolbox.md](toolbox.md)), so the simulation code carries over into the game. ~2 weeks total.
+Test only the riskiest bets, one playable bundle at a time, before building month-one content. Built on the real stack (plain JS + JSDoc, Canvas2D, no build step; see [toolbox.md](toolbox.md)), so the simulation code carries over into the game. ~2 weeks total.
 
 
 * **Rules for Every Bundle**
@@ -744,7 +744,7 @@ Test only the riskiest bets, one playable bundle at a time, before building mont
 * **Playtesters:** you first, then 2–3 others per bundle, at least one on a cheap Android phone. Watch silently; don't explain.
 * **Self-imposed limits (replacing PICO-8's):** coloured squares only; the light circle is the only visual effect. If it's fun as squares, the art can only lift it.
 * **Sim / render split from day one:** `sim` is a deterministic integer-grid, fixed-tick simulation with no rendering imports; `render` only draws its state. Both inputs (keys, swipes, taps) map to the same simulation commands.
-* **Dev panel:** Tweakpane sliders for every tunable (stop rules, walk / dig / build speeds, bug and glow numbers), hidden behind a key / corner tap. Presets saved as JSON; testers play the current preset.
+* **Dev panel:** our own sliders for every tunable (stop rules, walk / dig / build speeds, bug and glow numbers), hidden behind a key / corner tap. Presets saved as JSON; testers play the current preset.
 * **Dive log:** each dive's end reason and duration, shown at home and copyable as a string, so testers paste it back.
 * **Time box:** over time means cutting features, not extending the deadline.
 

@@ -12,6 +12,7 @@ export const TILE_RGB = {
   [Tile.Hard]: [52, 54, 66],
   [Tile.Ore]: [236, 164, 40],
   [Tile.Loot]: [64, 232, 214],
+  [Tile.Built]: [150, 120, 70],
 }
 
 /** @type {{ loud: Rgb, panic: Rgb }} */
