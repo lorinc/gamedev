@@ -1,9 +1,10 @@
 // Deterministic integer PRNG. Same seed → same sequence on every browser.
 // Returns uint32 values; no floats anywhere in the sim.
 
-export type Rng = () => number
+/** @typedef {() => number} Rng */
 
-export function mulberry32(seed: number): Rng {
+/** @param {number} seed @returns {Rng} */
+export function mulberry32(seed) {
   let a = seed >>> 0
   return () => {
     a = (a + 0x6d2b79f5) >>> 0
@@ -15,7 +16,8 @@ export function mulberry32(seed: number): Rng {
 }
 
 // Derives independent sub-seeds (per layer, per chunk) from a world seed.
-export function hashSeed(...parts: number[]): number {
+/** @param {...number} parts @returns {number} */
+export function hashSeed(...parts) {
   let h = 0x811c9dc5
   for (const p of parts) {
     h = Math.imul(h ^ (p >>> 0), 0x01000193)
@@ -25,6 +27,7 @@ export function hashSeed(...parts: number[]): number {
 }
 
 // true with probability permille / 1000
-export function chance(rng: Rng, permille: number): boolean {
+/** @param {Rng} rng @param {number} permille @returns {boolean} */
+export function chance(rng, permille) {
   return rng() % 1000 < permille
 }

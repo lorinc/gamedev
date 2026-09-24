@@ -6,13 +6,16 @@ Frameworks, libraries, SDKs, and tools for the platform and its games. Design pr
 
 ### Runtime Stack
 
-* **Simulation: Plain TypeScript**
+**Decided 2026-09-25:** dependencies are bad by default. Everything below was proposed by Claude, not chosen by the user, and each runtime dependency must be re-justified at the point a bundle actually needs it (see *Dependencies* in [spelunking/README.md](../spelunking/README.md)). Current stack: plain `.js` ES modules with JSDoc types checked by `tsc`, no build step, Canvas2D, zero runtime packages.
+
+* **Simulation: Plain JavaScript, JSDoc-typed**
 * Deterministic integer-grid simulation, engine-independent, runnable in a **Web Worker**, fully testable (principle: *Simulation / Renderer Split* in [opinionated_games.md](opinionated_games.md)).
 * No engine physics (Phaser Arcade, Matter.js, Box2D): float-based, not deterministic across browsers.
 * Fixed-point / integer math only; avoid engine-dependent `Math.*` functions in simulation code.
 
 
-* **Renderer: PixiJS v8 (Default)**
+* **Renderer: Canvas2D now; PixiJS v8 is a candidate once shaders are needed**
+* Deferred 2026-09-25: b1 (coloured squares) runs on Canvas2D. Re-argue Pixi only when a bundle needs what Canvas2D can't do on the Galaxy A41 (bloom, heat shimmer, a lighting pass).
 * WebGPU with automatic WebGL fallback.
 * 2D-first: fast sprite and particle batching for dense tile worlds and heavy particle use.
 * Filter pipeline: bloom / glow, **displacement (heat shimmer)**, custom shaders.

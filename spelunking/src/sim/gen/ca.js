@@ -2,35 +2,45 @@
 // random seed field → smooth → scale ×2 → smooth → … Wraps horizontally (the moon is a ring),
 // not vertically (depth runs top to bottom).
 
-import { chance, type Rng } from '../rng'
+import { chance } from '../rng.js'
 
-export interface Grid {
-  w: number
-  h: number
-  cells: Uint8Array // 0 or 1, row-major
-}
+/** @typedef {import('../rng.js').Rng} Rng */
 
-// Bitmasks over the live-neighbour count (bit n = count n, 0..8).
-export interface Rule {
-  birth: number
-  death: number
-}
+/**
+ * @typedef {object} Grid
+ * @property {number} w
+ * @property {number} h
+ * @property {Uint8Array} cells 0 or 1, row-major
+ */
 
-export interface LayerParams {
-  density: number // permille of live cells in the seed field
-  stepsX: number // ×2 scale-ups along x; blob width grows with this
-  stepsY: number // … along y. stepsX > stepsY stretches blobs sideways (galleries, strata),
-  // stepsY > stepsX stretches them vertically (shafts, chimneys)
-  first: string // rule for the pass on the seed field
-  mid: string // rule after each scale-up but the last
-  last: string // rule after the last scale-up
-  edge: Edge
-}
+/**
+ * Bitmasks over the live-neighbour count (bit n = count n, 0..8).
+ * @typedef {{ birth: number, death: number }} Rule
+ */
+
+/**
+ * What lies above the top and below the bottom: empty, filled, or the other side (full torus).
+ * @typedef {0 | 1 | 'wrap'} Edge
+ */
+
+/**
+ * @typedef {object} LayerParams
+ * @property {number} density permille of live cells in the seed field
+ * @property {number} stepsX ×2 scale-ups along x; blob width grows with this
+ * @property {number} stepsY … along y. stepsX > stepsY stretches blobs sideways (galleries, strata),
+ *   stepsY > stepsX stretches them vertically (shafts, chimneys)
+ * @property {string} first rule for the pass on the seed field
+ * @property {string} mid rule after each scale-up but the last
+ * @property {string} last rule after the last scale-up
+ * @property {Edge} edge
+ */
 
 // "d012 b5678" → death on 0,1,2 neighbours, birth on 5..8. Other counts keep the cell.
 // Same shape as the notebook's {'d': [...], 'b': [...]}; 's' is accepted and ignored.
-export function parseRule(text: string): Rule {
-  const rule: Rule = { birth: 0, death: 0 }
+/** @param {string} text @returns {Rule} */
+export function parseRule(text) {
+  /** @type {Rule} */
+  const rule = { birth: 0, death: 0 }
   for (const part of text.toLowerCase().split(/\s+/)) {
     const key = part[0]
     let mask = 0
@@ -44,21 +54,22 @@ export function parseRule(text: string): Rule {
   return rule
 }
 
-export function formatRule(rule: Rule): string {
-  const digits = (mask: number) => [...Array(9).keys()].filter((n) => mask & (1 << n)).join('')
+/** @param {Rule} rule @returns {string} */
+export function formatRule(rule) {
+  /** @param {number} mask */
+  const digits = (mask) => [...Array(9).keys()].filter((n) => mask & (1 << n)).join('')
   return `d${digits(rule.death & ~rule.birth)} b${digits(rule.birth)}`
 }
 
-export function seedGrid(w: number, h: number, rng: Rng, density: number): Grid {
+/** @param {number} w @param {number} h @param {Rng} rng @param {number} density @returns {Grid} */
+export function seedGrid(w, h, rng, density) {
   const cells = new Uint8Array(w * h)
   for (let i = 0; i < w * h; i++) cells[i] = chance(rng, density) ? 1 : 0
   return { w, h, cells }
 }
 
-// What lies above the top and below the bottom: empty, filled, or the other side (full torus).
-export type Edge = 0 | 1 | 'wrap'
-
-export function nextgen(g: Grid, rule: Rule, edge: Edge): Grid {
+/** @param {Grid} g @param {Rule} rule @param {Edge} edge @returns {Grid} */
+export function nextgen(g, rule, edge) {
   const { w, h, cells } = g
   const out = new Uint8Array(w * h)
   for (let y = 0; y < h; y++) {
@@ -88,7 +99,8 @@ export function nextgen(g: Grid, rule: Rule, edge: Edge): Grid {
 }
 
 // Every cell becomes an fx × fy block.
-export function scaleBy(g: Grid, fx: number, fy: number): Grid {
+/** @param {Grid} g @param {number} fx @param {number} fy @returns {Grid} */
+export function scaleBy(g, fx, fy) {
   const w = g.w * fx
   const h = g.h * fy
   const cells = new Uint8Array(w * h)
@@ -98,19 +110,22 @@ export function scaleBy(g: Grid, fx: number, fy: number): Grid {
   return { w, h, cells }
 }
 
-export function scaleUp(g: Grid, sx = true, sy = true): Grid {
+/** @param {Grid} g @returns {Grid} */
+export function scaleUp(g, sx = true, sy = true) {
   return scaleBy(g, sx ? 2 : 1, sy ? 2 : 1)
 }
 
 // Width must be divisible by 2^stepsX, height by 2^stepsY. The one-axis scale-ups come first,
 // so the stretch is set early and later passes smooth it. onStep sees every intermediate grid.
-export function runLayer(
-  p: LayerParams,
-  width: number,
-  height: number,
-  rng: Rng,
-  onStep?: (label: string, g: Grid) => void,
-): Grid {
+/**
+ * @param {LayerParams} p
+ * @param {number} width
+ * @param {number} height
+ * @param {Rng} rng
+ * @param {(label: string, g: Grid) => void} [onStep]
+ * @returns {Grid}
+ */
+export function runLayer(p, width, height, rng, onStep) {
   let g = seedGrid(width >> p.stepsX, height >> p.stepsY, rng, p.density)
   onStep?.('seed', g)
   g = nextgen(g, parseRule(p.first), p.edge)

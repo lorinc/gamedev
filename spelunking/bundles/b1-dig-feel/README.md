@@ -4,14 +4,25 @@ Design source: *Playtest Bundles → Bundle 1* and *Controls & Genre* in [spelun
 
 ## 1. Question and criteria
 
-**Question:** does "move until something changes" feel good, with keys and with swipes, and do I want another dive?
+**Question:** does "move until something changes" feel good **on every target setup**, and do I want another dive? Every game must run in portrait, landscape and square with touch and mouse/keyboard ([opinionated_games.md](../../../concepts/opinionated_games.md), *Any Screen, Any Aspect Ratio*), so b1 tests the feel across all of them, not on one favourite setup.
+
+**Test matrix** (decided 2026-09-25):
+
+| Setup | Input | Ratios |
+|---|---|---|
+| Samsung Galaxy A41 (2020, the performance floor) | touch | 9:16, 16:9 |
+| New HD phone | touch | 9:16, 16:9 |
+| Desktop, HD monitor | mouse + keyboard | 16:9, 1:1, 9:16 (resized window) |
 
 **Pass:**
-- You instinctively start another dive.
+- You instinctively start another dive, on every row of the matrix.
 - "Push through the hard rock, or recall?" feels like a choice.
 - Swipes on the phone neither overshoot nor feel twitchy.
+- The old phone doesn't visibly hitch; the frame-time readout in the dev panel says the same.
+- Sharp on the HD screens (drawn at the device pixel ratio), readable on the small one.
+- Portrait shows enough depth to plan a dive; landscape doesn't feel like wasted space.
 
-**Kill:** still boring after tuning the stop rules → rethink movement before anything else.
+**Kill:** still boring after tuning the stop rules → rethink movement before anything else. If it only feels good on one input or one ratio, that input or ratio gets redesigned before b2.
 
 **Time box:** 3 days. Running over means cutting features, not extending.
 
@@ -30,7 +41,8 @@ Design source: *Playtest Bundles → Bundle 1* and *Controls & Genre* in [spelun
 - **Loop:** pack (3–5 slots), teleport home, loot counted at home.
 - **Juice:** screen shake, square chunks flying, per-material dig resistance.
 - **Dev panel** and **dive log** (see *Rules for Every Bundle* in the concept doc).
-- **Any aspect ratio:** portrait shows deeper, landscape wider.
+- **Any aspect ratio:** portrait shows deeper, landscape wider. The layout follows the window live (rotate the phone, resize the browser) so a single session covers several ratios.
+- **Phone testing from day 1:** the dev build is reachable from a phone on the local network. The dev panel shows frame time, device pixel ratio, viewport size and input type.
 
 **Out (later bundles or never):** darkness and glow, moon bugs, Demolitionist and Ghost, base, heat, raids, art beyond coloured squares.
 

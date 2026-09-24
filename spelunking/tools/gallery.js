@@ -1,18 +1,17 @@
 // Saves every generation step and the final world as PNGs, plus stats and params.
-// Usage: npm run gallery -- [seed ...] [--params file.json]
+// Usage: node tools/gallery.js [seed ...] [--params file.json]
 // Output: gallery/<timestamp>_seed<N>/
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { DROP_RGB, MASK_RGB, TILE_RGB, type Rgb } from '../src/render/palette'
-import type { Grid } from '../src/sim/gen/ca'
-import { computeStats } from '../src/sim/gen/stats'
-import { DEFAULT_PARAMS, generate, type GenParams, type Tile } from '../src/sim/gen/world'
-import { encodePng } from './png'
+import { DROP_RGB, MASK_RGB, TILE_RGB } from '../src/render/palette.js'
+import { computeStats } from '../src/sim/gen/stats.js'
+import { DEFAULT_PARAMS, generate } from '../src/sim/gen/world.js'
+import { encodePng } from './png.js'
 
 const PX = 4 // screen pixels per final-world tile
 
-function render(w: number, h: number, scale: number, colorAt: (x: number, y: number) => Rgb): Buffer {
+function render(w, h, scale, colorAt) {
   const W = w * scale
   const H = h * scale
   const rgb = new Uint8Array(W * H * 3)
@@ -23,7 +22,7 @@ function render(w: number, h: number, scale: number, colorAt: (x: number, y: num
 
 const args = process.argv.slice(2)
 const paramsIdx = args.indexOf('--params')
-const base: GenParams =
+const base =
   paramsIdx >= 0 ? { ...DEFAULT_PARAMS, ...JSON.parse(readFileSync(args[paramsIdx + 1], 'utf8')) } : DEFAULT_PARAMS
 const seeds = args.filter((a, i) => /^\d+$/.test(a) && (paramsIdx < 0 || i !== paramsIdx + 1)).map(Number)
 const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')
@@ -34,7 +33,7 @@ for (const seed of seeds.length ? seeds : [base.seed]) {
   mkdirSync(dir, { recursive: true })
 
   let n = 0
-  const world = generate(params, (layer, label, g: Grid) => {
+  const world = generate(params, (layer, label, g) => {
     // every step is drawn at the same on-screen size as the final world
     const scale = (params.width * PX) / g.w
     const name = `${String(++n).padStart(2, '0')}_${layer}_${label.replace(/[^a-z0-9]+/gi, '-')}.png`
@@ -42,7 +41,7 @@ for (const seed of seeds.length ? seeds : [base.seed]) {
   })
 
   const stats = computeStats(world)
-  const tileAt = (x: number, y: number) => TILE_RGB[world.tiles[y * world.w + x] as Tile]
+  const tileAt = (x, y) => TILE_RGB[world.tiles[y * world.w + x]]
   writeFileSync(join(dir, `${String(++n).padStart(2, '0')}_world.png`), render(world.w, world.h, PX, tileAt))
 
   const marks = new Map(stats.dropList.filter((d) => d.height >= 3).map((d) => [d.y * world.w + d.x, d.height]))

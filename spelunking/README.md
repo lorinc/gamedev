@@ -4,34 +4,50 @@ Playtest bundles and dev tools for the game designed in [../concepts/spelunking_
 
 ## Run
 
+No build step: the browser runs the `.js` files as they are.
+
 ```
-npm install
-npm run dev          # http://localhost:5173 lists every tool and bundle
-npm test             # simulation tests
+npm run serve        # python3 -m http.server 8000; phones on the same wifi use http://<this-machine's-ip>:8000
+npm test             # node --test: simulation tests, nothing to install
+npm install          # only needed for the type check
+npm run check        # tsc: type-checks the JSDoc types in src/ (emits nothing)
 npm run gallery -- 1 2 3   # v1 generator: stage-by-stage PNGs into gallery/
 ```
+
+## Dependencies
+
+Dependencies are bad by default. Each one needs a line here saying why ~100 lines of our own code can't replace it, or it goes.
+
+| Package | Kind | Why |
+|---|---|---|
+| `typescript` | dev, optional | Type-checks the code (JSDoc types in plain `.js`). It's the only independent check on code the author can't fully review. Pulls in no other packages; the game runs without it. |
+
+Runtime dependencies: none. The browser APIs (Canvas2D, pointer events, Web Audio) are the engine. Platform SDKs (Playgama Bridge) load from the platform's own script tag in release builds only.
+
+Rules: the sim (`src/sim/`) imports only other sim modules, enforced by `src/sim/boundary.test.js`. Browser code sticks to ES2020 (iOS 14 Safari), enforced by `tsc`.
 
 ## Layout
 
 | Path | What |
 |---|---|
 | `src/sim/` | Deterministic integer-grid core, shared by everything and tested. Code that should outlive the prototypes lives here. |
-| `src/sim/gen/` | Terrain: `ca.ts` (cellular automaton), `pipeline.ts` (v2 recipes), `terrain.ts` (v3), `world.ts` / `stats.ts` |
+| `src/sim/gen/` | Terrain: `ca.js` (cellular automaton), `pipeline.js` (v2 recipes), `terrain.js` (v3) + `starterCaves.js` (its recipe), `world.js` / `stats.js` |
 | `src/render/`, `src/ui/`, `src/input/` | Drawing, dev-panel widgets, touch / keyboard → commands |
-| `src/tools/vN/` + `vN.html` | Dev tools, numbered v1, v2, v3, … |
 | `src/bundles/bN/` + `bN.html` | Playable bundle entry points: wire sim + render + input + dev panel only |
 | `bundles/bN-name/` | Bundle docs: README, `presets/`, `playtests/`, `releases/` |
 | `archive/` | Frozen references: dated recipe JSON + PNG |
 | `gallery/` | Renders to look at (not in git) |
 | `tools/` | Node scripts (gallery export, PNG writer) |
 
-## Tools
+## Tools (retired)
+
+The terrain tools lived on TS + Vite + Pixi + Tweakpane and were removed on 2026-09-25 with that stack. All three were frozen. To run them: `git checkout tools-v1-v3 && npm install && npm run dev`.
 
 | Tool | What |
 |---|---|
-| v1 · Cave generator | Layered CA world: galleries, shafts, hard rock, ore, loot |
-| v2 · CA Lab | One binary grid, hand-built gen / scale pipeline. **Frozen:** the fundamental pattern-finding tool |
-| v3 · Terrain | A v2 recipe for caves and soft / hard rock, plus ore and loot |
+| v1 · Cave generator | Layered CA world: galleries, shafts, hard rock, ore, loot. Its generator lives on in `src/sim/gen/world.js` (used by the gallery) |
+| v2 · CA Lab | One binary grid, hand-built gen / scale pipeline. The fundamental pattern-finding tool |
+| v3 · Terrain | A v2 recipe for caves and soft / hard rock, plus ore and loot. Its output is `src/sim/gen/terrain.js`, which b1 uses |
 
 ## Bundles
 

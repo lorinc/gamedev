@@ -1,26 +1,34 @@
 // Numbers for tuning the generator against the design: material mix, open space by depth,
 // and ledge drop heights bucketed by the fall table (1–2 safe, 3–4 loud, 5+ panic).
 
-import { isOpen, TILE_NAMES, type World } from './world'
+import { isOpen, TILE_NAMES } from './world.js'
 
-export interface Drop {
-  x: number // the open tile you step off into
-  y: number
-  height: number // tiles fallen before landing
-}
+/** @typedef {import('./world.js').World} World */
 
-export interface WorldStats {
-  materialPct: Record<string, number>
-  openPctByQuarter: number[]
-  drops: { safe: number; loud: number; panic: number }
-  dropList: Drop[]
-}
+/**
+ * @typedef {object} Drop
+ * @property {number} x the open tile you step off into
+ * @property {number} y
+ * @property {number} height tiles fallen before landing
+ */
 
-export function findDrops(world: World): Drop[] {
+/**
+ * @typedef {object} WorldStats
+ * @property {Record<string, number>} materialPct
+ * @property {number[]} openPctByQuarter
+ * @property {{ safe: number, loud: number, panic: number }} drops
+ * @property {Drop[]} dropList
+ */
+
+/** @param {World} world @returns {Drop[]} */
+export function findDrops(world) {
   const { w, h, tiles } = world
-  const open = (x: number, y: number) => y < h && isOpen(tiles[y * w + ((x + w) % w)])
-  const drops: Drop[] = []
-  const seen = new Set<number>()
+  /** @param {number} x @param {number} y */
+  const open = (x, y) => y < h && isOpen(tiles[y * w + ((x + w) % w)])
+  /** @type {Drop[]} */
+  const drops = []
+  /** @type {Set<number>} */
+  const seen = new Set()
   for (let y = 0; y < h - 1; y++) {
     for (let x = 0; x < w; x++) {
       // standing: open tile with ground below
@@ -40,7 +48,8 @@ export function findDrops(world: World): Drop[] {
   return drops
 }
 
-export function computeStats(world: World): WorldStats {
+/** @param {World} world @returns {WorldStats} */
+export function computeStats(world) {
   const { w, h, tiles } = world
   const counts = new Array(TILE_NAMES.length).fill(0)
   const quarterOpen = [0, 0, 0, 0]
@@ -51,7 +60,8 @@ export function computeStats(world: World): WorldStats {
       if (isOpen(t)) quarterOpen[Math.min(3, Math.trunc((y * 4) / h))]++
     }
   }
-  const materialPct: Record<string, number> = {}
+  /** @type {Record<string, number>} */
+  const materialPct = {}
   TILE_NAMES.forEach((name, i) => (materialPct[name] = Math.round((counts[i] * 1000) / (w * h)) / 10))
 
   const dropList = findDrops(world)

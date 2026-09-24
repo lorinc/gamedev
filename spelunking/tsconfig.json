@@ -1,29 +1,22 @@
 {
+  // Type-checks the plain .js sources from their JSDoc comments. Emits nothing: the browser
+  // runs the files as they are. lib ES2020 = the oldest browsers we target (iOS 14 Safari),
+  // so newer APIs are flagged. Tests and tools/ run in Node and aren't checked: that would
+  // need @types/node.
   "compilerOptions": {
-    "target": "ES2022",
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": true,
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
-    "types": [
-      "vite/client",
-      "node"
-    ],
-    "strict": true,
+    "types": [],
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "isolatedModules": true,
-    "skipLibCheck": true,
-    "noEmit": true,
-    "resolveJsonModule": true
+    "noFallthroughCasesInSwitch": true
   },
-  "include": [
-    "src",
-    "tools",
-    "vite.config.ts"
-  ]
+  "include": ["src"],
+  "exclude": ["src/**/*.test.js"]
 }

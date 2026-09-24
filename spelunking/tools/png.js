@@ -8,13 +8,13 @@ const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
   return c >>> 0
 })
 
-function crc32(buf: Buffer): number {
+function crc32(buf) {
   let c = 0xffffffff
   for (const b of buf) c = CRC_TABLE[(c ^ b) & 0xff] ^ (c >>> 8)
   return (c ^ 0xffffffff) >>> 0
 }
 
-function chunk(type: string, data: Buffer): Buffer {
+function chunk(type, data) {
   const len = Buffer.alloc(4)
   len.writeUInt32BE(data.length)
   const body = Buffer.concat([Buffer.from(type, 'ascii'), data])
@@ -24,7 +24,7 @@ function chunk(type: string, data: Buffer): Buffer {
 }
 
 // rgb: w*h*3 bytes, row-major
-export function encodePng(w: number, h: number, rgb: Uint8Array): Buffer {
+export function encodePng(w, h, rgb) {
   const header = Buffer.alloc(13)
   header.writeUInt32BE(w, 0)
   header.writeUInt32BE(h, 4)
