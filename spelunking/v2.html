@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>v2 · CA Lab</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #050508;
+        color: #ccc;
+        font: 11px monospace;
+      }
+      body {
+        display: flex;
+      }
+      #left {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+      #strip {
+        display: flex;
+        gap: 8px;
+        padding: 8px;
+        overflow-x: auto;
+        border-bottom: 1px solid #222;
+        flex-shrink: 0;
+      }
+      .thumb {
+        cursor: pointer;
+        padding: 3px;
+        border: 2px solid transparent;
+        border-radius: 3px;
+        flex-shrink: 0;
+        max-width: 140px;
+      }
+      .thumb.selected {
+        border-color: #e6dc5a;
+      }
+      .thumb canvas {
+        height: 140px;
+        display: block;
+        margin-bottom: 3px;
+      }
+      .thumb div {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      canvas {
+        image-rendering: pixelated;
+      }
+      #view {
+        flex: 1;
+        overflow: auto;
+        padding: 8px;
+      }
+      #panel {
+        width: 330px;
+        overflow: auto;
+        padding: 8px;
+        box-sizing: border-box;
+        flex-shrink: 0;
+      }
+      #warn {
+        color: #f66;
+        padding: 4px 8px;
+      }
+      @media (max-width: 700px) {
+        body {
+          flex-direction: column;
+        }
+        #panel {
+          width: 100%;
+          max-height: 45%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="left">
+      <div id="strip"></div>
+      <div id="warn"></div>
+      <div id="view"><canvas id="big"></canvas></div>
+    </div>
+    <div id="panel"></div>
+    <script type="module" src="/src/tools/v2/main.ts"></script>
+  </body>
+</html>
