@@ -92,7 +92,7 @@ export function mapRows(world, at) {
  */
 export function runExample(ex, table, cfg) {
   const { world, at } = parseMap(ex.map)
-  const g = createGame(world, at, { ...cfg, ...structuredClone(ex.numbers ?? {}), rules: { ...cfg.rules, ...ex.stops } }, table)
+  const g = createGame(world, at, { ...cfg, ...JSON.parse(JSON.stringify(ex.numbers ?? {})), rules: { ...cfg.rules, ...ex.stops } }, table)
   g.pack = parsePack(ex.start?.pack ?? [])
   /** @type {string[]} */
   const problems = []

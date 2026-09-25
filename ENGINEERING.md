@@ -32,8 +32,48 @@ Code moves from throwaway to keeper by the **rule of two** (R7): when a second p
 | R11 | Nothing reaches `main` without the checks passing | The repo is public and a push publishes (D023) | `.githooks/pre-push` | 2026-09-25 |
 | R12 | No secrets in the repo, ever | Public repo: a leaked key is public within a minute | GitHub secret scanning + push protection (repo setting) | 2026-09-25 |
 | R13 | Every playable version is on the timeline: a pushed b1 is always a frozen build | You test what the timeline shows, and every version stays playable (D037) | `spelunking/tools/unfrozen.sh` in `.githooks/pre-push`; `npm run ship` freezes and pushes | 2026-09-25 |
+| R14 | Shipped code runs on iOS 14.0 Safari: no newer JS syntax or DOM API; newer CSS only where the page works without it. `tsc` only sees JS built-ins (R2) | On the oldest target a newer API is a black screen, while every other check stays green (I4) | `spelunking/tools/compat.test.js` (a denylist for JS that grows with each incident); CSS by the build check | 2026-09-25 |
+| R15 | Every page loads in a browser with no uncaught error, failed load or rejected promise, and errors show on screen | Every other check runs in Node, and nothing loaded the game itself (I4) | `spelunking/tools/smoke.sh` (headless Chromium) in `.githooks/pre-push`; `src/errors.js` on every page | 2026-09-25 |
+| R16 | Every commit that changes a playable page or its code gets a build check: a sub-agent with fresh context reviews the diff, the checks and the running page, and the commit carries its verdict as a `Build-check:` line | The author can't see their own gaps, and reading isn't running ([guide 02 §6](guides/engineering/02-pre-commit-and-release-checks.md)) | `.claude/agents/build-check.md`; the line is checked in `.githooks/pre-push` | 2026-09-25 |
 
-**Setup, once per clone:** `git config core.hooksPath .githooks`, and `npm install` in each game folder (for `tsc`).
+**Setup, once per clone:** `git config core.hooksPath .githooks`, `npm install` in each game folder (for `tsc`), and Chromium on the `PATH` (for `smoke.sh`).
+
+## Build check (R16)
+
+It runs whenever something playable was built, before the commit:
+
+1. **Build**, with the checks green locally.
+2. **Run the `build-check` sub-agent** (`.claude/agents/build-check.md`) with the task statement. It's read-only and hasn't seen the author's reasoning. It:
+   - runs `tsc`, the tests, `smoke.sh` and the timeline check;
+   - takes phone and desktop screenshots when the page's look changed;
+   - reviews the diff against the rules and the resource principles below;
+   - reports only real gaps.
+3. **FAIL:** fix it and run the check again. **PASS WITH NOTES:** fix the notes, or record why not.
+4. **Commit** with the verdict as a trailer line, for example `Build-check: pass (tsc, 102 tests, smoke 3 pages, 0 findings)`. Use `Build-check: skipped (<why>)` only for a change that can't affect play (a comment, a typo). The pre-push hook refuses game-code commits without the line.
+5. **The human part:** the report ends with what only a person can check for this diff, such as feel, touch on a phone, a hidden tab, or a run on the A41. Those stay yours.
+
+## Resource principles
+
+From [guides/engineering/01-runtime-resources.md](guides/engineering/01-runtime-resources.md), weighed for tiny games on a 2020 budget phone. The build check reviews each diff against them. Most can't be checked mechanically; where a check exists, it's named.
+
+- **The sim's speed never depends on the frame rate.** It runs on fixed 60 Hz ticks with a clamped accumulator, and the renderer interpolates. Browsers run rAF at 30 fps (Safari in iframes before the first tap, iOS Low Power Mode) and at 120 fps (fast phones). Cosmetic animation uses `dt`, never "per frame". Nothing uses `setInterval`/`setTimeout` for gameplay.
+- **Compute on change, not per frame.** Anything that depends only on zoom, size, settings or slow-changing state (layouts, colour strings, text metrics, the world texture) is computed once and cached behind a key.
+- **No allocation in per-tile or per-entity loops.** A few small objects per frame are fine; the GC handles them. Object pools and dirty rectangles are a skip at this scale.
+- **Pixel-exact drawing:** whole device pixels, `imageSmoothingEnabled = false` after every resize, no `shadowBlur`, `filter` or `getImageData` on the per-frame path.
+- **A fixed, small set of canvases,** created at startup or resize, each at most 4096 × 4096. iOS caps total canvas memory and kills the page past it.
+- **Idle when nobody's playing.** A hidden tab pauses the game and suspends audio. Web Audio keeps running when rAF stops.
+- **The first frame never waits** for audio decoding or asset loads.
+- **Storage is optional.** `localStorage` is only touched inside a `try`, because it throws in private windows and in some portal iframes.
+- **Measure on the floor device.** Headless Chromium can't see fill rate or heat. Per-frame work gets 2+ minutes on the A41 before a freeze; the budget is ~10 ms per frame.
+
+**Known gaps** (found by the research on 2026-09-25, and not yet needed):
+
+| Gap | Label | When |
+|---|---|---|
+| Pause and suspend audio on `visibilitychange` (`input.js` only handles `blur`) | must | before the first portal build |
+| Cap DPR at 2 (the A41 at 2.625 fills ~2.6 M px per frame) | worth it | the first A41 session: measure frame times before and after |
+| Block page scroll on space and the arrow keys, and remove debug surfaces from portal builds | must | before the first portal build ([guide 03](guides/engineering/03-web-portal-requirements.md)) |
+| Golden replays: 3–5 saved dives with state hashes, checked in the hook | worth it | the first sim change that silently changes an old replay, or when P2P starts |
 
 ## Dependencies
 
@@ -42,6 +82,8 @@ Code moves from throwaway to keeper by the **rule of two** (R7): when a second p
 | `typescript` | dev | The type check, the only independent check on code the author can't fully review. Justified in `spelunking/README.md` |
 | GitHub Pages | platform | Free static hosting straight from `main`. There's no build step, so no CI is needed yet |
 | Node ≥ 20 | runtime for tests and tools | `node --test` and `fs.readdirSync` with `{ recursive: true }` (20.1+) |
+| Chromium | dev tool | Headless page loads (`smoke.sh`) and screenshots (the build check). It's the only way to run the game in a browser without an npm dependency. Chrome works too |
+| Python 3 | dev tool | `http.server` for `npm run serve` and `smoke.sh`. It's already on every Linux and macOS machine |
 
 ## Not yet (stubs)
 
@@ -65,3 +107,4 @@ Why the rules exist. Append one line whenever something goes wrong, then ask whe
 | I1 | 2026-09-24 | The first tools pulled in TS + Vite + Pixi + Tweakpane: hundreds of node modules for what was ~100 lines of Python | R3, D013 |
 | I2 | 2026-09-25 | A proposal by Claude (idiomatic TypeScript) was recorded downstream as the user's choice | "justify every dependency" (in memory, not the repo) |
 | I3 | 2026-09-25 | Frozen builds were edited to add a favicon (cosmetic, one line each). There was no check to catch it | R6 (manifests written after the edit) |
+| I4 | 2026-09-25 | Research found two problems every check had missed. b1 couldn't start on iOS below 15.4, because `structuredClone` runs at startup. Its sound threw on iOS 14.0–14.4, because of the unprefixed `AudioContext`. `tsc` with `lib: ES2020` doesn't see DOM APIs or syntax, and nothing ever loaded a page in a browser | R14, R15, R16 |

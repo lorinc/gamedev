@@ -297,7 +297,7 @@ export function compile(r) {
 
 /** The sim config a ruleset carries: its numbers and stop switches. @param {Ruleset} r @returns {SimConfig} */
 export function simConfig(r) {
-  return { ...structuredClone(r.numbers), rules: { ...r.stops } }
+  return { ...JSON.parse(JSON.stringify(r.numbers)), rules: { ...r.stops } } // a deep copy; structuredClone is iOS 15.4+ (R14)
 }
 
 /**

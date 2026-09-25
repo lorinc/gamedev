@@ -1,11 +1,31 @@
 #!/usr/bin/env bash
 # Runs before every push. The repo is public and GitHub Pages serves main, so a push publishes:
-# this is the only gate between a broken commit and the live site. ~2 s.
+# this is the only gate between a broken commit and the live site. ~5 s.
 # Enable once per clone:  git config core.hooksPath .githooks
 # Skip in an emergency:   git push --no-verify   (and say so in the next commit)
 # Note: it checks the working tree, so commit or stash unrelated edits first.
 set -euo pipefail
 ROOT=$(git rev-parse --show-toplevel)
+
+# Every pushed commit that changes a playable page or its code carries the build check's verdict (R16):
+# a trailer line "Build-check: pass …" or "Build-check: skipped (why)", written from the build-check
+# sub-agent's report. Tests, tools and the timeline don't need one; rules/ does (it changes play, D028).
+while read -r _ local_sha _ remote_sha; do
+  [ "$local_sha" = 0000000000000000000000000000000000000000 ] && continue # deleting a ref
+  range=("$remote_sha..$local_sha")
+  # a new ref, or a force-push over commits we never fetched: everything no remote has yet
+  if [ "$remote_sha" = 0000000000000000000000000000000000000000 ] || ! git cat-file -e "$remote_sha^{commit}" 2>/dev/null; then
+    range=("$local_sha" --not --remotes)
+  fi
+  for c in $(git rev-list "${range[@]}"); do
+    game=$(git diff-tree --no-commit-id --name-only -r "$c" | grep -E '^[^/]+/([^/]+\.html|src/.*|rules/.*)$' | grep -vE '\.test\.js$' || true)
+    [ -z "$game" ] && continue
+    git log -1 --format=%B "$c" | grep -qE '^Build-check: (pass|skipped \(.+\))' && continue
+    echo "pre-push · $(git log -1 --format='%h %s' "$c")"
+    echo "  changes game code without a 'Build-check:' line (R16): run the build-check agent, then amend or reword"
+    exit 1
+  done
+done
 
 for game in "$ROOT"/*/package.json; do
   dir=$(dirname "$game")
@@ -16,6 +36,8 @@ for game in "$ROOT"/*/package.json; do
   npx --no-install tsc -p . || { echo "  $name: type check failed"; exit 1; }
   node --test --test-reporter=dot >/dev/null 2>&1 || { node --test 2>&1 | grep -E '^not ok|^# (pass|fail)'; echo "  $name: tests failed"; exit 1; }
   if [ -f tools/timeline.js ]; then
+    # every page loads in a browser without errors (R15)
+    [ -x tools/smoke.sh ] && { tools/smoke.sh >/dev/null || { tools/smoke.sh; echo "  $name: a page has errors in the browser"; exit 1; }; }
     node tools/timeline.js --strict >/dev/null || { echo "  $name: timeline has problems (npm run timeline)"; exit 1; }
     git diff --quiet -- timeline/index.html || { echo "  $name: timeline/index.html was stale; it's regenerated now, commit it"; exit 1; }
     # every playable version is on the timeline (D037): the pushed commit's b1 must be a frozen build
