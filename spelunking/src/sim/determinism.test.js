@@ -57,7 +57,10 @@ test('same seed + same commands → same state', () => {
   const a = play()
   const b = play()
   assert.equal(a.hash, b.hash)
-  assert.ok(a.g.tick > 0 && (a.g.ch.x !== a.g.home.x || Object.values(a.g.stash).some((n) => n > 0) || a.g.dives.length > 0), 'the script must actually do something')
+  assert.ok(
+    a.g.tick > 0 && (a.g.ch.x !== a.g.home.x || Object.values(a.g.stash).some((n) => n > 0) || a.g.dives.length > 0),
+    'the script must actually do something',
+  )
 })
 
 test('a different seed → a different state (the hash covers the world)', () => {

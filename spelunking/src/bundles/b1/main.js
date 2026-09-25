@@ -143,7 +143,10 @@ function start(ruleset, table) {
   Object.assign(window, { b1: { game, tunables, ruleset } })
 
   /** @param {Stash} s 'soft 3 hard 0 ore 1 loot 0' */
-  const got = (s, sep = ' ') => Object.entries(s).map(([k, n]) => `${k} ${n}`).join(sep)
+  const got = (s, sep = ' ') =>
+    Object.entries(s)
+      .map(([k, n]) => `${k} ${n}`)
+      .join(sep)
 
   /** @param {Dive} d */
   function diveLine(d) {
@@ -157,8 +160,7 @@ function start(ruleset, table) {
   /** @param {Dive} d */
   function showLog(d) {
     $('log-text').textContent =
-      `Dive ${d.n}: ${(d.ticks / 60).toFixed(0)} s, ${got(d.got, ', ')}, ${d.depth} deep\n` +
-      `Home: ${got(game.stash, ', ')}`
+      `Dive ${d.n}: ${(d.ticks / 60).toFixed(0)} s, ${got(d.got, ', ')}, ${d.depth} deep\nHome: ${got(game.stash, ', ')}`
     $('log').classList.add('open')
   }
   $('log-copy').onclick = () => copyText(game.dives.map(diveLine).join('\n'))

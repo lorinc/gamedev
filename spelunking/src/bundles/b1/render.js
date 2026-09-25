@@ -152,12 +152,13 @@ export function createRenderer(canvas, game, t, juice) {
       // a deep fall: at the bottom, red, while the teleport charges (D036)
       const s = game.step
       const homing = s && s.home && s.hold ? Math.min(1, Math.max(0, (s.t + alpha - (s.dur - s.hold)) / s.hold)) : 0
-      ctx.fillStyle = homing > 0 ? FELL : CHAR
+      const body = homing > 0 ? FELL : CHAR
+      ctx.fillStyle = body
       ctx.fillRect(Math.round(cx - cw / 2), Math.round(cy - chh), Math.round(cw), Math.round(chh))
       ctx.fillStyle = BG // an eye on the facing side, so direction reads
       const eye = Math.max(2, Math.round(tp * 0.14))
       ctx.fillRect(Math.round(cx + game.ch.facing * cw * 0.18 - eye / 2), Math.round(cy - chh * 0.75), eye, eye)
-      drawPack(ctx, game, cx, cy, cw, chh, tp, failA)
+      drawPack(ctx, game, cx, cy, cw, chh, tp, body, failA)
 
       for (const c of juice.chunks) {
         ctx.fillStyle = c.color
@@ -171,7 +172,6 @@ export function createRenderer(canvas, game, t, juice) {
         const d = tp * 1.15
         drawCue(ctx, cx + cue.dx * d, cy - chh / 2 + cue.dy * d, Math.max(9 * dpr, tp * 0.45), cue, cue.left / CUE_S)
       }
-
 
       if (homing > 0) charge = { p: homing, x: null, y: null }
       if (charge && charge.p > 0.12) {
@@ -190,19 +190,19 @@ export function createRenderer(canvas, game, t, juice) {
 
 // The backpack on the character's back (D038): 2 slots wide, filled bottom to top; each slot a 4×4
 // grid of units filled row by row from the bottom. Mirrored with the facing: slot 1 is always at
-// the bottom, on the outer side. One unit is 1/12 of a tile.
+// the bottom, on the outer side. One unit is 1/12 of a tile. Solid, in the body's colour, and sunk
+// deep into the body's back, so only the units stand out.
 // TODO (2026-09-25): zoomed out, the pack should scale up past the character's proportions to stay legible.
 const PACK_COLS = 2
 const SLOT_SIDE = 4 // √SLOT
-const PACK_FRAME = '#8a7a5a'
-const PACK_EMPTY = '#121216'
 /**
  * @param {CanvasRenderingContext2D} ctx @param {Game} game
  * @param {number} cx @param {number} cy the character's bottom centre, device px
  * @param {number} cw @param {number} chh its drawn width and height @param {number} tp tile px
+ * @param {string} body the body's colour
  * @param {number} failA alpha of the red "can't do" flash over the pack, 0 = none
  */
-function drawPack(ctx, game, cx, cy, cw, chh, tp, failA) {
+function drawPack(ctx, game, cx, cy, cw, chh, tp, body, failA) {
   const f = game.ch.facing
   const rows = Math.ceil(game.cfg.packSlots / PACK_COLS)
   const u = Math.max(1, Math.round(tp / 12))
@@ -210,20 +210,18 @@ function drawPack(ctx, game, cx, cy, cw, chh, tp, failA) {
   const side = SLOT_SIDE * u
   const w = PACK_COLS * side + (PACK_COLS + 1) * gap
   const h = rows * side + (rows + 1) * gap
-  // it overlaps the back edge of the body a little
-  const inner = cx - f * (cw / 2 - cw * 0.15)
+  // its inner edge sits 40% of the way into the body; its top near the head
+  const inner = cx - f * (cw / 2 - cw * 0.4)
   const x0 = Math.round(f > 0 ? inner - w : inner)
-  const y0 = Math.round(cy - chh * 0.9)
+  const y0 = Math.round(cy - chh * 0.97)
   // local x runs from the outer edge toward the body
   const fill = (/** @type {number} */ lx, /** @type {number} */ ly, /** @type {number} */ lw, /** @type {number} */ lh) =>
     ctx.fillRect(f > 0 ? x0 + lx : x0 + w - lx - lw, y0 + ly, lw, lh)
-  ctx.fillStyle = PACK_FRAME
+  ctx.fillStyle = body
   fill(0, 0, w, h)
   for (let i = 0; i < game.cfg.packSlots; i++) {
     const sx = gap + (i % PACK_COLS) * (side + gap)
     const sy = h - (Math.floor(i / PACK_COLS) + 1) * (side + gap) // slot 1 at the bottom
-    ctx.fillStyle = PACK_EMPTY
-    fill(sx, sy, side, side)
     const slot = game.pack[i]
     if (!slot) continue
     ctx.fillStyle = css(TILE_RGB[/** @type {Tile} */ (slot.tile)])

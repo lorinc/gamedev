@@ -118,14 +118,21 @@ describe('the pack', () => {
 
   test('a slot holds 16 of one material; the next unit opens a new slot', () => {
     const g = game(['#'.repeat(22), '#@' + '#'.repeat(18) + 'H#', '#'.repeat(22)], { ...CFG, packSlots: 3 })
-    g.pack = [{ tile: Tile.Soft, n: 15 }, { tile: Tile.Ore, n: 1 }]
+    g.pack = [
+      { tile: Tile.Soft, n: 15 },
+      { tile: Tile.Ore, n: 1 },
+    ]
     assert.equal(swipe(g, 1, 0), 'harder') // 18 soft: 1 tops up slot 1, 16 fill slot 3, the last is dropped
     assert.deepEqual(packText(g.pack), ['soft 16', 'ore 1', 'soft 16'])
   })
 
   test('building spends soft before hard, from the last slot; mining a built tile gives soft back', () => {
     const g = game(['#.....#', '#.....#', '#@....#', '#######'], { ...CFG, packSlots: 3 })
-    g.pack = [{ tile: Tile.Hard, n: 5 }, { tile: Tile.Soft, n: 1 }, { tile: Tile.Ore, n: 1 }]
+    g.pack = [
+      { tile: Tile.Hard, n: 5 },
+      { tile: Tile.Soft, n: 1 },
+      { tile: Tile.Ore, n: 1 },
+    ]
     assert.equal(swipe(g, 1, -1), 'bedrock') // two steps: the first paid in soft, the second in hard
     assert.deepEqual(packText(g.pack), ['hard 4', '-', 'ore 1']) // the emptied slot is free, in place
     const mined = game(['#####', '#@=.#', '#####'], { ...CFG, packSlots: 3 })
