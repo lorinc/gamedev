@@ -1,0 +1,325 @@
+{
+  "format": "spelunking-examples",
+  "version": 1,
+  "legend": ". open · # soft · H hard · o ore · $ loot · = built · - plank (a tread along the top of an open cell) · @ you (standing in open space) · x wraps, above and below the map is bedrock",
+  "examples": [
+    {
+      "id": "walk-steps",
+      "note": "Walking follows the floor over 1-tile steps and stops at a wall.",
+      "map": ["##########", "#@.......#", "###..#...#", "#####.#.##", "##########"],
+      "swipes": [{ "swipe": "→", "stop": "wall", "at": [8, 2] }]
+    },
+    {
+      "id": "ledge",
+      "note": "Walking stops at a drop of 2 or more and asks to bridge it (D042); → again lays a plank (1 rock) and walks on.",
+      "map": ["#######", "#@....#", "###.###", "###.###", "#######"],
+      "swipes": [
+        { "swipe": "→", "stop": "confirm", "at": [2, 1] },
+        { "swipe": "→", "stop": "wall", "at": [5, 1] }
+      ],
+      "start": { "pack": ["soft 1"] }
+    },
+    {
+      "id": "step-off",
+      "note": "→ never steps off a ledge (it asks to bridge); ↓ climbs down into the gap, then → walks on (D042).",
+      "map": ["########", "#@..####", "###.####", "###....#", "########"],
+      "swipes": [
+        { "swipe": "→", "stop": "confirm", "at": [2, 1] },
+        { "swipe": "↓", "stop": "floor", "at": [3, 3] },
+        { "swipe": "→", "stop": "wall", "at": [6, 3] }
+      ]
+    },
+    {
+      "id": "deep-gap",
+      "note": "A gap with no rock in the pack: → would bridge it, so it refuses (flash), every time.",
+      "map": ["#####", "#@.##", "##.##", "##.##", "##.##", "##.##", "##.##", "##.##", "#####"],
+      "swipes": [
+        { "swipe": "→", "stop": "noRock", "at": [1, 1] },
+        { "swipe": "→", "stop": "noRock", "at": [1, 1] }
+      ]
+    },
+    {
+      "id": "climb-over",
+      "note": "↓ at a ledge climbs down the wall to the floor.",
+      "map": ["#######", "#@....#", "###.###", "###.###", "###.###", "###.###", "###.###", "###.###", "#######"],
+      "swipes": [
+        { "swipe": "→", "stop": "confirm", "at": [2, 1] },
+        { "swipe": "↓", "stop": "floor", "at": [3, 7] }
+      ]
+    },
+    {
+      "id": "tunnel",
+      "note": "A swipe at a wall tunnels through soft and hard rock alike, breaks out and walks on (D040), until walking reaches rock again.",
+      "map": ["##########", "#@##HH..##", "##########"],
+      "swipes": [{ "swipe": "→", "stop": "wall", "at": [7, 1] }]
+    },
+    {
+      "id": "loot-pack",
+      "note": "Tunnelling mines ore without stopping (D040); the second ore stacks on the first. With both slots taken, the loot refuses (flash), mid-run and when asked again.",
+      "numbers": { "packSlots": 2 },
+      "map": ["#########", "#@#oo$###", "#########"],
+      "swipes": [
+        { "swipe": "→", "stop": "packFull", "at": [4, 1] },
+        { "swipe": "→", "stop": "packFull", "at": [4, 1] }
+      ],
+      "pack": ["soft 1", "ore 2"]
+    },
+    {
+      "id": "no-dig-down",
+      "note": "↓ on a floor never digs: the way down is the diagonal staircase.",
+      "map": ["#####", "#.@.#", "#####", "#####"],
+      "swipes": [{ "swipe": "↓", "stop": "down", "at": [2, 1] }],
+      "after": ["#####", "#.@.#", "#####", "#####"]
+    },
+    {
+      "id": "tunnel-into-chasm",
+      "note": "Mine first, then look: tunnelling into a chasm mines the wall but stays on solid ground, then asks to bridge (D042).",
+      "map": ["#######", "#@##..#", "###...#", "###...#", "###...#", "###...#", "###...#", "###...#", "###...#", "###...#", "#######"],
+      "swipes": [{ "swipe": "→", "stop": "confirm", "at": [2, 1] }],
+      "after": ["#######", "#.@...#", "###...#", "###...#", "###...#", "###...#", "###...#", "###...#", "###...#", "###...#", "#######"]
+    },
+    {
+      "id": "stair-into-chasm",
+      "note": "↘ into a chasm mines but doesn't step off. Going on would build, so the run stops and asks (D041); ↘ again builds a plank staircase down, paid with the rock just dug (D038), until it mines again.",
+      "map": ["######", "#@####", "######", "##...#", "##...#", "##...#", "##...#", "##...#", "##...#", "##...#", "##...#", "######"],
+      "swipes": [
+        { "swipe": "↘", "stop": "confirm", "at": [1, 1] },
+        { "swipe": "↘", "stop": "wall", "at": [4, 4] }
+      ],
+      "after": ["######", "#..###", "##..##", "##-..#", "##.-@#", "##..-#", "##...#", "##...#", "##...#", "##...#", "##...#", "######"]
+    },
+    {
+      "id": "stair-up",
+      "note": "↗ into air asks first (D041), then builds a plank staircase, 1 rock per step; ore never pays, so it refuses (flash) when the rock runs out.",
+      "start": { "pack": ["soft 1", "ore 1"] },
+      "map": ["#.....#", "#.....#", "#@....#", "#######"],
+      "swipes": [
+        { "swipe": "↗", "stop": "confirm", "at": [1, 2] },
+        { "swipe": "↗", "stop": "noRock", "at": [2, 1] }
+      ],
+      "pack": ["-", "ore 1"]
+    },
+    {
+      "id": "no-rock",
+      "note": "Building without rock refuses (flash).",
+      "map": ["#####", "#...#", "#@..#", "#####"],
+      "swipes": [{ "swipe": "↗", "stop": "noRock", "at": [1, 2] }]
+    },
+    {
+      "id": "stairs-end",
+      "note": "D030 (b1.2 playtest): ↗ walks up an existing staircase; where it ends, going on would build, so the run stops and asks (D041). Asking again with no rock refuses (flash).",
+      "map": ["########", "#......#", "###....#", "##..####", "#..#####", "#@######", "########"],
+      "swipes": [
+        { "swipe": "↗", "stop": "confirm", "at": [4, 2] },
+        { "swipe": "↗", "stop": "noRock", "at": [4, 2] }
+      ]
+    },
+    {
+      "id": "stair-down",
+      "note": "↘ into rock mines a staircase down, stepping onto each floor, until bedrock.",
+      "map": ["########", "#@.....#", "########", "########", "########"],
+      "swipes": [{ "swipe": "↘", "stop": "bedrock", "at": [4, 4] }],
+      "after": ["########", "#......#", "##..####", "###..###", "####@###"]
+    },
+    {
+      "id": "stair-down-air",
+      "note": "Tunnelling into ore over a gap mines it and stays, then asks to bridge. ↘ cancels that and asks for its own plank; ↘ again builds a floor under the target and walks down to the next rock.",
+      "start": { "pack": ["soft 1"] },
+      "map": ["#######", "#@o...#", "##....#", "##....#", "#######"],
+      "swipes": [
+        { "swipe": "→", "stop": "confirm", "at": [1, 1] },
+        { "swipe": "↘", "stop": "confirm", "at": [1, 1] },
+        { "swipe": "↘", "stop": "wall", "at": [3, 3] }
+      ],
+      "pack": ["-", "ore 1"]
+    },
+    {
+      "id": "cling",
+      "note": "Clinging to a wall: diagonals have no footing, → into open air refuses (a bridge needs footing); ↓ climbs down to the floor.",
+      "map": ["#####", "#...#", "#@..#", "#...#", "#...#", "#####"],
+      "swipes": [
+        { "swipe": "↗", "stop": "noFooting", "at": [1, 2] },
+        { "swipe": "↘", "stop": "noFooting", "at": [1, 2] },
+        { "swipe": "→", "stop": "ledge", "at": [1, 2] },
+        { "swipe": "↓", "stop": "floor", "at": [1, 4] }
+      ]
+    },
+    {
+      "id": "overhang",
+      "note": "Climbing down follows a wall that recedes by one (45°), then climbs on.",
+      "map": ["#######", "##@...#", "#.....#", "#.....#", "#######"],
+      "swipes": [{ "swipe": "↓", "stop": "floor", "at": [1, 3] }]
+    },
+    {
+      "id": "let-go",
+      "note": "Climbing down past the end of a wall lets go, if the floor is within harmlessDrop.",
+      "map": ["#########", "#..#@...#", "#.......#", "#.......#", "#########"],
+      "swipes": [{ "swipe": "↓", "stop": "floor", "at": [4, 3] }]
+    },
+    {
+      "id": "stuck",
+      "note": "…and stays put when the floor is deeper than that.",
+      "map": ["#########", "#..#@...#", "#.......#", "#.......#", "#.......#", "#.......#", "#.......#", "#.......#", "#########"],
+      "swipes": [{ "swipe": "↓", "stop": "overhang", "at": [4, 1] }]
+    },
+    {
+      "id": "cling-climb-back",
+      "note": "D035 (bug report, tick 1222): clinging above a chasm at the foot of your own staircase, ↗ toward the wall climbs back up the stairs, then stops and asks at the surface, where going on would build.",
+      "map": [
+        "...............................",
+        "...............................",
+        "...............................",
+        "...............................",
+        "################..#############",
+        "###############..##############",
+        "##############.@###############",
+        "####.........................oo",
+        "#####......................#ooo",
+        "#####.....................###oo",
+        "####$................######$###"
+      ],
+      "swipes": [{ "swipe": "↗", "stop": "confirm", "at": [18, 3] }]
+    },
+    {
+      "id": "cling-mine-hold",
+      "note": "D035: any mining is allowed, even the wall you hold. Mine, check, move: no floor there, so you stay; nothing holds you, so you fall and land (within harmlessDrop).",
+      "map": ["#######", "#..@#.#", "#.....#", "#######"],
+      "swipes": [{ "swipe": "→", "stop": "fell", "at": [3, 2] }],
+      "after": ["#######", "#.....#", "#..@..#", "#######"]
+    },
+    {
+      "id": "cling-fall-home",
+      "note": "D035: the same over a drop deeper than harmlessDrop: you fall, land, then teleport home (here: where the example starts).",
+      "map": ["#######", "#..@#.#", "#.....#", "#.....#", "#.....#", "#.....#", "#.....#", "#.....#", "#######"],
+      "swipes": [{ "swipe": "→", "stop": "fallHome", "at": [3, 1] }]
+    },
+    {
+      "id": "cling-mine-down",
+      "note": "D035: ↘ while clinging mines into rock like any ↘ (the cell beside you, your hold, then the target) and steps down onto the floor.",
+      "map": ["#######", "#..@###", "#...###", "#...###", "#######"],
+      "swipes": [{ "swipe": "↘", "stop": "bedrock", "at": [6, 4] }]
+    },
+    {
+      "id": "junction-cave",
+      "note": "D024: walking out of a tunnel into an open cave takes the 1-tile step down and walks on.",
+      "map": ["#####....#", "#####....#", "#####....#", "#@.......#", "#####....#", "##########"],
+      "swipes": [{ "swipe": "→", "stop": "wall", "at": [8, 4] }]
+    },
+    {
+      "id": "junction-shaft",
+      "note": "D040: walking under a narrow shaft no longer stops (the junction stop is off); the walk ends at the wall.",
+      "map": ["####.#####", "####.#####", "#@.......#", "##########"],
+      "swipes": [{ "swipe": "→", "stop": "wall", "at": [8, 2] }]
+    },
+    {
+      "id": "junction-break-out",
+      "note": "D040: mining out into a cave no longer stops at the break-out; it walks on, down the step, to the wall.",
+      "map": ["#####....#", "#####....#", "#@###....#", "#####....#", "##########"],
+      "swipes": [{ "swipe": "→", "stop": "wall", "at": [8, 3] }]
+    },
+    {
+      "id": "plank-crossing",
+      "note": "D039 (bug report, tick 6659): two diagonal tunnels cross in an X. ↗ from the crossing needs a step at the top of the ↘ tunnel: it asks, then lays a plank there and climbs the ↙ tunnel. ↙ comes back down over the plank, and ↘ still runs down its own tunnel, under it.",
+      "map": [
+        "oo###################...=......",
+        "#..........#########..#=.......",
+        "............ooo##$#..##........",
+        ".............oo###..##$........",
+        ".............####..####........",
+        ".............$##..######.......",
+        ".............##..#$######......",
+        "............###@.########oo....",
+        "#..........#####..########o#...",
+        ".........$#######..#######$####",
+        "........####$#####..#######$o##",
+        "........###########..$#####oooo",
+        ".........$##########.######o#oo",
+        "...........#####HHHHoo#$$......",
+        "............##ooHHHHHo##......."
+      ],
+      "swipes": [
+        { "swipe": "↗", "stop": "confirm", "at": [15, 7] },
+        { "swipe": "↗", "stop": "bedrock", "at": [22, 0] },
+        { "swipe": "↙", "stop": "wall", "at": [15, 7] },
+        { "swipe": "↘", "stop": "wall", "at": [20, 12] }
+      ],
+      "start": { "pack": ["soft 16", "soft 12"] }
+    },
+    {
+      "id": "plank-ramp",
+      "note": "D039, the ramp from the b1.2 feedback: ↗ walks up a plank ramp (and asks where it ends), ← walks back down it, → from the floor walks under it.",
+      "map": ["#......#", "#......#", "#....-.#", "##..-..#", "##@-...#", "########"],
+      "swipes": [
+        { "swipe": "↗", "stop": "confirm", "at": [5, 1] },
+        { "swipe": "←", "stop": "wall", "at": [2, 4] },
+        { "swipe": "→", "stop": "wall", "at": [6, 4] }
+      ]
+    },
+    {
+      "id": "plank-ramp-follow",
+      "note": "D039: → while standing on a plank ramp follows it up (the surface under your feet), and asks to bridge where it ends.",
+      "map": ["#......#", "#......#", "#....-.#", "#..@-..#", "#..-...#", "########"],
+      "swipes": [{ "swipe": "→", "stop": "confirm", "at": [5, 1] }]
+    },
+    {
+      "id": "step-dig",
+      "note": "D042: a fresh → at the foot of a step you could walk up asks, then digs it; the run keeps tunnelling level while it mines. A run that arrives walking steps up.",
+      "map": ["#.........#", "#@##.#....#", "###########"],
+      "swipes": [
+        { "swipe": "→", "stop": "confirm", "at": [1, 1] },
+        { "swipe": "→", "stop": "wall", "at": [9, 1] }
+      ]
+    },
+    {
+      "id": "plank-drop",
+      "note": "D042: ↓ on a plank drops through it to a floor within harmlessDrop.",
+      "map": ["#####", "#.@.#", "##-##", "#...#", "#...#", "#####"],
+      "swipes": [{ "swipe": "↓", "stop": "floor", "at": [2, 4] }]
+    },
+    {
+      "id": "ladder-down",
+      "note": "D042: ↓ on a plank over a deep drop asks, then builds a plank ladder down, a rung per step, until the rest is a safe drop.",
+      "start": { "pack": ["soft 4"] },
+      "map": ["#####", "#.@.#", "##-##", "##.##", "##.##", "##.##", "##.##", "##.##", "##.##", "##.##", "#####"],
+      "swipes": [
+        { "swipe": "↓", "stop": "confirm", "at": [2, 1] },
+        { "swipe": "↓", "stop": "floor", "at": [2, 9] }
+      ]
+    },
+    {
+      "id": "ladder-up",
+      "note": "D043: ↑ under open air asks, then builds a plank ladder up to the ceiling. ↓ climbs back down it; ↑ from a rung climbs up onto the tread above your head.",
+      "start": { "pack": ["soft 3"] },
+      "map": ["##.##", "#...#", "#...#", "#.@.#", "#####"],
+      "swipes": [
+        { "swipe": "↑", "stop": "confirm", "at": [2, 3] },
+        { "swipe": "↑", "stop": "bedrock", "at": [2, 0] },
+        { "swipe": "↓", "stop": "floor", "at": [2, 3] },
+        { "swipe": "↑", "stop": "floor", "at": [2, 0] }
+      ]
+    },
+    {
+      "id": "mine-above",
+      "note": "D043: ↑ into rock mines it and stays put; going on would build, so the run stops and asks.",
+      "map": ["#####", "##o##", "#.@.#", "#####"],
+      "swipes": [{ "swipe": "↑", "stop": "confirm", "at": [2, 2] }]
+    },
+    {
+      "id": "overhang-mine",
+      "note": "D043: ↗ into rock with no floor under it mines it and stays; going on would build a step, so it asks.",
+      "map": ["######", "#.####", "#@...#", "######"],
+      "swipes": [{ "swipe": "↗", "stop": "confirm", "at": [1, 2] }]
+    },
+    {
+      "id": "dig-yes-not-build",
+      "note": "D044 (bug report, tick 3900): a yes covers only what it was asked for, while the run keeps doing it. → digs the step (asked), walks out, and asks again at the gap instead of bridging it; → again bridges.",
+      "map": ["#........#", "#@#......#", "####..####", "####..####", "##########"],
+      "swipes": [
+        { "swipe": "→", "stop": "confirm", "at": [1, 1] },
+        { "swipe": "→", "stop": "confirm", "at": [3, 1] },
+        { "swipe": "→", "stop": "wall", "at": [8, 1] }
+      ],
+      "start": { "pack": ["soft 1"] }
+    }
+  ]
+}
