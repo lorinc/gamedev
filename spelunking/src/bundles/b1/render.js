@@ -14,6 +14,7 @@ import { wrap } from '../../sim/dig/rules.js'
 const BG = '#050508'
 const BEDROCK = '#000'
 const CHAR = '#f4f1de'
+const FELL = '#ff5a5a' // the character at the bottom of a deep fall
 const FAIL_S = 0.7 // seconds the red "can't do" flash of the pack lasts
 const CUE_S = 0.6 // seconds the swipe cue takes to fade out
 /** @typedef {'walk' | 'build' | 'mine'} CueKind the symbol: an arrow, stairs, a pickaxe */
@@ -148,7 +149,10 @@ export function createRenderer(canvas, game, t, juice) {
       if (p.digging && run) dig = Math.sin(time * 40) * 0.08 * tp
       const cx = sx(px + 0.5) + (run ? run.dx * dig : 0)
       const cy = sy(p.y + 1) + (run ? run.dy * dig : 0)
-      ctx.fillStyle = CHAR
+      // a deep fall: at the bottom, red, while the teleport charges (D036)
+      const s = game.step
+      const homing = s && s.home && s.hold ? Math.min(1, Math.max(0, (s.t + alpha - (s.dur - s.hold)) / s.hold)) : 0
+      ctx.fillStyle = homing > 0 ? FELL : CHAR
       ctx.fillRect(Math.round(cx - cw / 2), Math.round(cy - chh), Math.round(cw), Math.round(chh))
       ctx.fillStyle = BG // an eye on the facing side, so direction reads
       const eye = Math.max(2, Math.round(tp * 0.14))
@@ -169,6 +173,7 @@ export function createRenderer(canvas, game, t, juice) {
 
       drawPack(ctx, game, W, H, dpr, failA)
 
+      if (homing > 0) charge = { p: homing, x: null, y: null }
       if (charge && charge.p > 0.12) {
         const r = 28 * dpr
         ctx.strokeStyle = CHAR
@@ -294,7 +299,7 @@ export function charPos(g, alpha) {
   if (!s) return { x: g.ch.x, y: g.ch.y, digging: false }
   const t = s.t + alpha
   if (t <= s.digT) return { x: s.from.x, y: s.from.y, digging: true }
-  const f = Math.min(1, (t - s.digT) / (s.dur - s.digT))
+  const f = Math.min(1, (t - s.digT) / (s.dur - (s.hold ?? 0) - s.digT))
   const to = { x: nearest(s.action.to.x, s.from.x, g.world.w), y: s.action.to.y }
   const fall = s.action.fall
   if (fall) {

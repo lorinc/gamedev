@@ -32,6 +32,7 @@ import { interpret } from './ruleset.js'
  * @property {number} digT ticks spent mining / building before moving
  * @property {number} dur total ticks
  * @property {boolean} [home] a deep fall: teleport home on landing
+ * @property {number} [hold] ticks at the end spent in place (a deep fall: the teleport charge at the bottom)
  */
 
 /**
@@ -206,6 +207,9 @@ function arrive(g, s) {
   else if (g.cfg.gravity && s.action.kind !== 'fall') fallIfLoose(g)
 }
 
+/** Ticks a deep fall waits at the bottom before the teleport: the charge animation (b1's long press, 700 ms). */
+const HOME_HOLD_TICKS = 42
+
 // Gravity (D035): nothing holds you (no floor below, no wall left or right) → fall straight down to
 // the first floor. Deeper than harmlessDrop: land, then teleport home. The run ends either way.
 /** @param {Game} g */
@@ -222,7 +226,8 @@ function fallIfLoose(g) {
   g.events.push({ type: 'stop', reason, dx: 0, dy: 1, tried: [], next: 'fall' })
   if (g.dive) g.dive.stops[reason] = (g.dive.stops[reason] ?? 0) + 1
   g.run = null
-  g.step = { action, from: { x: ch.x, y: ch.y }, t: 0, digT: 0, dur: Math.max(1, d * g.cfg.fallTicks), home: deep }
+  const hold = deep ? HOME_HOLD_TICKS : 0
+  g.step = { action, from: { x: ch.x, y: ch.y }, t: 0, digT: 0, dur: Math.max(1, d * g.cfg.fallTicks) + hold, home: deep, hold }
   g.events.push({ type: 'step', action, fresh: false })
 }
 

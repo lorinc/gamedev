@@ -85,6 +85,8 @@ The order is swipe > situation > meaning, because "ahead" means the swipe's side
 
 **Ruleset b1.3 (D035), from a bug report** (clinging at the foot of your own staircase, above a chasm, with no way back up). ↗ ↖ toward the wall you hold climb it; any mining is allowed; gravity makes you fall when nothing holds you, and home after a fall deeper than `harmlessDrop`. b1 and the Rule Lab load `rules/b1.3.json`; `b1.2.json` stays as the frozen reference. Four new examples.
 
+**Deep-fall feedback (D036, after b1.3):** at the bottom of a fall deeper than `harmlessDrop`, the character turns red and the teleport charge ring fills over 0.7 s, then it teleports home.
+
 **Pass criterion, half met:** `rules/b1.2.json` reproduces b1.2 exactly. A D024-style change made in the editor, checked against examples and played in b1 without code has been tried once, by the build check above. It's still open for you.
 
 ## Feedback
