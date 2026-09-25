@@ -6,6 +6,9 @@
 // ~0.3 s at every step, and a release stops it, so exact positioning is easy. While held, nothing
 // asks for confirmation (the hold is the confirmation). Teach it early as a no-brainer tutorial
 // situation (a spot where you must stop at an exact cell). Key hold (WASD) should mean the same.
+// Swipe+hold is the same intent as hold+swipe (Lorinc): pressing, waiting, then swiping while still
+// down is precise mode too. That clashes with holding still charging the teleport: the swipe must
+// cancel the charge before it fires (longPressMs), or the charge needs another gesture.
 
 /** @typedef {import('../../sim/dig/game.js').Command} Command */
 /** @typedef {import('./tunables.js').Tunables} Tunables */
