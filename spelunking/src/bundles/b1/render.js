@@ -17,6 +17,7 @@ const CHAR = '#f4f1de'
 const FELL = '#ff5a5a' // the character at the bottom of a deep fall
 const FAIL_S = 0.7 // seconds the red "can't do" flash of the pack lasts
 const CUE_S = 0.6 // seconds the swipe cue takes to fade out
+const BODY_H = 1.3 // the character's drawn height, in tiles (1 in the sim)
 /** @typedef {'walk' | 'build' | 'mine'} CueKind the symbol: an arrow, stairs, a pickaxe */
 
 /** @param {import('../../render/palette.js').Rgb} c */
@@ -144,7 +145,7 @@ export function createRenderer(canvas, game, t, juice) {
       // Character: 1 tile in the sim, drawn ~1.3 tall. Squash on stops, a push while digging.
       const sq = juice.squash()
       const cw = tp * 0.7 * (1 + sq * 0.25)
-      const chh = tp * 1.3 * (1 - sq * 0.2)
+      const chh = tp * BODY_H * (1 - sq * 0.2)
       let dig = 0
       if (p.digging && run) dig = Math.sin(time * 40) * 0.08 * tp
       const cx = sx(px + 0.5) + (run ? run.dx * dig : 0)
@@ -158,7 +159,7 @@ export function createRenderer(canvas, game, t, juice) {
       ctx.fillStyle = BG // an eye on the facing side, so direction reads
       const eye = Math.max(2, Math.round(tp * 0.14))
       ctx.fillRect(Math.round(cx + game.ch.facing * cw * 0.18 - eye / 2), Math.round(cy - chh * 0.75), eye, eye)
-      drawPack(ctx, game, cx, cy, cw, chh, tp, body, failA)
+      drawPack(ctx, game, t.view, cx, cy, cw, chh, tp, body, failA)
 
       for (const c of juice.chunks) {
         ctx.fillStyle = c.color
@@ -190,46 +191,91 @@ export function createRenderer(canvas, game, t, juice) {
 
 // The backpack on the character's back (D038): 2 slots wide, filled bottom to top; each slot a 4×4
 // grid of units filled row by row from the bottom. Mirrored with the facing: slot 1 is always at
-// the bottom, on the outer side. One unit is 1/12 of a tile. Solid, in the body's colour, and sunk
-// deep into the body's back, so only the units stand out.
+// the bottom, on the outer side. Solid, in the body's colour, sunk into the body's back, so only
+// the units stand out. Its top is 1 px below the body's top; it ends at least 1 px above the feet
+// (else the character reads as a snail). About `view.packFit` of the body's height at every zoom:
+// unit rows and columns differ by at most 1 px to get there (square units made the size jump with
+// zoom). At tp ≤ 17 the slots touch (no body-coloured grid between them), which saves pixels.
 // TODO (2026-09-25): zoomed out, the pack should scale up past the character's proportions to stay legible.
 const PACK_COLS = 2
 const SLOT_SIDE = 4 // √SLOT
+
+/** n whole-pixel sizes adding up to total, as even as possible. @param {number} total @param {number} n */
+const split = (total, n) => Array.from({ length: n }, (_, k) => Math.floor(((k + 1) * total) / n) - Math.floor((k * total) / n))
+
 /**
- * @param {CanvasRenderingContext2D} ctx @param {Game} game
+ * Where each unit column or row starts along one axis, and its size.
+ * @param {number[]} sizes one per unit @param {number} gap between slots
+ */
+function axis(sizes, gap) {
+  const at = []
+  let p = 0
+  for (let k = 0; k < sizes.length; k++) {
+    if (k && k % SLOT_SIDE === 0) p += gap
+    at.push(p)
+    p += sizes[k]
+  }
+  return { at, sizes, len: p }
+}
+
+/**
+ * The pack's unit grid for a body `bh` px tall at tile size tp.
+ * @param {number} tp @param {number} bh @param {number} slotRows @param {number} fit
+ */
+export function packLayout(tp, bh, slotRows, fit) {
+  const gap = tp <= 17 ? 0 : Math.max(1, Math.round(tp / 40))
+  const nx = PACK_COLS * SLOT_SIDE
+  const ny = slotRows * SLOT_SIDE
+  const gaps = (slotRows - 1) * gap
+  const target = Math.min(bh - 2, Math.round(fit * bh)) - gaps // unit pixels available: 1 px free above and below
+  const hy = Math.max(ny, target)
+  return { x: axis(split(Math.max(nx, Math.round((hy * nx) / ny)), nx), gap), y: axis(split(hy, ny), gap) }
+}
+
+/** @type {{ key: string, layout: ReturnType<typeof packLayout> } | null} rebuilt only when the zoom, slots or fit change */
+let packCache = null
+
+/**
+ * @param {CanvasRenderingContext2D} ctx @param {Game} game @param {Tunables['view']} view
  * @param {number} cx @param {number} cy the character's bottom centre, device px
  * @param {number} cw @param {number} chh its drawn width and height @param {number} tp tile px
  * @param {string} body the body's colour
  * @param {number} failA alpha of the red "can't do" flash over the pack, 0 = none
  */
-function drawPack(ctx, game, cx, cy, cw, chh, tp, body, failA) {
+function drawPack(ctx, game, view, cx, cy, cw, chh, tp, body, failA) {
   const f = game.ch.facing
-  const rows = Math.ceil(game.cfg.packSlots / PACK_COLS)
-  const u = Math.max(1, Math.round(tp / 12))
-  const gap = Math.max(1, Math.round(u / 2))
-  const side = SLOT_SIDE * u
-  const w = PACK_COLS * side + (PACK_COLS + 1) * gap
-  const h = rows * side + (rows + 1) * gap
-  // its inner edge sits 40% of the way into the body; its top near the head
+  const slotRows = Math.ceil(game.cfg.packSlots / PACK_COLS)
+  // sized by the unsquashed body, so a squash moves the pack but never resizes it
+  const bh = Math.round(tp * BODY_H)
+  const key = `${tp} ${bh} ${slotRows} ${view.packFit}`
+  if (packCache?.key !== key) packCache = { key, layout: packLayout(tp, bh, slotRows, view.packFit) }
+  const { x, y } = packCache.layout
+  const w = x.len
+  const h = y.len
+  // its inner edge sits 40% of the way into the body; its top 1 px below the body's
   const inner = cx - f * (cw / 2 - cw * 0.4)
   const x0 = Math.round(f > 0 ? inner - w : inner)
-  const y0 = Math.round(cy - chh * 0.97)
+  const y0 = Math.round(cy - chh) + 1
   // local x runs from the outer edge toward the body
   const fill = (/** @type {number} */ lx, /** @type {number} */ ly, /** @type {number} */ lw, /** @type {number} */ lh) =>
     ctx.fillRect(f > 0 ? x0 + lx : x0 + w - lx - lw, y0 + ly, lw, lh)
   ctx.fillStyle = body
   fill(0, 0, w, h)
   for (let i = 0; i < game.cfg.packSlots; i++) {
-    const sx = gap + (i % PACK_COLS) * (side + gap)
-    const sy = h - (Math.floor(i / PACK_COLS) + 1) * (side + gap) // slot 1 at the bottom
     const slot = game.pack[i]
     if (!slot) continue
+    const col0 = (i % PACK_COLS) * SLOT_SIDE
+    const row0 = (slotRows - 1 - Math.floor(i / PACK_COLS)) * SLOT_SIDE // slot 1 at the bottom
     ctx.fillStyle = css(TILE_RGB[/** @type {Tile} */ (slot.tile)])
-    for (let k = 0; k < slot.n; k++) fill(sx + (k % SLOT_SIDE) * u, sy + side - (Math.floor(k / SLOT_SIDE) + 1) * u, u, u)
+    for (let k = 0; k < slot.n; k++) {
+      const c = col0 + (k % SLOT_SIDE)
+      const r = row0 + SLOT_SIDE - 1 - Math.floor(k / SLOT_SIDE)
+      fill(x.at[c], y.at[r], x.sizes[c], y.sizes[r])
+    }
   }
   if (failA > 0) {
     ctx.fillStyle = `rgba(255,40,40,${failA})`
-    fill(-gap, -gap, w + 2 * gap, h + 2 * gap)
+    fill(-1, -1, w + 2, h + 2)
   }
 }
 

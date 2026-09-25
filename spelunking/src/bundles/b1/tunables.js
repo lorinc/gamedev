@@ -25,6 +25,7 @@ export const DEFAULTS = {
     tilesShort: 48, // tiles across the screen's short side
     camLerp: 0.12, // per 1/60 s
     lookahead: 3, // tiles ahead in the intent direction
+    packFit: 0.75, // the backpack's height / the body's (render.js drawPack)
   },
   juice: {
     on: true, // master switch: judge the stop rules with it off first
