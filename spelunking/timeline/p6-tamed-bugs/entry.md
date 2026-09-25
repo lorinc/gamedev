@@ -45,7 +45,8 @@ Built in steps, one per session (user, 2026-09-25): 0 + 1 · 2 · 3 · 3b + 4.
 
 0. The b3 bundle, forked from b2.1; this entry; decisions D054–D057.
 1. The probe centred on the probed block; ↑ into rock probes the ceiling; no teleport home (D055, ruleset b3.1).
-2. Wild bugs (D056).
+2. Wild bugs (D056, D059).
+2b. Shared taming, the bug bar, placing bugs with the hold (D060), after playing b3.2.
 3. Tamed bugs (D056).
 3b. The friendly area (D057).
 4. The build check, and b3.1 frozen.
@@ -59,6 +60,13 @@ Built in steps, one per session (user, 2026-09-25): 0 + 1 · 2 · 3 · 3b + 4.
 **Wild bugs (step 2, D059):** ruleset `b3.2` = b3.1 + `bugs` numbers. Wild moon bugs appear in the dark, drift to you through open cells, and nibble ore (never loot) from your pack, with an ore flying into them and a heart popping. The 16th ore tames one where it is, and it turns warm amber (wild ones are cool blue). A probe ring scares them off for 4 s. No wild bug comes within 12 tiles of a tamed one. Tamed bugs just stay at their den for now (step 3 puts them to work). The Claude's calls are listed in D059.
 - **Tests:** 8 bug tests on ASCII maps (drift, nibble and taming, never loot, the probe's scare, the wander and despawn, where they appear, den areas kept clear, none in b3.1), plus a determinism test with bugs.
 - **Screenshots** (local, `gallery/p6/`, not in the repo): a nibble with its heart, a taming, and a tamed bug at its den with wild ones blinking out in the dark.
+
+**Shared taming, the bug bar and the hold (step 2b, D060):** ruleset `b3.3`. After playing b3.2, the user redesigned the tamed side: several wild bugs split the nibbles, so none of them got tamed.
+- All wild bugs' bites add up to one count; at 16, the last biter is tamed into the **bug bar**, b1.1's slot row along the bottom (4 slots).
+- Bar bugs circle you and light 2 around themselves, seen for good.
+- The 1 s hold is back: it places the bar's first bug 2 above your head (or at the nearest open cell), where it's the mining utility for step 3, lit, with no wild bugs within 12.
+- Wild bugs show everywhere and light 2 around them for the moment they blink on, without making anything seen.
+- **Tests:** 12 bug tests (the shared count, a full bar, the orbit's light, placing, above rock, an empty bar) plus determinism with a `place`; 178 in all.
 
 Claude's calls in step 1, not discussed:
 - Only the home cell counts the pack in, and only when there's something in it, so walking past home logs no empty dives.

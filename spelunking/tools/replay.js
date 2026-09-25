@@ -36,7 +36,7 @@ export function replay(text) {
         g.cfg = structuredClone(rest[0])
         rec.config()
       } else {
-        const types = /** @type {Record<string, string>} */ ({ s: 'stop', t: 'teleport', h: 'hold', r: 'release' })
+        const types = /** @type {Record<string, string>} */ ({ s: 'stop', t: 'teleport', h: 'hold', r: 'release', p: 'place' })
         const cmd = type === 'i' ? { type: 'intent', dx: rest[0], dy: rest[1], ...(rest[3] ? { held: true } : {}) } : { type: types[type] }
         rec.record(/** @type {any} */ (cmd), type === 'i' ? rest[2] : rest[0])
         command(g, /** @type {any} */ (cmd))

@@ -7,13 +7,18 @@
 // lit now is clear. Whole tiles, a hard edge. It changes only on `seen` events and when `game.lit` does.
 // The probe (D053): thin circles over the fog around the cell it spreads from, the newest ring solid and
 // the ones before it fading out; they fade on for a moment after it ends.
-// Moon bugs (D056, D059): a small square with a soft halo, over the fog (they're lights). Wild ones are
-// cool blue and blink in and out like fireflies, steady next to you, flickering while scared; tamed
-// ones are warm amber and glow steadily. They drift between cells and bob a little.
+// Moon bugs (D056, D059, D060): a small square with a soft halo, over the fog (they're lights), so they
+// show even where nothing is seen yet. Wild ones are cool blue and blink in and out like fireflies,
+// steady next to you, flickering while scared; while on, they show the cave 2 around them through the
+// fog, for the moment only (their light never makes anything seen). Tamed ones are warm amber and
+// glow steadily: in the bar they circle you, placed they hover at their den. They drift between cells
+// and bob a little. The bug bar: b1.1's slot row along the bottom edge, a tamed bug per slot.
 
 import { cellRgb, TILE_RGB, TREAD } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
 import { PROBE } from '../../sim/dig/probe.js'
+import { orbitStep } from '../../sim/dig/bugs.js'
+import { litCells } from '../../sim/dig/light.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { FLIGHT_S, HEART_S } from './juice.js'
 import { AUTO_TILES, ZOOM_PX } from './tunables.js'
@@ -35,8 +40,9 @@ const CUE_S = 0.6 // seconds the swipe cue takes to fade out
 const BODY_H = 1.3 // the character's drawn height, in tiles (1 in the sim)
 const RING_TRAIL = 4 // probe rings drawn: the newest and the ones before it, fading out over this many rings' time
 const WILD = [150, 190, 255] // a wild bug: cool
-const TAMED = [255, 196, 90] // a tamed bug: warm (user, 2026-09-26)
+const TAMED = /** @type {const} */ ([255, 196, 90]) // a tamed bug: warm (user, 2026-09-26)
 const HEART = '#ff7aa0'
+const WILD_LIGHT = 2 // a wild bug's light radius, for the moment it's on (D060)
 // a heart, in pixels
 const HEART_PX = ['.x.x.', 'xxxxx', 'xxxxx', '.xxx.', '..x..']
 /** @typedef {'walk' | 'build' | 'mine'} CueKind the symbol: an arrow, stairs, a pickaxe */
@@ -122,6 +128,8 @@ export function createRenderer(canvas, game, t, juice) {
   let cue = { dx: 0, dy: 0, kind: /** @type {CueKind} */ ('walk'), refused: false, question: false, left: 0 }
   /** The probe's rings as last drawn; age: seconds since ring r came, so they keep fading after the probe ends. */
   const rings = { x: 0, y: 0, r: 0, age: Infinity }
+  /** Per wild bug: the cells its light shows, for the cell and world it was computed for. @type {Map<number, { key: string, cells: number[] }>} */
+  const wildLit = new Map()
   /** The zoom setting tilePx was last set from (the camera keeps its world centre, so zooming is centred on the character). */
   let zoomSeen = NaN
 
@@ -284,7 +292,25 @@ export function createRenderer(canvas, game, t, juice) {
         ctx.globalAlpha = 1
       }
 
-      drawBugs(ctx, game, alpha, time, (x) => sx(nearest(x, px, world.w)), sy, tp)
+      // a wild bug's light: the cave around it, over the fog, while it's on (never seen for good)
+      for (const b of game.bugs) {
+        if (b.kind !== 'wild') continue
+        const on = glow(b, game, time)
+        if (on <= 0.02) continue
+        const key = `${b.x},${b.y},${game.worldRev}`
+        let cells = wildLit.get(b.id)
+        if (cells?.key !== key) wildLit.set(b.id, (cells = { key, cells: litCells(world, b, WILD_LIGHT) }))
+        ctx.globalAlpha = on * 0.8
+        for (const i of cells.cells) {
+          if (litNow[i]) continue
+          const x = i % world.w
+          const y = (i - x) / world.w
+          ctx.drawImage(tex, x, y, 1, 1, sx(nearest(x, px, world.w)), sy(y), tp, tp)
+        }
+        ctx.globalAlpha = 1
+      }
+      if (wildLit.size > game.bugs.length) for (const id of wildLit.keys()) if (!game.bugs.some((b) => b.id === id)) wildLit.delete(id)
+      drawBugs(ctx, game, alpha, time, p, (x) => sx(nearest(x, px, world.w)), sy, tp)
 
       // the pack's "can't do": two quick red blinks that fade
       failLeft = Math.max(0, failLeft - dt)
@@ -352,6 +378,8 @@ export function createRenderer(canvas, game, t, juice) {
         drawCue(ctx, cx + cue.dx * d, cy - chh / 2 + cue.dy * d, Math.max(9 * dpr, tp * 0.45), cue, cue.left / CUE_S)
       }
 
+      if (game.cfg.bugs) drawBar(ctx, game, W, H, dpr)
+
       if (homing > 0) charge = { p: homing, x: null, y: null }
       if (charge && charge.p > 0) {
         const r = 28 * dpr
@@ -368,32 +396,49 @@ export function createRenderer(canvas, game, t, juice) {
 }
 
 /**
- * The moon bugs (D056): each between the cell it drifted from and its cell, bobbing; a halo and a core.
+ * How bright a bug is now, 0..1. Wild: a firefly, on for 1.4 s then dark until the next blink; steady
+ * next to you; flickering while scared. Tamed: a steady glow.
+ * @param {import('../../sim/dig/bugs.js').Bug} b @param {Game} game @param {number} time seconds
+ */
+function glow(b, game, time) {
+  if (b.kind !== 'wild') return 0.8 + 0.2 * Math.sin(time * 2 + b.id)
+  if (game.tick < b.scared) return Math.sin(time * 30 + b.id) > 0 ? 0.9 : 0.2
+  const dx = wrapDelta(b.x - game.ch.x, game.world.w)
+  const dy = b.y - game.ch.y
+  const period = 2.6 + (b.id % 4) * 0.4
+  const phase = (time + b.id * 0.77) % period
+  return dx * dx + dy * dy <= 2 ? 1 : phase < 1.4 ? Math.sin((Math.PI * phase) / 1.4) : 0
+}
+
+/**
+ * The moon bugs (D056, D060): wild and placed ones between the cell they drifted from and their cell,
+ * bobbing; bar ones on a smooth circle two tiles round you (the sim's orbit, between its steps).
  * @param {CanvasRenderingContext2D} ctx @param {Game} game @param {number} alpha @param {number} time seconds
+ * @param {{ x: number, y: number }} me the character's drawn cell
  * @param {(x: number) => number} sx tile x → device px, the copy nearest the character
  * @param {(y: number) => number} sy @param {number} tp tile px
  */
-function drawBugs(ctx, game, alpha, time, sx, sy, tp) {
-  const move = Math.max(1, game.cfg.bugs?.moveTicks ?? 1)
+function drawBugs(ctx, game, alpha, time, me, sx, sy, tp) {
+  const cfg = game.cfg.bugs
+  if (!cfg) return
+  const move = Math.max(1, cfg.moveTicks)
   const core = Math.max(2, Math.round(tp * 0.3))
   for (const b of game.bugs) {
-    const f = Math.min(1, Math.max(0, (game.tick + alpha - b.movedAt) / move))
-    const fx = b.from.x + wrapDelta(b.x - b.from.x, game.world.w) * f
-    // they float in the upper part of their cell, fanned out, so two in one cell (or one beside you) read apart
-    const x = fx + 0.5 + Math.sin(time * 1.3 + b.id * 2.1) * 0.3
-    const y = b.from.y + (b.y - b.from.y) * f + 0.2 - (b.id % 3) * 0.3 + Math.cos(time * 1.7 + b.id) * 0.2
-    let on
-    if (b.den) on = 0.8 + 0.2 * Math.sin(time * 2 + b.id)
-    else if (game.tick < b.scared) on = Math.sin(time * 30 + b.id) > 0 ? 0.9 : 0.2
-    else {
-      const dx = wrapDelta(b.x - game.ch.x, game.world.w)
-      const dy = b.y - game.ch.y
-      // a firefly: on for 1.4 s, then dark until the next blink; steady next to you
-      const period = 2.6 + (b.id % 4) * 0.4
-      const phase = (time + b.id * 0.77) % period
-      on = dx * dx + dy * dy <= 2 ? 1 : phase < 1.4 ? Math.sin((Math.PI * phase) / 1.4) : 0
+    let x
+    let y
+    if (b.kind === 'bar') {
+      const a = (orbitStep(game.tick + alpha, game.bar.indexOf(b), cfg) * Math.PI * 2) / 12
+      x = me.x + 0.5 + 2 * Math.cos(a)
+      y = me.y + 0.5 + 2 * Math.sin(a)
+    } else {
+      const f = Math.min(1, Math.max(0, (game.tick + alpha - b.movedAt) / move))
+      const fx = b.from.x + wrapDelta(b.x - b.from.x, game.world.w) * f
+      // they float in the upper part of their cell, fanned out, so two in one cell (or one beside you) read apart
+      x = fx + 0.5 + Math.sin(time * 1.3 + b.id * 2.1) * 0.3
+      y = b.from.y + (b.y - b.from.y) * f + 0.2 - (b.id % 3) * 0.3 + Math.cos(time * 1.7 + b.id) * 0.2
     }
-    const [r, g, bl] = b.den ? TAMED : WILD
+    const on = glow(b, game, time)
+    const [r, g, bl] = b.kind === 'wild' ? WILD : TAMED
     const cx = sx(x)
     const cy = sy(y)
     const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, tp * 1.1)
@@ -403,6 +448,27 @@ function drawBugs(ctx, game, alpha, time, sx, sy, tp) {
     ctx.fillRect(cx - tp * 1.1, cy - tp * 1.1, tp * 2.2, tp * 2.2)
     ctx.fillStyle = `rgba(${r},${g},${bl},${0.15 + 0.85 * on})`
     ctx.fillRect(Math.round(cx - core / 2), Math.round(cy - core / 2), core, core)
+  }
+}
+
+// The bug bar (D060): b1.1's pack row, back as the only HUD. barSlots squares along the bottom edge,
+// opaque, so the world behind never reads as a bug; a tamed bug is an amber square, an empty slot a
+// grey dot.
+/** @param {CanvasRenderingContext2D} ctx @param {Game} game @param {number} W @param {number} H @param {number} dpr */
+function drawBar(ctx, game, W, H, dpr) {
+  const slots = /** @type {NonNullable<Game['cfg']['bugs']>} */ (game.cfg.bugs).barSlots
+  const s = Math.round(26 * dpr)
+  const gap = Math.round(6 * dpr)
+  const x0 = Math.round(W / 2 - (slots * (s + gap) - gap) / 2)
+  const y = H - s - Math.round(14 * dpr)
+  for (let i = 0; i < slots; i++) {
+    const x = x0 + i * (s + gap)
+    ctx.fillStyle = '#000'
+    ctx.fillRect(x - dpr, y - dpr, s + 2 * dpr, s + 2 * dpr)
+    const full = i < game.bar.length
+    ctx.fillStyle = full ? css(TAMED) : '#333'
+    const inset = full ? Math.round(7 * dpr) : s / 2 - dpr
+    ctx.fillRect(x + inset, y + inset, s - 2 * inset, s - 2 * inset)
   }
 }
 

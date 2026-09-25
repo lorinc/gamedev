@@ -1,6 +1,7 @@
 // Touch, mouse and keyboard → the same sim commands. One pointer recogniser serves touch and mouse:
 // a swipe commits as soon as it travels swipePx (not on release), a short press is a tap (stop).
-// b3 has no teleport home (D055): holding still does nothing; the 1 s hold is kept for outposts (TODO).
+// Holding still (the 1 s hold) places the bug bar's first bug (D060): its ring fills at the finger.
+// There's no teleport home (D055).
 //
 // Flick and hold (D046): a swipe is a flick unless the finger is still down holdMs after it (or was
 // down holdMs before it: hold+swipe), which makes it a hold. The sim gets the intent at once, then
@@ -9,7 +10,7 @@
 //
 // Zoom (D050): the mouse wheel (a trackpad pinch arrives as a wheel with ctrlKey: the same) and a
 // two-finger pinch step the zoom level. A second finger down drops the first finger's pending tap,
-// swipe; a swipe it already made still gets its `release` when it lifts.
+// swipe or charge; a swipe it already made still gets its `release` when it lifts.
 //
 // TODO (Lorinc, 2026-09-25): a tutorial for the controls. Flick vs hold is unusual, on PC especially.
 // Teach it early in a no-brainer situation: a gap you can only cross by holding.
@@ -57,6 +58,8 @@ export function createInput(surface, t, send, hooks) {
   const keys = new Set()
   let keysT0 = 0
   let keysHeld = false
+  /** @type {{ t0: number, done: boolean } | null} numpad 5 held: charging a bug's placing */
+  let key5 = null
   let kind = '–'
   /** @type {Map<number, { x: number, y: number }>} touch fingers down, by pointer id */
   const fingers = new Map()
@@ -157,8 +160,11 @@ export function createInput(surface, t, send, hooks) {
     if (e.repeat) return
     hooks.gesture()
     kind = 'keyboard'
-    // Numpad 5 = tap: stop on press (a key can't turn into a swipe)
-    if (e.code === 'Numpad5') return send({ type: 'stop' }, e.timeStamp, 'key Numpad5')
+    // Numpad 5 = tap and long-tap: stop on press (a key can't turn into a swipe), place a bug if held
+    if (e.code === 'Numpad5') {
+      key5 = { t0: e.timeStamp, done: false }
+      return send({ type: 'stop' }, e.timeStamp, 'key Numpad5')
+    }
     if (!keys.size) {
       keysT0 = e.timeStamp
       keysHeld = false
@@ -178,18 +184,23 @@ export function createInput(surface, t, send, hooks) {
   })
 
   window.addEventListener('keyup', (e) => {
+    if (e.code === 'Numpad5') key5 = null
     if (!keys.delete(e.code) || keys.size) return
     send({ type: 'release' }, e.timeStamp, `key ${e.code} up`)
   })
   window.addEventListener('blur', () => {
     if (keys.size) send({ type: 'release' }, performance.now(), 'window lost focus')
     keys.clear()
+    key5 = null
   })
+
+  /** The placing charge 0..1 for a press that started at t0: nothing for holdMs, then it fills. @param {number} held ms */
+  const chargeOf = (held) => (held - t.input.holdMs) / (t.input.longPressMs - t.input.holdMs)
 
   return {
     /**
-     * Once per frame: says `hold` when a swipe or keys are still down holdMs on. The charge ring it
-     * returns is always null in b3 (no teleport, D055); the renderer still takes one.
+     * Once per frame: says `hold` when a swipe or keys are still down holdMs on, and gives the placing
+     * charge 0..1 at the pointer (CSS px; null x / y = at the character), or null. It fires when full.
      * @param {number} now @returns {{ p: number, x: number | null, y: number | null } | null}
      */
     charge(now) {
@@ -201,7 +212,21 @@ export function createInput(surface, t, send, hooks) {
         keysHeld = true
         send({ type: 'hold' }, now, `key ${[...keys].join('+')} still down ${Math.round(now - keysT0)} ms`)
       }
-      return null // no teleport charge (D055)
+      if (key5 && !key5.done) {
+        const p = chargeOf(now - key5.t0)
+        if (p < 1) return p > 0 ? { p, x: null, y: null } : null
+        key5.done = true
+        send({ type: 'place' }, now, 'hold Numpad5')
+        return null
+      }
+      if (!press || press.done || press.swiped !== null) return null
+      const p = chargeOf(now - press.t0)
+      if (p >= 1) {
+        press.done = true
+        send({ type: 'place' }, now, 'long press')
+        return null
+      }
+      return p > 0 ? { p, x: press.x0, y: press.y0 } : null
     },
     kind: () => kind,
   }

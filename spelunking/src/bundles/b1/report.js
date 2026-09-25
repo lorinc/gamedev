@@ -20,7 +20,7 @@ import { Tile } from '../../sim/gen/world.js'
 /** @typedef {import('../../sim/dig/ruleset.js').Ruleset} Ruleset */
 /** @typedef {import('../../sim/dig/examples.js').Example} Example */
 
-/** A recorded command: [tick, 'i', dx, dy, how, held?: 1] | [tick, 's' | 't' | 'h' | 'r', how] | [tick, 'cfg', sim]. h: hold, r: release (D046). */
+/** A recorded command: [tick, 'i', dx, dy, how, held?: 1] | [tick, 's' | 't' | 'h' | 'r' | 'p', how] | [tick, 'cfg', sim]. h: hold, r: release (D046), p: place a bug (D060). */
 /** @typedef {[number, string, ...any[]]} Rec */
 
 const KEEP = 5 // swipes in the report
@@ -126,6 +126,8 @@ export function createRecorder(game, info) {
           last.end = `let go (${how})`
           last.stop = 'released'
         }
+      } else if (cmd.type === 'place') {
+        cmds.push([tick, 'p', how]) // a bug placed (D060): the run goes on
       } else {
         cmds.push([tick, cmd.type === 'stop' ? 's' : 't', how])
         const last = swipes[swipes.length - 1]

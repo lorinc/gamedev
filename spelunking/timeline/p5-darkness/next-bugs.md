@@ -86,6 +86,16 @@ Bundle 2, and away from the vault/raid path: the concept doc gets updated.
 - Defaults (Claude's): the whole radius, not only seen cells; tunnels dug
   there later get decorated too; overlapping areas merge.
 
+## Decided by the user, fourth pass (2026-09-26, after playing b3.2): the bug bar (D060)
+- Wild bugs' nibbles add up to one shared count; at 16, the last biter is tamed.
+- Tamed bugs go into a bug bar: b1.1's slot row along the bottom, 4 slots. In the bar, a bug circles
+  you and lights R = 2 like your light (seen for good). It doesn't mine.
+- The 1 s hold is back: it places the bar's first bug 2 blocks above your head (the nearest open cell
+  if that's rock). A placed bug is the mining utility, covering R = 12. Taking it back: later.
+- Wild bugs show even in never-seen areas, and light R = 2 like your light while they blink on,
+  for the moment only (they never lift the fog for good).
+- So step 3 below is about **placed** bugs: the den is where you place one, not where it was tamed.
+
 ## Steps (sequential sub-sessions, like p5; each one playable, user OK 2026-09-25)
 Sessions (user OK 2026-09-25): 0 + 1 · 2 · 3 · 3b + 4, each in a fresh session
 that starts from the handoff and this file.

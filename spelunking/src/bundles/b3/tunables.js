@@ -24,6 +24,7 @@ export const DEFAULTS = {
     horizontalDeg: 30, // ± around left / right that reads as a walk
     verticalDeg: 25, // ± around up / down; the rest is diagonal
     holdMs: 200, // a swipe still down this long is a hold (D046, D048)
+    longPressMs: 1000, // placing a bug (D060): holding still this long (the ring fills from holdMs on)
   },
   view: {
     zoom: -1, // index into ZOOM_PX; -1 = the default (AUTO_TILES). The wheel and a pinch set it
@@ -54,6 +55,7 @@ export const RANGES = {
   'input.horizontalDeg': [10, 45, 1],
   'input.verticalDeg': [10, 45, 1],
   'input.holdMs': [100, 800, 10],
+  'input.longPressMs': [400, 2000, 50],
   'view.zoom': [-1, ZOOM_PX.length - 1, 1],
   'view.camLerp': [0.02, 1, 0.01],
   'view.lookahead': [0, 8, 0.5],

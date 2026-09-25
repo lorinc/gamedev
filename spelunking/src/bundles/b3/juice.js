@@ -87,6 +87,8 @@ export function createJuice(t) {
       } else if (e.type === 'tamed') {
         for (let k = 1; k <= 3; k++) hearts.push({ x: e.x + 0.5 + (k - 2) * 0.4, y: e.y + 0.2, age: -FLIGHT_S - k * 0.15 })
         sound.play('tamed')
+      } else if (e.type === 'placed') {
+        sound.play('placed')
       }
     },
     /** @param {number} dt seconds */
@@ -117,7 +119,7 @@ export function createJuice(t) {
   }
 }
 
-/** @typedef {'soft' | 'hard' | 'ore' | 'loot' | 'build' | 'thunk' | 'break' | 'bump' | 'teleport' | 'ping' | 'nibble' | 'tamed'} SoundName */
+/** @typedef {'soft' | 'hard' | 'ore' | 'loot' | 'build' | 'thunk' | 'break' | 'bump' | 'teleport' | 'ping' | 'nibble' | 'tamed' | 'placed'} SoundName */
 
 /** @param {Tunables} t */
 function createSound(t) {
@@ -141,6 +143,7 @@ function createSound(t) {
     ping: ['sine', 150, 110, 0, 0.14, 0.3], // a probe ring: low and short, a ring every 5 ticks (83 ms) overlaps a little
     nibble: ['triangle', 1200, 1600, 0, 0.05, 0.15], // a wild bug's bite: tiny and high
     tamed: ['sine', 520, 1040, 0, 0.4, 0.3],
+    placed: ['sine', 780, 390, 0, 0.3, 0.3], // a bug set down (D060): the taming's chime, falling
   }
 
   return {

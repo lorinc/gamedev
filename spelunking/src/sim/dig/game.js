@@ -23,8 +23,9 @@
 // Without the teleport (D055, `teleport: false`): the command does nothing, a deep fall just lands, and
 // stepping onto the home cell with something in the pack counts it in (event `home`).
 //
-// Moon bugs (D056, D059), only when the config has `bugs`: bugs.js, each tick before the light (a
-// nibble changes the pack). A probe ring scares the wild bugs it passes.
+// Moon bugs (D056, D059, D060), only when the config has `bugs`: bugs.js, each tick before the light (a
+// nibble changes the pack). A probe ring scares the wild bugs it passes. The command `place` (the 1 s
+// hold) places the bug bar's first bug. Bar and placed bugs light around themselves like you do.
 
 import { isFloor, isOpen, Tile } from '../gen/world.js'
 import { digTicks, stopReason, tileAt } from './rules.js'
@@ -32,7 +33,7 @@ import { add, fits, MATERIAL_NAME, material, rock, spendRock, valuable } from '.
 import { interpret } from './ruleset.js'
 import { litCells, lightRadius, surfaceCells } from './light.js'
 import { PROBE, probeReach, ringCells } from './probe.js'
-import { scare, updateBugs } from './bugs.js'
+import { bugGlows, place, scare, updateBugs } from './bugs.js'
 
 /** @typedef {import('../gen/world.js').World} World */
 /** @typedef {import('./rules.js').Action} Action */
@@ -43,7 +44,8 @@ import { scare, updateBugs } from './bugs.js'
 
 /**
  * @typedef {{ type: 'intent', dx: number, dy: number, held?: boolean } | { type: 'hold' } | { type: 'release' }
- *   | { type: 'stop' } | { type: 'teleport' }} Command held: the finger was already down 0.3 s (hold+swipe)
+ *   | { type: 'stop' } | { type: 'teleport' } | { type: 'place' }} Command held: the finger was already down 0.3 s
+ *   (hold+swipe); place: the bug bar's first bug into the world (D060)
  */
 
 /**
@@ -57,9 +59,11 @@ import { scare, updateBugs } from './bugs.js'
  *   | { type: 'seen', cells: number[] }
  *   | { type: 'ring', x: number, y: number, r: number }
  *   | { type: 'nibble', id: number, x: number, y: number, from: Cell }
- *   | { type: 'tamed', id: number, x: number, y: number }} GameEvent seen: cells (y * w + x) seen for the first time, for a renderer's
+ *   | { type: 'tamed', id: number, x: number, y: number, slot: number }
+ *   | { type: 'placed', id: number, x: number, y: number }} GameEvent seen: cells (y * w + x) seen for the first time, for a renderer's
  *   texture; ring: the probe from (x, y) reached ring r (D053); nibble: wild bug `id` at (x, y) ate an ore from the pack,
- *   carried from `from` (D056); tamed: it has eaten enough, and (x, y) is its den
+ *   carried from `from` (D056); tamed: the shared count reached `tame` with its bite, and it's in the bug bar's
+ *   `slot` (D060); placed: the bar's first bug is at its den (x, y)
  */
 
 /**
@@ -120,12 +124,15 @@ import { scare, updateBugs } from './bugs.js'
  * @property {number[]} lit cells (y * w + x) lit now, sorted, the surface included; a new array whenever it changes
  * @property {number} radius the light's radius now, in tiles (0 without `cfg.light`)
  * @property {number[]} surface the cells always lit: the sky and the ground's top faces, as at the start
- * @property {{ x: number, y: number, r: number }} litFor what `lit` was computed for; r = -1 after the world changed
+ * @property {{ x: number, y: number, r: number, glows: string }} litFor what `lit` was computed for; r = -1 after the
+ *   world changed; glows: the bugs' light cells (D060)
  * @property {ProbeState | null} probe the seismic probe in progress (D053); you don't move while it's there
  * @property {import('./bugs.js').Bug[]} bugs wild and tamed (D056); none without `cfg.bugs`
  * @property {number} nextBug the next bug's id
  * @property {import('./bugs.js').Field | null} bugField the bugs' way to you, cached
  * @property {number} worldRev counts the ticks that mined or built something
+ * @property {number} fed ore the wild bugs ate toward the next taming, all of them together (D060)
+ * @property {import('./bugs.js').Bug[]} bar the tamed bugs you carry, in slot order (D060)
  */
 
 // The generated terrain under a surface strip: sky rows to walk on, solid crust rows, home at x = 0.
@@ -162,12 +169,14 @@ export function createGame(world, home, cfg, table) {
     lit: [],
     radius: 0,
     surface: [],
-    litFor: { x: home.x, y: home.y, r: -1 },
+    litFor: { x: home.x, y: home.y, r: -1, glows: '' },
     probe: null,
     bugs: [],
     nextBug: 1,
     bugField: null,
     worldRev: 0,
+    fed: 0,
+    bar: [],
   }
   if (cfg.light) {
     g.seen = new Uint8Array(world.w * world.h)
@@ -205,7 +214,8 @@ export function tick(g) {
     } else if (cmd.type === 'stop') {
       g.run = null
       abortDig(g)
-    } else if (g.cfg.teleport !== false) teleport(g)
+    } else if (cmd.type === 'place') place(g)
+    else if (g.cfg.teleport !== false) teleport(g)
   }
   g.queue.length = 0
 
@@ -257,10 +267,13 @@ function updateLight(g) {
   if (!g.cfg.light) return
   const r = lightRadius(g.pack, g.cfg.light)
   const at = g.litFor
-  if (at.x === g.ch.x && at.y === g.ch.y && at.r === r) return
-  g.litFor = { x: g.ch.x, y: g.ch.y, r }
+  const sources = bugGlows(g)
+  const glows = sources.map((c) => `${c.x},${c.y}`).join(' ')
+  if (at.x === g.ch.x && at.y === g.ch.y && at.r === r && at.glows === glows) return
+  g.litFor = { x: g.ch.x, y: g.ch.y, r, glows }
   g.radius = r
-  const cells = litCells(g.world, g.ch, r)
+  let cells = litCells(g.world, g.ch, r)
+  for (const c of sources) cells = union(cells, litCells(g.world, c, /** @type {NonNullable<SimConfig['bugs']>} */ (g.cfg.bugs).light))
   g.lit = union(g.surface, cells)
   reveal(g, cells) // the surface was seen at the start
 }

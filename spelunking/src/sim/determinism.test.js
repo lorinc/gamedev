@@ -51,11 +51,12 @@ function play(caveSeed = DEFAULT_TERRAIN.caveSeed, light, bugs) {
     command(g, { type: 'intent', dx, dy })
     for (let i = 0; i < 300; i++) tick(g)
   }
+  command(g, { type: 'place' }) // with bugs: the bar's first bug, if one was tamed (D060)
   command(g, { type: 'teleport' })
   for (let i = 0; i < 300; i++) tick(g)
   const h = createHash('sha256')
   h.update(g.world.tiles)
-  h.update(JSON.stringify({ tick: g.tick, ch: g.ch, pack: g.pack, stash: g.stash, dives: g.dives, bugs: g.bugs }))
+  h.update(JSON.stringify({ tick: g.tick, ch: g.ch, pack: g.pack, stash: g.stash, dives: g.dives, bugs: g.bugs, fed: g.fed }))
   if (g.seen) h.update(g.seen)
   return { hash: h.digest('hex'), g }
 }
@@ -84,7 +85,20 @@ test('with light: same seed + same commands → the same seen map (D052)', () =>
 
 test('with bugs: same seed + same commands → the same bugs (D056)', () => {
   const light = { base: 4, orePer: 16, lootPer: 8 }
-  const bugs = { max: 3, spawnTicks: 60, moveTicks: 4, seek: 20, nibbleTicks: 10, tame: 2, scareTicks: 60, den: 12, despawn: 28 }
+  const bugs = {
+    max: 3,
+    spawnTicks: 60,
+    moveTicks: 4,
+    seek: 20,
+    nibbleTicks: 10,
+    tame: 2,
+    scareTicks: 60,
+    den: 12,
+    despawn: 28,
+    barSlots: 4,
+    light: 2,
+    orbitTicks: 10,
+  }
   const a = play(DEFAULT_TERRAIN.caveSeed, light, bugs)
   const b = play(DEFAULT_TERRAIN.caveSeed, light, bugs)
   assert.equal(a.hash, b.hash)
