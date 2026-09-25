@@ -34,13 +34,15 @@ Code moves from throwaway to keeper by the **rule of two** (R7): when a second p
 | R13 | Every playable version is on the timeline: a pushed b1 is always a frozen build | You test what the timeline shows, and every version stays playable (D037) | `spelunking/tools/unfrozen.sh` in `.githooks/pre-push`; `npm run ship` freezes and pushes | 2026-09-25 |
 | R14 | Shipped code runs on iOS 14.0 Safari: no newer JS syntax or DOM API; newer CSS only where the page works without it. `tsc` only sees JS built-ins (R2) | On the oldest target a newer API is a black screen, while every other check stays green (I4) | `spelunking/tools/compat.test.js` (a denylist for JS that grows with each incident); CSS by the build check | 2026-09-25 |
 | R15 | Every page loads in a browser with no uncaught error, failed load or rejected promise, and errors show on screen | Every other check runs in Node, and nothing loaded the game itself (I4) | `spelunking/tools/smoke.sh` (headless Chromium) in `.githooks/pre-push`; `src/errors.js` on every page | 2026-09-25 |
-| R16 | Every commit that changes a playable page or its code gets a build check: a sub-agent with fresh context reviews the diff, the checks and the running page, and the commit carries its verdict as a `Build-check:` line | The author can't see their own gaps, and reading isn't running ([guide 02 §6](guides/engineering/02-pre-commit-and-release-checks.md)) | `.claude/agents/build-check.md`; the line is checked in `.githooks/pre-push` | 2026-09-25 |
+| R16 | Every major release gets a build check. Major means a new bundle (`bN.html`), closing a prototype entry, or a portal submission. A sub-agent with fresh context reviews the diff, the checks and the running page, and the release commit carries its verdict as a `Build-check:` line. Point freezes (b1.N) rely on the automated checks | The author can't see their own gaps, and reading isn't running ([guide 02 §6](guides/engineering/02-pre-commit-and-release-checks.md)). The review costs ~70k tokens and ~4 minutes, which is worth it per release but not per push (user's call) | `.claude/agents/build-check.md`; `.githooks/pre-push` refuses a new `bN.html` or an entry closed as `concluded`/`killed` without the line; the portal pack script will do the same when it exists | 2026-09-25 |
 
 **Setup, once per clone:** `git config core.hooksPath .githooks`, `npm install` in each game folder (for `tsc`), and Chromium on the `PATH` (for `smoke.sh`).
 
 ## Build check (R16)
 
-It runs whenever something playable was built, before the commit:
+**Every push** runs the automated checks: `tsc`, the tests, iOS 14 compat, the headless page load and the timeline. They take about 5 s and cost no tokens.
+
+The build-check sub-agent runs on **major releases** only: a new bundle (`bN.html`), closing a prototype entry, or a portal submission. For a point freeze (b1.N), you can still ask for one if a change feels risky.
 
 1. **Build**, with the checks green locally.
 2. **Run the `build-check` sub-agent** (`.claude/agents/build-check.md`) with the task statement. It's read-only and hasn't seen the author's reasoning. It:
@@ -49,7 +51,7 @@ It runs whenever something playable was built, before the commit:
    - reviews the diff against the rules and the resource principles below;
    - reports only real gaps.
 3. **FAIL:** fix it and run the check again. **PASS WITH NOTES:** fix the notes, or record why not.
-4. **Commit** with the verdict as a trailer line, for example `Build-check: pass (tsc, 102 tests, smoke 3 pages, 0 findings)`. Use `Build-check: skipped (<why>)` only for a change that can't affect play (a comment, a typo). The pre-push hook refuses game-code commits without the line.
+4. **Commit** the release with the verdict as a trailer line, for example `Build-check: pass (tsc, 102 tests, smoke 3 pages, 0 findings)`. `Build-check: skipped (<why>)` is for a release that doesn't change play. The pre-push hook refuses a release commit without the line.
 5. **The human part:** the report ends with what only a person can check for this diff, such as feel, touch on a phone, a hidden tab, or a run on the A41. Those stay yours.
 
 ## Resource principles

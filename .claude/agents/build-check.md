@@ -1,6 +1,6 @@
 ---
 name: build-check
-description: Build check (R16). An independent, fresh-context review of uncommitted game changes before they're committed. It runs the checks, loads the pages in headless Chromium, reviews the diff against ENGINEERING.md, and returns a verdict plus the exact `Build-check:` trailer line. Read-only. Use it before every commit that touches a playable page or its `src/`.
+description: Build check (R16). An independent, fresh-context review of uncommitted game changes before they're committed. It runs the checks, loads the pages in headless Chromium, reviews the diff against ENGINEERING.md, and returns a verdict plus the exact `Build-check:` trailer line. Read-only. Use it for major releases: a new bundle (`bN.html`), closing a prototype entry, or a portal submission (R16). Point freezes rely on the automated checks.
 tools: Read, Grep, Glob, Bash
 ---
 

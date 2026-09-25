@@ -7,9 +7,10 @@
 set -euo pipefail
 ROOT=$(git rev-parse --show-toplevel)
 
-# Every pushed commit that changes a playable page or its code carries the build check's verdict (R16):
-# a trailer line "Build-check: pass …" or "Build-check: skipped (why)", written from the build-check
-# sub-agent's report. Tests, tools and the timeline don't need one; rules/ does (it changes play, D028).
+# A major release carries the build check's verdict (R16): a trailer line "Build-check: pass …" or
+# "Build-check: skipped (why)", from the build-check sub-agent's report. Major = the commit adds a new
+# bundle page (bN.html) or closes a prototype entry (status: concluded / killed). Point freezes
+# (b1.N, every push) don't need one; the automated checks below run on every push anyway.
 while read -r _ local_sha _ remote_sha; do
   [ "$local_sha" = 0000000000000000000000000000000000000000 ] && continue # deleting a ref
   range=("$remote_sha..$local_sha")
@@ -18,11 +19,12 @@ while read -r _ local_sha _ remote_sha; do
     range=("$local_sha" --not --remotes)
   fi
   for c in $(git rev-list "${range[@]}"); do
-    game=$(git diff-tree --no-commit-id --name-only -r "$c" | grep -E '^[^/]+/([^/]+\.html|src/.*|rules/.*)$' | grep -vE '\.test\.js$' || true)
-    [ -z "$game" ] && continue
+    major=$(git diff-tree --no-commit-id --name-only -r --diff-filter=A "$c" | grep -E '^[^/]+/b[0-9]+\.html$' || true)
+    git diff-tree --no-commit-id -p "$c" -- '*/timeline/*/entry.md' | grep -qE '^\+status: (concluded|killed)' && major="closes an entry"
+    [ -z "$major" ] && continue
     git log -1 --format=%B "$c" | grep -qE '^Build-check: (pass|skipped \(.+\))' && continue
     echo "pre-push · $(git log -1 --format='%h %s' "$c")"
-    echo "  changes game code without a 'Build-check:' line (R16): run the build-check agent, then amend or reword"
+    echo "  a major release ($major) without a 'Build-check:' line (R16): run the build-check agent, then amend or reword"
     exit 1
   done
 done
