@@ -7,7 +7,7 @@ Playtest bundles and dev tools for the game designed in [../concepts/spelunking_
 No build step: the browser runs the `.js` files as they are.
 
 ```
-npm run serve        # python3 -m http.server 8000; phones on the same wifi use http://<this-machine's-ip>:8000
+npm run serve        # http://localhost:8000, bound to this machine only (nothing exposed to the LAN)
 npm test             # node --test: simulation tests, nothing to install
 npm install          # only needed for the type check
 npm run check        # tsc: type-checks the JSDoc types in src/ (emits nothing)

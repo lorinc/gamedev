@@ -77,6 +77,29 @@ describe('walking', () => {
     assert.equal(swipe(g, 1, 0), 'ledge')
     assert.deepEqual(pos(g), [2, 1])
   })
+
+  test('swiping into a gap within harmlessDrop drops to its floor, then walks on', () => {
+    const g = game([
+      '########', //
+      '#@..####',
+      '###.####',
+      '###....#',
+      '########',
+    ])
+    assert.equal(swipe(g, 1, 0), 'ledge') // walking never steps off unasked
+    assert.equal(swipe(g, 1, 0), 'wall') // a fresh swipe drops 2, lands, walks to the wall
+    assert.deepEqual(pos(g), [6, 3])
+  })
+
+  test('a gap deeper than harmlessDrop stays a ledge', () => {
+    const rows = ['#####', '#@.##']
+    for (let i = 0; i < 6; i++) rows.push('##.##')
+    rows.push('#####')
+    const g = game(rows)
+    assert.equal(swipe(g, 1, 0), 'ledge')
+    assert.equal(swipe(g, 1, 0), 'ledge')
+    assert.deepEqual(pos(g), [1, 1])
+  })
 })
 
 describe('mining', () => {
@@ -104,30 +127,32 @@ describe('mining', () => {
     assert.deepEqual(g.pack, [Tile.Ore, Tile.Ore])
   })
 
-  test('digging down into a cave stops at the breakthrough; down again climbs to its floor', () => {
-    const g = game([
-      '#####', //
-      '#.@.#',
-      '#####',
-      '##.##',
-      '#...#',
-      '#####',
-    ])
-    assert.equal(swipe(g, 0, 1), 'open')
-    assert.deepEqual(pos(g), [2, 2]) // clinging in the hole it dug
-    assert.equal(swipe(g, 0, 1), 'floor')
-    assert.deepEqual(pos(g), [2, 4])
+  test('down on open floor never digs', () => {
+    const g = game(['#####', '#.@.#', '#####', '#####'])
+    assert.equal(swipe(g, 0, 1), 'down')
+    assert.equal(g.world.tiles[2 * 5 + 2], Tile.Soft)
   })
 
-  test('never leaves the character hanging over a deep drop', () => {
-    const rows = ['#####', '#.@.#', '#####']
-    for (let i = 0; i < 8; i++) rows.push('.....')
-    rows.push('#####')
+  test('tunnelling into a chasm mines the wall but stays on solid ground', () => {
+    const rows = ['#######', '#@##..#']
+    for (let i = 0; i < 8; i++) rows.push('###...#')
+    rows.push('#######')
     const g = game(rows)
-    assert.equal(swipe(g, 0, 1), 'overhang') // through the ceiling, then nothing to climb and too far to drop
-    assert.deepEqual(pos(g), [2, 2]) // braced in its own hole, rock on both sides
-    assert.equal(g.world.tiles[1 * 5 + 1], Tile.Open)
-    assert.equal(g.world.tiles[2 * 5 + 1], Tile.Soft)
+    assert.equal(swipe(g, 1, 0), 'ledge') // mined (2,1) and (3,1); (3,1) has nothing under it
+    assert.deepEqual(pos(g), [2, 1])
+    assert.equal(g.world.tiles[1 * 7 + 3], Tile.Open)
+  })
+
+  test('a diagonal down into a chasm mines but does not step off', () => {
+    const rows = ['######', '#@####', '######']
+    for (let i = 0; i < 8; i++) rows.push('##...#')
+    rows.push('######')
+    const g = game(rows)
+    // mines (2,1) and (2,2); (2,2) has a chasm under it, so it stays. Carrying on would build
+    // a stair into the chasm (air is built), which needs ore.
+    assert.equal(swipe(g, 1, 1), 'noOre')
+    assert.deepEqual(pos(g), [1, 1])
+    assert.equal(g.world.tiles[2 * 6 + 2], Tile.Open)
   })
 })
 
@@ -181,14 +206,14 @@ describe('dives', () => {
   test('teleport counts the pack into the stash and logs the dive', () => {
     const { world, home } = withSurface({ w: 8, h: 4, tiles: new Uint8Array(32).fill(Tile.Ore) }, 2, 1)
     const g = createGame(world, home, { ...CFG })
-    assert.equal(swipe(g, 0, 1), 'loot') // crust, then ore below
-    swipe(g, 0, 1)
+    assert.equal(swipe(g, 1, 1), 'loot') // a stair step through the crust, then ore ahead
+    assert.equal(swipe(g, 1, 1), 'packFull') // took one ore; the next step holds 2 ore, 1 slot free
     command(g, { type: 'teleport' })
     tick(g)
     assert.deepEqual(pos(g), [home.x, home.y])
     assert.deepEqual(g.stash, { ore: 1, loot: 0 })
     assert.equal(g.dives.length, 1)
-    assert.equal(g.dives[0].mined, 2)
+    assert.equal(g.dives[0].mined, 3)
     assert.equal(g.dives[0].depth, 2)
   })
 

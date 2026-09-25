@@ -32,7 +32,7 @@ Design source: *Playtest Bundles → Bundle 1* and *Controls & Genre* in [spelun
 - **World:** v3 terrain (archived recipe `archive/2026-09-24_starter-caves_seed6712.json`, live = cave), wrapping horizontally, with a surface strip on top and a home spot.
 - **Character:** 1 tile tall in the sim, drawn ~1.3 tiles. Everyone is an Engineer.
 - **Swipes by context** (8 directions; a new swipe replaces the current intent):
-  - Open floor: left / right walk (follows the floor, 1-tile steps up and down without stopping); diagonal mine / build; down dig down.
+  - Open floor: left / right walk (follows the floor, 1-tile steps up and down without stopping); diagonal mine / build; down does nothing (no digging straight down, decided 2026-09-25).
   - At a wall: swipe into it mines until the environment changes; diagonal mine / build.
   - At a ledge (2+ drop): swipe into the gap = Engineer zipline; down = climb down (overhangs up to 45°; steeper: drop if floor ≤4 below, else zipline out).
   - Mine or build: rock is mined, air is built (1 ore per 12 tiles).
@@ -42,7 +42,7 @@ Design source: *Playtest Bundles → Bundle 1* and *Controls & Genre* in [spelun
 - **Juice:** screen shake, square chunks flying, per-material dig resistance.
 - **Dev panel** and **dive log** (see *Rules for Every Bundle* in the concept doc).
 - **Any aspect ratio:** portrait shows deeper, landscape wider. The layout follows the window live (rotate the phone, resize the browser) so a single session covers several ratios.
-- **Phone testing from day 1:** the dev build is reachable from a phone on the local network. The dev panel shows frame time, device pixel ratio, viewport size and input type.
+- **Phone testing from day 1:** the dev build reaches the phone without exposing a port to the LAN (how: see the phone-testing decision). The dev panel shows frame time, device pixel ratio, viewport size and input type.
 
 **Out (later bundles or never):** darkness and glow, moon bugs, Demolitionist and Ghost, base, heat, raids, art beyond coloured squares.
 
@@ -52,6 +52,14 @@ Design source: *Playtest Bundles → Bundle 1* and *Controls & Genre* in [spelun
 - Surface strip: 4 sky rows + 3 solid crust rows above the terrain, home at x = 0. There's no torchlight tap.
 - Swipes use pointer events (mouse and touch share one recogniser) and commit at a distance threshold, not on release. A swipe made mid-tile is applied at the next tile boundary.
 - Juice sits behind a master switch. Judge the stop rules with it off first (guide 02 §2.11).
+
+**Decided 2026-09-25 (first play of b1.1):**
+- **Mine first, then look.** A mining step moves into the mined cell only if it's a viable spot: it has a floor, or a 1-tile step down to one. Otherwise the character stays at the edge. Tunnels never walk you into a chasm.
+- **Step off by asking.** Walking still stops at every drop of 2+. Swiping into the gap again drops you to its floor if it's within `harmlessDrop` (default 4), and the run then walks on. A deeper gap stays a ledge. This takes the swipe the cut zipline left free.
+- **No digging straight down.** A down swipe only climbs over a ledge on the facing side, or continues a climb. The way down through rock is the diagonal staircase.
+
+**Open (TBD):**
+- **Chasms** (voids deeper than the harmless drop): with the rules above you can't fall in, but there's no designed way across or down yet besides building a diagonal stair into it (ore-paid). The zipline (b1.2) was meant for this. Home at x = 0 sits above such a void.
 
 ## 3. Tunables
 

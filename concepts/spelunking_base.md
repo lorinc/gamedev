@@ -118,10 +118,11 @@ Built on the pillars in [opinionated_games.md](opinionated_games.md).
 * **The character is 1 tile tall** in the simulation (no crouching), drawn ~1.3 tiles tall so climbing a 1-tile step reads naturally (Spelunky precedent: 1-tile character, automatic ledge scramble).
 * **Chill by design: no falling.** Walking in the dark is the point; a wrong move never ends a dive. Nothing the player does starts a harmful fall (see *Ledges, Gaps & Descents*).
 * **What a swipe means depends on where you stand:**
-* **On open floor:** left / right = **walk**: follows the floor, climbs 1-tile steps up and steps down 1-tile drops without stopping, so ragged cave floors are walkable ground. Diagonal = **mine / build** that way. Down = **dig down**.
+* **On open floor:** left / right = **walk**: follows the floor, climbs 1-tile steps up and steps down 1-tile drops without stopping, so ragged cave floors are walkable ground. Diagonal = **mine / build** that way (diagonal stairs are the way down). Down does nothing: **no digging straight down** (decided in b1, 2026-09-25).
 * **At a wall** (walking stops at every wall 2+ tiles high, any material): swipe into it = **mine** until the environment changes. Diagonal = mine / build. Up = **climb straight up, Ghost only**; everyone else builds diagonally up.
 * **At a ledge** (walking stops at every drop of 2+ tiles): swipe into the gap = **cross it**. Diagonal = mine / build. Down = **climb down**, the same for everyone. Crossing is a path signature (see *Ledges, Gaps & Descents*).
 * **Mine or build:** the tile decides. Rock is mined, air is built. A diagonal makes a 1-tile staircase, which the walker's automatic step climbing then walks: the non-Ghost way up.
+* **Mine first, then look:** a mining step moves into the mined cell only if it has a floor (or a 1-tile step down to one); otherwise the character stays at the edge, so a tunnel never walks you into a chasm (decided in b1, 2026-09-25).
 * **Mining, digging, and building continue until the environment changes or you tap the character.** Soft rock does not stop mining, so a long tunnel is one flick; harder rock stops it, so continuing is a decision. Material boundaries become meaningful choices.
 * **Digging is slower than walking:** placeholder 3× slower; later set by mining gear × rock type. Open galleries feel like travel, rock feels like work.
 * **Building costs a little ore:** 1 bulk ore per 12 tiles built, taken from the pack. Spending glowing bulk also dims the pack, so building doubles as relief from bug pressure.

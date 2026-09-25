@@ -20,7 +20,7 @@ export const BEDROCK = -1
  * @property {Cell} to where the character ends up (x wrapped)
  * @property {Dug[]} digs cells mined, in order
  * @property {Cell[]} builds cells filled with Built
- * @property {number} fall tiles dropped at the end (harmless drop, ≤ harmlessDrop)
+ * @property {number} fall tiles dropped at the end (≤ harmlessDrop): stepping off a ledge, or letting go of a climb
  * @property {string} [reason] why it's blocked
  */
 
@@ -40,7 +40,7 @@ export const BEDROCK = -1
  * @property {number} fallTicks per tile dropped
  * @property {number} buildTicks per tile built
  * @property {{ soft: number, hard: number, ore: number, loot: number, built: number }} digTicks per tile mined
- * @property {number} harmlessDrop largest drop taken without asking
+ * @property {number} harmlessDrop deepest drop a swipe into a gap (or a climb that runs out of wall) will take
  * @property {number} packSlots
  * @property {number} tilesPerOre tiles built per ore spent
  * @property {Rules} rules
@@ -131,14 +131,6 @@ export function resolve(world, at, dx, dy, facing, cfg, inv) {
   }
   /** @param {string} reason @returns {Action} */
   const blocked = (reason) => ({ kind: 'blocked', dx, dy, to: { x, y }, digs: [], builds: [], fall: 0, reason })
-  /** After mining the cell at (tx, ty): go there, drop from there, or stay put if we'd hang in the air. */
-  const moveInto = (/** @type {number} */ tx, /** @type {number} */ ty) => {
-    if (supported(tx, ty)) return done('walk', tx, ty)
-    const d = dropTo(tx, ty)
-    if (d >= 0) return done('walk', tx, ty, d)
-    return supported(x, y) ? done('walk', x, y) : blocked('unsafe')
-  }
-
   const onFloor = standing(x, y)
 
   // Straight up: only the Ghost climbs; everyone else builds diagonally.
@@ -149,22 +141,27 @@ export function resolve(world, at, dx, dy, facing, cfg, inv) {
     if (open(nx, y)) {
       if (standing(nx, y)) return done('walk', nx, y)
       if (onFloor && open(nx, y + 1) && standing(nx, y + 1)) return done('walk', nx, y + 1) // 1-tile step down
-      return blocked('ledge')
+      // A deeper gap: step off and drop if the floor is within harmlessDrop. A moving run always
+      // stops before it (see stopReason); only a fresh swipe into the gap takes the drop.
+      const d = onFloor ? dropTo(nx, y) : -1
+      return d > 0 ? done('walk', nx, y, d) : blocked('ledge')
     }
     if (onFloor && open(nx, y - 1) && open(x, y - 1)) return done('walk', nx, y - 1) // 1-tile step up
+    // Mine first, then look: step in only if the new cell has a floor (or a 1-tile step down to one).
+    // Otherwise stay put at the edge: a tunnel never walks you into a chasm.
     if (!dig(nx, y)) return blocked('bedrock')
     if (standing(nx, y)) return done('walk', nx, y)
     if (onFloor && open(nx, y + 1) && standing(nx, y + 1)) return done('walk', nx, y + 1)
-    return moveInto(nx, y)
+    return done('walk', x, y)
   }
 
   if (dx === 0) {
-    // Down. At a ledge on the facing side: climb over it. On open floor: dig. Clinging: climb on.
+    // Down never digs (the way down is a diagonal staircase). At a ledge on the facing side:
+    // climb over it. Clinging: climb on.
     if (onFloor) {
       const fx = x + facing
       if (open(fx, y) && open(fx, y + 1) && !standing(fx, y + 1)) return done('climb', fx, y + 1)
-      if (!dig(x, y + 1)) return blocked('bedrock')
-      return moveInto(x, y + 1)
+      return blocked('down')
     }
     if (supported(x, y + 1)) return done('climb', x, y + 1)
     // The wall we cling to recedes: follow it one step in (a 45° overhang), no further.
@@ -189,7 +186,7 @@ export function resolve(world, at, dx, dy, facing, cfg, inv) {
   if (!dig(tx, y)) return blocked('bedrock')
   if (!open(tx, ty)) {
     if (!dig(tx, ty)) return blocked('bedrock')
-    return supported(tx, ty) ? done('walk', tx, ty) : done('walk', x, y)
+    return standing(tx, ty) ? done('walk', tx, ty) : done('walk', x, y) // mine first, step only onto a floor
   }
   if (!standing(tx, ty)) {
     if (ty + 1 >= world.h) return blocked('bedrock')
@@ -209,9 +206,11 @@ export function resolve(world, at, dx, dy, facing, cfg, inv) {
  */
 export function stopReason(world, at, prev, next, cfg) {
   const { rules } = cfg
+  const landed = prev.kind === 'climb' && next.kind !== 'climb' && !isOpen(tileAt(world, at.x, at.y + 1))
+  if (landed) return 'floor'
   if (next.kind === 'blocked') return next.reason ?? 'blocked'
+  if (next.kind === 'walk' && next.fall > 0) return 'ledge' // never walk off an edge unasked
   if (next.kind !== prev.kind) {
-    if (prev.kind === 'climb') return 'floor'
     const reason = next.kind === 'mine' ? 'wall' : 'open'
     if (rules[reason]) return reason
   }
