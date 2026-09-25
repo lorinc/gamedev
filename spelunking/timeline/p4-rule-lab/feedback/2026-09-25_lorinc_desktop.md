@@ -70,3 +70,12 @@ b1.1 rules b1.2 #1 59.0s ore 0 loot 0 depth 12 mined 11 built 0 | noOre:5 floor:
 
 - Seen: walking along a tunnel toward a plank bridge at head height. The run walked on under it without a pause, so there was no chance to take ↗ up onto it.
 - Changed: D045, the `crossing` stop. Example `plank-crossing-stop`.
+
+## Later: no way to bridge over a down-ramp (screenshot, on b1.6)
+
+> Awesome progress, the game feels unrestricted now. There's only one problem, and I have no straight answer to it. There's no easy way to bridge over a down-ramp now.
+
+> My idea is: ALL building + dig-into-ramp should be swipe+hold, stop at every step for .3s, and should stop at release, and should not ask for confirmation. The reason is: all building is a high-value, precision action, and you do not do it too much, so it does not feel a chore, more like control. It solves a LOT of clumsy situations. Building ONE step up is now a chore, where you got to intent+confirm+cancel in quick succession. And you can not bridge over small gaps.
+
+- Seen: standing on the surface beside the mouth of a ↙ ramp. The first cell ahead is only 1 step down, so ← walks down the ramp; the bridge rule only covers drops of 2 or more.
+- Decided: D046 (flick follows the world, hold draws a straight line and builds), to be built in the next session.
