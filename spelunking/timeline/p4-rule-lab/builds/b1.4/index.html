@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>b1 · Dig Feel</title>
+    <link rel="icon" href="favicon.png" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #050508;
+        color: #ccc;
+        font: 12px monospace;
+        overscroll-behavior: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+      }
+      #game {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+        display: block;
+      }
+      #panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: min(340px, 100%);
+        max-height: 100%;
+        overflow: hidden auto;
+        box-sizing: border-box;
+        padding: 8px;
+        background: rgba(5, 5, 8, 0.88);
+        display: none;
+        user-select: text;
+        -webkit-user-select: text;
+      }
+      #panel.open {
+        display: block;
+      }
+      #panel pre {
+        margin: 0 0 8px;
+        white-space: pre-wrap;
+        color: #e6dc5a;
+      }
+      #panel fieldset {
+        border: 1px solid #333;
+        margin: 6px 0;
+        padding: 4px 6px;
+      }
+      #panel label {
+        display: grid;
+        grid-template-columns: 110px 1fr 40px;
+        align-items: center;
+        gap: 6px;
+        min-height: 26px;
+      }
+      #panel label:has(input[type='checkbox']) {
+        grid-template-columns: 110px auto;
+        justify-content: start;
+      }
+      #panel input[type='range'] {
+        min-width: 0;
+        width: 100%;
+      }
+      #panel output {
+        text-align: right;
+      }
+      #panel .buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      button {
+        font: inherit;
+        padding: 6px 10px;
+        background: #222;
+        color: #ccc;
+        border: 1px solid #444;
+      }
+      #log {
+        position: fixed;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 10px 14px;
+        background: rgba(5, 5, 8, 0.85);
+        border: 1px solid #333;
+        display: none;
+        pointer-events: none;
+        text-align: center;
+        max-width: calc(100% - 32px);
+        box-sizing: border-box;
+      }
+      #log.open {
+        display: block;
+      }
+      #log pre {
+        margin: 0 0 8px;
+        white-space: pre-wrap;
+      }
+      #log button {
+        pointer-events: auto;
+      }
+      #bug {
+        position: fixed;
+        left: 8px;
+        bottom: calc(8px + env(safe-area-inset-bottom));
+        padding: 6px 8px;
+        opacity: 0.7;
+        touch-action: manipulation;
+      }
+      #toast {
+        position: fixed;
+        left: 8px;
+        bottom: calc(48px + env(safe-area-inset-bottom)); /* just above the bug button */
+        padding: 8px 12px;
+        background: rgba(5, 5, 8, 0.9);
+        border: 1px solid #5ac878;
+        color: #5ac878;
+        display: none;
+        pointer-events: none;
+      }
+      #toast.open {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+    <div id="log">
+      <pre id="log-text"></pre>
+      <button id="log-copy">copy dive log</button>
+    </div>
+    <div id="panel"></div>
+    <button id="bug" title="Copy the last events for a bug report (B)">🐞 bug</button>
+    <div id="toast"></div>
+    <script type="module" src="src/bundles/b1/main.js"></script>
+  </body>
+</html>
