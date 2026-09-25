@@ -108,6 +108,29 @@
       #log button {
         pointer-events: auto;
       }
+      #bug {
+        position: fixed;
+        left: 8px;
+        bottom: calc(8px + env(safe-area-inset-bottom));
+        padding: 6px 8px;
+        opacity: 0.7;
+        touch-action: manipulation;
+      }
+      #toast {
+        position: fixed;
+        left: 50%;
+        bottom: 56px;
+        transform: translateX(-50%);
+        padding: 8px 12px;
+        background: rgba(5, 5, 8, 0.9);
+        border: 1px solid #5ac878;
+        color: #5ac878;
+        display: none;
+        pointer-events: none;
+      }
+      #toast.open {
+        display: block;
+      }
     </style>
   </head>
   <body>
@@ -117,6 +140,8 @@
       <button id="log-copy">copy dive log</button>
     </div>
     <div id="panel"></div>
+    <button id="bug" title="Copy the last events for a bug report (B)">🐞 bug</button>
+    <div id="toast"></div>
     <script type="module" src="src/bundles/b1/main.js"></script>
   </body>
 </html>

@@ -13,6 +13,7 @@ npm install          # only needed for the type check
 npm run check        # tsc: type-checks the JSDoc types in src/ (emits nothing)
 npm run gallery -- 1 2 3   # v1 generator: stage-by-stage PNGs into gallery/
 npm run timeline     # timeline/*/entry.md + decisions.md → timeline/index.html
+npm run replay -- report.txt   # replay a b1 bug report (the 🐞 button / B key copies it) and check it reproduces
 npm run favicon      # redraw favicon.png and copy it next to every page
 npm run freeze -- p3-dig-feel b1.2   # freeze bN.html + src/ into the timeline and git tag it
 ```

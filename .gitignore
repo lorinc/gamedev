@@ -2,3 +2,4 @@ node_modules/
 dist/
 spelunking/gallery/
 .claude/settings.local.json
+.cdp-profile/

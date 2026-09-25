@@ -71,6 +71,17 @@ The order is swipe > situation > meaning, because "ahead" means the swipe's side
 
 **Checked in a browser** (headless Chromium): v4 loads with 22 of 22 passing. Switching the `junction` stop off fails exactly `junction-shaft`, and `b1.html?rules=lab` then plays with `junction` off. b1 on the default ruleset walks, mines a staircase and stops as before.
 
+**After the first report** ([feedback](feedback/2026-09-25_lorinc_desktop.md)):
+- **D030:** a `noOre` / `packFull` refusal in the middle of a run gives way to the stop the run would have made anyway, so it stops quietly with no flash. Examples: `stairs-end` is new, and `loot-pack` and `stair-into-chasm` are updated.
+- **D031, bug reports:** the 🐞 button bottom-left in b1, or the B key, shows "Copied last events to clipboard". The text has:
+  - the last 5 swipes: the raw gesture (angle and length, or the key), the intent, the ruleset row for each step, the stop with its signal and the refused cells;
+  - the map where the last swipe started;
+  - an `EXAMPLE` line, which the Rule Lab's "paste bug report" opens as a draft example;
+  - a `REPLAY` line with every command and its tick. `npm run replay -- report.txt` rebuilds the session and checks it tells the same story.
+- **Checked:** `tools/replay.test.js` checks the replay. In headless Chromium, real mouse swipes → B → the clipboard → a ✓ replay → v4 opened the draft.
+
+**The swipe cue (D032):** what a swipe attempts is now visible. A white disc, one step out in the swipe's direction, shows an arrow, stairs or a pickaxe, blinks red if refused and fades in 0.6 s. It replaces the red flash on the refused cells. The pack flash stays for now.
+
 **Pass criterion, half met:** `rules/b1.2.json` reproduces b1.2 exactly. A D024-style change made in the editor, checked against examples and played in b1 without code has been tried once, by the build check above. It's still open for you.
 
 ## Feedback

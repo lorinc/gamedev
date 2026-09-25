@@ -46,7 +46,11 @@ function swipe(g, dx, dy) {
 
 const pos = (g) => [g.ch.x, g.ch.y]
 const map = (g) => {
-  const chars = Object.fromEntries(Object.entries(LEGEND).filter(([k]) => k !== '@').map(([k, v]) => [v, k]))
+  const chars = Object.fromEntries(
+    Object.entries(LEGEND)
+      .filter(([k]) => k !== '@')
+      .map(([k, v]) => [v, k]),
+  )
   const rows = []
   for (let y = 0; y < g.world.h; y++) {
     let row = ''
@@ -96,6 +100,7 @@ describe('building', () => {
     const g = game(['#########', '#@#oo$###', '#########'])
     stopOf(g, 1, 0)
     stopOf(g, 1, 0)
+    assert.equal(stopOf(g, 1, 0).reason, 'loot') // the run stops before the loot anyway: quietly (D030)
     const full = stopOf(g, 1, 0)
     assert.deepEqual([full.reason, full.tried], ['packFull', [{ x: 5, y: 1 }]]) // the loot it couldn't take
     assert.deepEqual(stopOf(game(['#####', '#.@.#', '#####', '#####']), 0, 1).tried, []) // other stops: none
@@ -107,7 +112,8 @@ describe('dives', () => {
     const { world, home } = withSurface({ w: 8, h: 4, tiles: new Uint8Array(32).fill(Tile.Ore) }, 2, 1)
     const g = createGame(world, home, { ...CFG }, TABLE)
     assert.equal(swipe(g, 1, 1), 'loot') // a stair step through the crust, then ore ahead
-    assert.equal(swipe(g, 1, 1), 'packFull') // took one ore; the next step holds 2 ore, 1 slot free
+    assert.equal(swipe(g, 1, 1), 'loot') // took one ore; the next step holds 2 ore: the loot stop, quietly (D030)
+    assert.equal(swipe(g, 1, 1), 'packFull') // asked again: 2 ore, 1 slot free
     command(g, { type: 'teleport' })
     tick(g)
     assert.deepEqual(pos(g), [home.x, home.y])
@@ -120,7 +126,15 @@ describe('dives', () => {
   test('deterministic: same commands, same world', () => {
     const play = () => {
       const g = game(['########', '#@#o$#H#', '#.#.##.#', '########'])
-      for (const [dx, dy] of [[1, 0], [1, 0], [0, 1], [1, 0], [1, 1], [-1, 0]]) swipe(g, dx, dy)
+      for (const [dx, dy] of [
+        [1, 0],
+        [1, 0],
+        [0, 1],
+        [1, 0],
+        [1, 1],
+        [-1, 0],
+      ])
+        swipe(g, dx, dy)
       return [g.world.tiles, g.tick, pos(g)]
     }
     assert.deepEqual(play(), play())

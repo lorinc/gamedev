@@ -1,6 +1,7 @@
 // Canvas2D view of the game: the world as a 1-px-per-tile canvas scaled up with nearest-neighbour,
 // a camera that follows with lookahead, the character, debris, the pack strip and the charge ring,
-// and a red "I tried, can't do" flash when an action is refused for lack of ore or pack space.
+// the swipe cue (a white disc beside the character showing what it attempts; red when refused)
+// and the red "can't do" flash of the pack when an action is refused for lack of ore or pack space.
 
 import { TILE_RGB } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
@@ -13,7 +14,9 @@ import { wrap } from '../../sim/dig/rules.js'
 const BG = '#050508'
 const BEDROCK = '#000'
 const CHAR = '#f4f1de'
-const FAIL_S = 0.7 // seconds the red "can't do" flash lasts
+const FAIL_S = 0.7 // seconds the red "can't do" flash of the pack lasts
+const CUE_S = 0.6 // seconds the swipe cue takes to fade out
+/** @typedef {'walk' | 'build' | 'mine'} CueKind the symbol: an arrow, stairs, a pickaxe */
 
 /** @param {import('../../render/palette.js').Rgb} c */
 const css = ([r, g, b]) => `rgb(${r},${g},${b})`
@@ -36,8 +39,10 @@ export function createRenderer(canvas, game, t, juice) {
   let dpr = 1
   let tilePx = 16
   const cam = { x: game.ch.x + 0.5, y: game.ch.y + 0.5 }
-  /** The last refusal: the cells it tried, and seconds left of its flash. */
-  let fail = { cells: /** @type {{ x: number, y: number }[]} */ ([]), left: 0 }
+  /** Seconds left of the pack's red flash. */
+  let failLeft = 0
+  /** The swipe cue: what the character attempts, which way, refused or not, seconds left. */
+  let cue = { dx: 0, dy: 0, kind: /** @type {CueKind} */ ('walk'), refused: false, left: 0 }
 
   function resize() {
     dpr = window.devicePixelRatio || 1
@@ -59,9 +64,13 @@ export function createRenderer(canvas, game, t, juice) {
       cam.x = game.ch.x + 0.5
       cam.y = game.ch.y + 0.5
     },
-    /** Flash these cells and the pack red: "I tried, can't do" (no ore to build, no room for loot). */
-    fail(/** @type {{ x: number, y: number }[]} */ cells) {
-      fail = { cells, left: FAIL_S }
+    /** Flash the pack red: "can't do" for lack of ore or pack room. */
+    fail() {
+      failLeft = FAIL_S
+    },
+    /** Show the swipe cue: what the character attempts in direction (dx, dy); red if it's refused. */
+    attempt(/** @type {number} */ dx, /** @type {number} */ dy, /** @type {CueKind} */ kind, refused = false) {
+      cue = { dx, dy, kind, refused, left: CUE_S }
     },
     info: () => ({ dpr, tilePx, w: canvas.width, h: canvas.height }),
     /**
@@ -117,20 +126,16 @@ export function createRenderer(canvas, game, t, juice) {
         ctx.fillRect(0, sy(world.h), W, H)
       }
       // the world wraps: draw it in slices that don't cross x = 0
-      for (let x = ix; x < ix + cols; ) {
+      for (let x = ix; x < ix + cols;) {
         const srcX = wrap(x, world.w)
         const n = Math.min(world.w - srcX, ix + cols - x)
         if (y1 > y0) ctx.drawImage(tex, srcX, y0, n, y1 - y0, sx(x), sy(y0), n * tp, (y1 - y0) * tp)
         x += n
       }
 
-      // "I tried, can't do": two quick red blinks that fade, over the refused cells and the pack.
-      fail.left = Math.max(0, fail.left - dt)
-      const failA = fail.left > 0 ? failAlpha(1 - fail.left / FAIL_S) : 0
-      if (failA > 0) {
-        ctx.fillStyle = `rgba(255,40,40,${failA})`
-        for (const c of fail.cells) ctx.fillRect(Math.round(sx(nearest(c.x, left, world.w))), Math.round(sy(c.y)), tp, tp)
-      }
+      // the pack's "can't do": two quick red blinks that fade
+      failLeft = Math.max(0, failLeft - dt)
+      const failA = failLeft > 0 ? failAlpha(1 - failLeft / FAIL_S) : 0
 
       // Character: 1 tile in the sim, drawn ~1.3 tall. Squash on stops, a push while digging.
       const sq = juice.squash()
@@ -150,6 +155,13 @@ export function createRenderer(canvas, game, t, juice) {
         ctx.fillStyle = c.color
         const s = Math.max(2, Math.round(tp * 0.18))
         ctx.fillRect(Math.round(sx(nearest(c.x, left, world.w))), Math.round(sy(c.y)), s, s)
+      }
+
+      cue.left = Math.max(0, cue.left - dt)
+      if (cue.left > 0) {
+        // one step out from the drawn body, in the swipe's direction: beside, above, below or diagonal
+        const d = tp * 1.15
+        drawCue(ctx, cx + cue.dx * d, cy - chh / 2 + cue.dy * d, Math.max(9 * dpr, tp * 0.45), cue, cue.left / CUE_S)
       }
 
       drawPack(ctx, game, W, H, dpr, failA)
@@ -192,6 +204,71 @@ function drawPack(ctx, game, W, H, dpr, failA) {
     ctx.fillStyle = `rgba(255,40,40,${failA})`
     ctx.fillRect(x0 - 3 * dpr, y - 3 * dpr, slots * (s + gap) - gap + 6 * dpr, s + 6 * dpr)
   }
+}
+
+// The swipe cue: an opaque white disc with the attempted action cut out of it (negative): an arrow
+// for a walk or climb, stairs for a build, a pickaxe for a dig. A refused one blinks red. Fades out.
+/**
+ * @param {CanvasRenderingContext2D} ctx @param {number} x @param {number} y centre, device px @param {number} r radius
+ * @param {{ dx: number, dy: number, kind: CueKind, refused: boolean }} cue @param {number} life 1 → 0
+ */
+function drawCue(ctx, x, y, r, cue, life) {
+  ctx.save()
+  ctx.globalAlpha = life
+  ctx.translate(x, y)
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  const red = cue.refused && Math.sin((1 - life) * Math.PI * 4) > 0
+  ctx.fillStyle = cue.refused ? (red ? '#ff2828' : '#ffd0d0') : '#fff'
+  ctx.fill()
+  ctx.fillStyle = BG
+  ctx.strokeStyle = BG
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  const u = r * 0.62
+  if (cue.kind === 'walk') {
+    ctx.rotate(Math.atan2(cue.dy, cue.dx))
+    ctx.lineWidth = u * 0.32
+    ctx.beginPath()
+    ctx.moveTo(-u, 0)
+    ctx.lineTo(u * 0.35, 0)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(u, 0)
+    ctx.lineTo(u * 0.1, -u * 0.6)
+    ctx.lineTo(u * 0.1, u * 0.6)
+    ctx.closePath()
+    ctx.fill()
+  } else if (cue.kind === 'build') {
+    // three steps rising toward the side you build up to (↗ ↖) or away from it (↘ ↙)
+    ctx.scale(cue.dy < 0 ? Math.sign(cue.dx) || 1 : -Math.sign(cue.dx) || 1, 1)
+    const s = (2 * u) / 3
+    ctx.beginPath()
+    ctx.moveTo(-u, u)
+    ctx.lineTo(-u, u - s)
+    ctx.lineTo(-u + s, u - s)
+    ctx.lineTo(-u + s, u - 2 * s)
+    ctx.lineTo(-u + 2 * s, u - 2 * s)
+    ctx.lineTo(-u + 2 * s, -u)
+    ctx.lineTo(u, -u)
+    ctx.lineTo(u, u)
+    ctx.closePath()
+    ctx.fill()
+  } else {
+    // a pickaxe swinging toward the swipe's side
+    ctx.scale(Math.sign(cue.dx) || 1, 1)
+    ctx.lineWidth = u * 0.26
+    ctx.beginPath()
+    ctx.moveTo(-u * 0.75, u) // handle
+    ctx.lineTo(u * 0.3, -u * 0.35)
+    ctx.stroke()
+    ctx.lineWidth = u * 0.3
+    ctx.beginPath()
+    ctx.moveTo(-u * 0.55, -u * 0.95) // head: a curved blade across the handle's top
+    ctx.quadraticCurveTo(u * 0.55, -u * 0.75, u * 0.95, u * 0.35)
+    ctx.stroke()
+  }
+  ctx.restore()
 }
 
 /** Alpha of the "can't do" flash at progress f (0..1): two blinks, fading out. */

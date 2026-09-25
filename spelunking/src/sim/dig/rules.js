@@ -28,6 +28,7 @@ export const BEDROCK = -1
  * @property {Cell[]} [tried] blocked for lack of stock (`noOre`, `packFull`): the cells it would have
  *   built or mined, so the view can show "I tried, can't do"
  * @property {{ intent: string, row: number }} [rule] the ruleset row that chose it (ruleset.js)
+ * @property {Action} [intended] a `noOre` / `packFull` refusal: the action it would have been (D030)
  */
 
 /**
@@ -215,7 +216,12 @@ export function stopReason(world, at, prev, next, cfg) {
   const { rules } = cfg
   const landed = prev.kind === 'climb' && next.kind !== 'climb' && !isOpen(tileAt(world, at.x, at.y + 1))
   if (landed) return 'floor'
-  if (next.kind === 'blocked') return next.reason ?? 'blocked'
+  if (next.kind === 'blocked') {
+    // D030: a refusal for lack of ore or pack room only speaks when the run would really have done
+    // it. If the stop rules would have ended the run here anyway, it stops quietly for that reason.
+    const anyway = next.intended && stopReason(world, at, prev, next.intended, cfg)
+    return anyway || (next.reason ?? 'blocked')
+  }
   if (next.kind === 'walk' && next.fall > 0) return 'ledge' // never walk off an edge unasked
   if (next.kind !== prev.kind) {
     const reason = next.kind === 'mine' ? 'wall' : 'open'

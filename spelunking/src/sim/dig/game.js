@@ -156,7 +156,7 @@ function next(g) {
       ? (action.reason ?? 'blocked')
       : null
   if (reason) {
-    g.events.push({ type: 'stop', reason, dx: run.dx, dy: run.dy, tried: action.tried ?? [], rule: action.rule })
+    g.events.push({ type: 'stop', reason, dx: run.dx, dy: run.dy, tried: reason === action.reason ? (action.tried ?? []) : [], rule: action.rule }) // a quiet stop tried nothing (D030)
     if (g.dive) g.dive.stops[reason] = (g.dive.stops[reason] ?? 0) + 1
     g.run = null
     return

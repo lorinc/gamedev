@@ -44,7 +44,7 @@ describe('rules/b1.2.json', () => {
       for (const [dx, dy] of DIRS)
         for (const facing of [-1, 1]) {
           const want = resolve({ w, h, tiles }, at, dx, dy, facing, cfg, inv)
-          const { rule, ...got } = interpret(table, { w, h, tiles }, at, dx, dy, facing, cfg, inv)
+          const { rule, intended, ...got } = interpret(table, { w, h, tiles }, at, dx, dy, facing, cfg, inv)
           got.builds = got.builds.map(({ x, y }) => ({ x, y }))
           assert.deepEqual(got, want, `world ${world} ${JSON.stringify({ w, h, at, dx, dy, facing })}`)
           compared++

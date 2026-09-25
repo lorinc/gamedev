@@ -41,13 +41,14 @@
     },
     {
       "id": "loot-pack",
-      "note": "Tunnelling stops before ore; mining it fills the pack; a full pack refuses (flash).",
+      "note": "Tunnelling stops before ore; mining it fills the pack. With the pack full the run still stops before the loot, quietly (D030); asking again refuses (flash).",
       "numbers": { "packSlots": 2 },
       "map": ["#########", "#@#oo$###", "#########"],
       "swipes": [
         { "swipe": "→", "stop": "loot" },
         { "swipe": "→", "stop": "loot" },
-        { "swipe": "→", "stop": "packFull" }
+        { "swipe": "→", "stop": "loot", "at": [4, 1] },
+        { "swipe": "→", "stop": "packFull", "at": [4, 1] }
       ],
       "pack": ["ore", "ore"]
     },
@@ -91,7 +92,7 @@
     },
     {
       "id": "stair-into-chasm",
-      "note": "↘ into a chasm mines but doesn't step off. Carrying on would build a floor into the chasm, which needs ore.",
+      "note": "↘ into a chasm mines but doesn't step off. Carrying on would turn mining into building, so the run stops there quietly (D030); asking again refuses, because building needs ore.",
       "map": [
         "######",
         "#@####",
@@ -106,7 +107,7 @@
         "##...#",
         "######"
       ],
-      "swipes": [{ "swipe": "↘", "stop": "noOre", "at": [1, 1] }],
+      "swipes": [{ "swipe": "↘", "stop": "open", "at": [1, 1] }, { "swipe": "↘", "stop": "noOre", "at": [1, 1] }],
       "after": [
         "######",
         "#@.###",
@@ -135,6 +136,12 @@
       "note": "Building without ore refuses (flash).",
       "map": ["#####", "#...#", "#@..#", "#####"],
       "swipes": [{ "swipe": "↗", "stop": "noOre", "at": [1, 2] }]
+    },
+    {
+      "id": "stairs-end",
+      "note": "D030 (b1.2 playtest): ↗ walks up an existing staircase; where it ends, going on would mean building, so the run stops quietly (open). No red flash unless you ask again.",
+      "map": ["########", "#......#", "###....#", "##..####", "#..#####", "#@######", "########"],
+      "swipes": [{ "swipe": "↗", "stop": "open", "at": [4, 2] }, { "swipe": "↗", "stop": "noOre", "at": [4, 2] }]
     },
     {
       "id": "stair-down",

@@ -30,7 +30,7 @@ const CORNER_PX = 48 // a tap in the top-left corner toggles the dev panel
 /**
  * @param {HTMLElement} surface
  * @param {Tunables} t
- * @param {(cmd: Command, stamp: number) => void} send
+ * @param {(cmd: Command, stamp: number, how: string) => void} send how: the raw input, in words, for bug reports
  * @param {{ togglePanel: () => void, gesture: () => void }} hooks gesture: first user gesture (unlocks audio)
  */
 export function createInput(surface, t, send, hooks) {
@@ -60,7 +60,12 @@ export function createInput(surface, t, send, hooks) {
     if (Math.hypot(dx, dy) < t.input.swipePx) return
     press.done = true
     const [ix, iy] = direction(dx, dy, t.input.horizontalDeg, t.input.verticalDeg)
-    send({ type: 'intent', dx: ix, dy: iy }, e.timeStamp)
+    const deg = Math.round((Math.atan2(Math.abs(dy), Math.abs(dx)) * 180) / Math.PI)
+    send(
+      { type: 'intent', dx: ix, dy: iy },
+      e.timeStamp,
+      `${e.pointerType} swipe ${deg}° off horizontal, ${Math.round(Math.hypot(dx, dy))} px`,
+    )
   })
 
   /** @param {PointerEvent} e */
@@ -68,7 +73,7 @@ export function createInput(surface, t, send, hooks) {
     if (!press || e.pointerId !== press.id) return
     if (!press.done && e.type === 'pointerup') {
       if (press.x0 < CORNER_PX && press.y0 < CORNER_PX) hooks.togglePanel()
-      else send({ type: 'stop' }, e.timeStamp)
+      else send({ type: 'stop' }, e.timeStamp, `${e.pointerType} tap`)
     }
     press = null
   }
@@ -86,9 +91,9 @@ export function createInput(surface, t, send, hooks) {
     // Numpad 5 = tap and long-tap: stop on press (a key can't turn into a swipe), teleport if held.
     if (e.code === 'Numpad5') {
       key5 = { t0: e.timeStamp, done: false }
-      return send({ type: 'stop' }, e.timeStamp)
+      return send({ type: 'stop' }, e.timeStamp, 'key Numpad5')
     }
-    if (NUMPAD[e.code]) return send({ type: 'intent', dx: move[0], dy: move[1] }, e.timeStamp)
+    if (NUMPAD[e.code]) return send({ type: 'intent', dx: move[0], dy: move[1] }, e.timeStamp, `key ${e.code}`)
     held.add(e.code)
     sendHeld(e.timeStamp)
   })
@@ -115,8 +120,9 @@ export function createInput(surface, t, send, hooks) {
     }
     dx = Math.sign(dx)
     dy = Math.sign(dy)
-    if (dx || dy) send({ type: 'intent', dx, dy }, stamp)
-    else send({ type: 'stop' }, stamp)
+    const keys = `keys held: ${[...held].join('+') || 'none'}`
+    if (dx || dy) send({ type: 'intent', dx, dy }, stamp, keys)
+    else send({ type: 'stop' }, stamp, keys)
   }
 
   return {
@@ -127,14 +133,14 @@ export function createInput(surface, t, send, hooks) {
         const p = (now - key5.t0) / t.input.longPressMs
         if (p < 1) return { p, x: null, y: null }
         key5.done = true
-        send({ type: 'teleport' }, now)
+        send({ type: 'teleport' }, now, 'hold Numpad5')
         return null
       }
       if (!press || press.done) return null
       const p = (now - press.t0) / t.input.longPressMs
       if (p >= 1) {
         press.done = true
-        send({ type: 'teleport' }, now)
+        send({ type: 'teleport' }, now, 'long press')
         return null
       }
       return { p, x: press.x0, y: press.y0 }

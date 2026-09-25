@@ -150,6 +150,7 @@ function header() {
     button('download', () => download(`${rs.name}.json`, pretty(rs) + '\n'), 'save as rules/<name>.json'),
     button('copy examples', () => copyText(pretty(exFile) + '\n'), 'rules/examples.json'),
     button('paste examples', pasteExamples),
+    button('paste bug report', pasteReport, "the text b1's 🐞 button copied: its last swipe becomes a draft example"),
     button('copy as Markdown', () => copyText(rulesetMarkdown(rs)), 'the "Rules at close" tables'),
     button('reset to files', reset, 'reload rules/b1.2.json and rules/examples.json, dropping edits'),
     button('▶ play in b1', () => {
@@ -169,6 +170,31 @@ function pasteRuleset() {
     change(() => ((rs = r), (selected = null)))
   } catch {
     alert('Not valid JSON')
+  }
+}
+
+function pasteReport() {
+  const text = prompt('Paste the bug report b1 copied')
+  if (!text) return
+  const line = text.split('\n').find((l) => l.startsWith('EXAMPLE '))
+  if (!line) return alert('No EXAMPLE line in that text: copy the report again with the 🐞 button')
+  try {
+    /** @type {Example} */
+    const ex = JSON.parse(line.slice('EXAMPLE '.length))
+    const { numbers, stops, start } = ex
+    Object.assign(draft, {
+      id: ex.id,
+      note: ex.note,
+      map: ex.map.join('\n'),
+      swipes: ex.swipes.map((s) => s.swipe).join(' '),
+      editing: null,
+    })
+    draft.extra = { numbers, stops, start }
+    draftOpen = true
+    render()
+    $('examples').scrollTop = 0
+  } catch {
+    alert('The EXAMPLE line is not valid JSON')
   }
 }
 
@@ -282,7 +308,18 @@ function rulesPane(errors, uses) {
       ),
     )
 
-  out.push(h('h2', {}, 'Stop rules ', h('span', { class: 'dim' }, 'a run of steps goes on until one fires; a refusal always stops')))
+  out.push(
+    h(
+      'h2',
+      {},
+      'Stop rules ',
+      h(
+        'span',
+        { class: 'dim' },
+        'a run of steps goes on until one fires; a refusal always stops (noOre / packFull mid-run give way to the stop the run would make anyway, D030)',
+      ),
+    ),
+  )
   for (const [k, text] of Object.entries(STOPS)) {
     const key = /** @type {keyof Ruleset['stops']} */ (k)
     out.push(
@@ -561,7 +598,15 @@ function drawExample(canvas, ex, res) {
 
 // ---- new / edited example ----
 
-const draft = { id: '', note: '', map: '#######\n#@....#\n#######', swipes: '→', editing: /** @type {Example | null} */ (null) }
+const draft = {
+  id: '',
+  note: '',
+  map: '#######\n#@....#\n#######',
+  swipes: '→',
+  editing: /** @type {Example | null} */ (null),
+  /** @type {Pick<Example, 'numbers' | 'stops' | 'start'>} from a bug report */
+  extra: {},
+}
 let draftOpen = false
 
 /** @param {Example} ex */
@@ -584,7 +629,7 @@ function draftExample() {
   if (map.join('').split('@').length !== 2) return 'put exactly one @ (you) on the map'
   const swipes = [...draft.swipes].filter((ch) => ch in ARROWS)
   if (!swipes.length) return 'add a swipe'
-  const base = draft.editing ?? {}
+  const base = draft.editing ?? draft.extra
   return { ...base, id: draft.id || 'new', note: draft.note, map, swipes: swipes.map((swipe) => ({ swipe, stop: '?' })) }
 }
 
@@ -635,6 +680,7 @@ function form() {
       if (draft.editing) exFile.examples[exFile.examples.indexOf(draft.editing)] = ex
       else exFile.examples.unshift(ex)
       draft.editing = null
+      draft.extra = {}
     })
   }
   const box = h(

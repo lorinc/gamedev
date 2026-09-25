@@ -186,7 +186,10 @@ export const ENGINE_REASONS = ['noRule', 'bedrock', 'noOre', 'packFull']
 
 /** How a refusal shows. `flash`: the cells it tried and the backpack flash red (D027). */
 /** @type {Record<string, string>} */
-export const SIGNALS = { none: 'the run just stops', flash: 'the tried cells and the backpack flash red' }
+export const SIGNALS = {
+  none: 'the run just stops; a swipe that asked for it gets a red swipe cue',
+  flash: 'shown even mid-run: the swipe cue and the backpack flash red',
+}
 
 /**
  * @typedef {{ if: string, do: string, reason?: string, place?: string }} Row
@@ -344,9 +347,11 @@ export function interpret(table, world, at, dx, dy, facing, cfg, inv) {
     done(base, tx, ty, fall = 0) {
       const kind = builds.length ? 'build' : digs.length ? 'mine' : base
       const lootCells = digs.filter((d) => d.tile === Tile.Ore || d.tile === Tile.Loot).map(({ x, y }) => ({ x, y }))
-      if (lootCells.length > inv.free) return { ...blocked('packFull'), tried: lootCells }
-      if (builds.length > inv.buildable) return { ...blocked('noOre'), tried: builds.map(({ x, y }) => ({ x, y })) }
-      return { kind, dx, dy, to: { x: wrap(tx, world.w), y: ty + fall }, digs, builds, fall, rule }
+      /** @type {Action} */
+      const action = { kind, dx, dy, to: { x: wrap(tx, world.w), y: ty + fall }, digs, builds, fall, rule }
+      if (lootCells.length > inv.free) return { ...blocked('packFull'), tried: lootCells, intended: action }
+      if (builds.length > inv.buildable) return { ...blocked('noOre'), tried: builds.map(({ x, y }) => ({ x, y })), intended: action }
+      return action
     },
     blocked,
   }

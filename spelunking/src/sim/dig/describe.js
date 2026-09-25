@@ -35,7 +35,7 @@ export function rulesetMarkdown(r) {
   for (const [reason, signal] of Object.entries(r.reasons)) out.push(`| \`${reason}\` | ${signal}: ${SIGNALS[signal] ?? '?'} |`)
   out.push(
     '',
-    '**Stop rules** (a run of steps goes on until one fires; a refusal always stops):',
+    '**Stop rules** (a run of steps goes on until one fires; a refusal always stops, but a `noOre` / `packFull` refusal mid-run gives way to the stop the run would have made anyway, D030):',
     '',
     '| Rule | Stops the run when | |',
     '|---|---|---|',

@@ -39,6 +39,7 @@ export const ARROWS = {
  * @property {string[]} [pack] the pack at the end ('ore' / 'loot')
  * @property {Partial<Omit<SimConfig, 'rules'>>} [numbers] overrides the ruleset's
  * @property {Partial<SimConfig['rules']>} [stops] overrides the ruleset's
+ * @property {{ pack?: string[], credit?: number }} [start] what you carry at the start ('ore' / 'loot'; credit: tiles already paid for)
  */
 
 /**
@@ -91,6 +92,8 @@ export function mapRows(world, at) {
 export function runExample(ex, table, cfg) {
   const { world, at } = parseMap(ex.map)
   const g = createGame(world, at, { ...cfg, ...structuredClone(ex.numbers ?? {}), rules: { ...cfg.rules, ...ex.stops } }, table)
+  g.pack = (ex.start?.pack ?? []).map((t) => (t === 'ore' ? Tile.Ore : Tile.Loot))
+  g.credit = ex.start?.credit ?? 0
   /** @type {string[]} */
   const problems = []
   const swipes = ex.swipes.map((s, n) => {

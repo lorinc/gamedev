@@ -9,13 +9,14 @@ import { createInput } from './input.js'
 import { createJuice } from './juice.js'
 import { createPanel } from './panel.js'
 import { createRenderer } from './render.js'
+import { createRecorder } from './report.js'
 import { assignDeep, changedFrom, DEFAULTS, presetId, RANGES } from './tunables.js'
 
 /** @typedef {import('../../sim/dig/game.js').Dive} Dive */
 /** @typedef {import('../../sim/dig/ruleset.js').Ruleset} Ruleset */
 /** @typedef {import('../../sim/dig/ruleset.js').Table} Table */
 
-const BUILD = 'b1.1'
+const BUILD = 'b1.3-dev' // the live build after b1.2
 const STORE = 'b1-tunables-changed' // only values tuned away from DEFAULTS (was 'b1-tunables': a full snapshot)
 const LAB_STORE = 'rulelab-ruleset' // written by v4.html
 const TICK_MS = 1000 / 60
@@ -67,9 +68,14 @@ function start(ruleset, table) {
   const canvas = /** @type {HTMLCanvasElement} */ ($('game'))
   const juice = createJuice(tunables)
   const renderer = createRenderer(canvas, game, tunables, juice)
+  const recorder = createRecorder(game, { build: BUILD, ruleset, preset: () => presetId(tunables) })
+  const changed = () => {
+    save()
+    recorder.config() // a replay needs every sim value the dive ran with
+  }
 
   const panel = createPanel($('panel'), tunables, RANGES, {
-    onChange: save,
+    onChange: changed,
     buttons: [
       ['copy preset', () => copyText(JSON.stringify(tunables, null, 2))],
       [
@@ -83,7 +89,7 @@ function start(ruleset, table) {
             return alert('Not valid JSON')
           }
           panel.sync()
-          save()
+          changed()
         },
       ],
       [
@@ -91,21 +97,25 @@ function start(ruleset, table) {
         () => {
           assignDeep(tunables, DEFAULTS)
           panel.sync()
-          save()
+          changed()
         },
       ],
       ['copy dive log', () => copyText(game.dives.map(diveLine).join('\n') || 'no dives yet')],
     ],
   })
 
+  /** A swipe was made and hasn't produced a step or a stop yet: its first outcome gets the cue. */
+  let asked = false
   /** @type {number | null} input timestamp waiting for the sim to take its command */
   let pending = null
   let latency = 0
   const input = createInput(
     canvas,
     tunables,
-    (cmd, stamp) => {
+    (cmd, stamp, how) => {
+      recorder.record(cmd, how)
       command(game, cmd)
+      if (cmd.type === 'intent') asked = true
       if (pending === null) pending = stamp
       if (cmd.type === 'intent') $('log').classList.remove('open')
     },
@@ -113,6 +123,20 @@ function start(ruleset, table) {
   )
 
   window.addEventListener('resize', () => renderer.resize())
+
+  // Bug report: the last swipes, the map, a Rule Lab example and an exact replay, to the clipboard.
+  const reportBug = () => copyText(recorder.report()).then(() => toast('Copied last events to clipboard'))
+  $('bug').onclick = reportBug
+  window.addEventListener('keydown', (e) => e.code === 'KeyB' && !e.repeat && reportBug())
+  /** @type {number | undefined} */
+  let toastTimer
+  /** @param {string} text */
+  function toast(text) {
+    $('toast').textContent = text
+    $('toast').classList.add('open')
+    clearTimeout(toastTimer)
+    toastTimer = setTimeout(() => $('toast').classList.remove('open'), 2000)
+  }
 
   // for the browser console and automated checks: read state, never write it
   Object.assign(window, { b1: { game, tunables, ruleset } })
@@ -179,8 +203,19 @@ function start(ruleset, table) {
 
     for (const e of game.events) {
       juice.onEvent(e)
+      recorder.onEvent(e)
       if (e.type === 'mined' || e.type === 'built') renderer.setTile(e.x, e.y)
-      if (e.type === 'stop' && table.signals[e.reason] === 'flash') renderer.fail(e.tried) // D027
+      // The swipe cue (D032): what a swipe attempts, beside the character; red when it's refused.
+      if (e.type === 'step' && e.fresh) {
+        renderer.attempt(e.action.dx, e.action.dy, e.action.kind === 'build' ? 'build' : e.action.kind === 'mine' ? 'mine' : 'walk')
+        asked = false
+      }
+      if (e.type === 'stop') {
+        const flash = table.signals[e.reason] === 'flash' // a refusal that shows even mid-run (D027)
+        if (asked || flash) renderer.attempt(e.dx, e.dy, e.reason === 'noOre' ? 'build' : e.reason === 'packFull' ? 'mine' : 'walk', true)
+        if (flash) renderer.fail()
+        asked = false
+      }
       if (e.type === 'teleport') {
         renderer.snap()
         if (e.dive) showLog(e.dive)
