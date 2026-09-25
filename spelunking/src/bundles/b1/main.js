@@ -6,25 +6,26 @@ import { createInput } from './input.js'
 import { createJuice } from './juice.js'
 import { createPanel } from './panel.js'
 import { createRenderer } from './render.js'
-import { assignDeep, DEFAULTS, presetId, RANGES } from './tunables.js'
+import { assignDeep, changedFrom, DEFAULTS, presetId, RANGES } from './tunables.js'
 
 /** @typedef {import('../../sim/dig/game.js').Dive} Dive */
 
 const BUILD = 'b1.1'
-const STORE = 'b1-tunables'
+const STORE = 'b1-tunables-changed' // only values tuned away from DEFAULTS (was 'b1-tunables': a full snapshot)
 const TICK_MS = 1000 / 60
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id))
 
 /** @type {typeof DEFAULTS} */
 const tunables = JSON.parse(JSON.stringify(DEFAULTS))
 try {
+  localStorage.removeItem('b1-tunables') // full snapshots pinned old defaults forever
   assignDeep(tunables, JSON.parse(localStorage.getItem(STORE) ?? '{}'))
 } catch {
   // no storage (private window, blocked): defaults
 }
 const save = () => {
   try {
-    localStorage.setItem(STORE, JSON.stringify(tunables))
+    localStorage.setItem(STORE, JSON.stringify(changedFrom(DEFAULTS, tunables)))
   } catch {
     // not persisted; the panel still works for this session
   }

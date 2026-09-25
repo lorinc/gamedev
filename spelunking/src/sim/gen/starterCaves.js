@@ -1,18 +1,17 @@
-// Copy of archive/2026-09-24_starter-caves_seed6712.json as a module: browsers can't import JSON
+// Copy of archive/2026-09-25_starter-caves_seed7727.json as a module: browsers can't import JSON
 // on every target (iOS Safari < 17.2). A test keeps the two identical.
 
 /** @type {import('./pipeline.js').Pipeline} */
 export const STARTER_CAVES = {
-  seed: 6712,
-  width: 128,
-  height: 64,
-  density: 450,
+  seed: 7727,
+  width: 32,
+  height: 32,
+  density: 415,
   edge: 'wrap',
   steps: [
-    { kind: 'gen', rule: 'd012 b5678', repeat: 2 },
     { kind: 'scale', x: 4, y: 1 },
-    { kind: 'gen', rule: 'd0124 b78', repeat: 4 },
-    { kind: 'scale', x: 2, y: 2 },
-    { kind: 'gen', rule: 'd012 b345', repeat: 1 },
+    { kind: 'gen', rule: 'd012 b678', repeat: 1 },
+    { kind: 'scale', x: 3, y: 2 },
+    { kind: 'gen', rule: 'd012 b345678', repeat: 1 },
   ],
 }

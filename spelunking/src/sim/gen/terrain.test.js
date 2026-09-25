@@ -7,7 +7,7 @@ import { DEFAULT_TERRAIN, generateTerrain } from './terrain.js'
 import { Tile } from './world.js'
 
 test('the recipe module matches the archived JSON', () => {
-  const url = new URL('../../../archive/2026-09-24_starter-caves_seed6712.json', import.meta.url)
+  const url = new URL('../../../archive/2026-09-25_starter-caves_seed7727.json', import.meta.url)
   assert.deepEqual(STARTER_CAVES, JSON.parse(readFileSync(url, 'utf8')))
 })
 

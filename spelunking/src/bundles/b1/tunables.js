@@ -21,7 +21,7 @@ export const DEFAULTS = {
     longPressMs: 700, // teleport charge
   },
   view: {
-    tilesShort: 16, // tiles across the screen's short side
+    tilesShort: 48, // tiles across the screen's short side
     camLerp: 0.12, // per 1/60 s
     lookahead: 3, // tiles ahead in the intent direction
   },
@@ -48,7 +48,7 @@ export const RANGES = {
   'input.horizontalDeg': [10, 45, 1],
   'input.verticalDeg': [10, 45, 1],
   'input.longPressMs': [300, 2000, 50],
-  'view.tilesShort': [8, 32, 1],
+  'view.tilesShort': [8, 96, 1],
   'view.camLerp': [0.02, 1, 0.01],
   'view.lookahead': [0, 8, 0.5],
   'juice.volume': [0, 1, 0.05],
@@ -65,6 +65,21 @@ export function assignDeep(dst, src) {
     else if (typeof dst[k] === typeof src[k]) dst[k] = src[k]
   }
   return dst
+}
+
+// Only the values that differ from `base`, as a nested object. Stored settings hold just these,
+// so a changed default reaches every browser that didn't tune that value itself.
+/** @param {Record<string, any>} base @param {Record<string, any>} t @returns {Record<string, any>} */
+export function changedFrom(base, t) {
+  /** @type {Record<string, any>} */
+  const out = {}
+  for (const k of Object.keys(base)) {
+    if (typeof base[k] === 'object') {
+      const sub = changedFrom(base[k], t[k])
+      if (Object.keys(sub).length) out[k] = sub
+    } else if (t[k] !== base[k]) out[k] = t[k]
+  }
+  return out
 }
 
 /** Short hash of a preset, printed in the dive log so a pasted log names its preset. */
