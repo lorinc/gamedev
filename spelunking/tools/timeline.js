@@ -4,16 +4,40 @@
 // sessions behind a <details>. One static file; a few lines of inline JS count the time box days.
 // Usage: node tools/timeline.js [--out file] [--dev <base url of live bN.html>] [--strict]
 //   --strict  exit 1 on problems; otherwise they're printed as warnings.
+// A line `<!-- ruleset: builds/b1.3/rules/b1.3.json -->` (path relative to the entry) becomes that
+// ruleset's tables, so "Rules at close" is generated from the ruleset a frozen build played.
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { rulesetMarkdown } from '../src/sim/dig/describe.js'
 import { escapeHtml, inline, mdToHtml, parseEntry, sections } from './md.js'
 
 export const SECTIONS = ['Question', 'Assumptions', 'Limitations', 'Built', 'Feedback', 'Conclusion → next']
 // The rules as they stood when a playtest closed. Required once an entry with bundle builds (bN.M)
 // is concluded or killed, so the next prototype starts from a readable baseline.
 export const RULES = 'Rules at close'
+
+/**
+ * Replaces each `<!-- ruleset: path -->` line with the ruleset's Markdown tables.
+ * @param {string} md
+ * @param {(path: string) => string | null} read the file's text, or null if it's missing
+ * @returns {{ md: string, problems: string[] }}
+ */
+export function expandRulesets(md, read) {
+  /** @type {string[]} */
+  const problems = []
+  const out = md.replace(/^<!-- ruleset: (\S+) -->$/gm, (line, path) => {
+    const text = read(path)
+    if (text === null) {
+      problems.push(`ruleset ${path} not found`)
+      return line
+    }
+    return rulesetMarkdown(JSON.parse(text))
+  })
+  return { md: out, problems }
+}
+
 const MARKS = /** @type {const} */ ({ '?': 'open', '✓': 'held', '✗': 'broken' })
 
 /**
@@ -325,7 +349,11 @@ function main() {
     const feedback = existsSync(fbDir)
       ? readdirSync(fbDir).filter((f) => f.endsWith('.md')).sort().map((name) => ({ name, md: readFileSync(join(fbDir, name), 'utf8') }))
       : []
-    const r = readEntry(dir, readFileSync(join(base, 'entry.md'), 'utf8'), feedback, (id) => existsSync(join(base, 'builds', id, 'index.html')))
+    const expanded = expandRulesets(readFileSync(join(base, 'entry.md'), 'utf8'), (p) =>
+      existsSync(join(base, p)) ? readFileSync(join(base, p), 'utf8') : null,
+    )
+    const r = readEntry(dir, expanded.md, feedback, (id) => existsSync(join(base, 'builds', id, 'index.html')))
+    r.problems.push(...expanded.problems.map((p) => `${dir}: ${p}`))
     const listed = new Set(r.entry.builds.map((b) => b.id))
     const onDisk = existsSync(join(base, 'builds')) ? readdirSync(join(base, 'builds')) : []
     for (const b of onDisk) if (!listed.has(b)) r.problems.push(`${dir}: builds/${b}/ has no "build ${b}:" line in the frontmatter`)

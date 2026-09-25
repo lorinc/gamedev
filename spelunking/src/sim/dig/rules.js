@@ -1,3 +1,6 @@
+// b1.2's rules in code. The game now runs rulesets (ruleset.js + rules/*.json); resolve() stays as
+// the reference rules/b1.2.json is checked against (ruleset.test.js). stopReason() is still live.
+//
 // What a swipe means where you stand: a pure truth table from (world, position, direction) to the
 // next one-tile action, plus the stop rules that end a run of actions ("move until something changes").
 // The character is 1 tile tall. It never falls: it stands (solid below) or clings (solid beside).
@@ -19,11 +22,12 @@ export const BEDROCK = -1
  * @property {number} dy
  * @property {Cell} to where the character ends up (x wrapped)
  * @property {Dug[]} digs cells mined, in order
- * @property {Cell[]} builds cells filled with Built
+ * @property {(Cell & { tile?: number })[]} builds cells filled (with `tile`, Built if none)
  * @property {number} fall tiles dropped at the end (≤ harmlessDrop): stepping off a ledge, or letting go of a climb
  * @property {string} [reason] why it's blocked
  * @property {Cell[]} [tried] blocked for lack of stock (`noOre`, `packFull`): the cells it would have
  *   built or mined, so the view can show "I tried, can't do"
+ * @property {{ intent: string, row: number }} [rule] the ruleset row that chose it (ruleset.js)
  */
 
 /**
@@ -83,11 +87,6 @@ export function digTicks(cfg, tile) {
  * @param {Inventory} inv
  * @returns {Action}
  */
-// TODO (Lorinc, 2026-09-25 feedback on b1.2), traversal is clumsy:
-//   - there's no way to dig a 1-block-high ledge;
-//   - there's no way to build a ramp down to the right and then go left: a stairs-type block
-//     is missing, where the character can choose to walk up it or straight on.
-// Design both as rules in the p4 Rule Lab (situations first), not as code here.
 export function resolve(world, at, dx, dy, facing, cfg, inv) {
   const { x, y } = at
   /** @type {Dug[]} */

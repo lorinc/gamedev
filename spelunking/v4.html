@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>v4 · Rule Lab</title>
+    <link rel="icon" href="favicon.png" />
+    <style>
+      :root {
+        --bg: #050508;
+        --panel: #0d0d14;
+        --line: #262633;
+        --text: #ccc;
+        --dim: #777;
+        --good: #5ac878;
+        --bad: #f0503c;
+        --hi: #e6dc5a;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font: 12px monospace;
+      }
+      body {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        min-width: 960px;
+      }
+      #head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-bottom: 1px solid var(--line);
+      }
+      h1 {
+        font-size: 14px;
+        margin: 0 10px 0 0;
+      }
+      h2 {
+        font-size: 13px;
+        margin: 18px 0 6px;
+        color: var(--hi);
+      }
+      h3 {
+        font-size: 13px;
+        margin: 10px 0 4px;
+      }
+      main {
+        display: grid;
+        grid-template-columns: minmax(520px, 46%) 1fr;
+        min-height: 0;
+      }
+      #rules,
+      #examples {
+        overflow: auto;
+        padding: 0 12px 40px;
+      }
+      #rules {
+        border-right: 1px solid var(--line);
+      }
+      .dim {
+        color: var(--dim);
+        font-weight: normal;
+      }
+      .bad {
+        color: var(--bad);
+      }
+      button,
+      select,
+      input,
+      textarea {
+        font: inherit;
+        background: #1a1a22;
+        color: var(--text);
+        border: 1px solid #3a3a48;
+        padding: 3px 6px;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: var(--hi);
+      }
+      #flash {
+        color: var(--good);
+      }
+      .errors {
+        color: var(--bad);
+        border: 1px solid var(--bad);
+        padding: 6px 6px 6px 22px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 22px 150px 14px 140px 110px 70px 26px 26px 26px;
+        gap: 4px;
+        align-items: center;
+        margin-top: 4px;
+      }
+      .row button {
+        padding: 3px 0;
+      }
+      .row.sel {
+        outline: 1px solid var(--hi);
+      }
+      .n,
+      .uses {
+        cursor: pointer;
+        text-align: center;
+      }
+      .n:hover,
+      .uses:hover {
+        color: var(--hi);
+      }
+      .uses.none {
+        color: var(--bad);
+      }
+      .param {
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .desc {
+        color: var(--dim);
+        margin: 1px 0 0 26px;
+      }
+      .situation {
+        display: grid;
+        grid-template-columns: 130px 1fr 52px 26px;
+        gap: 6px;
+        align-items: start;
+        margin-top: 4px;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 3px;
+      }
+      .chip {
+        cursor: pointer;
+        padding: 1px 4px;
+        border: 1px solid var(--line);
+        color: #444;
+      }
+      .chip.need {
+        color: var(--good);
+        border-color: var(--good);
+      }
+      .chip.not {
+        color: var(--bad);
+        border-color: var(--bad);
+      }
+      .kv {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 3px;
+      }
+      .kv > span:first-of-type {
+        min-width: 150px;
+      }
+      .kv input[type='number'] {
+        width: 70px;
+      }
+      .grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .card {
+        width: 280px;
+        padding: 8px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--good);
+      }
+      .card.fail {
+        border-left-color: var(--bad);
+      }
+      .card.dim {
+        opacity: 0.25;
+      }
+      .card canvas,
+      .preview canvas {
+        display: block;
+        margin-bottom: 6px;
+        image-rendering: pixelated;
+      }
+      .title {
+        font-weight: bold;
+      }
+      .note {
+        color: var(--dim);
+        margin: 2px 0 4px;
+      }
+      .swipe {
+        margin-top: 2px;
+      }
+      .tags {
+        margin-left: 6px;
+      }
+      .tag {
+        cursor: pointer;
+        color: var(--dim);
+        border: 1px solid var(--line);
+        padding: 0 3px;
+        margin-right: 3px;
+      }
+      .tag.sel {
+        color: var(--hi);
+        border-color: var(--hi);
+      }
+      .buttons {
+        display: flex;
+        gap: 6px;
+        margin-top: 6px;
+      }
+      pre {
+        white-space: pre-wrap;
+        margin: 4px 0;
+      }
+      .form {
+        margin-top: 10px;
+        border: 1px solid var(--line);
+        padding: 6px 8px;
+      }
+      .form summary {
+        cursor: pointer;
+        color: var(--hi);
+      }
+      .form-body {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 12px;
+        margin-top: 6px;
+      }
+      .form-body input,
+      .form-body textarea {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 4px;
+      }
+      .form-body textarea {
+        line-height: 1.1;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="head"></div>
+    <main>
+      <section id="rules"></section>
+      <section id="examples"></section>
+    </main>
+    <script type="module" src="src/bundles/v4/main.js"></script>
+  </body>
+</html>

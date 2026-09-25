@@ -8,9 +8,11 @@ import { dirname, join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { command, createGame, tick, withSurface } from './dig/game.js'
+import { compile } from './dig/ruleset.js'
 import { DEFAULT_TERRAIN, generateTerrain } from './gen/terrain.js'
 
 const SIM = dirname(fileURLToPath(import.meta.url))
+const TABLE = compile(JSON.parse(readFileSync(join(SIM, '../../rules/b1.2.json'), 'utf8'))).table
 
 /** @type {import('./dig/rules.js').SimConfig} */
 const CFG = {
@@ -39,7 +41,7 @@ const SCRIPT = [
 
 function play(caveSeed = DEFAULT_TERRAIN.caveSeed) {
   const { world, home } = withSurface(generateTerrain({ ...DEFAULT_TERRAIN, caveSeed }), 4, 3)
-  const g = createGame(world, home, structuredClone(CFG))
+  const g = createGame(world, home, structuredClone(CFG), TABLE)
   for (const [dx, dy] of SCRIPT) {
     command(g, { type: 'intent', dx, dy })
     for (let i = 0; i < 300; i++) tick(g)

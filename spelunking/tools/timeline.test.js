@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { describe, test } from 'node:test'
 import { mdToHtml, parseEntry, sections } from './md.js'
-import { daysUsed, parseDecisions, readEntry, renderPage } from './timeline.js'
+import { daysUsed, expandRulesets, parseDecisions, readEntry, renderPage } from './timeline.js'
 
 const ENTRY = `---
 id: p9
@@ -163,5 +164,16 @@ describe('renderPage', () => {
     assert.match(html, /href="#p9-fb-2026-01-02_me_phone"/)
     assert.match(html, /id="p9-fb-2026-01-02_me_phone"/)
     assert.match(html, /href="#p10"/)
+  })
+})
+
+describe('expandRulesets', () => {
+  test('a ruleset line becomes its tables; a missing file is a problem', () => {
+    const b12 = readFileSync(new URL('../rules/b1.2.json', import.meta.url), 'utf8')
+    const md = '## Rules at close\n\n<!-- ruleset: builds/b9.1/rules/b1.2.json -->\n<!-- ruleset: nope.json -->\n'
+    const { md: out, problems } = expandRulesets(md, (p) => (p === 'builds/b9.1/rules/b1.2.json' ? b12 : null))
+    assert.match(out, /\| ← → \| `walkable`: the cell ahead is open, solid under the cell ahead \| walk into the cell ahead \|/)
+    assert.match(out, /<!-- ruleset: nope.json -->/)
+    assert.deepEqual(problems, ['ruleset nope.json not found'])
   })
 })

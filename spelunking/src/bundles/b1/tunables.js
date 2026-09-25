@@ -1,5 +1,6 @@
 // Every number b1 is tuned with. The dev panel edits this object live; presets are copies of it.
-// Sim values are in ticks at 60 ticks/s.
+// Sim values are in ticks at 60 ticks/s. At start, `sim` and the swipe angles in `input` are replaced
+// by the loaded ruleset's (rules/*.json); the values here are its fallback shape.
 
 export const DEFAULTS = {
   /** @type {import('../../sim/dig/rules.js').SimConfig} */

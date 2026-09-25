@@ -37,6 +37,9 @@ Rules: the sim (`src/sim/`) imports only other sim modules, enforced by `src/sim
 |---|---|
 | `src/sim/` | Deterministic integer-grid core, shared by everything and tested. Code that should outlive the prototypes lives here. |
 | `src/sim/gen/` | Terrain: `ca.js` (cellular automaton), `pipeline.js` (v2 recipes), `terrain.js` (v3) + `starterCaves.js` (its recipe), `world.js` / `stats.js` |
+| `src/sim/dig/` | The dig game: `game.js` (state + fixed tick), `ruleset.js` (the rule vocabulary + the interpreter of a ruleset), `examples.js` (replays `rules/examples.json`), `describe.js` (a ruleset as Markdown), `rules.js` (stop rules; b1.2's rules in code, kept as the reference `rules/b1.2.json` is checked against) |
+| `rules/` | Dig rulesets (`<name>.json`: situations, the swipe table, refusal signals, stops, numbers) and `examples.json` (ASCII maps + swipes + expected stops: the dig tests and the Rule Lab's previews). Edit them in `v4.html`, export, commit |
+| `src/bundles/v4/` + `v4.html` | Rule Lab: the ruleset editor. b1 plays the ruleset it saves with `b1.html?rules=lab` |
 | `src/render/`, `src/ui/`, `src/input/` | Drawing, dev-panel widgets, touch / keyboard → commands |
 | `src/bundles/bN/` + `bN.html` | Playable bundle entry points: wire sim + render + input + dev panel only |
 | `timeline/pN-slug/` | One prototype: `entry.md` (question, assumptions, built, feedback, conclusion), frozen `builds/`, `feedback/`, `media/`, `presets/`. Public. See [timeline/README.md](timeline/README.md) |
@@ -54,9 +57,9 @@ Planned bundles (from the concept doc): b2 · Greed & Darkness, b3 · Tiny Base,
 
 **Workflow:**
 1. **New prototype:** copy `timeline/_template/` to `timeline/pN-slug/`, then write its Question, Assumptions, Limitations and time box *before* building. Develop in `src/` + `bN.html` as usual.
-2. **Playable:** commit, `npm run freeze -- pN-slug bN.M`, add the `build` line it prints, `npm run timeline -- --strict`, commit, push.
+2. **Playable:** commit, `npm run freeze -- pN-slug bN.M` (it copies `rules/` too), add the `build` line it prints, `npm run timeline -- --strict`, commit, push.
 3. **Play session:** a `feedback/YYYY-MM-DD_tester_device.md` from the template, with the tester's quotes (minimal spelling / grammar fixes, never rewording) and the dive log. Flip the assumption and constraint marks, record rule changes under Built, and append each decision to `timeline/decisions.md`.
-4. **End:** fill in Conclusion → next, set `ended:` and the status to `concluded` or `killed`, and copy the decisions back to the concept doc. The card shows the days used against the time box.
+4. **End:** fill in Conclusion → next (a playtest's `## Rules at close` can be the line `<!-- ruleset: builds/bN.M/rules/<name>.json -->`: the timeline renders the frozen ruleset's tables), set `ended:` and the status to `concluded` or `killed`, and copy the decisions back to the concept doc. The card shows the days used against the time box.
 
 ## Rules
 

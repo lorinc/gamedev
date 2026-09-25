@@ -2,12 +2,14 @@
 // renderers read state and events and never write them.
 
 import { Tile } from '../gen/world.js'
-import { digTicks, resolve, stopReason } from './rules.js'
+import { digTicks, stopReason } from './rules.js'
+import { interpret } from './ruleset.js'
 
 /** @typedef {import('../gen/world.js').World} World */
 /** @typedef {import('./rules.js').Action} Action */
 /** @typedef {import('./rules.js').Cell} Cell */
 /** @typedef {import('./rules.js').SimConfig} SimConfig */
+/** @typedef {import('./ruleset.js').Table} Table */
 
 /**
  * @typedef {{ type: 'intent', dx: number, dy: number } | { type: 'stop' } | { type: 'teleport' }} Command
@@ -17,7 +19,7 @@ import { digTicks, resolve, stopReason } from './rules.js'
  * @typedef {{ type: 'step', action: Action, fresh: boolean }
  *   | { type: 'mined', x: number, y: number, tile: number }
  *   | { type: 'built', x: number, y: number }
- *   | { type: 'stop', reason: string, dx: number, dy: number, tried: Cell[] }
+ *   | { type: 'stop', reason: string, dx: number, dy: number, tried: Cell[], rule?: Action['rule'] }
  *   | { type: 'abort' }
  *   | { type: 'teleport', from: Cell, dive: Dive | null }} GameEvent
  */
@@ -48,6 +50,7 @@ import { digTicks, resolve, stopReason } from './rules.js'
  * @typedef {object} Game
  * @property {World} world
  * @property {SimConfig} cfg read every tick, so the dev panel can change it live
+ * @property {Table} table what a swipe means where you stand (a compiled ruleset)
  * @property {number} tick
  * @property {{ x: number, y: number, facing: number }} ch
  * @property {Cell} home
@@ -77,11 +80,12 @@ export function withSurface(terrain, skyRows, crustRows) {
   return { world: { w, h: terrain.h + top, tiles }, home: { x: 0, y: skyRows - 1 } }
 }
 
-/** @param {World} world @param {Cell} home @param {SimConfig} cfg @returns {Game} */
-export function createGame(world, home, cfg) {
+/** @param {World} world @param {Cell} home @param {SimConfig} cfg @param {Table} table @returns {Game} */
+export function createGame(world, home, cfg, table) {
   return {
     world,
     cfg,
+    table,
     tick: 0,
     ch: { x: home.x, y: home.y, facing: 1 },
     home,
@@ -145,14 +149,14 @@ function next(g) {
     free: cfg.packSlots - g.pack.length,
     buildable: g.credit + g.pack.filter((t) => t === Tile.Ore).length * cfg.tilesPerOre,
   }
-  const action = resolve(world, ch, run.dx, run.dy, ch.facing, cfg, inv)
+  const action = interpret(g.table, world, ch, run.dx, run.dy, ch.facing, cfg, inv)
   const reason = run.prev
     ? stopReason(world, ch, run.prev, action, cfg)
     : action.kind === 'blocked'
       ? (action.reason ?? 'blocked')
       : null
   if (reason) {
-    g.events.push({ type: 'stop', reason, dx: run.dx, dy: run.dy, tried: action.tried ?? [] })
+    g.events.push({ type: 'stop', reason, dx: run.dx, dy: run.dy, tried: action.tried ?? [], rule: action.rule })
     if (g.dive) g.dive.stops[reason] = (g.dive.stops[reason] ?? 0) + 1
     g.run = null
     return
@@ -183,7 +187,7 @@ function apply(g, action) {
       g.credit = g.cfg.tilesPerOre
     }
     g.credit--
-    world.tiles[b.y * world.w + b.x] = Tile.Built
+    world.tiles[b.y * world.w + b.x] = b.tile ?? Tile.Built
     if (g.dive) g.dive.built++
     g.events.push({ type: 'built', x: b.x, y: b.y })
   }
