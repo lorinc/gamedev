@@ -58,6 +58,7 @@ export const BEDROCK = -1
  * @property {boolean} [teleport] false: nothing teleports you home (D055); a deep fall just lands, and walking onto the
  *   home cell counts the pack in. True if missing
  * @property {import('./probe.js').Probe} [probe] the seismic probe's reach and speed (D053); probe.js's PROBE if missing
+ * @property {import('./bugs.js').Bugs} [bugs] moon bugs (D056); none if missing
  * @property {Rules} rules
  */
 

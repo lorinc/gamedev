@@ -1,5 +1,7 @@
 // Feedback that reads sim events and never writes sim state: debris chunks, trauma shake,
 // squash on stops, and one synthesized sound per material (no audio files). A low ping per probe ring (D053).
+// Moon bugs (D056): a nibble sends an ore flying from the pack into the bug, and a heart pops when it
+// lands; a taming pops a few. These show what happened to your ore, so they stay on with the juice off.
 
 import { TILE_RGB } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
@@ -9,6 +11,8 @@ import { Tile } from '../../sim/gen/world.js'
 
 const MAX_CHUNKS = 160
 const GRAVITY = 40 // tiles / s²
+export const FLIGHT_S = 0.35 // an ore's flight from the pack into a bug
+export const HEART_S = 0.9 // a heart's rise and fade
 
 /** @param {Tunables} t */
 export function createJuice(t) {
@@ -18,6 +22,10 @@ export function createJuice(t) {
   let squash = 0
   let kick = { x: 0, y: 0 } // shake bias along the last dig
   const sound = createSound(t)
+  /** @type {{ x0: number, y0: number, x1: number, y1: number, age: number }[]} ore in flight, tile coords, seconds */
+  const flights = []
+  /** @type {{ x: number, y: number, age: number }[]} hearts over bugs; a negative age waits */
+  const hearts = []
 
   const on = () => t.juice.on
 
@@ -45,6 +53,8 @@ export function createJuice(t) {
 
   return {
     chunks,
+    flights,
+    hearts,
     sound,
     /** @param {GameEvent} e */
     onEvent(e) {
@@ -70,12 +80,23 @@ export function createJuice(t) {
         } else sound.play('bump')
       } else if (e.type === 'teleport') {
         sound.play('teleport')
+      } else if (e.type === 'nibble') {
+        flights.push({ x0: e.from.x + 0.5, y0: e.from.y + 0.35, x1: e.x + 0.5, y1: e.y + 0.5, age: 0 })
+        hearts.push({ x: e.x + 0.5, y: e.y + 0.2, age: -FLIGHT_S }) // pops when the ore lands
+        sound.play('nibble')
+      } else if (e.type === 'tamed') {
+        for (let k = 1; k <= 3; k++) hearts.push({ x: e.x + 0.5 + (k - 2) * 0.4, y: e.y + 0.2, age: -FLIGHT_S - k * 0.15 })
+        sound.play('tamed')
       }
     },
     /** @param {number} dt seconds */
     update(dt) {
       trauma = Math.max(0, trauma - dt * 1.6)
       squash = Math.max(0, squash - dt * 8)
+      for (const f of flights) f.age += dt
+      for (const h of hearts) h.age += dt
+      while (flights.length && flights[0].age > FLIGHT_S) flights.shift()
+      for (let i = hearts.length - 1; i >= 0; i--) if (hearts[i].age > HEART_S) hearts.splice(i, 1)
       for (let i = chunks.length - 1; i >= 0; i--) {
         const c = chunks[i]
         c.life -= dt
@@ -96,7 +117,7 @@ export function createJuice(t) {
   }
 }
 
-/** @typedef {'soft' | 'hard' | 'ore' | 'loot' | 'build' | 'thunk' | 'break' | 'bump' | 'teleport' | 'ping'} SoundName */
+/** @typedef {'soft' | 'hard' | 'ore' | 'loot' | 'build' | 'thunk' | 'break' | 'bump' | 'teleport' | 'ping' | 'nibble' | 'tamed'} SoundName */
 
 /** @param {Tunables} t */
 function createSound(t) {
@@ -118,6 +139,8 @@ function createSound(t) {
     bump: ['sine', 160, 120, 0, 0.05, 0.25],
     teleport: ['sine', 200, 1400, 0, 0.35, 0.3],
     ping: ['sine', 150, 110, 0, 0.14, 0.3], // a probe ring: low and short, a ring every 5 ticks (83 ms) overlaps a little
+    nibble: ['triangle', 1200, 1600, 0, 0.05, 0.15], // a wild bug's bite: tiny and high
+    tamed: ['sine', 520, 1040, 0, 0.4, 0.3],
   }
 
   return {

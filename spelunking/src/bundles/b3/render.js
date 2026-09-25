@@ -7,11 +7,15 @@
 // lit now is clear. Whole tiles, a hard edge. It changes only on `seen` events and when `game.lit` does.
 // The probe (D053): thin circles over the fog around the cell it spreads from, the newest ring solid and
 // the ones before it fading out; they fade on for a moment after it ends.
+// Moon bugs (D056, D059): a small square with a soft halo, over the fog (they're lights). Wild ones are
+// cool blue and blink in and out like fireflies, steady next to you, flickering while scared; tamed
+// ones are warm amber and glow steadily. They drift between cells and bob a little.
 
 import { cellRgb, TILE_RGB, TREAD } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
 import { PROBE } from '../../sim/dig/probe.js'
 import { wrap } from '../../sim/dig/rules.js'
+import { FLIGHT_S, HEART_S } from './juice.js'
 import { AUTO_TILES, ZOOM_PX } from './tunables.js'
 
 /** @typedef {import('../../sim/dig/game.js').Game} Game */
@@ -30,6 +34,11 @@ const FAIL_S = 0.7 // seconds the red "can't do" flash of the pack lasts
 const CUE_S = 0.6 // seconds the swipe cue takes to fade out
 const BODY_H = 1.3 // the character's drawn height, in tiles (1 in the sim)
 const RING_TRAIL = 4 // probe rings drawn: the newest and the ones before it, fading out over this many rings' time
+const WILD = [150, 190, 255] // a wild bug: cool
+const TAMED = [255, 196, 90] // a tamed bug: warm (user, 2026-09-26)
+const HEART = '#ff7aa0'
+// a heart, in pixels
+const HEART_PX = ['.x.x.', 'xxxxx', 'xxxxx', '.xxx.', '..x..']
 /** @typedef {'walk' | 'build' | 'mine'} CueKind the symbol: an arrow, stairs, a pickaxe */
 
 /** @param {import('../../render/palette.js').Rgb} c */
@@ -275,6 +284,8 @@ export function createRenderer(canvas, game, t, juice) {
         ctx.globalAlpha = 1
       }
 
+      drawBugs(ctx, game, alpha, time, (x) => sx(nearest(x, px, world.w)), sy, tp)
+
       // the pack's "can't do": two quick red blinks that fade
       failLeft = Math.max(0, failLeft - dt)
       const failA = failLeft > 0 ? failAlpha(1 - failLeft / FAIL_S) : 0
@@ -309,6 +320,31 @@ export function createRenderer(canvas, game, t, juice) {
         ctx.fillRect(Math.round(sx(nearest(c.x, left, world.w))), Math.round(sy(c.y)), s, s)
       }
 
+      // ore flying from the pack into a wild bug, and the hearts it pops (D056)
+      const oreS = Math.max(2, Math.round(tp * 0.2))
+      ctx.fillStyle = css(TILE_RGB[Tile.Ore])
+      for (const f of juice.flights) {
+        const k = Math.min(1, f.age / FLIGHT_S)
+        const e = k * (2 - k) // eases out
+        const x0 = nearest(f.x0, px, world.w)
+        const x = x0 + (nearest(f.x1, x0, world.w) - x0) * e
+        const y = f.y0 + (f.y1 - f.y0) * e - Math.sin(k * Math.PI) * 0.6 // a little arc
+        ctx.fillRect(Math.round(sx(x) - oreS / 2), Math.round(sy(y) - oreS / 2), oreS, oreS)
+      }
+      const hp = Math.max(1, Math.round(tp / 12))
+      ctx.fillStyle = HEART
+      for (const h of juice.hearts) {
+        if (h.age < 0) continue
+        const k = h.age / HEART_S
+        ctx.globalAlpha = 1 - k * k
+        const hx = Math.round(sx(nearest(h.x, px, world.w)) - 2.5 * hp)
+        const hy = Math.round(sy(h.y - k) - 5 * hp)
+        HEART_PX.forEach((row, j) => {
+          for (let i = 0; i < row.length; i++) if (row[i] === 'x') ctx.fillRect(hx + i * hp, hy + j * hp, hp, hp)
+        })
+      }
+      ctx.globalAlpha = 1
+
       cue.left = Math.max(0, cue.left - dt)
       if (cue.left > 0) {
         // one step out from the drawn body, in the swipe's direction: beside, above, below or diagonal
@@ -330,6 +366,48 @@ export function createRenderer(canvas, game, t, juice) {
     },
   }
 }
+
+/**
+ * The moon bugs (D056): each between the cell it drifted from and its cell, bobbing; a halo and a core.
+ * @param {CanvasRenderingContext2D} ctx @param {Game} game @param {number} alpha @param {number} time seconds
+ * @param {(x: number) => number} sx tile x → device px, the copy nearest the character
+ * @param {(y: number) => number} sy @param {number} tp tile px
+ */
+function drawBugs(ctx, game, alpha, time, sx, sy, tp) {
+  const move = Math.max(1, game.cfg.bugs?.moveTicks ?? 1)
+  const core = Math.max(2, Math.round(tp * 0.3))
+  for (const b of game.bugs) {
+    const f = Math.min(1, Math.max(0, (game.tick + alpha - b.movedAt) / move))
+    const fx = b.from.x + wrapDelta(b.x - b.from.x, game.world.w) * f
+    // they float in the upper part of their cell, fanned out, so two in one cell (or one beside you) read apart
+    const x = fx + 0.5 + Math.sin(time * 1.3 + b.id * 2.1) * 0.3
+    const y = b.from.y + (b.y - b.from.y) * f + 0.2 - (b.id % 3) * 0.3 + Math.cos(time * 1.7 + b.id) * 0.2
+    let on
+    if (b.den) on = 0.8 + 0.2 * Math.sin(time * 2 + b.id)
+    else if (game.tick < b.scared) on = Math.sin(time * 30 + b.id) > 0 ? 0.9 : 0.2
+    else {
+      const dx = wrapDelta(b.x - game.ch.x, game.world.w)
+      const dy = b.y - game.ch.y
+      // a firefly: on for 1.4 s, then dark until the next blink; steady next to you
+      const period = 2.6 + (b.id % 4) * 0.4
+      const phase = (time + b.id * 0.77) % period
+      on = dx * dx + dy * dy <= 2 ? 1 : phase < 1.4 ? Math.sin((Math.PI * phase) / 1.4) : 0
+    }
+    const [r, g, bl] = b.den ? TAMED : WILD
+    const cx = sx(x)
+    const cy = sy(y)
+    const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, tp * 1.1)
+    halo.addColorStop(0, `rgba(${r},${g},${bl},${0.35 * on})`)
+    halo.addColorStop(1, `rgba(${r},${g},${bl},0)`)
+    ctx.fillStyle = halo
+    ctx.fillRect(cx - tp * 1.1, cy - tp * 1.1, tp * 2.2, tp * 2.2)
+    ctx.fillStyle = `rgba(${r},${g},${bl},${0.15 + 0.85 * on})`
+    ctx.fillRect(Math.round(cx - core / 2), Math.round(cy - core / 2), core, core)
+  }
+}
+
+/** A step in x, the short way round the wrap. @param {number} d @param {number} w */
+const wrapDelta = (d, w) => d - w * Math.round(d / w)
 
 // The backpack on the character's back (D038): 2 slots wide, filled bottom to top; each slot a 4×4
 // grid of units filled row by row from the bottom. Mirrored with the facing: slot 1 is always at

@@ -22,6 +22,9 @@
 //
 // Without the teleport (D055, `teleport: false`): the command does nothing, a deep fall just lands, and
 // stepping onto the home cell with something in the pack counts it in (event `home`).
+//
+// Moon bugs (D056, D059), only when the config has `bugs`: bugs.js, each tick before the light (a
+// nibble changes the pack). A probe ring scares the wild bugs it passes.
 
 import { isFloor, isOpen, Tile } from '../gen/world.js'
 import { digTicks, stopReason, tileAt } from './rules.js'
@@ -29,6 +32,7 @@ import { add, fits, MATERIAL_NAME, material, rock, spendRock, valuable } from '.
 import { interpret } from './ruleset.js'
 import { litCells, lightRadius, surfaceCells } from './light.js'
 import { PROBE, probeReach, ringCells } from './probe.js'
+import { scare, updateBugs } from './bugs.js'
 
 /** @typedef {import('../gen/world.js').World} World */
 /** @typedef {import('./rules.js').Action} Action */
@@ -51,8 +55,11 @@ import { PROBE, probeReach, ringCells } from './probe.js'
  *   | { type: 'teleport', from: Cell, dive: Dive | null }
  *   | { type: 'home', dive: Dive | null }
  *   | { type: 'seen', cells: number[] }
- *   | { type: 'ring', x: number, y: number, r: number }} GameEvent seen: cells (y * w + x) seen for the first time, for a renderer's
- *   texture; ring: the probe from (x, y) reached ring r (D053)
+ *   | { type: 'ring', x: number, y: number, r: number }
+ *   | { type: 'nibble', id: number, x: number, y: number, from: Cell }
+ *   | { type: 'tamed', id: number, x: number, y: number }} GameEvent seen: cells (y * w + x) seen for the first time, for a renderer's
+ *   texture; ring: the probe from (x, y) reached ring r (D053); nibble: wild bug `id` at (x, y) ate an ore from the pack,
+ *   carried from `from` (D056); tamed: it has eaten enough, and (x, y) is its den
  */
 
 /**
@@ -115,6 +122,10 @@ import { PROBE, probeReach, ringCells } from './probe.js'
  * @property {number[]} surface the cells always lit: the sky and the ground's top faces, as at the start
  * @property {{ x: number, y: number, r: number }} litFor what `lit` was computed for; r = -1 after the world changed
  * @property {ProbeState | null} probe the seismic probe in progress (D053); you don't move while it's there
+ * @property {import('./bugs.js').Bug[]} bugs wild and tamed (D056); none without `cfg.bugs`
+ * @property {number} nextBug the next bug's id
+ * @property {import('./bugs.js').Field | null} bugField the bugs' way to you, cached
+ * @property {number} worldRev counts the ticks that mined or built something
  */
 
 // The generated terrain under a surface strip: sky rows to walk on, solid crust rows, home at x = 0.
@@ -153,6 +164,10 @@ export function createGame(world, home, cfg, table) {
     surface: [],
     litFor: { x: home.x, y: home.y, r: -1 },
     probe: null,
+    bugs: [],
+    nextBug: 1,
+    bugField: null,
+    worldRev: 0,
   }
   if (cfg.light) {
     g.seen = new Uint8Array(world.w * world.h)
@@ -202,6 +217,7 @@ export function tick(g) {
   }
   if (g.probe) spread(g, g.probe)
   else if (!g.step && g.run) next(g)
+  updateBugs(g)
   if (g.seen) updateLight(g)
 }
 
@@ -220,6 +236,7 @@ function spread(g, p) {
 function ring(g, p, r) {
   p.r = r
   reveal(g, ringCells(g.world, p, r))
+  scare(g, p, r)
   g.events.push({ type: 'ring', x: p.x, y: p.y, r })
 }
 
@@ -368,7 +385,10 @@ function sameOutcome(a, b) {
 /** @param {Game} g @param {Action} action */
 function apply(g, action) {
   const { world } = g
-  if (action.digs.length || action.builds.length) g.litFor.r = -1 // the light spreads anew (D051)
+  if (action.digs.length || action.builds.length) {
+    g.litFor.r = -1 // the light spreads anew (D051)
+    g.worldRev++
+  }
   // ore and loot first: the room they were promised (ruleset.js) mustn't go to rock mined alongside
   for (const d of [...action.digs.filter((d) => valuable(d.tile)), ...action.digs.filter((d) => !valuable(d.tile))]) {
     world.tiles[d.y * world.w + d.x] = Tile.Open

@@ -40,10 +40,13 @@ const SCRIPT = [
   [1, 0],
 ]
 
-/** @param {SimConfig['light']} [light] with it, the game keeps a seen map (D052), and the hash covers it */
-function play(caveSeed = DEFAULT_TERRAIN.caveSeed, light) {
+/**
+ * @param {SimConfig['light']} [light] with it, the game keeps a seen map (D052), and the hash covers it
+ * @param {SimConfig['bugs']} [bugs] with them, moon bugs (D056), and the hash covers them
+ */
+function play(caveSeed = DEFAULT_TERRAIN.caveSeed, light, bugs) {
   const { world, home } = withSurface(generateTerrain({ ...DEFAULT_TERRAIN, caveSeed }), 4, 3)
-  const g = createGame(world, home, { ...structuredClone(CFG), ...(light && { light }) }, TABLE)
+  const g = createGame(world, home, { ...structuredClone(CFG), ...(light && { light }), ...(bugs && { bugs }) }, TABLE)
   for (const [dx, dy] of SCRIPT) {
     command(g, { type: 'intent', dx, dy })
     for (let i = 0; i < 300; i++) tick(g)
@@ -52,7 +55,7 @@ function play(caveSeed = DEFAULT_TERRAIN.caveSeed, light) {
   for (let i = 0; i < 300; i++) tick(g)
   const h = createHash('sha256')
   h.update(g.world.tiles)
-  h.update(JSON.stringify({ tick: g.tick, ch: g.ch, pack: g.pack, stash: g.stash, dives: g.dives }))
+  h.update(JSON.stringify({ tick: g.tick, ch: g.ch, pack: g.pack, stash: g.stash, dives: g.dives, bugs: g.bugs }))
   if (g.seen) h.update(g.seen)
   return { hash: h.digest('hex'), g }
 }
@@ -77,6 +80,15 @@ test('with light: same seed + same commands → the same seen map (D052)', () =>
   const surface = a.g.surface.length
   assert.ok(a.g.seen && a.g.seen.reduce((n, v) => n + v, 0) > surface, 'the dive saw more than the surface')
   assert.equal(play().g.seen, null)
+})
+
+test('with bugs: same seed + same commands → the same bugs (D056)', () => {
+  const light = { base: 4, orePer: 16, lootPer: 8 }
+  const bugs = { max: 3, spawnTicks: 60, moveTicks: 4, seek: 20, nibbleTicks: 10, tame: 2, scareTicks: 60, den: 12, despawn: 28 }
+  const a = play(DEFAULT_TERRAIN.caveSeed, light, bugs)
+  const b = play(DEFAULT_TERRAIN.caveSeed, light, bugs)
+  assert.equal(a.hash, b.hash)
+  assert.ok(a.g.nextBug > 1, 'some bugs appeared')
 })
 
 test('a different seed → a different state (the hash covers the world)', () => {

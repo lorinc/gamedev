@@ -55,15 +55,17 @@ export function count(pack, tile) {
 export const rock = (pack) => count(pack, Tile.Soft) + count(pack, Tile.Hard)
 
 /** Takes one rock unit for a build, soft before hard. False when there's none. @param {Pack} pack */
-export function spendRock(pack) {
-  for (const tile of [Tile.Soft, Tile.Hard])
-    for (let i = pack.length - 1; i >= 0; i--) {
-      const s = pack[i]
-      if (s && s.tile === tile) {
-        if (--s.n === 0) pack[i] = null
-        return true
-      }
+export const spendRock = (pack) => take(pack, Tile.Soft) || take(pack, Tile.Hard)
+
+/** Takes one unit of `tile`, from the last slot holding it (a wild bug's nibble, D056). False when there's none. @param {Pack} pack @param {number} tile */
+export function take(pack, tile) {
+  for (let i = pack.length - 1; i >= 0; i--) {
+    const s = pack[i]
+    if (s && s.tile === tile) {
+      if (--s.n === 0) pack[i] = null
+      return true
     }
+  }
   return false
 }
 

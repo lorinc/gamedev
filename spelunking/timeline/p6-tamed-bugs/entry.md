@@ -55,7 +55,11 @@ Built in steps, one per session (user, 2026-09-25): 0 + 1 · 2 · 3 · 3b + 4.
 - **Home:** stepping onto the home cell with anything in the pack counts it in and shows the dive log; the pack empties and the light goes back to base.
 - **Tests:** 3 probe tests and 5 walk-home tests on ASCII maps; b2.1 still probes around you and teleports after a deep fall.
 
-Claude's calls, not discussed:
+**Wild bugs (step 2, D059):** ruleset `b3.2` = b3.1 + `bugs` numbers. Wild moon bugs appear in the dark, drift to you through open cells, and nibble ore (never loot) from your pack, with an ore flying into them and a heart popping. The 16th ore tames one where it is, and it turns warm amber (wild ones are cool blue). A probe ring scares them off for 4 s. No wild bug comes within 12 tiles of a tamed one. Tamed bugs just stay at their den for now (step 3 puts them to work). The Claude's calls are listed in D059.
+- **Tests:** 8 bug tests on ASCII maps (drift, nibble and taming, never loot, the probe's scare, the wander and despawn, where they appear, den areas kept clear, none in b3.1), plus a determinism test with bugs.
+- **Screenshots** (local, `gallery/p6/`, not in the repo): a nibble with its heart, a taming, and a tamed bug at its den with wild ones blinking out in the dark.
+
+Claude's calls in step 1, not discussed:
 - Only the home cell counts the pack in, and only when there's something in it, so walking past home logs no empty dives.
 - Home is a plain orange pod, 2 tiles wide, since you walk back to it now.
 - A long press does nothing in b3 (no ring), and Numpad 5 is a tap only (stop).

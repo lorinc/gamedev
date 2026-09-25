@@ -1,5 +1,5 @@
 // b3 · Tamed Bugs (forked from b2.1, p6): wires sim + input + render + juice + dev panel. Fixed 60 Hz sim, render interpolates.
-// The rules come from a ruleset: rules/b3.1.json, or with ?rules=lab the one the Rule Lab (v4.html)
+// The rules come from a ruleset: rules/b3.2.json, or with ?rules=lab the one the Rule Lab (v4.html)
 // saved in this browser.
 
 import { command, createGame, tick, withSurface } from '../../sim/dig/game.js'
@@ -32,9 +32,9 @@ async function loadRuleset() {
     } catch {
       // no storage or bad JSON: the default ruleset
     }
-    alert('No Rule Lab ruleset saved in this browser: playing rules/b3.1.json')
+    alert('No Rule Lab ruleset saved in this browser: playing rules/b3.2.json')
   }
-  return migrate(await (await fetch('rules/b3.1.json', { cache: 'no-cache' })).json())
+  return migrate(await (await fetch('rules/b3.2.json', { cache: 'no-cache' })).json())
 }
 
 loadRuleset().then((ruleset) => {
@@ -272,6 +272,7 @@ function start(ruleset, table) {
       `dpr ${r.dpr} · ${innerWidth}×${innerHeight} css · tile ${r.tilePx} px`,
       `pos ${ch.x},${ch.y} · depth ${ch.y - home.y}${game.seen ? ` · light r ${game.radius}` : ''} · ${run ? `run ${run.dx},${run.dy}` : 'idle'}${step ? ` · ${step.action.kind}` : ''}${game.probe ? ` · probe ${game.probe.r}/${game.probe.min}-${game.probe.max}` : ''}`,
       `home: ${got(game.stash)} · dives ${game.dives.length}`,
+      `bugs: ${game.bugs.filter((b) => !b.den).length} wild, ${game.bugs.filter((b) => b.den).length} tamed`,
       '` or tap the top-left corner: close',
     ].join('\n')
   }
