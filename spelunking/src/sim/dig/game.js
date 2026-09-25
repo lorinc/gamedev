@@ -3,6 +3,7 @@
 
 import { isOpen, Tile } from '../gen/world.js'
 import { digTicks, stopReason, tileAt } from './rules.js'
+import { add, fits, MATERIAL_NAME, material, rock, spendRock, valuable } from './pack.js'
 import { interpret } from './ruleset.js'
 
 /** @typedef {import('../gen/world.js').World} World */
@@ -10,6 +11,7 @@ import { interpret } from './ruleset.js'
 /** @typedef {import('./rules.js').Cell} Cell */
 /** @typedef {import('./rules.js').SimConfig} SimConfig */
 /** @typedef {import('./ruleset.js').Table} Table */
+/** @typedef {import('./pack.js').Pack} Pack */
 
 /**
  * @typedef {{ type: 'intent', dx: number, dy: number } | { type: 'stop' } | { type: 'teleport' }} Command
@@ -17,7 +19,7 @@ import { interpret } from './ruleset.js'
 
 /**
  * @typedef {{ type: 'step', action: Action, fresh: boolean }
- *   | { type: 'mined', x: number, y: number, tile: number }
+ *   | { type: 'mined', x: number, y: number, tile: number, kept: boolean }
  *   | { type: 'built', x: number, y: number }
  *   | { type: 'stop', reason: string, dx: number, dy: number, tried: Cell[], rule?: Action['rule'], next: Action['kind'] }
  *   | { type: 'abort' }
@@ -40,13 +42,14 @@ import { interpret } from './ruleset.js'
  * @property {number} n
  * @property {number} startTick
  * @property {number} ticks
- * @property {number} ore
- * @property {number} loot
+ * @property {Stash} got what it brought home
  * @property {number} depth deepest tile below home
  * @property {number} mined
  * @property {number} built
  * @property {Record<string, number>} stops
  */
+
+/** @typedef {{ soft: number, hard: number, ore: number, loot: number }} Stash */
 
 /**
  * @typedef {object} Game
@@ -58,12 +61,8 @@ import { interpret } from './ruleset.js'
  * @property {Cell} home
  * @property {{ dx: number, dy: number, prev: Action | null } | null} run the current intent
  * @property {Step | null} step
- * @property {number[]} pack Tile.Ore / Tile.Loot items
- *   TODO (Lorinc, 2026-09-25 feedback on b1.2): the pack is too limiting for this game's scale.
- *   Collect all 4 materials (soft, hard, ore, loot), stacking 32 per slot: pack becomes
- *   slots of { tile, count }, a dig adds to a matching stack below 32 or opens a new slot.
- * @property {number} credit tiles we can still build from ore already spent
- * @property {{ ore: number, loot: number }} stash counted at home
+ * @property {Pack} pack every material mined, in slots (pack.js)
+ * @property {Stash} stash counted at home
  * @property {Dive | null} dive
  * @property {Dive[]} dives
  * @property {Command[]} queue
@@ -94,8 +93,7 @@ export function createGame(world, home, cfg, table) {
     run: null,
     step: null,
     pack: [],
-    credit: 0,
-    stash: { ore: 0, loot: 0 },
+    stash: { soft: 0, hard: 0, ore: 0, loot: 0 },
     dive: null,
     dives: [],
     queue: [],
@@ -148,8 +146,8 @@ function next(g) {
   const run = /** @type {NonNullable<Game['run']>} */ (g.run)
   const { ch, cfg, world } = g
   const inv = {
-    free: cfg.packSlots - g.pack.length,
-    buildable: g.credit + g.pack.filter((t) => t === Tile.Ore).length * cfg.tilesPerOre,
+    fits: (/** @type {number[]} */ tiles) => fits(g.pack, cfg.packSlots, tiles),
+    buildable: rock(g.pack),
   }
   const action = interpret(g.table, world, ch, run.dx, run.dy, ch.facing, cfg, inv)
   const reason = run.prev
@@ -179,18 +177,15 @@ function next(g) {
 /** @param {Game} g @param {Action} action */
 function apply(g, action) {
   const { world } = g
-  for (const d of action.digs) {
+  // ore and loot first: the room they were promised (ruleset.js) mustn't go to rock mined alongside
+  for (const d of [...action.digs.filter((d) => valuable(d.tile)), ...action.digs.filter((d) => !valuable(d.tile))]) {
     world.tiles[d.y * world.w + d.x] = Tile.Open
-    if (d.tile === Tile.Ore || d.tile === Tile.Loot) g.pack.push(d.tile)
+    const kept = add(g.pack, g.cfg.packSlots, material(d.tile)) // rock with no room is dropped (D038)
     if (g.dive) g.dive.mined++
-    g.events.push({ type: 'mined', x: d.x, y: d.y, tile: d.tile })
+    g.events.push({ type: 'mined', x: d.x, y: d.y, tile: d.tile, kept })
   }
   for (const b of action.builds) {
-    if (g.credit === 0) {
-      g.pack.splice(g.pack.indexOf(Tile.Ore), 1)
-      g.credit = g.cfg.tilesPerOre
-    }
-    g.credit--
+    spendRock(g.pack)
     world.tiles[b.y * world.w + b.x] = b.tile ?? Tile.Built
     if (g.dive) g.dive.built++
     g.events.push({ type: 'built', x: b.x, y: b.y })
@@ -238,14 +233,11 @@ function teleport(g) {
   const dive = g.dive
   if (dive) {
     dive.ticks = g.tick - dive.startTick
-    dive.ore = g.pack.filter((t) => t === Tile.Ore).length
-    dive.loot = g.pack.filter((t) => t === Tile.Loot).length
-    g.stash.ore += dive.ore
-    g.stash.loot += dive.loot
+    for (const s of g.pack) if (s) dive.got[/** @type {keyof Stash} */ (MATERIAL_NAME[s.tile])] += s.n
+    for (const [k, n] of Object.entries(dive.got)) g.stash[/** @type {keyof Stash} */ (k)] += n
     g.dives.push(dive)
   }
   g.pack = []
-  g.credit = 0
   g.dive = null
   g.run = null
   g.step = null
@@ -256,5 +248,5 @@ function teleport(g) {
 
 /** @param {Game} g @returns {Dive} */
 function newDive(g) {
-  return { n: g.dives.length + 1, startTick: g.tick, ticks: 0, ore: 0, loot: 0, depth: 0, mined: 0, built: 0, stops: {} }
+  return { n: g.dives.length + 1, startTick: g.tick, ticks: 0, got: { soft: 0, hard: 0, ore: 0, loot: 0 }, depth: 0, mined: 0, built: 0, stops: {} }
 }

@@ -9,6 +9,7 @@
 // No DOM here: tools/replay.js runs it in Node.
 
 import { LEGEND } from '../../sim/dig/examples.js'
+import { packText } from '../../sim/dig/pack.js'
 import { INTENTS, intentOf } from '../../sim/dig/ruleset.js'
 import { Tile } from '../../sim/gen/world.js'
 
@@ -53,7 +54,7 @@ export function createRecorder(game, info) {
   const cmds = [[0, 'cfg', structuredClone(game.cfg)]]
   /**
    * @typedef {{ n: number, tick: number, how: string, arrow: string, intent: string, from: { x: number, y: number }, facing: number,
-   *   pack: number[], credit: number, map: string[], at: [number, number] | null, steps: string[], end: string, stopAt: [number, number] | null, stop: string | null }} Swipe
+   *   pack: string[], map: string[], at: [number, number] | null, steps: string[], end: string, stopAt: [number, number] | null, stop: string | null }} Swipe
    */
   /** @type {Swipe[]} */
   const swipes = []
@@ -104,8 +105,7 @@ export function createRecorder(game, info) {
           intent: `the ${INTENTS[intentOf(cmd.dx, cmd.dy)]} rows`,
           from: { x, y },
           facing: cmd.dx ? Math.sign(cmd.dx) : game.ch.facing,
-          pack: game.pack.slice(),
-          credit: game.credit,
+          pack: packText(game.pack),
           map: snip.rows,
           at: [x - snip.x0, y - snip.y0],
           steps: [],
@@ -150,13 +150,13 @@ export function createRecorder(game, info) {
       const g = game
       const lines = [
         `b1 bug report · ${info.build} · rules ${info.ruleset.name} · preset ${info.preset()} · tick ${g.tick}`,
-        `now: at ${pos(g.ch)} facing ${g.ch.facing > 0 ? '→' : '←'} · pack [${g.pack.map((t) => (t === Tile.Ore ? 'ore' : 'loot'))}] · credit ${g.credit}${g.run ? ` · running ${ARROW[`${g.run.dx},${g.run.dy}`]}` : ''}`,
+        `now: at ${pos(g.ch)} facing ${g.ch.facing > 0 ? '→' : '←'} · pack [${packText(g.pack).join(', ')}]${g.run ? ` · running ${ARROW[`${g.run.dx},${g.run.dy}`]}` : ''}`,
         '',
         `Last ${swipes.length} swipes, oldest first:`,
       ]
       for (const s of swipes) {
         lines.push(
-          `#${s.n} tick ${s.tick} · ${s.how} → ${s.arrow} (${s.intent}) · from ${pos(s.from)} facing ${s.facing > 0 ? '→' : '←'} · pack [${s.pack.map((t) => (t === Tile.Ore ? 'ore' : 'loot'))}] credit ${s.credit}`,
+          `#${s.n} tick ${s.tick} · ${s.how} → ${s.arrow} (${s.intent}) · from ${pos(s.from)} facing ${s.facing > 0 ? '→' : '←'} · pack [${s.pack.join(', ')}]`,
         )
         const steps =
           s.steps.length > 12 ? [...s.steps.slice(0, 5), `… ${s.steps.length - 10} more steps …`, ...s.steps.slice(-5)] : s.steps
@@ -173,8 +173,7 @@ export function createRecorder(game, info) {
           map: last.map,
           swipes: [{ swipe: last.arrow, stop: last.stop ?? '?', ...(last.stopAt ? { at: last.stopAt } : {}) }],
         }
-        if (last.pack.length || last.credit)
-          example.start = { pack: last.pack.map((t) => (t === Tile.Ore ? 'ore' : 'loot')), credit: last.credit }
+        if (last.pack.length) example.start = { pack: last.pack }
         lines.push('', `EXAMPLE ${JSON.stringify(example)}`)
       }
       const replay = { v: 1, build: info.build, world: startHash, ruleset: info.ruleset, at: g.tick, cmds }

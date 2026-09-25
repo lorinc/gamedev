@@ -5,7 +5,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { command, createGame, tick, withSurface } from '../src/sim/dig/game.js'
-import { compile } from '../src/sim/dig/ruleset.js'
+import { compile, migrate } from '../src/sim/dig/ruleset.js'
 import { DEFAULT_TERRAIN, generateTerrain } from '../src/sim/gen/terrain.js'
 import { createRecorder, worldHash } from '../src/bundles/b1/report.js'
 
@@ -20,7 +20,8 @@ export function replay(text) {
   const problems = []
   const { world, home } = withSurface(generateTerrain(DEFAULT_TERRAIN), 4, 3)
   if (worldHash(world.tiles) !== r.world) problems.push(`the world differs from the report's (${r.world}): the terrain changed since`)
-  const { table, errors } = compile(r.ruleset)
+  // a report from before b1.5 compiles, but pays for builds in rock now (D038): expect it to differ
+  const { table, errors } = compile(migrate(r.ruleset))
   if (!table) return { report: '', same: false, problems: [...problems, ...errors] }
   const g = createGame(world, home, structuredClone(r.cmds[0][2]), table)
   const preset = text.match(/ · preset (\w+)/)?.[1] ?? '?'

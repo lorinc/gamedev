@@ -11,8 +11,7 @@ export const DEFAULTS = {
     buildTicks: 14,
     digTicks: { soft: 14, hard: 42, ore: 21, loot: 14, built: 7 }, // + walkTicks to step in: soft = 3× a walk
     harmlessDrop: 4,
-    packSlots: 4, // TODO (2026-09-25 feedback): 32 per slot and all 4 materials: see Game.pack in sim/dig/game.js
-    tilesPerOre: 12,
+    packSlots: 6, // of 16 units each (sim/dig/pack.js)
     gravity: false, // rulesets from b1.3 on turn it on
     rules: { wall: true, open: true, harder: true, loot: true, junction: true },
   },
@@ -45,7 +44,7 @@ export const RANGES = {
   'sim.walkTicks': [2, 30, 1],
   'sim.climbTicks': [2, 40, 1],
   'sim.harmlessDrop': [0, 8, 1],
-  'sim.packSlots': [3, 5, 1],
+  'sim.packSlots': [1, 6, 1],
   'input.swipePx': [8, 80, 1],
   'input.horizontalDeg': [10, 45, 1],
   'input.verticalDeg': [10, 45, 1],

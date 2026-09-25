@@ -1,7 +1,7 @@
 // Canvas2D view of the game: the world as a 1-px-per-tile canvas scaled up with nearest-neighbour,
-// a camera that follows with lookahead, the character, debris, the pack strip and the charge ring,
-// the swipe cue (a white disc beside the character showing what it attempts; red when refused)
-// and the red "can't do" flash of the pack when an action is refused for lack of ore or pack space.
+// a camera that follows with lookahead, the character with the backpack on its back, debris and the
+// charge ring, the swipe cue (a white disc beside the character showing what it attempts; red when
+// refused) and the red "can't do" flash of the pack when an action is refused for lack of rock or pack space.
 
 import { TILE_RGB } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
@@ -157,6 +157,7 @@ export function createRenderer(canvas, game, t, juice) {
       ctx.fillStyle = BG // an eye on the facing side, so direction reads
       const eye = Math.max(2, Math.round(tp * 0.14))
       ctx.fillRect(Math.round(cx + game.ch.facing * cw * 0.18 - eye / 2), Math.round(cy - chh * 0.75), eye, eye)
+      drawPack(ctx, game, cx, cy, cw, chh, tp, failA)
 
       for (const c of juice.chunks) {
         ctx.fillStyle = c.color
@@ -171,7 +172,6 @@ export function createRenderer(canvas, game, t, juice) {
         drawCue(ctx, cx + cue.dx * d, cy - chh / 2 + cue.dy * d, Math.max(9 * dpr, tp * 0.45), cue, cue.left / CUE_S)
       }
 
-      drawPack(ctx, game, W, H, dpr, failA)
 
       if (homing > 0) charge = { p: homing, x: null, y: null }
       if (charge && charge.p > 0.12) {
@@ -188,29 +188,50 @@ export function createRenderer(canvas, game, t, juice) {
   }
 }
 
-// The only persistent on-screen element: pack slots along the bottom edge.
+// The backpack on the character's back (D038): 2 slots wide, filled bottom to top; each slot a 4×4
+// grid of units filled row by row from the bottom. Mirrored with the facing: slot 1 is always at
+// the bottom, on the outer side. One unit is 1/12 of a tile.
+// TODO (2026-09-25): zoomed out, the pack should scale up past the character's proportions to stay legible.
+const PACK_COLS = 2
+const SLOT_SIDE = 4 // √SLOT
+const PACK_FRAME = '#8a7a5a'
+const PACK_EMPTY = '#121216'
 /**
- * @param {CanvasRenderingContext2D} ctx @param {Game} game @param {number} W @param {number} H @param {number} dpr
- * @param {number} failA alpha of the red "can't do" flash over the whole strip, 0 = none
+ * @param {CanvasRenderingContext2D} ctx @param {Game} game
+ * @param {number} cx @param {number} cy the character's bottom centre, device px
+ * @param {number} cw @param {number} chh its drawn width and height @param {number} tp tile px
+ * @param {number} failA alpha of the red "can't do" flash over the pack, 0 = none
  */
-function drawPack(ctx, game, W, H, dpr, failA) {
-  const slots = game.cfg.packSlots
-  const s = Math.round(26 * dpr)
-  const gap = Math.round(6 * dpr)
-  const x0 = Math.round(W / 2 - (slots * (s + gap) - gap) / 2)
-  const y = H - s - Math.round(14 * dpr)
-  for (let i = 0; i < slots; i++) {
-    const x = x0 + i * (s + gap)
-    ctx.fillStyle = '#000' // opaque, so world tiles behind never read as items
-    ctx.fillRect(x - dpr, y - dpr, s + 2 * dpr, s + 2 * dpr)
-    const item = game.pack[i]
-    ctx.fillStyle = item === undefined ? '#333' : css(TILE_RGB[/** @type {Tile} */ (item)])
-    const inset = item === undefined ? s / 2 - dpr : 3 * dpr
-    ctx.fillRect(x + inset, y + inset, s - 2 * inset, s - 2 * inset)
+function drawPack(ctx, game, cx, cy, cw, chh, tp, failA) {
+  const f = game.ch.facing
+  const rows = Math.ceil(game.cfg.packSlots / PACK_COLS)
+  const u = Math.max(1, Math.round(tp / 12))
+  const gap = Math.max(1, Math.round(u / 2))
+  const side = SLOT_SIDE * u
+  const w = PACK_COLS * side + (PACK_COLS + 1) * gap
+  const h = rows * side + (rows + 1) * gap
+  // it overlaps the back edge of the body a little
+  const inner = cx - f * (cw / 2 - cw * 0.15)
+  const x0 = Math.round(f > 0 ? inner - w : inner)
+  const y0 = Math.round(cy - chh * 0.9)
+  // local x runs from the outer edge toward the body
+  const fill = (/** @type {number} */ lx, /** @type {number} */ ly, /** @type {number} */ lw, /** @type {number} */ lh) =>
+    ctx.fillRect(f > 0 ? x0 + lx : x0 + w - lx - lw, y0 + ly, lw, lh)
+  ctx.fillStyle = PACK_FRAME
+  fill(0, 0, w, h)
+  for (let i = 0; i < game.cfg.packSlots; i++) {
+    const sx = gap + (i % PACK_COLS) * (side + gap)
+    const sy = h - (Math.floor(i / PACK_COLS) + 1) * (side + gap) // slot 1 at the bottom
+    ctx.fillStyle = PACK_EMPTY
+    fill(sx, sy, side, side)
+    const slot = game.pack[i]
+    if (!slot) continue
+    ctx.fillStyle = css(TILE_RGB[/** @type {Tile} */ (slot.tile)])
+    for (let k = 0; k < slot.n; k++) fill(sx + (k % SLOT_SIDE) * u, sy + side - (Math.floor(k / SLOT_SIDE) + 1) * u, u, u)
   }
   if (failA > 0) {
     ctx.fillStyle = `rgba(255,40,40,${failA})`
-    ctx.fillRect(x0 - 3 * dpr, y - 3 * dpr, slots * (s + gap) - gap + 6 * dpr, s + 6 * dpr)
+    fill(-gap, -gap, w + 2 * gap, h + 2 * gap)
   }
 }
 

@@ -3,9 +3,10 @@ import { readFileSync } from 'node:fs'
 import { describe, test } from 'node:test'
 import { Tile } from '../gen/world.js'
 import { command, createGame, tick, withSurface } from './game.js'
-import { compile } from './ruleset.js'
+import { packText } from './pack.js'
+import { compile, migrate } from './ruleset.js'
 
-const TABLE = compile(JSON.parse(readFileSync(new URL('../../../rules/b1.2.json', import.meta.url), 'utf8'))).table
+const TABLE = compile(migrate(JSON.parse(readFileSync(new URL('../../../rules/b1.2.json', import.meta.url), 'utf8')))).table
 
 /** @type {import('./rules.js').SimConfig} */
 const CFG = {
@@ -16,7 +17,6 @@ const CFG = {
   digTicks: { soft: 3, hard: 9, ore: 4, loot: 3, built: 2 },
   harmlessDrop: 4,
   packSlots: 2,
-  tilesPerOre: 12,
   rules: { wall: true, open: true, harder: true, loot: true, junction: false },
 }
 
@@ -61,27 +61,27 @@ const map = (g) => {
 }
 
 // The map tests (walking, mining, ledges, building, junctions) are examples now: rules/examples.json,
-// run by examples.test.js. These check what an example can't: credit, tried cells, dives.
+// run by examples.test.js. These check what an example can't: tried cells, dropped rock, dives.
 
 describe('building', () => {
-  test('diagonal up into air builds a staircase, paid in ore', () => {
+  test('diagonal up into air builds a staircase, 1 rock per step (D038)', () => {
     const g = game([
       '#.....#', // the top of the world: bedrock above
       '#.#...#',
       '#@o...#',
       '#######',
     ])
+    g.pack = [{ tile: Tile.Soft, n: 3 }]
     assert.equal(swipe(g, 1, 0), 'open') // a swipe into ore mines it at once, then the cave opens up
-    assert.deepEqual(g.pack, [Tile.Ore])
-    assert.equal(swipe(g, 1, -1), 'bedrock') // mined the headroom, built two steps, hit the top
+    assert.deepEqual(packText(g.pack), ['soft 3', 'ore 1'])
+    assert.equal(swipe(g, 1, -1), 'bedrock') // mined the headroom (+1 soft), built two steps (-2), hit the top
     assert.deepEqual(map(g), [
       '#...@.#', //
       '#...=.#',
       '#..=..#',
       '#######',
     ])
-    assert.deepEqual(g.pack, [])
-    assert.equal(g.credit, CFG.tilesPerOre - 2)
+    assert.deepEqual(packText(g.pack), ['soft 2', 'ore 1']) // ore never pays for building
   })
 
   test('a refused build or mine reports the cells it tried (for the red flash)', () => {
@@ -96,14 +96,41 @@ describe('building', () => {
       assert.fail('run never stopped')
     }
     const build = stopOf(game(['#####', '#...#', '#@..#', '#####']), 1, -1)
-    assert.deepEqual([build.reason, build.tried], ['noOre', [{ x: 2, y: 2 }]]) // the step it would build
+    assert.deepEqual([build.reason, build.tried], ['noRock', [{ x: 2, y: 2 }]]) // the step it would build
     const g = game(['#########', '#@#oo$###', '#########'])
-    stopOf(g, 1, 0)
-    stopOf(g, 1, 0)
-    assert.equal(stopOf(g, 1, 0).reason, 'loot') // the run stops before the loot anyway: quietly (D030)
+    stopOf(g, 1, 0) // soft → slot 1
+    stopOf(g, 1, 0) // ore → slot 2
+    assert.equal(stopOf(g, 1, 0).reason, 'loot') // ore stacks in slot 2; the run stops before the loot anyway: quietly (D030)
+    assert.deepEqual(packText(g.pack), ['soft 1', 'ore 2'])
     const full = stopOf(g, 1, 0)
     assert.deepEqual([full.reason, full.tried], ['packFull', [{ x: 5, y: 1 }]]) // the loot it couldn't take
     assert.deepEqual(stopOf(game(['#####', '#.@.#', '#####', '#####']), 0, 1).tried, []) // other stops: none
+  })
+})
+
+describe('the pack', () => {
+  test('rock with no room is dropped; mining goes on (D038)', () => {
+    const g = game(['#########', '#@#HH###.', '#########'], { ...CFG, packSlots: 1 })
+    assert.equal(swipe(g, 1, 0), 'harder')
+    assert.equal(swipe(g, 1, 0), 'open') // the hard rock had no slot: mined and dropped
+    assert.deepEqual(packText(g.pack), ['soft 4'])
+  })
+
+  test('a slot holds 16 of one material; the next unit opens a new slot', () => {
+    const g = game(['#'.repeat(22), '#@' + '#'.repeat(18) + 'H#', '#'.repeat(22)], { ...CFG, packSlots: 3 })
+    g.pack = [{ tile: Tile.Soft, n: 15 }, { tile: Tile.Ore, n: 1 }]
+    assert.equal(swipe(g, 1, 0), 'harder') // 18 soft: 1 tops up slot 1, 16 fill slot 3, the last is dropped
+    assert.deepEqual(packText(g.pack), ['soft 16', 'ore 1', 'soft 16'])
+  })
+
+  test('building spends soft before hard, from the last slot; mining a built tile gives soft back', () => {
+    const g = game(['#.....#', '#.....#', '#@....#', '#######'], { ...CFG, packSlots: 3 })
+    g.pack = [{ tile: Tile.Hard, n: 5 }, { tile: Tile.Soft, n: 1 }, { tile: Tile.Ore, n: 1 }]
+    assert.equal(swipe(g, 1, -1), 'bedrock') // two steps: the first paid in soft, the second in hard
+    assert.deepEqual(packText(g.pack), ['hard 4', '-', 'ore 1']) // the emptied slot is free, in place
+    const mined = game(['#####', '#@=.#', '#####'], { ...CFG, packSlots: 3 })
+    swipe(mined, 1, 0)
+    assert.deepEqual(packText(mined.pack), ['soft 1'])
   })
 })
 
@@ -112,12 +139,14 @@ describe('dives', () => {
     const { world, home } = withSurface({ w: 8, h: 4, tiles: new Uint8Array(32).fill(Tile.Ore) }, 2, 1)
     const g = createGame(world, home, { ...CFG }, TABLE)
     assert.equal(swipe(g, 1, 1), 'loot') // a stair step through the crust, then ore ahead
-    assert.equal(swipe(g, 1, 1), 'loot') // took one ore; the next step holds 2 ore: the loot stop, quietly (D030)
-    assert.equal(swipe(g, 1, 1), 'packFull') // asked again: 2 ore, 1 slot free
+    assert.equal(swipe(g, 1, 1), 'loot') // took one ore; the next step holds 2 ore: the loot stop
+    assert.deepEqual(packText(g.pack), ['soft 2', 'ore 1'])
     command(g, { type: 'teleport' })
     tick(g)
     assert.deepEqual(pos(g), [home.x, home.y])
-    assert.deepEqual(g.stash, { ore: 1, loot: 0 })
+    assert.deepEqual(g.pack, [])
+    assert.deepEqual(g.stash, { soft: 2, hard: 0, ore: 1, loot: 0 })
+    assert.deepEqual(g.dives[0].got, g.stash)
     assert.equal(g.dives.length, 1)
     assert.equal(g.dives[0].mined, 3)
     assert.equal(g.dives[0].depth, 2)

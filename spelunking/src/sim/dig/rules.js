@@ -25,10 +25,10 @@ export const BEDROCK = -1
  * @property {(Cell & { tile?: number })[]} builds cells filled (with `tile`, Built if none)
  * @property {number} fall tiles dropped at the end (≤ harmlessDrop): stepping off a ledge, or letting go of a climb
  * @property {string} [reason] why it's blocked
- * @property {Cell[]} [tried] blocked for lack of stock (`noOre`, `packFull`): the cells it would have
+ * @property {Cell[]} [tried] blocked for lack of stock (`noRock`, `packFull`): the cells it would have
  *   built or mined, so the view can show "I tried, can't do"
  * @property {{ intent: string, row: number }} [rule] the ruleset row that chose it (ruleset.js)
- * @property {Action} [intended] a `noOre` / `packFull` refusal: the action it would have been (D030)
+ * @property {Action} [intended] a `noRock` / `packFull` refusal: the action it would have been (D030)
  */
 
 /**
@@ -48,13 +48,16 @@ export const BEDROCK = -1
  * @property {number} buildTicks per tile built
  * @property {{ soft: number, hard: number, ore: number, loot: number, built: number }} digTicks per tile mined
  * @property {number} harmlessDrop deepest drop a swipe into a gap (or a climb that runs out of wall) will take
- * @property {number} packSlots
- * @property {number} tilesPerOre tiles built per ore spent
+ * @property {number} packSlots slots of SLOT units each (pack.js)
  * @property {boolean} [gravity] after each step, fall if nothing holds you (floor below, wall left or right); a fall deeper than harmlessDrop lands, then teleports home (D035)
  * @property {Rules} rules
  */
 
-/** @typedef {{ free: number, buildable: number }} Inventory free pack slots, tiles we can afford to build */
+/**
+ * @typedef {object} Inventory
+ * @property {(tiles: number[]) => boolean} fits would this ore / loot fit in the pack
+ * @property {number} buildable rock units in the pack: tiles we can build (1 each)
+ */
 
 /** @param {World} world @param {number} x @param {number} y @returns {number} */
 export function tileAt(world, x, y) {
@@ -132,10 +135,9 @@ export function resolve(world, at, dx, dy, facing, cfg, inv) {
   const done = (base, tx, ty, fall = 0) => {
     const kind = builds.length ? 'build' : digs.length ? 'mine' : base
     const to = { x: wrap(tx, world.w), y: ty + fall }
-    const loot = digs.filter((d) => d.tile === Tile.Ore || d.tile === Tile.Loot).length
-    const lootCells = digs.filter((d) => d.tile === Tile.Ore || d.tile === Tile.Loot).map(({ x, y }) => ({ x, y }))
-    if (loot > inv.free) return { ...blocked('packFull'), tried: lootCells }
-    if (builds.length > inv.buildable) return { ...blocked('noOre'), tried: builds }
+    const loot = digs.filter((d) => d.tile === Tile.Ore || d.tile === Tile.Loot)
+    if (!inv.fits(loot.map((d) => d.tile))) return { ...blocked('packFull'), tried: loot.map(({ x, y }) => ({ x, y })) }
+    if (builds.length > inv.buildable) return { ...blocked('noRock'), tried: builds }
     return { kind, dx, dy, to, digs, builds, fall }
   }
   /** @param {string} reason @returns {Action} */

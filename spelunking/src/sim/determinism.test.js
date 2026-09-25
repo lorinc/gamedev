@@ -8,11 +8,11 @@ import { dirname, join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { command, createGame, tick, withSurface } from './dig/game.js'
-import { compile } from './dig/ruleset.js'
+import { compile, migrate } from './dig/ruleset.js'
 import { DEFAULT_TERRAIN, generateTerrain } from './gen/terrain.js'
 
 const SIM = dirname(fileURLToPath(import.meta.url))
-const TABLE = compile(JSON.parse(readFileSync(join(SIM, '../../rules/b1.2.json'), 'utf8'))).table
+const TABLE = compile(migrate(JSON.parse(readFileSync(join(SIM, '../../rules/b1.2.json'), 'utf8')))).table
 
 /** @type {import('./dig/rules.js').SimConfig} */
 const CFG = {
@@ -23,7 +23,6 @@ const CFG = {
   digTicks: { soft: 3, hard: 9, ore: 4, loot: 3, built: 2 },
   harmlessDrop: 4,
   packSlots: 3,
-  tilesPerOre: 12,
   rules: { wall: true, open: true, harder: true, loot: true, junction: true },
 }
 
@@ -58,7 +57,7 @@ test('same seed + same commands → same state', () => {
   const a = play()
   const b = play()
   assert.equal(a.hash, b.hash)
-  assert.ok(a.g.tick > 0 && (a.g.ch.x !== a.g.home.x || a.g.stash.ore + a.g.stash.loot > 0 || a.g.dives.length > 0), 'the script must actually do something')
+  assert.ok(a.g.tick > 0 && (a.g.ch.x !== a.g.home.x || Object.values(a.g.stash).some((n) => n > 0) || a.g.dives.length > 0), 'the script must actually do something')
 })
 
 test('a different seed → a different state (the hash covers the world)', () => {

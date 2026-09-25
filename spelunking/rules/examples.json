@@ -41,7 +41,7 @@
     },
     {
       "id": "loot-pack",
-      "note": "Tunnelling stops before ore; mining it fills the pack. With the pack full the run still stops before the loot, quietly (D030); asking again refuses (flash).",
+      "note": "Tunnelling stops before ore; mining it fills the pack; the second ore stacks on the first. With both slots taken the run still stops before the loot, quietly (D030); asking again refuses (flash).",
       "numbers": { "packSlots": 2 },
       "map": ["#########", "#@#oo$###", "#########"],
       "swipes": [
@@ -50,7 +50,7 @@
         { "swipe": "→", "stop": "loot", "at": [4, 1] },
         { "swipe": "→", "stop": "packFull", "at": [4, 1] }
       ],
-      "pack": ["ore", "ore"]
+      "pack": ["soft 1", "ore 2"]
     },
     {
       "id": "no-dig-down",
@@ -92,7 +92,7 @@
     },
     {
       "id": "stair-into-chasm",
-      "note": "↘ into a chasm mines but doesn't step off. Carrying on would turn mining into building, so the run stops there quietly (D030); asking again refuses, because building needs ore.",
+      "note": "↘ into a chasm mines but doesn't step off. Carrying on would turn mining into building, so the run stops there quietly (D030); asking again builds on down, paid with the rock just dug (D038).",
       "map": [
         "######",
         "#@####",
@@ -107,14 +107,14 @@
         "##...#",
         "######"
       ],
-      "swipes": [{ "swipe": "↘", "stop": "open", "at": [1, 1] }, { "swipe": "↘", "stop": "noOre", "at": [1, 1] }],
+      "swipes": [{ "swipe": "↘", "stop": "open", "at": [1, 1] }, { "swipe": "↘", "stop": "wall", "at": [4, 4] }],
       "after": [
         "######",
-        "#@.###",
-        "##.###",
-        "##...#",
-        "##...#",
-        "##...#",
+        "#..###",
+        "##..##",
+        "##=..#",
+        "##.=@#",
+        "##..=#",
         "##...#",
         "##...#",
         "##...#",
@@ -125,23 +125,24 @@
     },
     {
       "id": "stair-up",
-      "note": "↗ into air builds a staircase, paid in ore; the top of the world stops it.",
+      "note": "↗ into air builds a staircase, 1 rock per step (the headroom it mines pays too, D038); ore never pays. The top of the world stops it.",
+      "start": { "pack": ["soft 2"] },
       "map": ["#.....#", "#.#...#", "#@o...#", "#######"],
       "swipes": [{ "swipe": "→", "stop": "open" }, { "swipe": "↗", "stop": "bedrock" }],
       "after": ["#...@.#", "#...=.#", "#..=..#", "#######"],
-      "pack": []
+      "pack": ["soft 1", "ore 1"]
     },
     {
-      "id": "no-ore",
-      "note": "Building without ore refuses (flash).",
+      "id": "no-rock",
+      "note": "Building without rock refuses (flash).",
       "map": ["#####", "#...#", "#@..#", "#####"],
-      "swipes": [{ "swipe": "↗", "stop": "noOre", "at": [1, 2] }]
+      "swipes": [{ "swipe": "↗", "stop": "noRock", "at": [1, 2] }]
     },
     {
       "id": "stairs-end",
       "note": "D030 (b1.2 playtest): ↗ walks up an existing staircase; where it ends, going on would mean building, so the run stops quietly (open). No red flash unless you ask again.",
       "map": ["########", "#......#", "###....#", "##..####", "#..#####", "#@######", "########"],
-      "swipes": [{ "swipe": "↗", "stop": "open", "at": [4, 2] }, { "swipe": "↗", "stop": "noOre", "at": [4, 2] }]
+      "swipes": [{ "swipe": "↗", "stop": "open", "at": [4, 2] }, { "swipe": "↗", "stop": "noRock", "at": [4, 2] }]
     },
     {
       "id": "stair-down",
@@ -152,11 +153,12 @@
     },
     {
       "id": "stair-down-air",
-      "note": "Tunnelling into ore over a gap mines it and stays; ↘ into air then builds a floor under the target (paid in ore), and stops where building turns into walking (open).",
+      "note": "Tunnelling into ore over a gap mines it and stays; ↘ into air then builds a floor under the target (paid in rock), and stops where building turns into walking (open).",
+      "start": { "pack": ["soft 1"] },
       "map": ["#######", "#@o...#", "##....#", "##....#", "#######"],
       "swipes": [{ "swipe": "→", "stop": "ledge", "at": [1, 1] }, { "swipe": "↘", "stop": "open", "at": [2, 2] }],
       "after": ["#######", "#.....#", "##@...#", "##=...#", "#######"],
-      "pack": []
+      "pack": ["-", "ore 1"]
     },
     {
       "id": "no-up",

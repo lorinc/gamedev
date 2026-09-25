@@ -78,7 +78,7 @@ export const PLACEABLE = { built: Tile.Built }
 
 /**
  * A meaning runs after its row matched. It may still refuse (bedrock, or its own `reasons`);
- * any meaning refuses with `noOre` / `packFull` when it builds or mines more than you can afford.
+ * any meaning refuses with `noRock` / `packFull` when it builds more than the pack's rock or mines ore / loot it has no room for.
  * @typedef {View & {
  *   dig: (x: number, y: number) => boolean,
  *   build: (x: number, y: number, tile: number) => void,
@@ -192,7 +192,7 @@ export const ALWAYS_STOPS = {
 }
 
 /** Reasons the engine gives on its own: no row matched, the world's edge, the pack. */
-export const ENGINE_REASONS = ['noRule', 'bedrock', 'noOre', 'packFull']
+export const ENGINE_REASONS = ['noRule', 'bedrock', 'noRock', 'packFull']
 
 /** How a refusal shows. `flash`: the cells it tried and the backpack flash red (D027). */
 /** @type {Record<string, string>} */
@@ -221,8 +221,20 @@ export const SIGNALS = {
  * @typedef {{ name: string, rows: Record<Intent, CompiledRow[]>, signals: Record<string, string> }} Table
  */
 
-/** Older rulesets, brought up to RULESET_VERSION. None yet. @param {any} r @returns {Ruleset} */
+/**
+ * Older rulesets, brought up to date. Before b1.5, building was paid in ore (numbers.tilesPerOre,
+ * refusal `noOre`) and the pack held 4 single items; now it's rock, and 6 slots of 16 (D038).
+ * @param {any} r @returns {Ruleset}
+ */
 export function migrate(r) {
+  if (r.numbers && 'tilesPerOre' in r.numbers) {
+    delete r.numbers.tilesPerOre
+    r.numbers.packSlots = 6
+  }
+  if (r.reasons && 'noOre' in r.reasons) {
+    r.reasons.noRock = r.reasons.noOre
+    delete r.reasons.noOre
+  }
   return r
 }
 
@@ -356,11 +368,11 @@ export function interpret(table, world, at, dx, dy, facing, cfg, inv) {
     },
     done(base, tx, ty, fall = 0) {
       const kind = builds.length ? 'build' : digs.length ? 'mine' : base
-      const lootCells = digs.filter((d) => d.tile === Tile.Ore || d.tile === Tile.Loot).map(({ x, y }) => ({ x, y }))
+      const loot = digs.filter((d) => d.tile === Tile.Ore || d.tile === Tile.Loot)
       /** @type {Action} */
       const action = { kind, dx, dy, to: { x: wrap(tx, world.w), y: ty + fall }, digs, builds, fall, rule }
-      if (lootCells.length > inv.free) return { ...blocked('packFull'), tried: lootCells, intended: action }
-      if (builds.length > inv.buildable) return { ...blocked('noOre'), tried: builds.map(({ x, y }) => ({ x, y })), intended: action }
+      if (!inv.fits(loot.map((d) => d.tile))) return { ...blocked('packFull'), tried: loot.map(({ x, y }) => ({ x, y })), intended: action }
+      if (builds.length > inv.buildable) return { ...blocked('noRock'), tried: builds.map(({ x, y }) => ({ x, y })), intended: action }
       return action
     },
     blocked,

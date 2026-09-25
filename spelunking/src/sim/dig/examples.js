@@ -5,6 +5,7 @@
 
 import { Tile } from '../gen/world.js'
 import { command, createGame, tick } from './game.js'
+import { packText, parsePack } from './pack.js'
 
 /** @typedef {import('./ruleset.js').Table} Table */
 /** @typedef {import('./rules.js').SimConfig} SimConfig */
@@ -36,10 +37,10 @@ export const ARROWS = {
  * @property {string[]} map rows of equal width; x wraps, so give maps side walls
  * @property {Swipe[]} swipes made in order, each run to its stop
  * @property {string[]} [after] the map at the end
- * @property {string[]} [pack] the pack at the end ('ore' / 'loot')
+ * @property {string[]} [pack] the pack at the end, one entry per slot: 'soft 3', or '-' for an empty one
  * @property {Partial<Omit<SimConfig, 'rules'>>} [numbers] overrides the ruleset's
  * @property {Partial<SimConfig['rules']>} [stops] overrides the ruleset's
- * @property {{ pack?: string[], credit?: number }} [start] what you carry at the start ('ore' / 'loot'; credit: tiles already paid for)
+ * @property {{ pack?: string[] }} [start] what you carry at the start (like `pack`)
  */
 
 /**
@@ -92,8 +93,7 @@ export function mapRows(world, at) {
 export function runExample(ex, table, cfg) {
   const { world, at } = parseMap(ex.map)
   const g = createGame(world, at, { ...cfg, ...structuredClone(ex.numbers ?? {}), rules: { ...cfg.rules, ...ex.stops } }, table)
-  g.pack = (ex.start?.pack ?? []).map((t) => (t === 'ore' ? Tile.Ore : Tile.Loot))
-  g.credit = ex.start?.credit ?? 0
+  g.pack = parsePack(ex.start?.pack ?? [])
   /** @type {string[]} */
   const problems = []
   const swipes = ex.swipes.map((s, n) => {
@@ -131,7 +131,7 @@ export function runExample(ex, table, cfg) {
   const after = mapRows(g.world, g.ch)
   if (ex.after && after.join('\n') !== ex.after.join('\n'))
     problems.push(`map after: expected\n${ex.after.join('\n')}\ngot\n${after.join('\n')}`)
-  const pack = g.pack.map((t) => (t === Tile.Ore ? 'ore' : 'loot'))
+  const pack = packText(g.pack)
   if (ex.pack && pack.join() !== ex.pack.join()) problems.push(`pack: expected [${ex.pack}], got [${pack}]`)
   return { swipes, after, pack, problems }
 }

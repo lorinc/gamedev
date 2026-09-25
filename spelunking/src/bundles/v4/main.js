@@ -106,7 +106,7 @@ function save() {
 const fetchJson = async (path) => (await fetch(path, { cache: 'no-cache' })).json()
 
 async function load() {
-  rs = migrate(stored(STORE) ?? (await fetchJson('rules/b1.3.json')))
+  rs = migrate(stored(STORE) ?? (await fetchJson('rules/b1.5.json')))
   exFile = stored(EX_STORE) ?? (await fetchJson('rules/examples.json'))
   render()
 }
@@ -152,7 +152,7 @@ function header() {
     button('paste examples', pasteExamples),
     button('paste bug report', pasteReport, "the text b1's 🐞 button copied: its last swipe becomes a draft example"),
     button('copy as Markdown', () => copyText(rulesetMarkdown(rs)), 'the "Rules at close" tables'),
-    button('reset to files', reset, 'reload rules/b1.3.json and rules/examples.json, dropping edits'),
+    button('reset to files', reset, 'reload rules/b1.5.json and rules/examples.json, dropping edits'),
     button('▶ play in b1', () => {
       save()
       open('b1.html?rules=lab', 'b1')
@@ -212,7 +212,7 @@ function pasteExamples() {
 
 async function reset() {
   if (!confirm('Drop all edits here and reload the files?')) return
-  rs = await fetchJson('rules/b1.3.json')
+  rs = await fetchJson('rules/b1.5.json')
   exFile = await fetchJson('rules/examples.json')
   selected = null
   save()
@@ -316,7 +316,7 @@ function rulesPane(errors, uses) {
       h(
         'span',
         { class: 'dim' },
-        'a run of steps goes on until one fires; a refusal always stops (noOre / packFull mid-run give way to the stop the run would make anyway, D030)',
+        'a run of steps goes on until one fires; a refusal always stops (noRock / packFull mid-run give way to the stop the run would make anyway, D030)',
       ),
     ),
   )

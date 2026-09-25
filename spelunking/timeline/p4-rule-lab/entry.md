@@ -88,6 +88,8 @@ The order is swipe > situation > meaning, because "ahead" means the swipe's side
 
 **Deep-fall feedback (D036, after b1.3):** at the bottom of a fall deeper than `harmlessDrop`, the character turns red and the teleport charge ring fills over 0.7 s, then it teleports home.
 
+**The backpack (D038, ruleset b1.5):** the pack strip at the bottom is gone. The character carries a backpack of 6 slots × 16 units (2 wide, 3 tall, each slot a 4×4 grid filling from the bottom), and every material mined goes in. Building costs 1 rock per tile (soft first); ore and loot never pay. With no room, rock is dropped and ore or loot refuse. `rules/b1.5.json` is the default, and `migrate()` brings older rulesets (the Rule Lab's saved one, b1.2 in the tests) up to it. Four examples changed; `stair-into-chasm` now builds on down with the rock it dug.
+
 **Pass criterion, half met:** `rules/b1.2.json` reproduces b1.2 exactly. A D024-style change made in the editor, checked against examples and played in b1 without code has been tried once, by the build check above. It's still open for you.
 
 ## Feedback

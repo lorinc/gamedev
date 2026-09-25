@@ -1,5 +1,5 @@
 // b1 · Dig Feel: wires sim + input + render + juice + dev panel. Fixed 60 Hz sim, render interpolates.
-// The rules come from a ruleset: rules/b1.3.json, or with ?rules=lab the one the Rule Lab (v4.html)
+// The rules come from a ruleset: rules/b1.5.json, or with ?rules=lab the one the Rule Lab (v4.html)
 // saved in this browser.
 
 import { command, createGame, tick, withSurface } from '../../sim/dig/game.js'
@@ -13,6 +13,7 @@ import { createRecorder } from './report.js'
 import { assignDeep, changedFrom, DEFAULTS, presetId, RANGES } from './tunables.js'
 
 /** @typedef {import('../../sim/dig/game.js').Dive} Dive */
+/** @typedef {import('../../sim/dig/game.js').Stash} Stash */
 /** @typedef {import('../../sim/dig/ruleset.js').Ruleset} Ruleset */
 /** @typedef {import('../../sim/dig/ruleset.js').Table} Table */
 
@@ -31,9 +32,9 @@ async function loadRuleset() {
     } catch {
       // no storage or bad JSON: the default ruleset
     }
-    alert('No Rule Lab ruleset saved in this browser: playing rules/b1.3.json')
+    alert('No Rule Lab ruleset saved in this browser: playing rules/b1.5.json')
   }
-  return (await fetch('rules/b1.3.json', { cache: 'no-cache' })).json()
+  return migrate(await (await fetch('rules/b1.5.json', { cache: 'no-cache' })).json())
 }
 
 loadRuleset().then((ruleset) => {
@@ -141,20 +142,23 @@ function start(ruleset, table) {
   // for the browser console and automated checks: read state, never write it
   Object.assign(window, { b1: { game, tunables, ruleset } })
 
+  /** @param {Stash} s 'soft 3 hard 0 ore 1 loot 0' */
+  const got = (s, sep = ' ') => Object.entries(s).map(([k, n]) => `${k} ${n}`).join(sep)
+
   /** @param {Dive} d */
   function diveLine(d) {
     const stops = Object.entries(d.stops)
       .map(([k, n]) => `${k}:${n}`)
       .join(' ')
     const secs = (d.ticks / 60).toFixed(1)
-    return `${BUILD} rules ${ruleset.name} #${d.n} ${secs}s ore ${d.ore} loot ${d.loot} depth ${d.depth} mined ${d.mined} built ${d.built} | ${stops} | preset ${presetId(tunables)}`
+    return `${BUILD} rules ${ruleset.name} #${d.n} ${secs}s ${got(d.got)} depth ${d.depth} mined ${d.mined} built ${d.built} | ${stops} | preset ${presetId(tunables)}`
   }
 
   /** @param {Dive} d */
   function showLog(d) {
     $('log-text').textContent =
-      `Dive ${d.n}: ${(d.ticks / 60).toFixed(0)} s, ore ${d.ore}, loot ${d.loot}, ${d.depth} deep\n` +
-      `Home: ore ${game.stash.ore}, loot ${game.stash.loot}`
+      `Dive ${d.n}: ${(d.ticks / 60).toFixed(0)} s, ${got(d.got, ', ')}, ${d.depth} deep\n` +
+      `Home: ${got(game.stash, ', ')}`
     $('log').classList.add('open')
   }
   $('log-copy').onclick = () => copyText(game.dives.map(diveLine).join('\n'))
@@ -212,7 +216,7 @@ function start(ruleset, table) {
       }
       if (e.type === 'stop') {
         const flash = table.signals[e.reason] === 'flash' // a refusal that shows even mid-run (D027)
-        if (asked || flash) renderer.attempt(e.dx, e.dy, e.reason === 'noOre' ? 'build' : e.reason === 'packFull' ? 'mine' : 'walk', true)
+        if (asked || flash) renderer.attempt(e.dx, e.dy, e.reason === 'noRock' ? 'build' : e.reason === 'packFull' ? 'mine' : 'walk', true)
         // a run that stopped on its own: just "?" (D034); a fall shows itself
         else if (e.next !== 'fall') renderer.attempt(e.dx, e.dy, 'walk', false, true)
         if (flash) renderer.fail()
@@ -248,7 +252,7 @@ function start(ruleset, table) {
       `input→sim ${latency.toFixed(0)} ms (${input.kind()})`,
       `dpr ${r.dpr} · ${innerWidth}×${innerHeight} css · tile ${r.tilePx} px`,
       `pos ${ch.x},${ch.y} · depth ${ch.y - home.y} · ${run ? `run ${run.dx},${run.dy}` : 'idle'}${step ? ` · ${step.action.kind}` : ''}`,
-      `home: ore ${game.stash.ore} loot ${game.stash.loot} · dives ${game.dives.length}`,
+      `home: ${got(game.stash)} · dives ${game.dives.length}`,
       '` or tap the top-left corner: close',
     ].join('\n')
   }

@@ -11,7 +11,7 @@ import { DEFAULT_TERRAIN, generateTerrain } from '../src/sim/gen/terrain.js'
 import { replay } from './replay.js'
 
 test('a report replays exactly', () => {
-  const ruleset = JSON.parse(readFileSync(new URL('../rules/b1.2.json', import.meta.url), 'utf8'))
+  const ruleset = JSON.parse(readFileSync(new URL('../rules/b1.5.json', import.meta.url), 'utf8'))
   const { world, home } = withSurface(generateTerrain(DEFAULT_TERRAIN), 4, 3)
   const g = createGame(world, home, simConfig(ruleset), /** @type {any} */ (compile(ruleset).table))
   const rec = createRecorder(g, { build: 'test', ruleset, preset: () => 'p' })

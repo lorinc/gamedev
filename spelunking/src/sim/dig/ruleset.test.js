@@ -7,9 +7,10 @@ import { describe, test } from 'node:test'
 import { mulberry32 } from '../rng.js'
 import { Tile } from '../gen/world.js'
 import { resolve } from './rules.js'
-import { compile, interpret, simConfig } from './ruleset.js'
+import { compile, interpret, migrate, simConfig } from './ruleset.js'
 
-const B12 = JSON.parse(readFileSync(new URL('../../../rules/b1.2.json', import.meta.url), 'utf8'))
+// migrated: building is paid in rock now (noRock, D038); the table itself is untouched
+const B12 = migrate(JSON.parse(readFileSync(new URL('../../../rules/b1.2.json', import.meta.url), 'utf8')))
 
 const DIRS = [
   [1, 0],
@@ -40,7 +41,8 @@ describe('rules/b1.2.json', () => {
       const at = { x: int(w), y: int(h) }
       tiles[at.y * w + at.x] = Tile.Open
       const cfg = { ...simConfig(B12), harmlessDrop: int(5) }
-      const inv = { free: int(3), buildable: int(3) }
+      const free = int(3)
+      const inv = { fits: (/** @type {number[]} */ t) => t.length <= free, buildable: int(3) }
       for (const [dx, dy] of DIRS)
         for (const facing of [-1, 1]) {
           const want = resolve({ w, h, tiles }, at, dx, dy, facing, cfg, inv)
@@ -91,7 +93,7 @@ describe('compile', () => {
   test('the row that chose an action is reported', () => {
     const table = /** @type {import('./ruleset.js').Table} */ (compile(B12).table)
     const tiles = Uint8Array.from('#####' + '#...#' + '#####', (c) => (c === '#' ? Tile.Soft : Tile.Open))
-    const a = interpret(table, { w: 5, h: 3, tiles }, { x: 1, y: 1 }, 1, 0, 1, simConfig(B12), { free: 1, buildable: 0 })
+    const a = interpret(table, { w: 5, h: 3, tiles }, { x: 1, y: 1 }, 1, 0, 1, simConfig(B12), { fits: () => true, buildable: 0 })
     assert.deepEqual([a.kind, a.rule], ['walk', { intent: 'side', row: 0 }])
   })
 })
