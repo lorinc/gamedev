@@ -227,6 +227,7 @@ export const STOPS = {
   loot: 'the next tile to mine is ore or loot',
   harder: 'the next tile is slower to mine than the last',
   junction: 'walking or tunnelling under a real side passage: a shaft with rock on both sides (D024)',
+  crossing: 'walking is about to step under a plank: a path you built crosses yours (D045)',
 }
 /** @type {Record<string, string>} */
 export const ALWAYS_STOPS = {

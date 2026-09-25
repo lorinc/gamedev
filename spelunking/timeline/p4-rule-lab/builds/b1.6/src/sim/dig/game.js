@@ -59,7 +59,8 @@ import { interpret } from './ruleset.js'
  * @property {number} tick
  * @property {{ x: number, y: number, facing: number }} ch
  * @property {Cell} home
- * @property {{ dx: number, dy: number, prev: Action | null, confirmed: boolean } | null} run the current intent; confirmed: it may do what asks first (D041)
+ * @property {{ dx: number, dy: number, prev: Action | null, confirmed: Action['kind'] | null } | null} run the current intent; confirmed: the
+ *   kind of action a yes allowed (D041, D044), until the run does anything else
  * @property {{ dx: number, dy: number, x: number, y: number, kind: Action['kind'] } | null} ask a run stopped to ask (D041): the same swipe here confirms
  * @property {Step | null} step
  * @property {Pack} pack every material mined, in slots (pack.js)
@@ -116,7 +117,7 @@ export function tick(g) {
       if (!g.dive) g.dive = newDive(g)
       if (cmd.dx) g.ch.facing = Math.sign(cmd.dx)
       const a = g.ask
-      const confirmed = !!a && !g.step && a.dx === cmd.dx && a.dy === cmd.dy && a.x === g.ch.x && a.y === g.ch.y
+      const confirmed = a && !g.step && a.dx === cmd.dx && a.dy === cmd.dy && a.x === g.ch.x && a.y === g.ch.y ? a.kind : null
       g.run = { dx: cmd.dx, dy: cmd.dy, prev: null, confirmed }
       abortDig(g)
     } else if (cmd.type === 'stop') {
@@ -155,9 +156,10 @@ function next(g) {
     buildable: rock(g.pack),
   }
   const action = interpret(g.table, world, ch, run.dx, run.dy, ch.facing, cfg, inv, run.prev)
-  // D041: a step whose row asks first stops the run and asks, unless the run was confirmed. A lack of
-  // rock mid-run gives way to the question, like any stop the run would have made anyway (D030).
-  const asks = (/** @type {Action} */ a) => !!a.confirm && !run.confirmed
+  // D041: a step whose row asks first stops the run and asks, unless a yes covers it: the same kind
+  // of action, with nothing else in between (D044). A lack of rock mid-run gives way to the question,
+  // like any stop the run would have made anyway (D030).
+  const asks = (/** @type {Action} */ a) => !!a.confirm && run.confirmed !== a.kind
   const ask = asks(action) || (action.kind === 'blocked' && !!run.prev && !!action.intended && asks(action.intended))
   const reason = ask
     ? 'confirm'
@@ -189,6 +191,7 @@ function next(g) {
   g.step = { action, from: { x: ch.x, y: ch.y }, t: 0, digT, dur: Math.max(1, digT + moveT) }
   g.events.push({ type: 'step', action, fresh: !run.prev })
   run.prev = action
+  if (action.kind !== run.confirmed) run.confirmed = null // the yes is used up (D044)
   if (digT === 0) apply(g, action)
 }
 
