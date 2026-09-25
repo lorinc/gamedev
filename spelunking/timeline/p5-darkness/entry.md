@@ -108,3 +108,5 @@ None yet.
 ## Conclusion → next
 
 Open.
+
+- Next package, designed with the user after playing b2.1 and not built yet: [tamed bugs mine for you, loot is carried home](next-bugs.md). It changes the probe's centre and turns ↑ into rock into a ceiling probe, so D053 and D043 change when it's built.
