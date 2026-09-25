@@ -50,8 +50,9 @@ export function worldHash(tiles) {
  */
 export function createRecorder(game, info) {
   const startHash = worldHash(game.world.tiles)
+  const cfg = () => JSON.parse(JSON.stringify(game.cfg)) // structuredClone is iOS 15.4+ (R14)
   /** @type {Rec[]} */
-  const cmds = [[0, 'cfg', structuredClone(game.cfg)]]
+  const cmds = [[0, 'cfg', cfg()]]
   /**
    * @typedef {{ n: number, tick: number, how: string, arrow: string, intent: string, from: { x: number, y: number }, facing: number,
    *   pack: string[], map: string[], at: [number, number] | null, steps: string[], end: string, stopAt: [number, number] | null, stop: string | null }} Swipe
@@ -123,7 +124,7 @@ export function createRecorder(game, info) {
     /** The sim config changed (dev panel): replays need it. */
     config() {
       const last = [...cmds].reverse().find((c) => c[1] === 'cfg')
-      if (JSON.stringify(last?.[2]) !== JSON.stringify(game.cfg)) cmds.push([game.tick + 1, 'cfg', structuredClone(game.cfg)])
+      if (JSON.stringify(last?.[2]) !== JSON.stringify(game.cfg)) cmds.push([game.tick + 1, 'cfg', cfg()])
     },
     /** @param {GameEvent} e */
     onEvent(e) {
