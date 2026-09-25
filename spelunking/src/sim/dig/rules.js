@@ -223,15 +223,17 @@ export function stopReason(world, at, prev, next, cfg) {
   return null
 }
 
-// A new side passage: walking or tunnelling sideways under a shaft (2+ open overhead), or digging
-// down past a cave opening beside the shaft.
+// A new side passage: walking or tunnelling sideways under a shaft (2+ open overhead, rock on both
+// sides of it: a real passage, not the ceiling of an open cave), or digging down past a cave
+// opening beside the shaft.
 /** @param {World} world @param {Cell} at @param {Action} next */
 function junction(world, at, next) {
   const open = (/** @type {number} */ x, /** @type {number} */ y) => isOpen(tileAt(world, x, y))
   const { x, y } = at
   const { x: tx, y: ty } = next.to
   if (next.dy === 0) {
-    const shaft = (/** @type {number} */ cx, /** @type {number} */ cy) => open(cx, cy - 1) && open(cx, cy - 2)
+    const shaft = (/** @type {number} */ cx, /** @type {number} */ cy) =>
+      open(cx, cy - 1) && open(cx, cy - 2) && !open(cx - 1, cy - 1) && !open(cx + 1, cy - 1)
     return shaft(tx, ty) && !shaft(x, y)
   }
   if (next.dx === 0) {

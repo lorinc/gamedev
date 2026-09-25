@@ -33,3 +33,13 @@ Not captured in this session.
 - Mine first, then look. No digging straight down. Step off by asking. All three have ASCII-map tests (`src/sim/dig/dig.test.js`).
 - Numpad 5: tap = stop, hold = teleport, with a charge ring.
 - Open: the chasm-cling bug (see Conclusion → next in the entry).
+
+## Later the same day · live dev (seed-7727 terrain, zoomed out 3×)
+
+> created two screenshots …, where the char stops at a 1-step-down location, where it should not stop. I have seen this in other locations as well. My assumption, that the char reacts to what used to be in that spot, not what's there right now.
+
+> That's NOT what I said. Not what was there a moment earlier. What was there originally.
+
+- **Found:** the terrain logic was right: sim, renderer and rules share one world, and digging changes it in place. The stops came from the stop rules. **junction** read an open cave above the step-down cell as "a shaft overhead". **open** fires when mining breaks out of rock.
+- **Changed:** junction now needs rock on both sides of the shaft (D024). Mining break-out still stops, by choice ("walk on only when walking").
+- **Not added:** an on-screen stop reason (the user said no; the dive log already counts the reasons).

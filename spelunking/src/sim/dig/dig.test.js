@@ -226,3 +226,52 @@ describe('dives', () => {
     assert.deepEqual(play(), play())
   })
 })
+
+describe('junction stop (decided 2026-09-25: only a real side passage)', () => {
+  const JCFG = { ...CFG, rules: { ...CFG.rules, junction: true } }
+
+  test('walking out of a tunnel into an open cave takes the 1-tile step down and walks on', () => {
+    const g = game(
+      [
+        '#####....#', //
+        '#####....#',
+        '#####....#',
+        '#@.......#',
+        '#####....#',
+        '##########',
+      ],
+      JCFG,
+    )
+    assert.equal(swipe(g, 1, 0), 'wall')
+    assert.deepEqual(pos(g), [8, 4])
+  })
+
+  test('walking under a narrow shaft still stops there', () => {
+    const g = game(
+      [
+        '####.#####', //
+        '####.#####',
+        '#@.......#',
+        '##########',
+      ],
+      JCFG,
+    )
+    assert.equal(swipe(g, 1, 0), 'junction')
+    assert.deepEqual(pos(g), [3, 2])
+  })
+
+  test('mining out into a cave still stops at the break-out', () => {
+    const g = game(
+      [
+        '#####....#', //
+        '#####....#',
+        '#@###....#',
+        '#####....#',
+        '##########',
+      ],
+      JCFG,
+    )
+    assert.equal(swipe(g, 1, 0), 'open')
+    assert.deepEqual(pos(g), [4, 2])
+  })
+})

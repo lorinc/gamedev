@@ -97,6 +97,7 @@ Every game must run in portrait, landscape and square, with touch and with mouse
 - **Mine first, then look (D020).** A mining step moves into the mined cell only if you can stand there: it has a floor, or a 1-tile step down to one. Tunnels never walk you into a chasm.
 - **Step off by asking (D018).** Walking still stops at every drop of 2+. Swiping into the gap again drops you to the floor if it's within `harmlessDrop` (default 4), and the walk then continues. A deeper gap stays a ledge.
 - **No digging straight down (D019).** A down swipe only climbs over a ledge on the facing side, or continues a climb.
+- **Junction means a real side passage (D024).** Walking out of a tunnel into an open cave no longer stops at the step down. A narrow shaft overhead still stops a walk, and breaking out of rock by mining still stops.
 
 **Tunables** (current values in `presets/`):
 
@@ -125,5 +126,5 @@ Open: playtesting. Next come the phone sessions on the A41, and two open problem
 
 - **Chasms:** voids deeper than the harmless drop. With the rules above you can't fall in, but there's no designed way across or down yet, except building a diagonal stair into one (paid in ore). The zipline (b1.2) was meant for this. Home at x = 0 sits above such a void.
 - **Climbing into a chasm:** should down at a ledge refuse a climb whose next step isn't possible (mine-then-look for climbs), or keep the stuck-then-teleport behaviour? Either way, draw a clinging pose.
-- The junction stop rule is on by default and may feel twitchy.
-- Decisions so far: [D014–D022](../decisions.md).
+- The junction stop rule is on by default and may feel twitchy: narrowed on 2026-09-25 (D024), watch it in the next session.
+- Decisions so far: [D014–D022, D024](../decisions.md).

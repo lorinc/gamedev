@@ -29,3 +29,4 @@ D001–D023 were reconstructed on 2026-09-25 from the session notes.
 | D021 | 2026-09-25 | p3 | active | Numpad 5 mirrors the taps: tap = stop, hold = teleport home. |
 | D022 | 2026-09-25 | p3 | active | Juice sits behind a master switch. Stop rules are judged with it off first. |
 | D023 | 2026-09-25 | — | active | Build in public: the repo is public, and a push to `main` publishes. Every prototype is a timeline entry with frozen, playable builds. |
+| D024 | 2026-09-25 | p3 | active | The junction stop fires only for a real side passage: a shaft with rock on both sides overhead. Walking out of a tunnel into an open cave takes the 1-tile step down and walks on. Mining that breaks into open space still stops (the `open` rule). |

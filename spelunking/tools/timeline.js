@@ -11,6 +11,9 @@ import { fileURLToPath } from 'node:url'
 import { escapeHtml, inline, mdToHtml, parseEntry, sections } from './md.js'
 
 export const SECTIONS = ['Question', 'Assumptions', 'Limitations', 'Built', 'Feedback', 'Conclusion → next']
+// The rules as they stood when a playtest closed. Required once an entry with bundle builds (bN.M)
+// is concluded or killed, so the next prototype starts from a readable baseline.
+export const RULES = 'Rules at close'
 const MARKS = /** @type {const} */ ({ '?': 'open', '✓': 'held', '✗': 'broken' })
 
 /**
@@ -40,6 +43,8 @@ export function readEntry(dir, src, feedback, buildExists) {
   const problems = []
   for (const s of SECTIONS) if (!(s in parts)) problems.push(`${dir}: missing section "## ${s}"`)
   for (const k of ['id', 'title', 'started', 'status', 'budget']) if (!meta[k]) problems.push(`${dir}: missing "${k}:" in frontmatter`)
+  const closed = meta.status === 'concluded' || meta.status === 'killed'
+  if (closed && builds.some((b) => /^b\d/.test(b.id)) && !(RULES in parts)) problems.push(`${dir}: a closed playtest needs a "## ${RULES}" section`)
   if (meta.budget && !/^\d+d$/.test(meta.budget)) problems.push(`${dir}: budget must look like "3d", got "${meta.budget}"`)
   const mark = (/** @type {string} */ c) => MARKS[/** @type {keyof MARKS} */ (c)] ?? 'open'
   const assumptions = []
@@ -214,6 +219,7 @@ function card(e, byId, devBase, decided) {
   ${play || dev ? `<div class="builds">${play}${dev}</div>` : ''}
   <p class="next"><b>→</b> ${lead(e.parts['Conclusion → next'], url) || '<i>open</i>'}</p>
   ${dec ? `<ul class="decided">${dec}</ul>` : ''}
+  ${RULES in e.parts ? `<details class="rules"><summary>${RULES}</summary><div class="doc">${mdToHtml(e.parts[RULES], url)}</div></details>` : ''}
   <details><summary>Full entry${e.feedback.length ? ` · ${e.feedback.length} feedback session${e.feedback.length > 1 ? 's' : ''}` : ''}</summary>
 <div class="doc">
 ${body}
@@ -284,6 +290,7 @@ details { margin-top:8px; } summary { cursor:pointer; color:var(--dim); }
 .doc blockquote { margin:6px 0; padding:2px 10px; border-left:3px solid var(--acc); color:#ddd; }
 .doc ul, .doc ol { padding-left:20px; }
 .fb { border-top:1px dashed var(--line); margin-top:16px; }
+details.rules > summary { color:var(--acc); }
 footer { color:var(--dim); font-size:12px; }
 .budget { font-size:12px; color:var(--dim); border:1px dotted var(--line); border-radius:3px; padding:0 5px; }
 .budget.over { color:var(--broken); border-color:var(--broken); }

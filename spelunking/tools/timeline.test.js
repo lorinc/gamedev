@@ -103,6 +103,14 @@ describe('readEntry', () => {
       'p9-test: missing "budget:" in frontmatter',
     ])
   })
+  test('a closed playtest needs its rule table', () => {
+    const closed = ENTRY.replace('status: playtesting', 'status: concluded').replace(/build x1/g, 'build b1')
+    assert.deepEqual(readEntry('p9-test', closed, [], () => true).problems, ['p9-test: a closed playtest needs a "## Rules at close" section'])
+    const withRules = closed.replace('## Conclusion → next', '## Rules at close\n\n| a | b |\n\n## Conclusion → next')
+    assert.deepEqual(readEntry('p9-test', withRules, [], () => true).problems, [])
+    const html = renderPage([readEntry('p9-test', withRules, [], () => true).entry], { game: 'G', devBase: '../' })
+    assert.match(html, /<details class="rules"><summary>Rules at close<\/summary>/)
+  })
   test('missing sections are reported', () => {
     const { problems } = readEntry('p9-test', ENTRY.replace('## Built', '## Made'), [], () => true)
     assert.deepEqual(problems, ['p9-test: missing section "## Built"'])
