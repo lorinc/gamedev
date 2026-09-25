@@ -6,6 +6,7 @@ status: building
 budget: 3d
 from: p5
 dev: b3.html
+build b3.1: 2026-09-26 · p6 · b3 Tamed Bugs: the pivot recorded, the probe centred on the probed block, ↑ probes the ceiling, no teleport home (D054–D058)
 ---
 
 # p6 · b3 · Tamed Bugs
