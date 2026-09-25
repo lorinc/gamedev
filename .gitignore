@@ -3,3 +3,4 @@ dist/
 spelunking/gallery/
 .claude/settings.local.json
 .cdp-profile/
+temp/
