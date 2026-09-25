@@ -70,7 +70,7 @@ export function createRenderer(canvas, game, t, juice) {
     },
     /**
      * Show the swipe cue: what the character attempts in direction (dx, dy). refused: red. ask: a run
-     * stopped on its own, and this is what it would do next (a "?" badge, D033).
+     * stopped on its own: the disc shows just "?" (D034).
      */
     attempt(/** @type {number} */ dx, /** @type {number} */ dy, /** @type {CueKind} */ kind, refused = false, ask = false) {
       cue = { dx, dy, kind, refused, ask, left: CUE_S }
@@ -230,24 +230,12 @@ function drawCue(ctx, x, y, r, cue, life) {
   ctx.lineJoin = 'round'
   const u = r * 0.62
   if (cue.ask) {
-    // "?": a small badge on the disc's upper edge, away from the character
-    ctx.save()
-    const bx = r * 0.72
-    const by = -r * 0.72
-    ctx.beginPath()
-    ctx.arc(bx, by, r * 0.5, 0, Math.PI * 2)
-    ctx.fillStyle = '#fff'
-    ctx.fill()
-    ctx.lineWidth = r * 0.08
-    ctx.stroke()
-    ctx.fillStyle = BG
-    ctx.font = `bold ${Math.round(r * 0.8)}px monospace`
+    // a run stopped on its own: just "?", readable at a glance (D034). The exact trigger is in the bug report.
+    ctx.font = `bold ${Math.round(r * 1.4)}px monospace`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText('?', bx, by + r * 0.04)
-    ctx.restore()
-  }
-  if (cue.kind === 'walk') {
+    ctx.fillText('?', 0, r * 0.08)
+  } else if (cue.kind === 'walk') {
     ctx.rotate(Math.atan2(cue.dy, cue.dx))
     ctx.lineWidth = u * 0.32
     ctx.beginPath()

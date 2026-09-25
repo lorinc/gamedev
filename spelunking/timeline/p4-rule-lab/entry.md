@@ -80,7 +80,7 @@ The order is swipe > situation > meaning, because "ahead" means the swipe's side
   - a `REPLAY` line with every command and its tick. `npm run replay -- report.txt` rebuilds the session and checks it tells the same story.
 - **Checked:** `tools/replay.test.js` checks the replay. In headless Chromium, real mouse swipes → B → the clipboard → a ✓ replay → v4 opened the draft.
 
-**The swipe cue (D032):** what a swipe attempts is now visible. A white disc, one step out in the swipe's direction, shows an arrow, stairs or a pickaxe, blinks red if refused and fades in 0.6 s. It replaces the red flash on the refused cells. The pack flash stays for now. A run that stops on its own shows the same disc with what it would do next and a "?" badge, never red (D033).
+**The swipe cue (D032):** what a swipe attempts is now visible. A white disc, one step out in the swipe's direction, shows an arrow, stairs or a pickaxe, blinks red if refused and fades in 0.6 s. It replaces the red flash on the refused cells. The pack flash stays for now. A run that stops on its own shows the disc with just "?" in the run's direction, never red (D034; the exact trigger is in the bug report).
 
 **Pass criterion, half met:** `rules/b1.2.json` reproduces b1.2 exactly. A D024-style change made in the editor, checked against examples and played in b1 without code has been tried once, by the build check above. It's still open for you.
 
