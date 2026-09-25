@@ -17,6 +17,11 @@
 // held or undecided, up to radius + hold, and a release ends it at the ring it's on. Nothing cuts a
 // probe short: a tap or a new swipe waits for it to end (the new swipe then runs); only a teleport
 // ends it at once. The run ends with the probe (stop `probe`), so a flick doesn't probe again.
+// A row's meaning can centre the probe on another cell (D055, b3.1: the block under you for ↓, the
+// ceiling for ↑); the reach stays the same.
+//
+// Without the teleport (D055, `teleport: false`): the command does nothing, a deep fall just lands, and
+// stepping onto the home cell with something in the pack counts it in (event `home`).
 
 import { isFloor, isOpen, Tile } from '../gen/world.js'
 import { digTicks, stopReason, tileAt } from './rules.js'
@@ -44,6 +49,7 @@ import { PROBE, probeReach, ringCells } from './probe.js'
  *   | { type: 'stop', reason: string, dx: number, dy: number, tried: Cell[], rule?: Action['rule'], next: Action['kind'] }
  *   | { type: 'abort' }
  *   | { type: 'teleport', from: Cell, dive: Dive | null }
+ *   | { type: 'home', dive: Dive | null }
  *   | { type: 'seen', cells: number[] }
  *   | { type: 'ring', x: number, y: number, r: number }} GameEvent seen: cells (y * w + x) seen for the first time, for a renderer's
  *   texture; ring: the probe from (x, y) reached ring r (D053)
@@ -184,7 +190,7 @@ export function tick(g) {
     } else if (cmd.type === 'stop') {
       g.run = null
       abortDig(g)
-    } else teleport(g)
+    } else if (g.cfg.teleport !== false) teleport(g)
   }
   g.queue.length = 0
 
@@ -322,7 +328,8 @@ function next(g) {
     const radius = cfg.light ? lightRadius(g.pack, cfg.light) : 0
     const { min, max } = probeReach(radius, cfg.probe ?? PROBE)
     run.prev = action
-    g.probe = { x: ch.x, y: ch.y, r: 0, min, max, t: 0, held: run.held, run }
+    const at = action.at ?? ch // the probed block (D055), or your own cell (D053)
+    g.probe = { x: at.x, y: at.y, r: 0, min, max, t: 0, held: run.held, run }
     ring(g, g.probe, 1)
     return
   }
@@ -386,6 +393,7 @@ function arrive(g, s) {
   if (g.run?.held) g.run.rest = g.cfg.holdPauseTicks ?? 18 // a held run pauses after every step (D046)
   if (s.home) teleport(g)
   else if (g.cfg.gravity && s.action.kind !== 'fall') fallIfLoose(g)
+  if (g.cfg.teleport === false && g.ch.x === g.home.x && g.ch.y === g.home.y) bank(g)
 }
 
 /** Ticks a deep fall waits at the bottom before the teleport: the charge ring's fill (b1's long press fills it in 700 ms). */
@@ -401,7 +409,7 @@ function fallIfLoose(g) {
   if (floor(ch.x, ch.y + 1) || !open(ch.x - 1, ch.y) || !open(ch.x + 1, ch.y)) return
   let d = 1
   while (!floor(ch.x, ch.y + d + 1)) d++
-  const deep = d > g.cfg.harmlessDrop
+  const deep = d > g.cfg.harmlessDrop && g.cfg.teleport !== false // without the teleport, it just lands (D055)
   const reason = deep ? 'fallHome' : 'fell'
   /** @type {Action} */
   const action = { kind: 'fall', dx: 0, dy: 1, to: { x: ch.x, y: ch.y + d }, digs: [], builds: [], fall: d }
@@ -417,6 +425,26 @@ function fallIfLoose(g) {
 /** @param {Game} g */
 function teleport(g) {
   const from = { x: g.ch.x, y: g.ch.y }
+  const dive = endDive(g)
+  g.run = null
+  g.step = null
+  g.probe = null // the one thing that ends a probe at once
+  g.ch.x = g.home.x
+  g.ch.y = g.home.y
+  g.events.push({ type: 'teleport', from, dive })
+}
+
+// Walked home (D055, without the teleport): the same count and log, and the run goes on. Only a dive
+// that brought something ends here, so walking past home on the surface doesn't log empty dives.
+/** @param {Game} g */
+function bank(g) {
+  if (!g.dive || !g.pack.some(Boolean)) return
+  g.events.push({ type: 'home', dive: endDive(g) })
+}
+
+// The pack counted into the stash, the dive logged; the pack is empty after.
+/** @param {Game} g */
+function endDive(g) {
   const dive = g.dive
   if (dive) {
     dive.ticks = g.tick - dive.startTick
@@ -426,12 +454,7 @@ function teleport(g) {
   }
   g.pack = []
   g.dive = null
-  g.run = null
-  g.step = null
-  g.probe = null // the one thing that ends a probe at once
-  g.ch.x = g.home.x
-  g.ch.y = g.home.y
-  g.events.push({ type: 'teleport', from, dive })
+  return dive
 }
 
 /** @param {Game} g @returns {Dive} */

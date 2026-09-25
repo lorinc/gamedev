@@ -349,6 +349,7 @@ Built on the pillars in [opinionated_games.md](opinionated_games.md).
 
 
 * **Moon Bugs**
+* **Pivot (2026-09-25, D054, after playing b2.1):** bugs become the miners. Wild bugs nibble ore from your pack; one that has eaten 16 is tamed, and then sucks the ore you've revealed out of the rock within 12 tiles of its den, and hands it to you as you run past. Its area turns friendly (moss, bulbs, red grass, glowing lichen). No teleport home: you carry the loot back. Ore and loot have no use yet, on purpose. The design is in [next-bugs.md](../spelunking/timeline/p5-darkness/next-bugs.md); the notes below are the earlier concept.
 * Local fauna (the starter pet can be a tamed one; seeds the later Tamer path).
 * **No combat input:** the character defeats bugs automatically; they drop small loot. Early in a dive, bugs are a bonus.
 * **Overwhelm:** when more bugs are adjacent than your gear handles, they take items from your pack and wander off with them.
@@ -776,6 +777,7 @@ Test only the riskiest bets, one playable bundle at a time, before building mont
 
 
 * **Bundle 3: Tiny Base (Days 7–9)**
+* **Pivot (2026-09-25, D054):** the idle production moved into Bundle 2 as tamed bugs mining what you revealed (p6 · b3); the drill, conveyor and heat below are the earlier plan.
 * *Question:* does digging pull you into building, and building back into digging?
 * Drill placed on an ore vein near home, hand-placed conveyor to the vault.
 * Production ticks while diving; on recall the camera pulls back and shows the gain ("it mined while I was gone").

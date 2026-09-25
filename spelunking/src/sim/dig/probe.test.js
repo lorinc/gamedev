@@ -19,6 +19,9 @@ const B21 = migrate(read('b2.1.json'))
 const TABLE = /** @type {import('./ruleset.js').Table} */ (compile(B21).table)
 const CFG = simConfig(B21) // light base 4; probe flick 2, hold 4, ringTicks 5
 const RING = 5
+const B31 = migrate(read('b3.1.json'))
+const TABLE31 = /** @type {import('./ruleset.js').Table} */ (compile(B31).table)
+const CFG31 = simConfig(B31)
 
 // Solid rock, 21 × 19, with you in a 1-cell pocket in the middle (10, 9): every ring of a probe up to
 // 8 fits in it, and there's rock beyond. A little ore, loot and a cave inside the rock.
@@ -99,10 +102,8 @@ describe('the rings (D053)', () => {
     const all = []
     for (let r = 1; r <= 6; r++) all.push(...ringCells(g.world, g.ch, r))
     assert.equal(new Set(all).size, all.length)
-    const want = disc(g, 6)
-    want.delete(g.ch.y * g.world.w + g.ch.x) // ring 1 leaves out your own cell: it's lit
-    assert.deepEqual(new Set(all), want)
-    assert.deepEqual(ringCells(g.world, g.ch, 1).length, 4)
+    assert.deepEqual(new Set(all), disc(g, 6))
+    assert.deepEqual(ringCells(g.world, g.ch, 1).length, 5) // the centre too: the probed block (D055)
     assert.deepEqual(ringCells(g.world, g.ch, 2).length, 8) // (±1, ±1), (±2, 0), (0, ±2)
   })
 
@@ -110,7 +111,7 @@ describe('the rings (D053)', () => {
     const { world, at } = parseMap(['#####', '##@##', '#####'])
     const all = [1, 2, 3].flatMap((r) => ringCells(world, at, r))
     assert.equal(new Set(all).size, all.length)
-    assert.equal(all.length, 14) // every cell but yours: none is more than 2 away the short way round
+    assert.equal(all.length, 15) // every cell: none is more than 2 away the short way round
     const { world: w6, at: a6 } = parseMap(['#.....', '@.....'])
     assert.deepEqual(
       ringCells(w6, a6, 3).sort((a, b) => a - b),
@@ -332,4 +333,48 @@ test('deterministic: the same commands give the same seen map, rings and state',
     return { seen: [.../** @type {Uint8Array} */ (g.seen)], events: JSON.stringify(events), ch: g.ch, tick: g.tick }
   }
   assert.deepEqual(run(), run())
+})
+
+describe('b3.1: the probe is centred on the probed block (D055)', () => {
+  /** @param {number} dy the swipe: 1 = ↓, -1 = ↑ */
+  function probe(dy) {
+    const g = game(ROCK, { table: TABLE31, cfg: CFG31, light: { base: 1 } })
+    const before = seen(g)
+    const at = { x: g.ch.x, y: g.ch.y }
+    const tile = g.world.tiles[(at.y + dy) * g.world.w + at.x]
+    const events = play(g, { 1: [{ type: 'intent', dx: 0, dy }, { type: 'release' }] })
+    const want = disc(g, 3, at.x, at.y + dy) // light 1 + flick 2
+    return { g, before, at, tile, events, want }
+  }
+
+  test('↓ on a floor: the rings spread from the block under you, same reach', () => {
+    const { g, before, at, events, want } = probe(1)
+    assert.deepEqual(rings(events), [1, 2, 3])
+    assert.deepEqual(stops(events), ['probe'])
+    assert.deepEqual(new Set([...seen(g)].filter((i) => !before.has(i))), new Set([...want].filter((i) => !before.has(i))))
+    assert.ok(seen(g).has((at.y + 4) * g.world.w + at.x)) // 4 below you: 3 from the probed block
+    assert.ok(!seen(g).has((at.y - 3) * g.world.w + at.x)) // 3 above you: 4 from it
+    assert.deepEqual([g.ch.x, g.ch.y], [at.x, at.y])
+  })
+
+  test('↑ into rock probes the ceiling: centred on the block above, which stays rock', () => {
+    const { g, before, at, tile, events, want } = probe(-1)
+    assert.deepEqual(rings(events), [1, 2, 3])
+    assert.deepEqual(stops(events), ['probe'])
+    assert.deepEqual(new Set([...seen(g)].filter((i) => !before.has(i))), new Set([...want].filter((i) => !before.has(i))))
+    assert.ok(seen(g).has((at.y - 4) * g.world.w + at.x))
+    assert.equal(g.world.tiles[(at.y - 1) * g.world.w + at.x], tile) // not mined (D043's mine-above is gone)
+    assert.equal(events.filter((e) => e.type === 'mined').length, 0)
+    assert.deepEqual([g.ch.x, g.ch.y], [at.x, at.y])
+  })
+
+  test('b2.1 is unchanged: ↓ probes around you, ↑ mines the rock above', () => {
+    const g = game(ROCK, { light: { base: 1 } })
+    const at = { x: g.ch.x, y: g.ch.y }
+    play(g, { 1: FLICK_DOWN })
+    assert.ok(seen(g).has((at.y - 3) * g.world.w + at.x))
+    assert.ok(!seen(g).has((at.y + 4) * g.world.w + at.x))
+    const events = play(g, { 1: [{ type: 'intent', dx: 0, dy: -1 }, { type: 'release' }] })
+    assert.equal(events.filter((e) => e.type === 'mined').length, 1)
+  })
 })

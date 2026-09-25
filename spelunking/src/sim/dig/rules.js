@@ -25,6 +25,7 @@ export const BEDROCK = -1
  * @property {Dug[]} digs cells mined, in order
  * @property {(Cell & { tile?: number })[]} builds cells filled (with `tile`, Built if none)
  * @property {number} fall tiles dropped at the end (≤ harmlessDrop): stepping off a ledge, or letting go of a climb
+ * @property {Cell} [at] a probe's centre: the cell its rings spread from (D055); your own cell if missing
  * @property {string} [reason] why it's blocked
  * @property {Cell[]} [tried] blocked for lack of stock (`noRock`, `packFull`): the cells it would have
  *   built or mined, so the view can show "I tried, can't do"
@@ -54,6 +55,8 @@ export const BEDROCK = -1
  * @property {number} [holdPauseTicks] a held run's pause after each step (D046; 18 = 0.3 s if missing)
  * @property {boolean} [gravity] after each step, fall if nothing holds you (floor below, wall left or right); a fall deeper than harmlessDrop lands, then teleports home (D035)
  * @property {import('./light.js').Light} [light] the light's radius from the pack (D051); with it, the game keeps a seen map (D052)
+ * @property {boolean} [teleport] false: nothing teleports you home (D055); a deep fall just lands, and walking onto the
+ *   home cell counts the pack in. True if missing
  * @property {import('./probe.js').Probe} [probe] the seismic probe's reach and speed (D053); probe.js's PROBE if missing
  * @property {Rules} rules
  */

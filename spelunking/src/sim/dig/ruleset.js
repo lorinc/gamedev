@@ -222,6 +222,14 @@ export const MEANINGS = {
     text: 'stand still and send out the seismic probe: rings that reveal everything around you, rock interiors too (D053)',
     run: (a) => a.done('probe', a.x, a.y),
   },
+  probeBelow: {
+    text: 'stand still and probe around the block under you: the seismic probe centred on it (D055)',
+    run: (a) => ({ ...a.done('probe', a.x, a.y), at: { x: a.x, y: a.y + 1 } }),
+  },
+  probeAbove: {
+    text: 'stand still and probe the ceiling: the seismic probe centred on the block above you (D055)',
+    run: (a) => (a.y > 0 ? { ...a.done('probe', a.x, a.y), at: { x: a.x, y: a.y - 1 } } : a.blocked('bedrock')),
+  },
   refuse: { text: 'nothing: refuse with a reason', param: 'reason', run: (a) => a.blocked(a.row.reason ?? 'refused') },
 }
 

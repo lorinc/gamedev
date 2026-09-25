@@ -21,13 +21,13 @@ export function probeReach(radius, p) {
 
 /**
  * Ring r around `at`: the cells with (r − 1)² < dx² + dy² ≤ r², inside the world's rows. Each cell
- * once, even when the ring is wider than the world. Ring 1 leaves out your own cell (it's lit).
+ * once, even when the ring is wider than the world. Ring 1 holds the centre too (the probed block, D055).
  * @param {World} world @param {Cell} at @param {number} r ≥ 1
  * @returns {number[]}
  */
 export function ringCells(world, at, r) {
   const { w, h } = world
-  const inner = (r - 1) * (r - 1)
+  const inner = r === 1 ? -1 : (r - 1) * (r - 1) // ring 1 holds the centre
   const outer = r * r
   // the offsets that are the short way round: a wider ring meets itself round the back
   const half = Math.floor(w / 2)
