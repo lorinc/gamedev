@@ -97,6 +97,8 @@ The order is swipe > situation > meaning, because "ahead" means the swipe's side
 
 **Flick and hold (D046, D047, ruleset b1.7):** nothing asks first any more. A flick (a quick swipe, a key tap) follows the world: it walks, goes up and down steps and ramps, and tunnels. Where only building would go on, it stops with "?". A hold (still down 0.3 s after the swipe, or down 0.3 s before it) goes straight: it lays planks over gaps, including a 1-deep dip or ramp mouth, and digs a step in the way. It pauses 0.3 s after each step, and letting go stops it on a whole cell, cancelling a dig or build in progress. Until the input knows which it is, a run waits only where the two differ. The sim gets `hold` and `release` as commands, so replays stay exact. Keys work the same way, and the teleport ring waits 0.3 s, then fills in 0.7 s. v4 lost its "asks" column; its example swipes take `→h2` for a hold of 2 steps. 17 examples changed, `dig-yes-not-build` (D044) went, and `ramp-mouth` is new.
 
+**Fixes after b1.7 (code check, 2026-09-25):** the hold check is 0.2 s (D048). b1 copied only the sim values its defaults already listed from the ruleset, so the `crossing` stop (D045) was never on in the browser, only in the examples; now every ruleset value reaches the game.
+
 **Pass criterion, half met:** `rules/b1.2.json` reproduces b1.2 exactly. A D024-style change made in the editor, checked against examples and played in b1 without code has been tried once, by the build check above. It's still open for you.
 
 ## Feedback

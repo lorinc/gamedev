@@ -41,7 +41,9 @@ loadRuleset().then((ruleset) => {
   const { table, errors } = compile(ruleset)
   if (!table) return alert(`Ruleset "${ruleset.name}" has errors:\n${errors.join('\n')}`)
   // The ruleset's numbers, stops and swipe angles are the defaults; the panel tunes on top.
-  assignDeep(DEFAULTS.sim, simConfig(ruleset))
+  // All of the ruleset's sim values: assignDeep would drop the ones DEFAULTS doesn't list (it lost
+  // the crossing stop, D045, and holdPauseTicks).
+  Object.assign(DEFAULTS.sim, simConfig(ruleset))
   assignDeep(DEFAULTS.input, ruleset.swipes)
   start(ruleset, table)
 })

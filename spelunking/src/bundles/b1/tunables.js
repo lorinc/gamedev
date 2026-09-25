@@ -19,7 +19,7 @@ export const DEFAULTS = {
     swipePx: 24, // CSS px of travel that commits a swipe
     horizontalDeg: 30, // ± around left / right that reads as a walk
     verticalDeg: 25, // ± around up / down; the rest is diagonal
-    holdMs: 300, // a swipe still down this long is a hold (D046); the teleport ring shows only after it
+    holdMs: 200, // a swipe still down this long is a hold (D046, D048); the teleport ring shows only after it
     longPressMs: 1000, // teleport: holding still this long (the ring fills from holdMs on)
   },
   view: {
