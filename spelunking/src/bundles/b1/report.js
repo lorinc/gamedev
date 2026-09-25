@@ -166,7 +166,7 @@ export function createRecorder(game, info) {
       }
       const last = swipes[swipes.length - 1]
       if (last) {
-        lines.push('', `Map where swipe #${last.n} started (@ = you; . open · # soft · H hard · o ore · $ loot · = built):`, ...last.map)
+        lines.push('', `Map where swipe #${last.n} started (@ = you; . open · # soft · H hard · o ore · $ loot · = built · - plank):`, ...last.map)
         /** @type {Example} */
         const example = {
           id: `report-${last.tick}`,

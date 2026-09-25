@@ -2,6 +2,11 @@
 // a swipe commits as soon as it travels swipePx (not on release), a short press is a tap (stop),
 // holding still charges the teleport.
 
+// TODO (Lorinc, 2026-09-25), precise mode: a swipe that stays held still walks the run, but pauses
+// ~0.3 s at every step, and a release stops it, so exact positioning is easy. While held, nothing
+// asks for confirmation (the hold is the confirmation). Teach it early as a no-brainer tutorial
+// situation (a spot where you must stop at an exact cell). Key hold (WASD) should mean the same.
+
 /** @typedef {import('../../sim/dig/game.js').Command} Command */
 /** @typedef {import('./tunables.js').Tunables} Tunables */
 

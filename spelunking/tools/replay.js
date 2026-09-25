@@ -47,6 +47,7 @@ export function replay(text) {
     t
       .split('\n')
       .filter((l) => !l.startsWith('REPLAY '))
+      .map((l) => (l.startsWith('Map where') ? l.replace(/ \(.*\):$/, ':') : l)) // the map legend grows with new tiles
       .join('\n')
       .trimEnd() // a saved or pasted report often gains a final newline
   const report = rec.report()

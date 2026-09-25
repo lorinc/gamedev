@@ -2,7 +2,7 @@
 // against the examples, which replay on every change. Both live in this browser until exported;
 // b1.html?rules=lab plays the ruleset saved here.
 
-import { TILE_RGB } from '../../render/palette.js'
+import { cellRgb, TILE_RGB, TREAD } from '../../render/palette.js'
 import { conditionText, rulesetMarkdown } from '../../sim/dig/describe.js'
 import { ARROWS, EXAMPLES_FORMAT, LEGEND, parseMap, runExample } from '../../sim/dig/examples.js'
 import {
@@ -106,7 +106,7 @@ function save() {
 const fetchJson = async (path) => (await fetch(path, { cache: 'no-cache' })).json()
 
 async function load() {
-  rs = migrate(stored(STORE) ?? (await fetchJson('rules/b1.5.json')))
+  rs = migrate(stored(STORE) ?? (await fetchJson('rules/b1.6.json')))
   exFile = stored(EX_STORE) ?? (await fetchJson('rules/examples.json'))
   render()
 }
@@ -152,7 +152,7 @@ function header() {
     button('paste examples', pasteExamples),
     button('paste bug report', pasteReport, "the text b1's 🐞 button copied: its last swipe becomes a draft example"),
     button('copy as Markdown', () => copyText(rulesetMarkdown(rs)), 'the "Rules at close" tables'),
-    button('reset to files', reset, 'reload rules/b1.5.json and rules/examples.json, dropping edits'),
+    button('reset to files', reset, 'reload rules/b1.6.json and rules/examples.json, dropping edits'),
     button('▶ play in b1', () => {
       save()
       open('b1.html?rules=lab', 'b1')
@@ -212,7 +212,7 @@ function pasteExamples() {
 
 async function reset() {
   if (!confirm('Drop all edits here and reload the files?')) return
-  rs = await fetchJson('rules/b1.5.json')
+  rs = await fetchJson('rules/b1.6.json')
   exFile = await fetchJson('rules/examples.json')
   selected = null
   save()
@@ -253,6 +253,18 @@ function rulesPane(errors, uses) {
           h('span', { class: 'arrow' }, '→'),
           select(meaningOptions, row.do, (v) => setMeaning(row, v)),
           paramInput(row),
+          row.do === 'refuse'
+            ? h('span', { class: 'ask' })
+            : h(
+                'label',
+                { class: 'ask', title: 'ask first: the run stops, the same swipe again does it (D041)' },
+                h('input', {
+                  type: 'checkbox',
+                  checked: !!row.confirm,
+                  onchange: () => change(() => (row.confirm ? delete row.confirm : (row.confirm = true))),
+                }),
+                'asks',
+              ),
           h(
             'span',
             { class: `uses${n ? '' : ' none'}`, title: 'examples that use this row', onclick: () => pick(key) },
@@ -354,7 +366,7 @@ function paramInput(row) {
   if (param === 'place')
     return select(
       Object.keys(PLACEABLE).map((p) => [p, `place ${p}`]),
-      row.place ?? 'built',
+      row.place ?? 'built', // a row without one places what b1.2 did
       (v) => (row.place = v),
     )
   if (param !== 'reason') return h('span', { class: 'param' })
@@ -380,9 +392,10 @@ function setMeaning(row, meaning) {
   row.do = meaning
   delete row.reason
   delete row.place
+  if (meaning === 'refuse') delete row.confirm
   const param = MEANINGS[meaning]?.param
   if (param === 'reason') row.reason = 'noRule'
-  if (param === 'place') row.place = 'built'
+  if (param === 'place') row.place = 'plank'
 }
 
 /** @param {Intent} intent @param {number} i @param {number} by */
@@ -570,8 +583,12 @@ function drawExample(canvas, ex, res) {
     for (let x = 0; x < w; x++) {
       const before = TILE_OF[ex.map[y][x]] ?? Tile.Soft
       const after = TILE_OF[res.after[y]?.[x]] ?? before
-      ctx.fillStyle = rgb(after)
+      ctx.fillStyle = `rgb(${cellRgb(/** @type {Tile} */ (after)).join(',')})`
       ctx.fillRect(x * s, y * s, s, s)
+      if (after === Tile.Plank) {
+        ctx.fillStyle = rgb(after)
+        ctx.fillRect(x * s, y * s, s, Math.max(2, Math.round(s * TREAD)))
+      }
       if (after === Tile.Open && before !== Tile.Open) {
         // mined: a faint outline of what was there
         ctx.strokeStyle = rgb(before)

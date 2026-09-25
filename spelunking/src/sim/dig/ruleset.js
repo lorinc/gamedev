@@ -4,7 +4,7 @@
 // named situations (all-of conditions, `!` negates), then per intent an ordered first-match table
 // of situation → meaning. The swipe comes first because "ahead" means the swipe's side.
 
-import { isOpen, Tile } from '../gen/world.js'
+import { isFloor, isOpen, Tile } from '../gen/world.js'
 import { BEDROCK, tileAt, wrap } from './rules.js'
 
 /** @typedef {import('../gen/world.js').World} World */
@@ -17,12 +17,10 @@ import { BEDROCK, tileAt, wrap } from './rules.js'
 export const RULESET_FORMAT = 'spelunking-ruleset'
 export const RULESET_VERSION = 1
 
-// TODO (Lorinc, 2026-09-25 feedback on b1.2), traversal is clumsy:
-//   - there's no way to dig a 1-block-high ledge: try it as rows in the Rule Lab first;
-//   - there's no stairs block (build a ramp down to the right, then go left: walk up it or straight
-//     on). A stair is a normal block that the intent decides: walked through or climbed on, and some
-//     builds / mines place one (D029). That needs a tiles section: what each tile is per intent, so
-//     conditions ask "passable for this swipe" instead of "open". Examples first.
+// Stairs are planks (D039): a tread along the top of an open cell. You stand on it from the cell
+// above, or walk through its cell under it; `open` is true for it and `standing` counts it as floor.
+// TODO (nice to have, Lorinc 2026-09-25): visual order for tidy players. A plank over a hole works,
+// but doesn't look fixed: a way to put rock back (a solid fill), and to take a plank away.
 /** @typedef {'side' | 'down' | 'up' | 'upSide' | 'downSide'} Intent */
 
 /** @type {Record<Intent, string>} */
@@ -42,16 +40,21 @@ export function intentOf(dx, dy) {
  * @property {number} x
  * @property {number} y
  * @property {number} f
- * @property {(x: number, y: number) => boolean} open
- * @property {(x: number, y: number) => boolean} standing solid under (x, y)
+ * @property {(x: number, y: number) => boolean} open you can be there: air, or a plank's cell
+ * @property {(x: number, y: number) => boolean} standing a floor under (x, y): rock, or a plank's tread
+ * @property {(x: number, y: number) => boolean} plank (x, y) holds a plank
  * @property {(x: number, y: number) => boolean} supported standing, or solid on either side
  * @property {(x: number, y: number) => number} dropTo tiles to a floor within harmlessDrop below (x, y), or -1
+ * @property {boolean} fresh the swipe's first step (a fresh swipe is literal; a run follows the terrain)
+ * @property {boolean} mining the run's last step mined
  */
 
 /** The side of the wall you cling to (left first). @param {View} v */
 const wallSide = (v) => (!v.open(v.x - 1, v.y) ? -1 : 1)
 
 /** @type {Record<string, { text: string, test: (v: View) => boolean }>} */
+// The texts also render closed entries' "Rules at close" (timeline.js): keep them true for older
+// rulesets. "solid" includes a plank's tread (D039).
 export const CONDITIONS = {
   standing: { text: 'solid under you', test: (v) => v.standing(v.x, v.y) },
   aboveOpen: { text: 'open above you', test: (v) => v.open(v.x, v.y - 1) },
@@ -70,11 +73,18 @@ export const CONDITIONS = {
     test: (v) => v.open(v.x + wallSide(v), v.y + 1) && v.supported(v.x + wallSide(v), v.y + 1),
   },
   belowDrop: { text: 'a floor within harmlessDrop below you', test: (v) => v.dropTo(v.x, v.y + 1) >= 0 },
+  upAheadOpen: { text: 'the cell diagonally up ahead is open', test: (v) => v.open(v.x + v.f, v.y - 1) },
+  upAheadFloor: { text: 'a floor under the cell diagonally up ahead', test: (v) => v.standing(v.x + v.f, v.y - 1) },
+  onPlank: { text: 'you stand on a plank', test: (v) => v.plank(v.x, v.y + 1) },
+  fwdPlank: { text: 'the cell ahead holds a plank', test: (v) => v.plank(v.x + v.f, v.y) },
+  inPlank: { text: 'your cell holds a plank (its tread just above your head)', test: (v) => v.plank(v.x, v.y) },
+  fresh: { text: "the swipe's first step", test: (v) => v.fresh },
+  mining: { text: "the run's last step mined", test: (v) => v.mining },
 }
 
 /** What `place` can put down. */
 /** @type {Record<string, number>} */
-export const PLACEABLE = { built: Tile.Built }
+export const PLACEABLE = { built: Tile.Built, plank: Tile.Plank }
 
 /**
  * A meaning runs after its row matched. It may still refuse (bedrock, or its own `reasons`);
@@ -133,12 +143,12 @@ export const MEANINGS = {
     },
   },
   stairUp: {
-    text: 'mine your headroom and the target, place a step under the target if it is air, walk up',
+    text: 'mine your headroom and the target, place a step under the target if it has no floor, walk up',
     param: 'place',
     run: (a) => {
       const { x, y, f } = a
       if (!a.dig(x, y - 1) || !a.dig(x + f, y - 1)) return a.blocked('bedrock')
-      if (a.open(x + f, y)) a.build(x + f, y, PLACEABLE[a.row.place ?? 'built'])
+      if (!a.standing(x + f, y - 1)) a.build(x + f, y, PLACEABLE[a.row.place ?? 'built'])
       return a.done('walk', x + f, y - 1)
     },
   },
@@ -171,6 +181,41 @@ export const MEANINGS = {
       return a.standing(x + f, y - 1) ? a.done('walk', x + f, y - 1) : a.done('walk', x, y)
     },
   },
+  bridge: {
+    text: 'place a floor under the cell ahead, walk onto it',
+    param: 'place',
+    run: (a) => {
+      const { x, y, f } = a
+      if (y + 1 >= a.h) return a.blocked('bedrock')
+      a.build(x + f, y + 1, PLACEABLE[a.row.place ?? 'built'])
+      return a.done('walk', x + f, y)
+    },
+  },
+  mineAbove: {
+    text: 'mine the cell above you; stay put',
+    run: (a) => (a.dig(a.x, a.y - 1) ? a.done('walk', a.x, a.y) : a.blocked('bedrock')),
+  },
+  climbUp: { text: 'climb up 1 (onto the tread above your head)', run: (a) => a.done('climb', a.x, a.y - 1) },
+  ladderUp: {
+    text: 'place a step in your cell, climb up onto it',
+    param: 'place',
+    run: (a) => {
+      a.build(a.x, a.y, PLACEABLE[a.row.place ?? 'built'])
+      return a.done('climb', a.x, a.y - 1)
+    },
+  },
+  ladderDown: {
+    text: 'climb down 1 through the plank under you, placing a step under you if there is no floor',
+    param: 'place',
+    run: (a) => {
+      const { x, y } = a
+      if (!a.standing(x, y + 1)) {
+        if (y + 2 >= a.h) return a.blocked('bedrock')
+        a.build(x, y + 2, PLACEABLE[a.row.place ?? 'built'])
+      }
+      return a.done('climb', x, y + 1)
+    },
+  },
   refuse: { text: 'nothing: refuse with a reason', param: 'reason', run: (a) => a.blocked(a.row.reason ?? 'refused') },
 }
 
@@ -189,6 +234,7 @@ export const ALWAYS_STOPS = {
   floor: 'a climb reaches the ground',
   fell: 'with gravity on: nothing holds you after a step, so you fall and land (up to harmlessDrop)',
   fallHome: 'with gravity on: a fall deeper than harmlessDrop; you land, then teleport home (D035)',
+  confirm: "the next step's row asks first (confirm): the run stops, the same swipe again does it (D041)",
 }
 
 /** Reasons the engine gives on its own: no row matched, the world's edge, the pack. */
@@ -202,7 +248,7 @@ export const SIGNALS = {
 }
 
 /**
- * @typedef {{ if: string, do: string, reason?: string, place?: string }} Row
+ * @typedef {{ if: string, do: string, reason?: string, place?: string, confirm?: boolean }} Row confirm: ask before doing it (D041)
  * @typedef {object} Ruleset
  * @property {string} format
  * @property {number} version
@@ -274,6 +320,7 @@ export function compile(r) {
         else reasons.add(row.reason)
       }
       if (meaning.param === 'place' && row.place && !(row.place in PLACEABLE)) errors.push(`${where}: can't place "${row.place}"`)
+      if (row.confirm !== undefined && typeof row.confirm !== 'boolean') errors.push(`${where}: confirm is true or false`)
       for (const x of meaning.reasons ?? []) reasons.add(x)
       const tests = conds.map((c) => ({ test: CONDITIONS[c.replace(/^!/, '')]?.test, want: !c.startsWith('!') }))
       if (tests.some((t) => !t.test)) return
@@ -310,24 +357,24 @@ export function simConfig(r) {
  * @param {number} facing -1 or 1: the side ↓ and ↑ look at
  * @param {SimConfig} cfg
  * @param {Inventory} inv
+ * @param {Action | null} [prev] the run's last step; null on a fresh swipe
  * @returns {Action}
  */
-export function interpret(table, world, at, dx, dy, facing, cfg, inv) {
+export function interpret(table, world, at, dx, dy, facing, cfg, inv, prev = null) {
   const { x, y } = at
   /** @type {Dug[]} */
   const digs = []
   /** @type {{ x: number, y: number, tile: number }[]} */
   const builds = []
-  /** @type {Map<number, boolean>} cells this action changes, keyed y * w + x → open afterwards */
+  /** @type {Map<number, number>} cells this action changes, keyed y * w + x → the tile afterwards */
   const changed = new Map()
   const key = (/** @type {number} */ cx, /** @type {number} */ cy) => cy * world.w + wrap(cx, world.w)
-
   /** @param {number} cx @param {number} cy */
-  const open = (cx, cy) => {
-    if (cy < 0 || cy >= world.h) return false
-    return changed.get(key(cx, cy)) ?? isOpen(tileAt(world, cx, cy))
-  }
-  const standing = (/** @type {number} */ cx, /** @type {number} */ cy) => !open(cx, cy + 1)
+  const tile = (cx, cy) => (cy < 0 || cy >= world.h ? BEDROCK : (changed.get(key(cx, cy)) ?? tileAt(world, cx, cy)))
+
+  const open = (/** @type {number} */ cx, /** @type {number} */ cy) => isOpen(tile(cx, cy))
+  const plank = (/** @type {number} */ cx, /** @type {number} */ cy) => tile(cx, cy) === Tile.Plank
+  const standing = (/** @type {number} */ cx, /** @type {number} */ cy) => isFloor(tile(cx, cy + 1))
   const clinging = (/** @type {number} */ cx, /** @type {number} */ cy) => !open(cx - 1, cy) || !open(cx + 1, cy)
   const supported = (/** @type {number} */ cx, /** @type {number} */ cy) => standing(cx, cy) || clinging(cx, cy)
   const dropTo = (/** @type {number} */ cx, /** @type {number} */ cy) => {
@@ -339,7 +386,7 @@ export function interpret(table, world, at, dx, dy, facing, cfg, inv) {
   }
   const f = dx ? Math.sign(dx) : facing
   /** @type {View} */
-  const view = { x, y, f, open, standing, supported, dropTo }
+  const view = { x, y, f, open, standing, plank, supported, dropTo, fresh: !prev, mining: prev?.kind === 'mine' }
 
   const intent = intentOf(dx, dy)
   const match = table.rows[intent].find((r) => r.tests.every((t) => t.test(view) === t.want))
@@ -359,18 +406,19 @@ export function interpret(table, world, at, dx, dy, facing, cfg, inv) {
       const tile = tileAt(world, cx, cy)
       if (tile === BEDROCK) return false
       digs.push({ x: wrap(cx, world.w), y: cy, tile })
-      changed.set(key(cx, cy), true)
+      changed.set(key(cx, cy), Tile.Open)
       return true
     },
     build(cx, cy, tile) {
       builds.push({ x: wrap(cx, world.w), y: cy, tile })
-      changed.set(key(cx, cy), false)
+      changed.set(key(cx, cy), tile)
     },
     done(base, tx, ty, fall = 0) {
       const kind = builds.length ? 'build' : digs.length ? 'mine' : base
       const loot = digs.filter((d) => d.tile === Tile.Ore || d.tile === Tile.Loot)
       /** @type {Action} */
       const action = { kind, dx, dy, to: { x: wrap(tx, world.w), y: ty + fall }, digs, builds, fall, rule }
+      if (match.data.confirm) action.confirm = true
       if (!inv.fits(loot.map((d) => d.tile))) return { ...blocked('packFull'), tried: loot.map(({ x, y }) => ({ x, y })), intended: action }
       if (builds.length > inv.buildable) return { ...blocked('noRock'), tried: builds.map(({ x, y }) => ({ x, y })), intended: action }
       return action

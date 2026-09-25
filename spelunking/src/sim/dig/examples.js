@@ -15,7 +15,16 @@ export const EXAMPLES_FORMAT = 'spelunking-examples'
 
 /** '@' is you, standing in open space. */
 /** @type {Record<string, number>} */
-export const LEGEND = { '.': Tile.Open, '#': Tile.Soft, H: Tile.Hard, o: Tile.Ore, $: Tile.Loot, '=': Tile.Built, '@': Tile.Open }
+export const LEGEND = {
+  '.': Tile.Open,
+  '#': Tile.Soft,
+  H: Tile.Hard,
+  o: Tile.Ore,
+  $: Tile.Loot,
+  '=': Tile.Built,
+  '-': Tile.Plank,
+  '@': Tile.Open,
+}
 
 /** @type {Record<string, [number, number]>} */
 export const ARROWS = {

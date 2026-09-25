@@ -5,7 +5,7 @@
 // next one-tile action, plus the stop rules that end a run of actions ("move until something changes").
 // The character is 1 tile tall. It never falls: it stands (solid below) or clings (solid beside).
 
-import { isOpen, Tile } from '../gen/world.js'
+import { isFloor, isOpen, Tile } from '../gen/world.js'
 
 /** @typedef {import('../gen/world.js').World} World */
 
@@ -29,6 +29,7 @@ export const BEDROCK = -1
  *   built or mined, so the view can show "I tried, can't do"
  * @property {{ intent: string, row: number }} [rule] the ruleset row that chose it (ruleset.js)
  * @property {Action} [intended] a `noRock` / `packFull` refusal: the action it would have been (D030)
+ * @property {boolean} [confirm] its row asks first (D041): a run stops before it until the same swipe comes again
  */
 
 /**
@@ -78,7 +79,7 @@ export function digTicks(cfg, tile) {
   if (tile === Tile.Hard) return cfg.digTicks.hard
   if (tile === Tile.Ore) return cfg.digTicks.ore
   if (tile === Tile.Loot) return cfg.digTicks.loot
-  if (tile === Tile.Built) return cfg.digTicks.built
+  if (tile === Tile.Built || tile === Tile.Plank) return cfg.digTicks.built
   return cfg.digTicks.soft
 }
 
@@ -217,7 +218,7 @@ export function resolve(world, at, dx, dy, facing, cfg, inv) {
  */
 export function stopReason(world, at, prev, next, cfg) {
   const { rules } = cfg
-  const landed = prev.kind === 'climb' && next.kind !== 'climb' && !isOpen(tileAt(world, at.x, at.y + 1))
+  const landed = prev.kind === 'climb' && next.kind !== 'climb' && isFloor(tileAt(world, at.x, at.y + 1))
   if (landed) return 'floor'
   if (next.kind === 'blocked') {
     // D030: a refusal for lack of ore or pack room only speaks when the run would really have done

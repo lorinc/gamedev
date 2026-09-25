@@ -13,7 +13,14 @@ export const TILE_RGB = {
   [Tile.Ore]: [236, 164, 40],
   [Tile.Loot]: [64, 232, 214],
   [Tile.Built]: [150, 120, 70],
+  [Tile.Plank]: [196, 156, 92], // the tread; its cell is open (cellRgb)
 }
+
+/** The colour that fills a cell: a plank's cell is open, its tread is drawn over it (D039). @param {Tile} t */
+export const cellRgb = (t) => TILE_RGB[t === Tile.Plank ? Tile.Open : t]
+
+/** A plank's tread, as a fraction of the tile's height. */
+export const TREAD = 0.2
 
 /** @type {{ loud: Rgb, panic: Rgb }} */
 export const DROP_RGB = {

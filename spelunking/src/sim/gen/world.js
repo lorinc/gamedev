@@ -14,14 +14,20 @@ export const Tile = /** @type {const} */ ({
   Ore: 4,
   Loot: 5,
   Built: 6, // placed by the player, never generated
+  Plank: 7, // placed by the player (D039): a tread along the top of an open cell
 })
 /** @typedef {(typeof Tile)[keyof typeof Tile]} Tile */
 
-export const TILE_NAMES = /** @type {const} */ (['sky', 'open', 'soft', 'hard', 'ore', 'loot', 'built'])
+export const TILE_NAMES = /** @type {const} */ (['sky', 'open', 'soft', 'hard', 'ore', 'loot', 'built', 'plank'])
 
-/** @param {number} t @returns {boolean} */
+/** You can be in it: air, or a plank's cell (you walk through it, under the tread). @param {number} t @returns {boolean} */
 export function isOpen(t) {
-  return t === Tile.Sky || t === Tile.Open
+  return t === Tile.Sky || t === Tile.Open || t === Tile.Plank
+}
+
+/** It holds you from above: rock, or a plank's tread. @param {number} t @returns {boolean} */
+export function isFloor(t) {
+  return !isOpen(t) || t === Tile.Plank
 }
 
 /**

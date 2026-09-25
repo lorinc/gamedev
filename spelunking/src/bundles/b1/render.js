@@ -1,9 +1,9 @@
 // Canvas2D view of the game: the world as a 1-px-per-tile canvas scaled up with nearest-neighbour,
 // a camera that follows with lookahead, the character with the backpack on its back, debris and the
 // charge ring, the swipe cue (a white disc beside the character showing what it attempts; red when
-// refused) and the red "can't do" flash of the pack when an action is refused for lack of rock or pack space.
+// refused; blinking while a run asks first, D041) and the red "can't do" flash of the pack when an action is refused for lack of rock or pack space.
 
-import { TILE_RGB } from '../../render/palette.js'
+import { cellRgb, TILE_RGB, TREAD } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
 import { wrap } from '../../sim/dig/rules.js'
 
@@ -17,6 +17,7 @@ const CHAR = '#f4f1de'
 const FELL = '#ff5a5a' // the character at the bottom of a deep fall
 const FAIL_S = 0.7 // seconds the red "can't do" flash of the pack lasts
 const CUE_S = 0.6 // seconds the swipe cue takes to fade out
+const ASK_HZ = 2 // blinks per second of the disc that asks for a confirmation (D041)
 const BODY_H = 1.3 // the character's drawn height, in tiles (1 in the sim)
 /** @typedef {'walk' | 'build' | 'mine'} CueKind the symbol: an arrow, stairs, a pickaxe */
 
@@ -33,9 +34,12 @@ export function createRenderer(canvas, game, t, juice) {
   tex.height = world.h
   const tctx = /** @type {CanvasRenderingContext2D} */ (tex.getContext('2d'))
   const img = tctx.createImageData(world.w, world.h)
-  for (let i = 0; i < world.tiles.length; i++) {
-    img.data.set([...TILE_RGB[/** @type {Tile} */ (world.tiles[i])], 255], i * 4)
+  // a plank's cell shows what's around it: sky above the surface (home stands on it), else open
+  const cell = (/** @type {number} */ x, /** @type {number} */ y) => {
+    const t = /** @type {Tile} */ (world.tiles[y * world.w + x])
+    return t === Tile.Plank && y <= game.home.y ? TILE_RGB[Tile.Sky] : cellRgb(t)
   }
+  for (let i = 0; i < world.tiles.length; i++) img.data.set([...cell(i % world.w, Math.trunc(i / world.w)), 255], i * 4)
   tctx.putImageData(img, 0, 0)
 
   let dpr = 1
@@ -58,7 +62,7 @@ export function createRenderer(canvas, game, t, juice) {
     resize,
     /** @param {number} x @param {number} y */
     setTile(x, y) {
-      tctx.fillStyle = css(TILE_RGB[/** @type {Tile} */ (world.tiles[y * world.w + x])])
+      tctx.fillStyle = css(cell(x, y))
       tctx.fillRect(x, y, 1, 1)
     },
     /** Snap the camera to the character (after a teleport). */
@@ -137,6 +141,12 @@ export function createRenderer(canvas, game, t, juice) {
         if (y1 > y0) ctx.drawImage(tex, srcX, y0, n, y1 - y0, sx(x), sy(y0), n * tp, (y1 - y0) * tp)
         x += n
       }
+      // planks: a tread along the top of their (open) cell (D039)
+      ctx.fillStyle = css(TILE_RGB[Tile.Plank])
+      const tread = Math.max(2, Math.round(tp * TREAD))
+      for (let y = y0; y < y1; y++)
+        for (let x = ix; x < ix + cols; x++)
+          if (world.tiles[y * world.w + wrap(x, world.w)] === Tile.Plank) ctx.fillRect(sx(x), sy(y), tp, tread)
 
       // the pack's "can't do": two quick red blinks that fade
       failLeft = Math.max(0, failLeft - dt)
@@ -172,6 +182,22 @@ export function createRenderer(canvas, game, t, juice) {
         // one step out from the drawn body, in the swipe's direction: beside, above, below or diagonal
         const d = tp * 1.15
         drawCue(ctx, cx + cue.dx * d, cy - chh / 2 + cue.dy * d, Math.max(9 * dpr, tp * 0.45), cue, cue.left / CUE_S)
+      }
+
+      // a run stopped to ask (D041): the disc blinks what the same swipe again would do, until answered
+      const ask = game.ask
+      if (ask && !game.step && cue.left === 0) {
+        const kind = ask.kind === 'build' ? 'build' : ask.kind === 'mine' ? 'mine' : 'walk'
+        const d = tp * 1.15
+        const on = Math.sin(time * Math.PI * 2 * ASK_HZ) > 0
+        drawCue(
+          ctx,
+          cx + ask.dx * d,
+          cy - chh / 2 + ask.dy * d,
+          Math.max(9 * dpr, tp * 0.45),
+          { dx: ask.dx, dy: ask.dy, kind, refused: false, ask: false },
+          on ? 1 : 0.35,
+        )
       }
 
       if (homing > 0) charge = { p: homing, x: null, y: null }

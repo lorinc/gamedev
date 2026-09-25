@@ -1,7 +1,7 @@
 // The dig game state and its fixed tick. Commands in (intent / stop / teleport), events out;
 // renderers read state and events and never write them.
 
-import { isOpen, Tile } from '../gen/world.js'
+import { isFloor, isOpen, Tile } from '../gen/world.js'
 import { digTicks, stopReason, tileAt } from './rules.js'
 import { add, fits, MATERIAL_NAME, material, rock, spendRock, valuable } from './pack.js'
 import { interpret } from './ruleset.js'
@@ -59,7 +59,8 @@ import { interpret } from './ruleset.js'
  * @property {number} tick
  * @property {{ x: number, y: number, facing: number }} ch
  * @property {Cell} home
- * @property {{ dx: number, dy: number, prev: Action | null } | null} run the current intent
+ * @property {{ dx: number, dy: number, prev: Action | null, confirmed: boolean } | null} run the current intent; confirmed: it may do what asks first (D041)
+ * @property {{ dx: number, dy: number, x: number, y: number, kind: Action['kind'] } | null} ask a run stopped to ask (D041): the same swipe here confirms
  * @property {Step | null} step
  * @property {Pack} pack every material mined, in slots (pack.js)
  * @property {Stash} stash counted at home
@@ -91,6 +92,7 @@ export function createGame(world, home, cfg, table) {
     ch: { x: home.x, y: home.y, facing: 1 },
     home,
     run: null,
+    ask: null,
     step: null,
     pack: [],
     stash: { soft: 0, hard: 0, ore: 0, loot: 0 },
@@ -113,12 +115,15 @@ export function tick(g) {
     if (cmd.type === 'intent') {
       if (!g.dive) g.dive = newDive(g)
       if (cmd.dx) g.ch.facing = Math.sign(cmd.dx)
-      g.run = { dx: cmd.dx, dy: cmd.dy, prev: null }
+      const a = g.ask
+      const confirmed = !!a && !g.step && a.dx === cmd.dx && a.dy === cmd.dy && a.x === g.ch.x && a.y === g.ch.y
+      g.run = { dx: cmd.dx, dy: cmd.dy, prev: null, confirmed }
       abortDig(g)
     } else if (cmd.type === 'stop') {
       g.run = null
       abortDig(g)
     } else teleport(g)
+    g.ask = null // any command answers the question: the same swipe confirmed it, anything else cancelled it
   }
   g.queue.length = 0
 
@@ -149,8 +154,19 @@ function next(g) {
     fits: (/** @type {number[]} */ tiles) => fits(g.pack, cfg.packSlots, tiles),
     buildable: rock(g.pack),
   }
-  const action = interpret(g.table, world, ch, run.dx, run.dy, ch.facing, cfg, inv)
-  const reason = run.prev ? stopReason(world, ch, run.prev, action, cfg) : action.kind === 'blocked' ? (action.reason ?? 'blocked') : null
+  const action = interpret(g.table, world, ch, run.dx, run.dy, ch.facing, cfg, inv, run.prev)
+  // D041: a step whose row asks first stops the run and asks, unless the run was confirmed. A lack of
+  // rock mid-run gives way to the question, like any stop the run would have made anyway (D030).
+  const asks = (/** @type {Action} */ a) => !!a.confirm && !run.confirmed
+  const ask = asks(action) || (action.kind === 'blocked' && !!run.prev && !!action.intended && asks(action.intended))
+  const reason = ask
+    ? 'confirm'
+    : run.prev
+      ? stopReason(world, ch, run.prev, action, cfg)
+      : action.kind === 'blocked'
+        ? (action.reason ?? 'blocked')
+        : null
+  if (ask) g.ask = { dx: run.dx, dy: run.dy, x: ch.x, y: ch.y, kind: (action.intended ?? action).kind }
   if (reason) {
     g.events.push({
       type: 'stop',
@@ -213,9 +229,10 @@ const HOME_HOLD_TICKS = 42
 function fallIfLoose(g) {
   const { world, ch } = g
   const open = (/** @type {number} */ x, /** @type {number} */ y) => isOpen(tileAt(world, x, y))
-  if (!open(ch.x, ch.y + 1) || !open(ch.x - 1, ch.y) || !open(ch.x + 1, ch.y)) return
+  const floor = (/** @type {number} */ x, /** @type {number} */ y) => isFloor(tileAt(world, x, y)) // a plank holds you (D039)
+  if (floor(ch.x, ch.y + 1) || !open(ch.x - 1, ch.y) || !open(ch.x + 1, ch.y)) return
   let d = 1
-  while (open(ch.x, ch.y + d + 1)) d++
+  while (!floor(ch.x, ch.y + d + 1)) d++
   const deep = d > g.cfg.harmlessDrop
   const reason = deep ? 'fallHome' : 'fell'
   /** @type {Action} */
