@@ -6,6 +6,7 @@ status: building
 budget: 3d
 from: p4
 dev: b2.html
+build b2.1: 2026-09-25 · p5 · b2 Darkness: zoom, light and the seen map, the fog, the seismic probe (D049–D053)
 ---
 
 # p5 · b2 · Darkness
