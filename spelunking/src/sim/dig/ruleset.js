@@ -47,6 +47,7 @@ export function intentOf(dx, dy) {
  * @property {(x: number, y: number) => number} dropTo tiles to a floor within harmlessDrop below (x, y), or -1
  * @property {boolean} fresh the swipe's first step (a fresh swipe is literal; a run follows the terrain)
  * @property {boolean} mining the run's last step mined
+ * @property {boolean} held the swipe is held (D046): a straight line that builds; a flick follows the world
  */
 
 /** The side of the wall you cling to (left first). @param {View} v */
@@ -80,6 +81,7 @@ export const CONDITIONS = {
   inPlank: { text: 'your cell holds a plank (its tread just above your head)', test: (v) => v.plank(v.x, v.y) },
   fresh: { text: "the swipe's first step", test: (v) => v.fresh },
   mining: { text: "the run's last step mined", test: (v) => v.mining },
+  held: { text: 'the swipe is held (a hold: a straight line that builds, D046)', test: (v) => v.held },
 }
 
 /** What `place` can put down. */
@@ -219,7 +221,8 @@ export const MEANINGS = {
   refuse: { text: 'nothing: refuse with a reason', param: 'reason', run: (a) => a.blocked(a.row.reason ?? 'refused') },
 }
 
-/** The stop rules (rules.js stopReason): the switches a ruleset sets, then the ones always on. */
+/** The stop rules (rules.js stopReason): the switches a ruleset sets (a flick's only: a held run goes on
+ * until released, D046), then the ones always on. */
 /** @type {Record<string, string>} */
 export const STOPS = {
   wall: 'walking turns into mining (you reach rock)',
@@ -235,7 +238,6 @@ export const ALWAYS_STOPS = {
   floor: 'a climb reaches the ground',
   fell: 'with gravity on: nothing holds you after a step, so you fall and land (up to harmlessDrop)',
   fallHome: 'with gravity on: a fall deeper than harmlessDrop; you land, then teleport home (D035)',
-  confirm: "the next step's row asks first (confirm): the run stops, the same swipe again does it (D041)",
 }
 
 /** Reasons the engine gives on its own: no row matched, the world's edge, the pack. */
@@ -249,7 +251,7 @@ export const SIGNALS = {
 }
 
 /**
- * @typedef {{ if: string, do: string, reason?: string, place?: string, confirm?: boolean }} Row confirm: ask before doing it (D041)
+ * @typedef {{ if: string, do: string, reason?: string, place?: string }} Row
  * @typedef {object} Ruleset
  * @property {string} format
  * @property {number} version
@@ -274,6 +276,8 @@ export const SIGNALS = {
  * @param {any} r @returns {Ruleset}
  */
 export function migrate(r) {
+  // D041's `confirm` (ask first) is gone: a hold is how you build now (D046). Old rows just do it.
+  for (const rows of Object.values(r.table ?? {})) for (const row of Array.isArray(rows) ? rows : []) delete row.confirm
   if (r.numbers && 'tilesPerOre' in r.numbers) {
     delete r.numbers.tilesPerOre
     r.numbers.packSlots = 6
@@ -321,7 +325,6 @@ export function compile(r) {
         else reasons.add(row.reason)
       }
       if (meaning.param === 'place' && row.place && !(row.place in PLACEABLE)) errors.push(`${where}: can't place "${row.place}"`)
-      if (row.confirm !== undefined && typeof row.confirm !== 'boolean') errors.push(`${where}: confirm is true or false`)
       for (const x of meaning.reasons ?? []) reasons.add(x)
       const tests = conds.map((c) => ({ test: CONDITIONS[c.replace(/^!/, '')]?.test, want: !c.startsWith('!') }))
       if (tests.some((t) => !t.test)) return
@@ -359,9 +362,10 @@ export function simConfig(r) {
  * @param {SimConfig} cfg
  * @param {Inventory} inv
  * @param {Action | null} [prev] the run's last step; null on a fresh swipe
+ * @param {boolean} [held] the swipe is held (D046)
  * @returns {Action}
  */
-export function interpret(table, world, at, dx, dy, facing, cfg, inv, prev = null) {
+export function interpret(table, world, at, dx, dy, facing, cfg, inv, prev = null, held = false) {
   const { x, y } = at
   /** @type {Dug[]} */
   const digs = []
@@ -387,7 +391,7 @@ export function interpret(table, world, at, dx, dy, facing, cfg, inv, prev = nul
   }
   const f = dx ? Math.sign(dx) : facing
   /** @type {View} */
-  const view = { x, y, f, open, standing, plank, supported, dropTo, fresh: !prev, mining: prev?.kind === 'mine' }
+  const view = { x, y, f, open, standing, plank, supported, dropTo, fresh: !prev, mining: prev?.kind === 'mine', held }
 
   const intent = intentOf(dx, dy)
   const match = table.rows[intent].find((r) => r.tests.every((t) => t.test(view) === t.want))
@@ -419,7 +423,6 @@ export function interpret(table, world, at, dx, dy, facing, cfg, inv, prev = nul
       const loot = digs.filter((d) => d.tile === Tile.Ore || d.tile === Tile.Loot)
       /** @type {Action} */
       const action = { kind, dx, dy, to: { x: wrap(tx, world.w), y: ty + fall }, digs, builds, fall, rule }
-      if (match.data.confirm) action.confirm = true
       if (!inv.fits(loot.map((d) => d.tile))) return { ...blocked('packFull'), tried: loot.map(({ x, y }) => ({ x, y })), intended: action }
       if (builds.length > inv.buildable) return { ...blocked('noRock'), tried: builds.map(({ x, y }) => ({ x, y })), intended: action }
       return action

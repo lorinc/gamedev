@@ -11,31 +11,32 @@
     },
     {
       "id": "ledge",
-      "note": "Walking stops at a drop of 2 or more and asks to bridge it (D042); → again lays a plank (1 rock) and walks on.",
+      "note": "A flick stops at a drop of 2 or more (\"?\"): it never builds (D046). A one-step hold lays a plank (1 rock) and walks onto it; a flick walks on.",
       "map": ["#######", "#@....#", "###.###", "###.###", "#######"],
       "swipes": [
-        { "swipe": "→", "stop": "confirm", "at": [2, 1] },
+        { "swipe": "→", "stop": "hold", "at": [2, 1] },
+        { "swipe": "→", "hold": 1, "stop": "released", "at": [3, 1] },
         { "swipe": "→", "stop": "wall", "at": [5, 1] }
       ],
       "start": { "pack": ["soft 1"] }
     },
     {
       "id": "step-off",
-      "note": "→ never steps off a ledge (it asks to bridge); ↓ climbs down into the gap, then → walks on (D042).",
+      "note": "→ never steps off a ledge (a flick stops, D046); ↓ climbs down into the gap, then → walks on (D042).",
       "map": ["########", "#@..####", "###.####", "###....#", "########"],
       "swipes": [
-        { "swipe": "→", "stop": "confirm", "at": [2, 1] },
+        { "swipe": "→", "stop": "hold", "at": [2, 1] },
         { "swipe": "↓", "stop": "floor", "at": [3, 3] },
         { "swipe": "→", "stop": "wall", "at": [6, 3] }
       ]
     },
     {
       "id": "deep-gap",
-      "note": "A gap with no rock in the pack: → would bridge it, so it refuses (flash), every time.",
+      "note": "A gap with no rock in the pack: a flick stops (\"?\"); a hold would bridge it, so it refuses (flash).",
       "map": ["#####", "#@.##", "##.##", "##.##", "##.##", "##.##", "##.##", "##.##", "#####"],
       "swipes": [
-        { "swipe": "→", "stop": "noRock", "at": [1, 1] },
-        { "swipe": "→", "stop": "noRock", "at": [1, 1] }
+        { "swipe": "→", "stop": "hold", "at": [1, 1] },
+        { "swipe": "→", "hold": 1, "stop": "noRock", "at": [1, 1] }
       ]
     },
     {
@@ -43,7 +44,7 @@
       "note": "↓ at a ledge climbs down the wall to the floor.",
       "map": ["#######", "#@....#", "###.###", "###.###", "###.###", "###.###", "###.###", "###.###", "#######"],
       "swipes": [
-        { "swipe": "→", "stop": "confirm", "at": [2, 1] },
+        { "swipe": "→", "stop": "hold", "at": [2, 1] },
         { "swipe": "↓", "stop": "floor", "at": [3, 7] }
       ]
     },
@@ -73,29 +74,29 @@
     },
     {
       "id": "tunnel-into-chasm",
-      "note": "Mine first, then look: tunnelling into a chasm mines the wall but stays on solid ground, then asks to bridge (D042).",
+      "note": "Mine first, then look: tunnelling into a chasm mines the wall but stays on solid ground, then stops: going on would bridge, and a flick never builds (D046).",
       "map": ["#######", "#@##..#", "###...#", "###...#", "###...#", "###...#", "###...#", "###...#", "###...#", "###...#", "#######"],
-      "swipes": [{ "swipe": "→", "stop": "confirm", "at": [2, 1] }],
+      "swipes": [{ "swipe": "→", "stop": "hold", "at": [2, 1] }],
       "after": ["#######", "#.@...#", "###...#", "###...#", "###...#", "###...#", "###...#", "###...#", "###...#", "###...#", "#######"]
     },
     {
       "id": "stair-into-chasm",
-      "note": "↘ into a chasm mines but doesn't step off. Going on would build, so the run stops and asks (D041); ↘ again builds a plank staircase down, paid with the rock just dug (D038), until it mines again.",
+      "note": "↘ into a chasm mines but doesn't step off. Going on would build, so a flick stops (D046); a held ↘ builds a plank staircase down, a step at a time, paid with the rock just dug (D038).",
       "map": ["######", "#@####", "######", "##...#", "##...#", "##...#", "##...#", "##...#", "##...#", "##...#", "##...#", "######"],
       "swipes": [
-        { "swipe": "↘", "stop": "confirm", "at": [1, 1] },
-        { "swipe": "↘", "stop": "wall", "at": [4, 4] }
+        { "swipe": "↘", "stop": "hold", "at": [1, 1] },
+        { "swipe": "↘", "hold": 3, "stop": "released" }
       ],
       "after": ["######", "#..###", "##..##", "##-..#", "##.-@#", "##..-#", "##...#", "##...#", "##...#", "##...#", "##...#", "######"]
     },
     {
       "id": "stair-up",
-      "note": "↗ into air asks first (D041), then builds a plank staircase, 1 rock per step; ore never pays, so it refuses (flash) when the rock runs out.",
+      "note": "↗ into air: a flick stops (D046); a hold builds a plank staircase, 1 rock per step. Ore never pays, so it refuses (flash) when the rock runs out.",
       "start": { "pack": ["soft 1", "ore 1"] },
       "map": ["#.....#", "#.....#", "#@....#", "#######"],
       "swipes": [
-        { "swipe": "↗", "stop": "confirm", "at": [1, 2] },
-        { "swipe": "↗", "stop": "noRock", "at": [2, 1] }
+        { "swipe": "↗", "stop": "hold", "at": [1, 2] },
+        { "swipe": "↗", "hold": 5, "stop": "noRock", "at": [2, 1] }
       ],
       "pack": ["-", "ore 1"]
     },
@@ -103,15 +104,15 @@
       "id": "no-rock",
       "note": "Building without rock refuses (flash).",
       "map": ["#####", "#...#", "#@..#", "#####"],
-      "swipes": [{ "swipe": "↗", "stop": "noRock", "at": [1, 2] }]
+      "swipes": [{ "swipe": "↗", "hold": 1, "stop": "noRock", "at": [1, 2] }]
     },
     {
       "id": "stairs-end",
-      "note": "D030 (b1.2 playtest): ↗ walks up an existing staircase; where it ends, going on would build, so the run stops and asks (D041). Asking again with no rock refuses (flash).",
+      "note": "D030 (b1.2 playtest): ↗ walks up an existing staircase; where it ends, going on would build, so the flick stops (D046). A hold with no rock refuses (flash).",
       "map": ["########", "#......#", "###....#", "##..####", "#..#####", "#@######", "########"],
       "swipes": [
-        { "swipe": "↗", "stop": "confirm", "at": [4, 2] },
-        { "swipe": "↗", "stop": "noRock", "at": [4, 2] }
+        { "swipe": "↗", "stop": "hold", "at": [4, 2] },
+        { "swipe": "↗", "hold": 1, "stop": "noRock", "at": [4, 2] }
       ]
     },
     {
@@ -123,13 +124,13 @@
     },
     {
       "id": "stair-down-air",
-      "note": "Tunnelling into ore over a gap mines it and stays, then asks to bridge. ↘ cancels that and asks for its own plank; ↘ again builds a floor under the target and walks down to the next rock.",
+      "note": "Tunnelling into ore over a gap mines it and stays, then stops: going on would bridge. A flick ↘ would build too, so it stops; a held ↘ builds a floor under the target, walks down, and walks on down.",
       "start": { "pack": ["soft 1"] },
       "map": ["#######", "#@o...#", "##....#", "##....#", "#######"],
       "swipes": [
-        { "swipe": "→", "stop": "confirm", "at": [1, 1] },
-        { "swipe": "↘", "stop": "confirm", "at": [1, 1] },
-        { "swipe": "↘", "stop": "wall", "at": [3, 3] }
+        { "swipe": "→", "stop": "hold", "at": [1, 1] },
+        { "swipe": "↘", "stop": "hold", "at": [1, 1] },
+        { "swipe": "↘", "hold": 2, "stop": "released", "at": [3, 3] }
       ],
       "pack": ["-", "ore 1"]
     },
@@ -164,7 +165,7 @@
     },
     {
       "id": "cling-climb-back",
-      "note": "D035 (bug report, tick 1222): clinging above a chasm at the foot of your own staircase, ↗ toward the wall climbs back up the stairs, then stops and asks at the surface, where going on would build.",
+      "note": "D035 (bug report, tick 1222): clinging above a chasm at the foot of your own staircase, ↗ toward the wall climbs back up the stairs, then stops at the surface, where going on would build.",
       "map": [
         "...............................",
         "...............................",
@@ -178,7 +179,7 @@
         "#####.....................###oo",
         "####$................######$###"
       ],
-      "swipes": [{ "swipe": "↗", "stop": "confirm", "at": [18, 3] }]
+      "swipes": [{ "swipe": "↗", "stop": "hold", "at": [18, 3] }]
     },
     {
       "id": "cling-mine-hold",
@@ -219,7 +220,7 @@
     },
     {
       "id": "plank-crossing",
-      "note": "D039 (bug report, tick 6659): two diagonal tunnels cross in an X. ↗ from the crossing needs a step at the top of the ↘ tunnel: it asks, then lays a plank there and climbs the ↙ tunnel. ↙ comes back down over the plank, and ↘ still runs down its own tunnel, under it.",
+      "note": "D039 (bug report, tick 6659): two diagonal tunnels cross in an X. ↗ from the crossing needs a step at the top of the ↘ tunnel: a flick stops, a one-step hold lays a plank there, and a flick climbs the ↙ tunnel. ↙ comes back down over the plank, and ↘ still runs down its own tunnel, under it.",
       "map": [
         "oo###################...=......",
         "#..........#########..#=.......",
@@ -238,7 +239,8 @@
         "............##ooHHHHHo##......."
       ],
       "swipes": [
-        { "swipe": "↗", "stop": "confirm", "at": [15, 7] },
+        { "swipe": "↗", "stop": "hold", "at": [15, 7] },
+        { "swipe": "↗", "hold": 1, "stop": "released", "at": [16, 6] },
         { "swipe": "↗", "stop": "bedrock", "at": [22, 0] },
         { "swipe": "↙", "stop": "wall", "at": [15, 7] },
         { "swipe": "↘", "stop": "wall", "at": [20, 12] }
@@ -247,26 +249,26 @@
     },
     {
       "id": "plank-ramp",
-      "note": "D039, the ramp from the b1.2 feedback: ↗ walks up a plank ramp (and asks where it ends), ← walks back down it, → from the floor walks under it.",
+      "note": "D039, the ramp from the b1.2 feedback: ↗ walks up a plank ramp (and stops where it ends), ← walks back down it, → from the floor walks under it.",
       "map": ["#......#", "#......#", "#....-.#", "##..-..#", "##@-...#", "########"],
       "swipes": [
-        { "swipe": "↗", "stop": "confirm", "at": [5, 1] },
+        { "swipe": "↗", "stop": "hold", "at": [5, 1] },
         { "swipe": "←", "stop": "wall", "at": [2, 4] },
         { "swipe": "→", "stop": "wall", "at": [6, 4] }
       ]
     },
     {
       "id": "plank-ramp-follow",
-      "note": "D039: → while standing on a plank ramp follows it up (the surface under your feet), and asks to bridge where it ends.",
+      "note": "D039: a flick → while standing on a plank ramp follows it up (the surface under your feet), and stops where it ends (D046).",
       "map": ["#......#", "#......#", "#....-.#", "#..@-..#", "#..-...#", "########"],
-      "swipes": [{ "swipe": "→", "stop": "confirm", "at": [5, 1] }]
+      "swipes": [{ "swipe": "→", "stop": "hold", "at": [5, 1] }]
     },
     {
       "id": "step-dig",
-      "note": "D042: a fresh → at the foot of a step you could walk up asks, then digs it; the run keeps tunnelling level while it mines. A run that arrives walking steps up.",
+      "note": "D046: a held → at the foot of a step you could walk up digs it and keeps level; a flick walks up and down the steps.",
       "map": ["#.........#", "#@##.#....#", "###########"],
       "swipes": [
-        { "swipe": "→", "stop": "confirm", "at": [1, 1] },
+        { "swipe": "→", "hold": 3, "stop": "released", "at": [4, 1] },
         { "swipe": "→", "stop": "wall", "at": [9, 1] }
       ]
     },
@@ -278,48 +280,48 @@
     },
     {
       "id": "ladder-down",
-      "note": "D042: ↓ on a plank over a deep drop asks, then builds a plank ladder down, a rung per step, until the rest is a safe drop.",
+      "note": "D042: ↓ on a plank over a deep drop: a flick stops (D046); a hold builds a plank ladder down, a rung per step, until the rest is a safe drop.",
       "start": { "pack": ["soft 4"] },
       "map": ["#####", "#.@.#", "##-##", "##.##", "##.##", "##.##", "##.##", "##.##", "##.##", "##.##", "#####"],
       "swipes": [
-        { "swipe": "↓", "stop": "confirm", "at": [2, 1] },
-        { "swipe": "↓", "stop": "floor", "at": [2, 9] }
+        { "swipe": "↓", "stop": "hold", "at": [2, 1] },
+        { "swipe": "↓", "hold": 10, "stop": "floor", "at": [2, 9] }
       ]
     },
     {
       "id": "ladder-up",
-      "note": "D043: ↑ under open air asks, then builds a plank ladder up to the ceiling. ↓ climbs back down it; ↑ from a rung climbs up onto the tread above your head.",
+      "note": "D043: ↑ under open air: a flick stops (D046); a hold builds a plank ladder up to the ceiling. ↓ climbs back down it; ↑ from a rung climbs up onto the tread above your head.",
       "start": { "pack": ["soft 3"] },
       "map": ["##.##", "#...#", "#...#", "#.@.#", "#####"],
       "swipes": [
-        { "swipe": "↑", "stop": "confirm", "at": [2, 3] },
-        { "swipe": "↑", "stop": "bedrock", "at": [2, 0] },
+        { "swipe": "↑", "stop": "hold", "at": [2, 3] },
+        { "swipe": "↑", "hold": 5, "stop": "bedrock", "at": [2, 0] },
         { "swipe": "↓", "stop": "floor", "at": [2, 3] },
         { "swipe": "↑", "stop": "floor", "at": [2, 0] }
       ]
     },
     {
       "id": "mine-above",
-      "note": "D043: ↑ into rock mines it and stays put; going on would build, so the run stops and asks.",
+      "note": "D043: ↑ into rock mines it and stays put; going on would build, so a flick stops (D046).",
       "map": ["#####", "##o##", "#.@.#", "#####"],
-      "swipes": [{ "swipe": "↑", "stop": "confirm", "at": [2, 2] }]
+      "swipes": [{ "swipe": "↑", "stop": "hold", "at": [2, 2] }]
     },
     {
       "id": "overhang-mine",
-      "note": "D043: ↗ into rock with no floor under it mines it and stays; going on would build a step, so it asks.",
+      "note": "D043: ↗ into rock with no floor under it mines it and stays; going on would build a step, so a flick stops (D046).",
       "map": ["######", "#.####", "#@...#", "######"],
-      "swipes": [{ "swipe": "↗", "stop": "confirm", "at": [1, 2] }]
+      "swipes": [{ "swipe": "↗", "stop": "hold", "at": [1, 2] }]
     },
     {
-      "id": "dig-yes-not-build",
-      "note": "D044 (bug report, tick 3900): a yes covers only what it was asked for, while the run keeps doing it. → digs the step (asked), walks out, and asks again at the gap instead of bridging it; → again bridges.",
-      "map": ["#........#", "#@#......#", "####..####", "####..####", "##########"],
+      "id": "ramp-mouth",
+      "note": "D046 (screenshot, b1.6): a flick follows the dip of a ramp mouth, down and up again; a hold goes straight, laying a plank over it.",
+      "map": ["#......#", "#@.....#", "##.#####", "########"],
+      "start": { "pack": ["soft 1"] },
       "swipes": [
-        { "swipe": "→", "stop": "confirm", "at": [1, 1] },
-        { "swipe": "→", "stop": "confirm", "at": [3, 1] },
-        { "swipe": "→", "stop": "wall", "at": [8, 1] }
-      ],
-      "start": { "pack": ["soft 1"] }
+        { "swipe": "→", "stop": "wall", "at": [6, 1] },
+        { "swipe": "←", "stop": "wall", "at": [1, 1] },
+        { "swipe": "→", "hold": 2, "stop": "released", "at": [3, 1] }
+      ]
     },
     {
       "id": "plank-crossing-stop",

@@ -39,7 +39,8 @@ export const ARROWS = {
 }
 
 /**
- * @typedef {{ swipe: string, stop: string, at?: [number, number] }} Swipe
+ * @typedef {{ swipe: string, hold?: number, stop: string, at?: [number, number] }} Swipe hold: held for that many steps,
+ *   then released (stop `released`); without it, a flick (released at once, D046)
  * @typedef {object} Example
  * @property {string} id
  * @property {string} note
@@ -114,7 +115,9 @@ export function runExample(ex, table, cfg) {
     let stop = 'never stopped'
     /** @type {Cell[]} */
     let tried = []
-    command(g, { type: 'intent', dx, dy })
+    command(g, { type: 'intent', dx, dy, held: !!s.hold })
+    if (!s.hold) command(g, { type: 'release' })
+    let steps = 0
     // run to the stop, and through a fall that follows it (gravity)
     for (let i = 0; i < 2000 && (stop === 'never stopped' || g.step); i++) {
       tick(g)
@@ -122,6 +125,7 @@ export function runExample(ex, table, cfg) {
         if (e.type === 'step') {
           path.push(e.action.to)
           if (e.action.rule) rules.push(e.action.rule)
+          if (e.action.kind !== 'fall') steps++
         }
         if (e.type === 'stop') {
           stop = e.reason
@@ -130,6 +134,10 @@ export function runExample(ex, table, cfg) {
         }
       }
       g.events.length = 0
+      if (steps === s.hold && !g.step && g.run) {
+        command(g, { type: 'release' }) // let go in the pause after the last step
+        stop = 'released'
+      }
     }
     /** @type {[number, number]} */
     const pos = [g.ch.x, g.ch.y]

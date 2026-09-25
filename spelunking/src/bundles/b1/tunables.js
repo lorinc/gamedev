@@ -19,7 +19,8 @@ export const DEFAULTS = {
     swipePx: 24, // CSS px of travel that commits a swipe
     horizontalDeg: 30, // ± around left / right that reads as a walk
     verticalDeg: 25, // ± around up / down; the rest is diagonal
-    longPressMs: 700, // teleport charge
+    holdMs: 300, // a swipe still down this long is a hold (D046); the teleport ring shows only after it
+    longPressMs: 1000, // teleport: holding still this long (the ring fills from holdMs on)
   },
   view: {
     tilesShort: 48, // tiles across the screen's short side
@@ -49,7 +50,8 @@ export const RANGES = {
   'input.swipePx': [8, 80, 1],
   'input.horizontalDeg': [10, 45, 1],
   'input.verticalDeg': [10, 45, 1],
-  'input.longPressMs': [300, 2000, 50],
+  'input.holdMs': [100, 800, 10],
+  'input.longPressMs': [400, 2000, 50],
   'view.tilesShort': [8, 96, 1],
   'view.camLerp': [0.02, 1, 0.01],
   'view.lookahead': [0, 8, 0.5],

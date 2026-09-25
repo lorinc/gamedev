@@ -29,7 +29,6 @@ export const BEDROCK = -1
  *   built or mined, so the view can show "I tried, can't do"
  * @property {{ intent: string, row: number }} [rule] the ruleset row that chose it (ruleset.js)
  * @property {Action} [intended] a `noRock` / `packFull` refusal: the action it would have been (D030)
- * @property {boolean} [confirm] its row asks first (D041): a run stops before it until the same swipe comes again
  */
 
 /**
@@ -51,6 +50,7 @@ export const BEDROCK = -1
  * @property {{ soft: number, hard: number, ore: number, loot: number, built: number }} digTicks per tile mined
  * @property {number} harmlessDrop deepest drop a swipe into a gap (or a climb that runs out of wall) will take
  * @property {number} packSlots slots of SLOT units each (pack.js)
+ * @property {number} [holdPauseTicks] a held run's pause after each step (D046; 18 = 0.3 s if missing)
  * @property {boolean} [gravity] after each step, fall if nothing holds you (floor below, wall left or right); a fall deeper than harmlessDrop lands, then teleports home (D035)
  * @property {Rules} rules
  */

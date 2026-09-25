@@ -1,5 +1,5 @@
 // b1 · Dig Feel: wires sim + input + render + juice + dev panel. Fixed 60 Hz sim, render interpolates.
-// The rules come from a ruleset: rules/b1.6.json, or with ?rules=lab the one the Rule Lab (v4.html)
+// The rules come from a ruleset: rules/b1.7.json, or with ?rules=lab the one the Rule Lab (v4.html)
 // saved in this browser.
 
 import { command, createGame, tick, withSurface } from '../../sim/dig/game.js'
@@ -32,9 +32,9 @@ async function loadRuleset() {
     } catch {
       // no storage or bad JSON: the default ruleset
     }
-    alert('No Rule Lab ruleset saved in this browser: playing rules/b1.6.json')
+    alert('No Rule Lab ruleset saved in this browser: playing rules/b1.7.json')
   }
-  return migrate(await (await fetch('rules/b1.6.json', { cache: 'no-cache' })).json())
+  return migrate(await (await fetch('rules/b1.7.json', { cache: 'no-cache' })).json())
 }
 
 loadRuleset().then((ruleset) => {
@@ -216,11 +216,11 @@ function start(ruleset, table) {
         renderer.attempt(e.action.dx, e.action.dy, e.action.kind === 'build' ? 'build' : e.action.kind === 'mine' ? 'mine' : 'walk')
         asked = false
       }
-      if (e.type === 'stop' && e.reason === 'confirm')
-        asked = false // the blinking disc asks (render.js, D041)
-      else if (e.type === 'stop') {
+      if (e.type === 'stop') {
         const flash = table.signals[e.reason] === 'flash' // a refusal that shows even mid-run (D027)
-        if (asked || flash) renderer.attempt(e.dx, e.dy, e.reason === 'noRock' ? 'build' : e.reason === 'packFull' ? 'mine' : 'walk', true)
+        // a flick where only a hold would go on (D046) isn't refused: it stops with "?"
+        if ((asked && e.reason !== 'hold') || flash)
+          renderer.attempt(e.dx, e.dy, e.reason === 'noRock' ? 'build' : e.reason === 'packFull' ? 'mine' : 'walk', true)
         // a run that stopped on its own: just "?" (D034); a fall shows itself
         else if (e.next !== 'fall') renderer.attempt(e.dx, e.dy, 'walk', false, true)
         if (flash) renderer.fail()

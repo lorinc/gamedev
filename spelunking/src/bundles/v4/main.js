@@ -106,7 +106,7 @@ function save() {
 const fetchJson = async (path) => (await fetch(path, { cache: 'no-cache' })).json()
 
 async function load() {
-  rs = migrate(stored(STORE) ?? (await fetchJson('rules/b1.6.json')))
+  rs = migrate(stored(STORE) ?? (await fetchJson('rules/b1.7.json')))
   exFile = stored(EX_STORE) ?? (await fetchJson('rules/examples.json'))
   render()
 }
@@ -152,7 +152,7 @@ function header() {
     button('paste examples', pasteExamples),
     button('paste bug report', pasteReport, "the text b1's 🐞 button copied: its last swipe becomes a draft example"),
     button('copy as Markdown', () => copyText(rulesetMarkdown(rs)), 'the "Rules at close" tables'),
-    button('reset to files', reset, 'reload rules/b1.6.json and rules/examples.json, dropping edits'),
+    button('reset to files', reset, 'reload rules/b1.7.json and rules/examples.json, dropping edits'),
     button('▶ play in b1', () => {
       save()
       open('b1.html?rules=lab', 'b1')
@@ -186,7 +186,7 @@ function pasteReport() {
       id: ex.id,
       note: ex.note,
       map: ex.map.join('\n'),
-      swipes: ex.swipes.map((s) => s.swipe).join(' '),
+      swipes: ex.swipes.map(swipeText).join(' '),
       editing: null,
     })
     draft.extra = { numbers, stops, start }
@@ -212,7 +212,7 @@ function pasteExamples() {
 
 async function reset() {
   if (!confirm('Drop all edits here and reload the files?')) return
-  rs = await fetchJson('rules/b1.6.json')
+  rs = await fetchJson('rules/b1.7.json')
   exFile = await fetchJson('rules/examples.json')
   selected = null
   save()
@@ -253,18 +253,6 @@ function rulesPane(errors, uses) {
           h('span', { class: 'arrow' }, '→'),
           select(meaningOptions, row.do, (v) => setMeaning(row, v)),
           paramInput(row),
-          row.do === 'refuse'
-            ? h('span', { class: 'ask' })
-            : h(
-                'label',
-                { class: 'ask', title: 'ask first: the run stops, the same swipe again does it (D041)' },
-                h('input', {
-                  type: 'checkbox',
-                  checked: !!row.confirm,
-                  onchange: () => change(() => (row.confirm ? delete row.confirm : (row.confirm = true))),
-                }),
-                'asks',
-              ),
           h(
             'span',
             { class: `uses${n ? '' : ' none'}`, title: 'examples that use this row', onclick: () => pick(key) },
@@ -392,7 +380,6 @@ function setMeaning(row, meaning) {
   row.do = meaning
   delete row.reason
   delete row.place
-  if (meaning === 'refuse') delete row.confirm
   const param = MEANINGS[meaning]?.param
   if (param === 'reason') row.reason = 'noRule'
   if (param === 'place') row.place = 'plank'
@@ -524,7 +511,7 @@ function card(ex, res, dim) {
     return h(
       'div',
       { class: `swipe ${got?.ok ? '' : 'bad'}` },
-      `${s.swipe} ${got?.stop ?? '?'} @${got?.at ?? '?'} `,
+      `${swipeText(s)} ${got?.stop ?? '?'} @${got?.at ?? '?'} `,
       got?.ok ? '✓' : `✗ expected ${s.stop}${s.at ? ` @${s.at}` : ''}`,
       h(
         'span',
@@ -637,7 +624,7 @@ let draftOpen = false
 
 /** @param {Example} ex */
 function editExample(ex) {
-  Object.assign(draft, { id: ex.id, note: ex.note, map: ex.map.join('\n'), swipes: ex.swipes.map((s) => s.swipe).join(' '), editing: ex })
+  Object.assign(draft, { id: ex.id, note: ex.note, map: ex.map.join('\n'), swipes: ex.swipes.map(swipeText).join(' '), editing: ex })
   render()
   $('examples').scrollTop = 0
 }
@@ -653,11 +640,21 @@ function draftExample() {
   const bad = [...map.join('')].find((ch) => !(ch in LEGEND))
   if (bad) return `"${bad}" isn't in the legend: ${exFile.legend}`
   if (map.join('').split('@').length !== 2) return 'put exactly one @ (you) on the map'
-  const swipes = [...draft.swipes].filter((ch) => ch in ARROWS)
+  // "→ ↘h2": a flick →, then ↘ held for 2 steps (D046)
+  const swipes = [...draft.swipes.matchAll(/(\S)(?:h(\d+))?/g)].filter((m) => m[1] in ARROWS)
   if (!swipes.length) return 'add a swipe'
   const base = draft.editing ?? draft.extra
-  return { ...base, id: draft.id || 'new', note: draft.note, map, swipes: swipes.map((swipe) => ({ swipe, stop: '?' })) }
+  return {
+    ...base,
+    id: draft.id || 'new',
+    note: draft.note,
+    map,
+    swipes: swipes.map(([, swipe, hold]) => ({ swipe, ...(hold ? { hold: Number(hold) } : {}), stop: '?' })),
+  }
 }
+
+/** A swipe as the draft writes it: "→", or "→h2" for a hold of 2 steps. @param {Example['swipes'][number]} s */
+const swipeText = (s) => (s.hold ? `${s.swipe}h${s.hold}` : s.swipe)
 
 function form() {
   const preview = h('div', { class: 'preview' })
@@ -670,7 +667,7 @@ function form() {
     const res = runExample(ex, table, simConfig(rs))
     const canvas = /** @type {HTMLCanvasElement} */ (h('canvas'))
     drawExample(canvas, ex, res)
-    preview.append(canvas, ...res.swipes.map((sw, n) => h('div', { class: 'swipe' }, `${ex.swipes[n].swipe} ${sw.stop} @${sw.at}`)))
+    preview.append(canvas, ...res.swipes.map((sw, n) => h('div', { class: 'swipe' }, `${swipeText(ex.swipes[n])} ${sw.stop} @${sw.at}`)))
   }
   const field = (
     /** @type {'id' | 'note' | 'map' | 'swipes'} */ k,
@@ -685,7 +682,7 @@ function form() {
         update()
       },
     })
-  const swipes = /** @type {HTMLInputElement} */ (field('swipes', 'input', { placeholder: 'swipes, e.g. → ↘' }))
+  const swipes = /** @type {HTMLInputElement} */ (field('swipes', 'input', { placeholder: 'swipes, e.g. → ↘h2 (h2: held for 2 steps)' }))
   const arrows = Object.keys(ARROWS).map((a) =>
     button(a, () => {
       draft.swipes += a

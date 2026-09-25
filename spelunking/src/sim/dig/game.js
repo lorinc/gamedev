@@ -1,5 +1,11 @@
-// The dig game state and its fixed tick. Commands in (intent / stop / teleport), events out;
-// renderers read state and events and never write them.
+// The dig game state and its fixed tick. Commands in (intent / hold / release / stop / teleport),
+// events out; renderers read state and events and never write them.
+//
+// Flick and hold (D046): an intent comes while the finger (or key) is still down. The input says
+// `hold` when it's still down 0.3 s after the swipe (or the swipe came after 0.3 s down: `held`),
+// and `release` when it lets go. Until one of them comes, the run is undecided: it takes the steps
+// a flick and a hold agree on, and waits where they differ. A flick follows the world and goes on
+// after the release; a held run goes straight, pauses after every step, and ends on the release.
 
 import { isFloor, isOpen, Tile } from '../gen/world.js'
 import { digTicks, stopReason, tileAt } from './rules.js'
@@ -14,7 +20,8 @@ import { interpret } from './ruleset.js'
 /** @typedef {import('./pack.js').Pack} Pack */
 
 /**
- * @typedef {{ type: 'intent', dx: number, dy: number } | { type: 'stop' } | { type: 'teleport' }} Command
+ * @typedef {{ type: 'intent', dx: number, dy: number, held?: boolean } | { type: 'hold' } | { type: 'release' }
+ *   | { type: 'stop' } | { type: 'teleport' }} Command held: the finger was already down 0.3 s (hold+swipe)
  */
 
 /**
@@ -59,9 +66,8 @@ import { interpret } from './ruleset.js'
  * @property {number} tick
  * @property {{ x: number, y: number, facing: number }} ch
  * @property {Cell} home
- * @property {{ dx: number, dy: number, prev: Action | null, confirmed: Action['kind'] | null } | null} run the current intent; confirmed: the
- *   kind of action a yes allowed (D041, D044), until the run does anything else
- * @property {{ dx: number, dy: number, x: number, y: number, kind: Action['kind'] } | null} ask a run stopped to ask (D041): the same swipe here confirms
+ * @property {{ dx: number, dy: number, prev: Action | null, held: boolean | null, rest: number } | null} run the current intent.
+ *   held: a hold or a flick, null until the input knows (D046); rest: ticks a held run still pauses before its next step
  * @property {Step | null} step
  * @property {Pack} pack every material mined, in slots (pack.js)
  * @property {Stash} stash counted at home
@@ -93,7 +99,6 @@ export function createGame(world, home, cfg, table) {
     ch: { x: home.x, y: home.y, facing: 1 },
     home,
     run: null,
-    ask: null,
     step: null,
     pack: [],
     stash: { soft: 0, hard: 0, ore: 0, loot: 0 },
@@ -116,15 +121,19 @@ export function tick(g) {
     if (cmd.type === 'intent') {
       if (!g.dive) g.dive = newDive(g)
       if (cmd.dx) g.ch.facing = Math.sign(cmd.dx)
-      const a = g.ask
-      const confirmed = a && !g.step && a.dx === cmd.dx && a.dy === cmd.dy && a.x === g.ch.x && a.y === g.ch.y ? a.kind : null
-      g.run = { dx: cmd.dx, dy: cmd.dy, prev: null, confirmed }
+      g.run = { dx: cmd.dx, dy: cmd.dy, prev: null, held: cmd.held ? true : null, rest: 0 }
       abortDig(g)
+    } else if (cmd.type === 'hold') {
+      if (g.run && g.run.held === null) g.run.held = true
+    } else if (cmd.type === 'release') {
+      if (g.run?.held) {
+        g.run = null // a hold ends on release: a move finishes, a dig or build in progress is cancelled
+        abortDig(g)
+      } else if (g.run) g.run.held = false // a flick: the run goes on
     } else if (cmd.type === 'stop') {
       g.run = null
       abortDig(g)
     } else teleport(g)
-    g.ask = null // any command answers the question: the same swipe confirmed it, anything else cancelled it
   }
   g.queue.length = 0
 
@@ -147,28 +156,37 @@ function abortDig(g) {
   }
 }
 
+/** A held run goes on until released: the stop switches are a flick's (D046). */
+const NO_STOPS = { wall: false, open: false, loot: false, harder: false, junction: false, crossing: false }
+
 /** @param {Game} g */
 function next(g) {
   const run = /** @type {NonNullable<Game['run']>} */ (g.run)
+  if (run.rest > 0) {
+    run.rest--
+    return
+  }
   const { ch, cfg, world } = g
   const inv = {
     fits: (/** @type {number[]} */ tiles) => fits(g.pack, cfg.packSlots, tiles),
     buildable: rock(g.pack),
   }
-  const action = interpret(g.table, world, ch, run.dx, run.dy, ch.facing, cfg, inv, run.prev)
-  // D041: a step whose row asks first stops the run and asks, unless a yes covers it: the same kind
-  // of action, with nothing else in between (D044). A lack of rock mid-run gives way to the question,
-  // like any stop the run would have made anyway (D030).
-  const asks = (/** @type {Action} */ a) => !!a.confirm && run.confirmed !== a.kind
-  const ask = asks(action) || (action.kind === 'blocked' && !!run.prev && !!action.intended && asks(action.intended))
-  const reason = ask
-    ? 'confirm'
-    : run.prev
-      ? stopReason(world, ch, run.prev, action, cfg)
+  /** What the next step is as a flick or as a hold, and whether the run stops before it. @param {boolean} held */
+  const plan = (held) => {
+    const action = interpret(g.table, world, ch, run.dx, run.dy, ch.facing, cfg, inv, run.prev, held)
+    const reason = run.prev
+      ? stopReason(world, ch, run.prev, action, held ? { ...cfg, rules: NO_STOPS } : cfg)
       : action.kind === 'blocked'
         ? (action.reason ?? 'blocked')
         : null
-  if (ask) g.ask = { dx: run.dx, dy: run.dy, x: ch.x, y: ch.y, kind: (action.intended ?? action).kind }
+    return { action, reason }
+  }
+  let p
+  if (run.held === null) {
+    p = plan(false)
+    if (!sameOutcome(p, plan(true))) return // wait for the input to say hold or release
+  } else p = plan(run.held)
+  const { action, reason } = p
   if (reason) {
     g.events.push({
       type: 'stop',
@@ -191,8 +209,14 @@ function next(g) {
   g.step = { action, from: { x: ch.x, y: ch.y }, t: 0, digT, dur: Math.max(1, digT + moveT) }
   g.events.push({ type: 'step', action, fresh: !run.prev })
   run.prev = action
-  if (action.kind !== run.confirmed) run.confirmed = null // the yes is used up (D044)
   if (digT === 0) apply(g, action)
+}
+
+/** A flick and a hold would do the same next (the rows that chose it may differ). */
+/** @param {{ action: Action, reason: string | null }} a @param {{ action: Action, reason: string | null }} b */
+function sameOutcome(a, b) {
+  const key = (/** @type {Action} */ x) => JSON.stringify([x.kind, x.to, x.digs, x.builds, x.fall, x.reason])
+  return a.reason === b.reason && key(a.action) === key(b.action)
 }
 
 /** @param {Game} g @param {Action} action */
@@ -219,11 +243,12 @@ function arrive(g, s) {
   g.ch.y = s.action.to.y
   if (g.dive) g.dive.depth = Math.max(g.dive.depth, g.ch.y - g.home.y)
   g.step = null
+  if (g.run?.held) g.run.rest = g.cfg.holdPauseTicks ?? 18 // a held run pauses after every step (D046)
   if (s.home) teleport(g)
   else if (g.cfg.gravity && s.action.kind !== 'fall') fallIfLoose(g)
 }
 
-/** Ticks a deep fall waits at the bottom before the teleport: the charge animation (b1's long press, 700 ms). */
+/** Ticks a deep fall waits at the bottom before the teleport: the charge ring's fill (b1's long press fills it in 700 ms). */
 const HOME_HOLD_TICKS = 42
 
 // Gravity (D035): nothing holds you (no floor below, no wall left or right) → fall straight down to

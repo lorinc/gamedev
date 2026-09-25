@@ -79,3 +79,4 @@ b1.1 rules b1.2 #1 59.0s ore 0 loot 0 depth 12 mined 11 built 0 | noOre:5 floor:
 
 - Seen: standing on the surface beside the mouth of a ↙ ramp. The first cell ahead is only 1 step down, so ← walks down the ramp; the bridge rule only covers drops of 2 or more.
 - Decided: D046 (flick follows the world, hold draws a straight line and builds), to be built in the next session.
+- Built: D046, with the details settled while building it (D047): ruleset b1.7. The ramp mouth is the example `ramp-mouth`.

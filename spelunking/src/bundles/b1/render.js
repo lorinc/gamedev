@@ -1,7 +1,7 @@
 // Canvas2D view of the game: the world as a 1-px-per-tile canvas scaled up with nearest-neighbour,
 // a camera that follows with lookahead, the character with the backpack on its back, debris and the
 // charge ring, the swipe cue (a white disc beside the character showing what it attempts; red when
-// refused; blinking while a run asks first, D041) and the red "can't do" flash of the pack when an action is refused for lack of rock or pack space.
+// refused) and the red "can't do" flash of the pack when an action is refused for lack of rock or pack space.
 
 import { cellRgb, TILE_RGB, TREAD } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
@@ -17,7 +17,6 @@ const CHAR = '#f4f1de'
 const FELL = '#ff5a5a' // the character at the bottom of a deep fall
 const FAIL_S = 0.7 // seconds the red "can't do" flash of the pack lasts
 const CUE_S = 0.6 // seconds the swipe cue takes to fade out
-const ASK_HZ = 2 // blinks per second of the disc that asks for a confirmation (D041)
 const BODY_H = 1.3 // the character's drawn height, in tiles (1 in the sim)
 /** @typedef {'walk' | 'build' | 'mine'} CueKind the symbol: an arrow, stairs, a pickaxe */
 
@@ -184,24 +183,8 @@ export function createRenderer(canvas, game, t, juice) {
         drawCue(ctx, cx + cue.dx * d, cy - chh / 2 + cue.dy * d, Math.max(9 * dpr, tp * 0.45), cue, cue.left / CUE_S)
       }
 
-      // a run stopped to ask (D041): the disc blinks what the same swipe again would do, until answered
-      const ask = game.ask
-      if (ask && !game.step && cue.left === 0) {
-        const kind = ask.kind === 'build' ? 'build' : ask.kind === 'mine' ? 'mine' : 'walk'
-        const d = tp * 1.15
-        const on = Math.sin(time * Math.PI * 2 * ASK_HZ) > 0
-        drawCue(
-          ctx,
-          cx + ask.dx * d,
-          cy - chh / 2 + ask.dy * d,
-          Math.max(9 * dpr, tp * 0.45),
-          { dx: ask.dx, dy: ask.dy, kind, refused: false, ask: false },
-          on ? 1 : 0.35,
-        )
-      }
-
       if (homing > 0) charge = { p: homing, x: null, y: null }
-      if (charge && charge.p > 0.12) {
+      if (charge && charge.p > 0) {
         const r = 28 * dpr
         ctx.strokeStyle = CHAR
         ctx.lineWidth = 4 * dpr

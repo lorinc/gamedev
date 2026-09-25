@@ -4,8 +4,9 @@ import { describe, test } from 'node:test'
 import { Tile } from '../gen/world.js'
 import { command, createGame, tick, withSurface } from './game.js'
 import { packText } from './pack.js'
-import { compile, migrate } from './ruleset.js'
+import { compile, migrate, simConfig } from './ruleset.js'
 
+const B17 = JSON.parse(readFileSync(new URL('../../../rules/b1.7.json', import.meta.url), 'utf8'))
 const TABLE = compile(migrate(JSON.parse(readFileSync(new URL('../../../rules/b1.2.json', import.meta.url), 'utf8')))).table
 
 /** @type {import('./rules.js').SimConfig} */
@@ -32,9 +33,10 @@ function game(rows, cfg = CFG) {
   return g
 }
 
-// Swipe, then tick until the run ends. Returns the stop reason.
+// Swipe (a flick: let go at once), then tick until the run ends. Returns the stop reason.
 function swipe(g, dx, dy) {
   command(g, { type: 'intent', dx, dy })
+  command(g, { type: 'release' })
   for (let i = 0; i < 1000; i++) {
     tick(g)
     const stop = g.events.find((e) => e.type === 'stop')
@@ -87,6 +89,7 @@ describe('building', () => {
   test('a refused build or mine reports the cells it tried (for the red flash)', () => {
     const stopOf = (/** @type {any} */ g, /** @type {number} */ dx, /** @type {number} */ dy) => {
       command(g, { type: 'intent', dx, dy })
+      command(g, { type: 'release' })
       for (let i = 0; i < 1000; i++) {
         tick(g)
         const stop = g.events.find((e) => e.type === 'stop')
@@ -174,5 +177,76 @@ describe('dives', () => {
       return [g.world.tiles, g.tick, pos(g)]
     }
     assert.deepEqual(play(), play())
+  })
+})
+
+// Flick and hold (D046), on ruleset b1.7: the input says hold (still down 0.3 s after the swipe) or
+// release; until then the run takes only the steps a flick and a hold agree on.
+describe('flick and hold', () => {
+  const RAMP_MOUTH = ['#......#', '#@.....#', '##.#####', '########'] // a 1-deep dip: a flick walks it, a hold bridges it
+  const hold = (rows = RAMP_MOUTH) => {
+    const g = createGame(game(rows).world, { x: 1, y: 1 }, simConfig(B17), compile(B17).table)
+    g.pack = [{ tile: Tile.Soft, n: 2 }]
+    return g
+  }
+  const ticks = (g, n) => {
+    for (let i = 0; i < n; i++) tick(g)
+  }
+  const plank = (g, x, y) => g.world.tiles[y * g.world.w + x] === Tile.Plank
+
+  test('where a flick and a hold differ, the run waits for the input; a hold then builds', () => {
+    const g = hold()
+    command(g, { type: 'intent', dx: 1, dy: 0 })
+    ticks(g, 30)
+    assert.equal(g.step, null) // flick: step down into the dip; hold: a plank over it
+    assert.deepEqual(pos(g), [1, 1])
+    command(g, { type: 'hold' })
+    ticks(g, 1)
+    assert.equal(g.step?.action.kind, 'build')
+  })
+
+  test('let go before the hold mark: a flick, which follows the dip and walks on', () => {
+    const g = hold()
+    command(g, { type: 'intent', dx: 1, dy: 0 })
+    ticks(g, 10)
+    command(g, { type: 'release' })
+    ticks(g, 200)
+    assert.deepEqual(pos(g), [6, 1])
+    assert.equal(plank(g, 2, 2), false)
+  })
+
+  test('hold+swipe builds at once; a held run pauses after every step, and a release in the pause ends it', () => {
+    const g = hold()
+    const { buildTicks, walkTicks, holdPauseTicks } = g.cfg
+    command(g, { type: 'intent', dx: 1, dy: 0, held: true })
+    ticks(g, 1)
+    assert.equal(g.step?.action.kind, 'build')
+    ticks(g, buildTicks + walkTicks) // built and walked onto it: now the pause
+    assert.deepEqual(pos(g), [2, 1])
+    assert.equal(plank(g, 2, 2), true)
+    ticks(g, holdPauseTicks - 1)
+    assert.equal(g.step, null) // still pausing
+    command(g, { type: 'release' })
+    ticks(g, 100)
+    assert.deepEqual(pos(g), [2, 1])
+    assert.equal(g.run, null)
+  })
+
+  test('a release cancels a build in progress (nothing placed, no rock spent), but a move finishes', () => {
+    const g = hold()
+    command(g, { type: 'intent', dx: 1, dy: 0, held: true })
+    ticks(g, 3) // building
+    command(g, { type: 'release' })
+    ticks(g, 100)
+    assert.deepEqual(pos(g), [1, 1])
+    assert.equal(plank(g, 2, 2), false)
+    assert.deepEqual(packText(g.pack), ['soft 2'])
+
+    const w = hold(['#......#', '#@.....#', '########', '########'])
+    command(w, { type: 'intent', dx: 1, dy: 0, held: true })
+    ticks(w, 2) // walking
+    command(w, { type: 'release' })
+    ticks(w, 100)
+    assert.deepEqual(pos(w), [2, 1])
   })
 })

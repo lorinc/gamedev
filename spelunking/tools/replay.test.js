@@ -11,7 +11,7 @@ import { DEFAULT_TERRAIN, generateTerrain } from '../src/sim/gen/terrain.js'
 import { replay } from './replay.js'
 
 test('a report replays exactly', () => {
-  const ruleset = JSON.parse(readFileSync(new URL('../rules/b1.5.json', import.meta.url), 'utf8'))
+  const ruleset = JSON.parse(readFileSync(new URL('../rules/b1.7.json', import.meta.url), 'utf8'))
   const { world, home } = withSurface(generateTerrain(DEFAULT_TERRAIN), 4, 3)
   const g = createGame(world, home, simConfig(ruleset), /** @type {any} */ (compile(ruleset).table))
   const rec = createRecorder(g, { build: 'test', ruleset, preset: () => 'p' })
@@ -27,17 +27,25 @@ test('a report replays exactly', () => {
     command(g, cmd)
   }
   send({ type: 'intent', dx: 1, dy: 0 }, 'test swipe 5°')
+  frames(3)
+  send({ type: 'release' }, 'test let go') // a flick
   frames(40)
   send({ type: 'stop' }, 'test tap')
   frames(5)
   send({ type: 'intent', dx: -1, dy: 1 }, 'test swipe 44°')
-  frames(200)
+  frames(12)
+  send({ type: 'hold' }, 'test still down') // a hold
+  frames(120)
+  send({ type: 'release' }, 'test let go')
+  frames(40)
   g.cfg.rules.junction = false
   rec.config()
-  send({ type: 'intent', dx: 1, dy: -1 }, 'test swipe 46°')
+  send({ type: 'intent', dx: 1, dy: -1, held: true }, 'test hold+swipe 46°')
   frames(300)
   const report = rec.report()
   assert.match(report, /Last 3 swipes/)
+  assert.match(report, /↙ hold/)
+  assert.match(report, /let go \(test let go\)/)
   assert.match(report, /^EXAMPLE \{/m)
   const r = replay(report)
   assert.deepEqual(r.problems, [])

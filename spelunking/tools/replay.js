@@ -26,6 +26,8 @@ export function replay(text) {
   const g = createGame(world, home, structuredClone(r.cmds[0][2]), table)
   const preset = text.match(/ · preset (\w+)/)?.[1] ?? '?'
   const rec = createRecorder(g, { build: r.build, ruleset: r.ruleset, preset: () => preset })
+  // before D046 a swipe had no release: it was a flick, so let go at once
+  const flicksOnly = !r.cmds.some((/** @type {any[]} */ c) => c[1] === 'r')
   let i = 1
   while (g.tick < r.at) {
     for (; i < r.cmds.length && r.cmds[i][0] === g.tick + 1; i++) {
@@ -34,9 +36,11 @@ export function replay(text) {
         g.cfg = structuredClone(rest[0])
         rec.config()
       } else {
-        const cmd = type === 'i' ? { type: 'intent', dx: rest[0], dy: rest[1] } : { type: type === 's' ? 'stop' : 'teleport' }
+        const types = /** @type {Record<string, string>} */ ({ s: 'stop', t: 'teleport', h: 'hold', r: 'release' })
+        const cmd = type === 'i' ? { type: 'intent', dx: rest[0], dy: rest[1], ...(rest[3] ? { held: true } : {}) } : { type: types[type] }
         rec.record(/** @type {any} */ (cmd), type === 'i' ? rest[2] : rest[0])
         command(g, /** @type {any} */ (cmd))
+        if (type === 'i' && flicksOnly) command(g, { type: 'release' })
       }
     }
     tick(g)

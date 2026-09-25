@@ -20,7 +20,7 @@ import { Tile } from '../../sim/gen/world.js'
 /** @typedef {import('../../sim/dig/ruleset.js').Ruleset} Ruleset */
 /** @typedef {import('../../sim/dig/examples.js').Example} Example */
 
-/** A recorded command: [tick, 'i', dx, dy, how] | [tick, 's' | 't', how] | [tick, 'cfg', sim]. */
+/** A recorded command: [tick, 'i', dx, dy, how, held?: 1] | [tick, 's' | 't' | 'h' | 'r', how] | [tick, 'cfg', sim]. h: hold, r: release (D046). */
 /** @typedef {[number, string, ...any[]]} Rec */
 
 const KEEP = 5 // swipes in the report
@@ -55,7 +55,8 @@ export function createRecorder(game, info) {
   const cmds = [[0, 'cfg', cfg()]]
   /**
    * @typedef {{ n: number, tick: number, how: string, arrow: string, intent: string, from: { x: number, y: number }, facing: number,
-   *   pack: string[], map: string[], at: [number, number] | null, steps: string[], end: string, stopAt: [number, number] | null, stop: string | null }} Swipe
+   *   pack: string[], map: string[], at: [number, number] | null, steps: string[], end: string, stopAt: [number, number] | null, stop: string | null,
+   *   held: boolean }} Swipe held: a hold, not a flick (D046)
    */
   /** @type {Swipe[]} */
   const swipes = []
@@ -95,7 +96,7 @@ export function createRecorder(game, info) {
     record(cmd, how) {
       const tick = game.tick + 1
       if (cmd.type === 'intent') {
-        cmds.push([tick, 'i', cmd.dx, cmd.dy, how])
+        cmds.push(cmd.held ? [tick, 'i', cmd.dx, cmd.dy, how, 1] : [tick, 'i', cmd.dx, cmd.dy, how])
         const { x, y } = game.ch
         const snip = snippet(x, y)
         swipes.push({
@@ -113,8 +114,18 @@ export function createRecorder(game, info) {
           end: 'still running',
           stopAt: null,
           stop: null,
+          held: !!cmd.held,
         })
         if (swipes.length > KEEP) swipes.shift()
+      } else if (cmd.type === 'hold' || cmd.type === 'release') {
+        cmds.push([tick, cmd.type === 'hold' ? 'h' : 'r', how])
+        const last = swipes[swipes.length - 1]
+        if (!last || last.end !== 'still running') return
+        if (cmd.type === 'hold' && game.run?.held === null) last.held = true
+        else if (cmd.type === 'release' && last.held) {
+          last.end = `let go (${how})`
+          last.stop = 'released'
+        }
       } else {
         cmds.push([tick, cmd.type === 'stop' ? 's' : 't', how])
         const last = swipes[swipes.length - 1]
@@ -157,7 +168,7 @@ export function createRecorder(game, info) {
       ]
       for (const s of swipes) {
         lines.push(
-          `#${s.n} tick ${s.tick} · ${s.how} → ${s.arrow} (${s.intent}) · from ${pos(s.from)} facing ${s.facing > 0 ? '→' : '←'} · pack [${s.pack.join(', ')}]`,
+          `#${s.n} tick ${s.tick} · ${s.how} → ${s.arrow} ${s.held ? 'hold' : 'flick'} (${s.intent}) · from ${pos(s.from)} facing ${s.facing > 0 ? '→' : '←'} · pack [${s.pack.join(', ')}]`,
         )
         const steps =
           s.steps.length > 12 ? [...s.steps.slice(0, 5), `… ${s.steps.length - 10} more steps …`, ...s.steps.slice(-5)] : s.steps
@@ -166,13 +177,24 @@ export function createRecorder(game, info) {
       }
       const last = swipes[swipes.length - 1]
       if (last) {
-        lines.push('', `Map where swipe #${last.n} started (@ = you; . open · # soft · H hard · o ore · $ loot · = built · - plank):`, ...last.map)
+        lines.push(
+          '',
+          `Map where swipe #${last.n} started (@ = you; . open · # soft · H hard · o ore · $ loot · = built · - plank):`,
+          ...last.map,
+        )
         /** @type {Example} */
         const example = {
           id: `report-${last.tick}`,
           note: `Bug report, tick ${last.tick}: ${last.how}. Say what should happen here.`,
           map: last.map,
-          swipes: [{ swipe: last.arrow, stop: last.stop ?? '?', ...(last.stopAt ? { at: last.stopAt } : {}) }],
+          swipes: [
+            {
+              swipe: last.arrow,
+              ...(last.held ? { hold: last.steps.length } : {}),
+              stop: last.stop ?? '?',
+              ...(last.stopAt ? { at: last.stopAt } : {}),
+            },
+          ],
         }
         if (last.pack.length) example.start = { pack: last.pack }
         lines.push('', `EXAMPLE ${JSON.stringify(example)}`)
