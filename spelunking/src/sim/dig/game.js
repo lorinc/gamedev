@@ -6,11 +6,24 @@
 // and `release` when it lets go. Until one of them comes, the run is undecided: it takes the steps
 // a flick and a hold agree on, and waits where they differ. A flick follows the world and goes on
 // after the release; a held run goes straight, pauses after every step, and ends on the release.
+//
+// Light and seen (D051, D052), only when the config has `light`: at the end of a tick in which your
+// cell, the pack's light radius or the world changed, the lit cells are recomputed (light.js), and
+// every lit cell becomes seen for good. Without `light` (every b1 ruleset) none of it runs.
+//
+// The seismic probe (D053), when a ruleset's row does `probe` (b2.1: ↓ on a floor): you stand still
+// while rings spread from your cell, one every ringTicks, each revealed for good (probe.js). A flick
+// grows to its reach (light radius + flick) and ends; a hold grows on past it while the swipe is still
+// held or undecided, up to radius + hold, and a release ends it at the ring it's on. Nothing cuts a
+// probe short: a tap or a new swipe waits for it to end (the new swipe then runs); only a teleport
+// ends it at once. The run ends with the probe (stop `probe`), so a flick doesn't probe again.
 
 import { isFloor, isOpen, Tile } from '../gen/world.js'
 import { digTicks, stopReason, tileAt } from './rules.js'
 import { add, fits, MATERIAL_NAME, material, rock, spendRock, valuable } from './pack.js'
 import { interpret } from './ruleset.js'
+import { litCells, lightRadius, surfaceCells } from './light.js'
+import { PROBE, probeReach, ringCells } from './probe.js'
 
 /** @typedef {import('../gen/world.js').World} World */
 /** @typedef {import('./rules.js').Action} Action */
@@ -30,7 +43,10 @@ import { interpret } from './ruleset.js'
  *   | { type: 'built', x: number, y: number }
  *   | { type: 'stop', reason: string, dx: number, dy: number, tried: Cell[], rule?: Action['rule'], next: Action['kind'] }
  *   | { type: 'abort' }
- *   | { type: 'teleport', from: Cell, dive: Dive | null }} GameEvent
+ *   | { type: 'teleport', from: Cell, dive: Dive | null }
+ *   | { type: 'seen', cells: number[] }
+ *   | { type: 'ring', x: number, y: number, r: number }} GameEvent seen: cells (y * w + x) seen for the first time, for a renderer's
+ *   texture; ring: the probe from (x, y) reached ring r (D053)
  */
 
 /**
@@ -59,6 +75,18 @@ import { interpret } from './ruleset.js'
 /** @typedef {{ soft: number, hard: number, ore: number, loot: number }} Stash */
 
 /**
+ * @typedef {object} ProbeState a seismic probe in progress (D053)
+ * @property {number} x
+ * @property {number} y the cell it spreads from
+ * @property {number} r the ring it has reached (1 on its first tick)
+ * @property {number} min the rings it always reaches: the light's radius at its start + flick
+ * @property {number} max the rings a hold can reach: radius + hold
+ * @property {number} t ticks since it started (ring r came at (r - 1) * ringTicks)
+ * @property {boolean | null} held its swipe is held; false once let go (or a new swipe came), null until the input knows
+ * @property {NonNullable<Game['run']>} run the run that started it: it ends with the probe, unless a newer command replaced it
+ */
+
+/**
  * @typedef {object} Game
  * @property {World} world
  * @property {SimConfig} cfg read every tick, so the dev panel can change it live
@@ -75,6 +103,12 @@ import { interpret } from './ruleset.js'
  * @property {Dive[]} dives
  * @property {Command[]} queue
  * @property {GameEvent[]} events since the renderer last drained them
+ * @property {Uint8Array | null} seen per cell (y * w + x), 1 = seen for good (D052); null without `cfg.light`
+ * @property {number[]} lit cells (y * w + x) lit now, sorted, the surface included; a new array whenever it changes
+ * @property {number} radius the light's radius now, in tiles (0 without `cfg.light`)
+ * @property {number[]} surface the cells always lit: the sky and the ground's top faces, as at the start
+ * @property {{ x: number, y: number, r: number }} litFor what `lit` was computed for; r = -1 after the world changed
+ * @property {ProbeState | null} probe the seismic probe in progress (D053); you don't move while it's there
  */
 
 // The generated terrain under a surface strip: sky rows to walk on, solid crust rows, home at x = 0.
@@ -91,7 +125,8 @@ export function withSurface(terrain, skyRows, crustRows) {
 
 /** @param {World} world @param {Cell} home @param {SimConfig} cfg @param {Table} table @returns {Game} */
 export function createGame(world, home, cfg, table) {
-  return {
+  /** @type {Game} */
+  const g = {
     world,
     cfg,
     table,
@@ -106,7 +141,20 @@ export function createGame(world, home, cfg, table) {
     dives: [],
     queue: [],
     events: [],
+    seen: null,
+    lit: [],
+    radius: 0,
+    surface: [],
+    litFor: { x: home.x, y: home.y, r: -1 },
+    probe: null,
   }
+  if (cfg.light) {
+    g.seen = new Uint8Array(world.w * world.h)
+    g.surface = surfaceCells(world)
+    reveal(g, g.surface)
+    updateLight(g)
+  }
+  return g
 }
 
 /** @param {Game} g @param {Command} cmd */
@@ -123,9 +171,12 @@ export function tick(g) {
       if (cmd.dx) g.ch.facing = Math.sign(cmd.dx)
       g.run = { dx: cmd.dx, dy: cmd.dy, prev: null, held: cmd.held ? true : null, rest: 0 }
       abortDig(g)
+      if (g.probe) g.probe.held = false // the new swipe has the input now; it runs once the probe ends
     } else if (cmd.type === 'hold') {
       if (g.run && g.run.held === null) g.run.held = true
+      if (g.probe && g.probe.held === null) g.probe.held = true
     } else if (cmd.type === 'release') {
+      if (g.probe) g.probe.held = false // it ends at the ring it's on, never short of min
       if (g.run?.held) {
         g.run = null // a hold ends on release: a move finishes, a dig or build in progress is cancelled
         abortDig(g)
@@ -143,7 +194,86 @@ export function tick(g) {
     if (s.t === s.digT) apply(g, s.action)
     if (s.t >= s.dur) arrive(g, s)
   }
-  if (!g.step && g.run) next(g)
+  if (g.probe) spread(g, g.probe)
+  else if (!g.step && g.run) next(g)
+  if (g.seen) updateLight(g)
+}
+
+// The probe's tick: each ring lasts ringTicks, then the next one comes, or the probe ends. Past min
+// it grows only while its swipe is still held (or undecided), up to max.
+/** @param {Game} g @param {ProbeState} p */
+function spread(g, p) {
+  p.t++
+  const ringTicks = Math.max(1, (g.cfg.probe ?? PROBE).ringTicks)
+  if (p.t < p.r * ringTicks) return
+  if (p.r < p.min || (p.r < p.max && p.held !== false)) ring(g, p, p.r + 1)
+  else endProbe(g, p)
+}
+
+/** Ring r reached: its cells are seen for good. @param {Game} g @param {ProbeState} p @param {number} r */
+function ring(g, p, r) {
+  p.r = r
+  reveal(g, ringCells(g.world, p, r))
+  g.events.push({ type: 'ring', x: p.x, y: p.y, r })
+}
+
+// The probe's run ends with it (stop `probe`), also when a tap or a hold's release ended it already;
+// a new swipe made during the probe runs now instead.
+/** @param {Game} g @param {ProbeState} p */
+function endProbe(g, p) {
+  g.probe = null
+  if (g.run && g.run !== p.run) return
+  g.run = null
+  g.events.push({ type: 'stop', reason: 'probe', dx: p.run.dx, dy: p.run.dy, tried: [], rule: p.run.prev?.rule, next: 'probe' })
+  if (g.dive) g.dive.stops.probe = (g.dive.stops.probe ?? 0) + 1
+}
+
+// Recomputes the lit cells if your cell, the radius or the world changed since the last time.
+/** @param {Game} g */
+function updateLight(g) {
+  if (!g.cfg.light) return
+  const r = lightRadius(g.pack, g.cfg.light)
+  const at = g.litFor
+  if (at.x === g.ch.x && at.y === g.ch.y && at.r === r) return
+  g.litFor = { x: g.ch.x, y: g.ch.y, r }
+  g.radius = r
+  const cells = litCells(g.world, g.ch, r)
+  g.lit = union(g.surface, cells)
+  reveal(g, cells) // the surface was seen at the start
+}
+
+/**
+ * Marks cells seen for good and emits one `seen` event with the ones seen for the first time.
+ * The light uses it, and so will the probe (D053). A no-op without a seen map.
+ * @param {Game} g @param {number[]} cells y * w + x
+ * @returns {number[]} the newly seen cells
+ */
+export function reveal(g, cells) {
+  const seen = g.seen
+  if (!seen) return []
+  /** @type {number[]} */
+  const fresh = []
+  for (const i of cells)
+    if (!seen[i]) {
+      seen[i] = 1
+      fresh.push(i)
+    }
+  if (fresh.length) g.events.push({ type: 'seen', cells: fresh })
+  return fresh
+}
+
+/** Two sorted lists of cells as one, sorted, without repeats. @param {number[]} a @param {number[]} b */
+function union(a, b) {
+  if (!a.length) return b
+  /** @type {number[]} */
+  const out = []
+  let i = 0
+  let j = 0
+  while (i < a.length || j < b.length) {
+    const v = j >= b.length || (i < a.length && a[i] <= b[j]) ? a[i++] : b[j++]
+    if (out[out.length - 1] !== v) out.push(v)
+  }
+  return out
 }
 
 // A new intent or a stop cancels a dig in progress (the tile stays); a move in progress finishes,
@@ -187,6 +317,15 @@ function next(g) {
     if (!sameOutcome(p, plan(true))) return // wait for the input to say hold or release
   } else p = plan(run.held)
   const { action, reason } = p
+  if (!reason && action.kind === 'probe') {
+    // you stay put: no step; the probe holds the run until it ends (D053)
+    const radius = cfg.light ? lightRadius(g.pack, cfg.light) : 0
+    const { min, max } = probeReach(radius, cfg.probe ?? PROBE)
+    run.prev = action
+    g.probe = { x: ch.x, y: ch.y, r: 0, min, max, t: 0, held: run.held, run }
+    ring(g, g.probe, 1)
+    return
+  }
   if (reason) {
     g.events.push({
       type: 'stop',
@@ -222,6 +361,7 @@ function sameOutcome(a, b) {
 /** @param {Game} g @param {Action} action */
 function apply(g, action) {
   const { world } = g
+  if (action.digs.length || action.builds.length) g.litFor.r = -1 // the light spreads anew (D051)
   // ore and loot first: the room they were promised (ruleset.js) mustn't go to rock mined alongside
   for (const d of [...action.digs.filter((d) => valuable(d.tile)), ...action.digs.filter((d) => !valuable(d.tile))]) {
     world.tiles[d.y * world.w + d.x] = Tile.Open
@@ -288,6 +428,7 @@ function teleport(g) {
   g.dive = null
   g.run = null
   g.step = null
+  g.probe = null // the one thing that ends a probe at once
   g.ch.x = g.home.x
   g.ch.y = g.home.y
   g.events.push({ type: 'teleport', from, dive })

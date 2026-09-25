@@ -14,7 +14,9 @@ import { DEFAULT_TERRAIN, generateTerrain } from './gen/terrain.js'
 const SIM = dirname(fileURLToPath(import.meta.url))
 const TABLE = compile(migrate(JSON.parse(readFileSync(join(SIM, '../../rules/b1.2.json'), 'utf8')))).table
 
-/** @type {import('./dig/rules.js').SimConfig} */
+/** @typedef {import('./dig/rules.js').SimConfig} SimConfig */
+
+/** @type {SimConfig} */
 const CFG = {
   walkTicks: 2,
   climbTicks: 2,
@@ -38,9 +40,10 @@ const SCRIPT = [
   [1, 0],
 ]
 
-function play(caveSeed = DEFAULT_TERRAIN.caveSeed) {
+/** @param {SimConfig['light']} [light] with it, the game keeps a seen map (D052), and the hash covers it */
+function play(caveSeed = DEFAULT_TERRAIN.caveSeed, light) {
   const { world, home } = withSurface(generateTerrain({ ...DEFAULT_TERRAIN, caveSeed }), 4, 3)
-  const g = createGame(world, home, structuredClone(CFG), TABLE)
+  const g = createGame(world, home, { ...structuredClone(CFG), ...(light && { light }) }, TABLE)
   for (const [dx, dy] of SCRIPT) {
     command(g, { type: 'intent', dx, dy })
     for (let i = 0; i < 300; i++) tick(g)
@@ -50,6 +53,7 @@ function play(caveSeed = DEFAULT_TERRAIN.caveSeed) {
   const h = createHash('sha256')
   h.update(g.world.tiles)
   h.update(JSON.stringify({ tick: g.tick, ch: g.ch, pack: g.pack, stash: g.stash, dives: g.dives }))
+  if (g.seen) h.update(g.seen)
   return { hash: h.digest('hex'), g }
 }
 
@@ -61,6 +65,18 @@ test('same seed + same commands → same state', () => {
     a.g.tick > 0 && (a.g.ch.x !== a.g.home.x || Object.values(a.g.stash).some((n) => n > 0) || a.g.dives.length > 0),
     'the script must actually do something',
   )
+})
+
+test('with light: same seed + same commands → the same seen map (D052)', () => {
+  const light = { base: 4, orePer: 16, lootPer: 8 }
+  const a = play(DEFAULT_TERRAIN.caveSeed, light)
+  const b = play(DEFAULT_TERRAIN.caveSeed, light)
+  assert.equal(a.hash, b.hash)
+  assert.deepEqual(a.g.seen, b.g.seen)
+  assert.deepEqual(a.g.lit, b.g.lit)
+  const surface = a.g.surface.length
+  assert.ok(a.g.seen && a.g.seen.reduce((n, v) => n + v, 0) > surface, 'the dive saw more than the surface')
+  assert.equal(play().g.seen, null)
 })
 
 test('a different seed → a different state (the hash covers the world)', () => {

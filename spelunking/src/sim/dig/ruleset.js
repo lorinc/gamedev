@@ -94,7 +94,7 @@ export const PLACEABLE = { built: Tile.Built, plank: Tile.Plank }
  * @typedef {View & {
  *   dig: (x: number, y: number) => boolean,
  *   build: (x: number, y: number, tile: number) => void,
- *   done: (base: 'walk' | 'climb', x: number, y: number, fall?: number) => Action,
+ *   done: (base: 'walk' | 'climb' | 'probe', x: number, y: number, fall?: number) => Action,
  *   blocked: (reason: string) => Action,
  *   h: number,
  *   row: { reason?: string, place?: string },
@@ -218,6 +218,10 @@ export const MEANINGS = {
       return a.done('climb', x, y + 1)
     },
   },
+  probe: {
+    text: 'stand still and send out the seismic probe: rings that reveal everything around you, rock interiors too (D053)',
+    run: (a) => a.done('probe', a.x, a.y),
+  },
   refuse: { text: 'nothing: refuse with a reason', param: 'reason', run: (a) => a.blocked(a.row.reason ?? 'refused') },
 }
 
@@ -238,6 +242,7 @@ export const ALWAYS_STOPS = {
   floor: 'a climb reaches the ground',
   fell: 'with gravity on: nothing holds you after a step, so you fall and land (up to harmlessDrop)',
   fallHome: 'with gravity on: a fall deeper than harmlessDrop; you land, then teleport home (D035)',
+  probe: 'a seismic probe ends: its run ends with it (D053; only rulesets whose table has `probe`)',
 }
 
 /** Reasons the engine gives on its own: no row matched, the world's edge, the pack. */

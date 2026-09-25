@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Push, with every playable version on the timeline (D037). If b1 changed since its newest frozen
-# build, freezes the next one (b1.N+1) into the entry that holds the newest build, adds its build
-# line (the last commit's subject), regenerates the timeline, commits, then pushes main + the tag.
+# Push, with every playable version on the timeline (D037). If the newest bundle (bN) changed since
+# its newest frozen build, freezes the next one (bN.M+1) into the entry that holds its newest build
+# (for bN.1, the entry whose dev: line names bN.html), adds its build line (the last commit's
+# subject), regenerates the timeline, commits, then pushes main + the tag.
 # Usage: npm run ship   (commit your work first)
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")/.." && pwd)
@@ -12,15 +13,23 @@ if NEXT=$(tools/unfrozen.sh); then
   git push
   exit 0
 fi
-LAST=$(git tag --list 'b1.*' | sort -V | tail -1)
-ENTRY=$(grep -l "^build $LAST:" timeline/p*/entry.md | head -1 | xargs dirname | xargs basename)
+B=${NEXT%.*}
+LAST=$(git tag --list "$B.*" | sort -V | tail -1)
+if [ -n "$LAST" ]; then
+  ENTRY=$(grep -l "^build $LAST:" timeline/p*/entry.md | head -1 | xargs dirname | xargs basename)
+  AFTER="^build $LAST:"
+else # its first build: the entry whose dev: line names the page
+  ENTRY=$(grep -lE "^dev: .*\b$B\.html" timeline/p*/entry.md | head -1 | xargs dirname | xargs basename)
+  AFTER="^dev: "
+fi
+[ -n "$ENTRY" ] || { echo "no entry holds $B: give one a 'dev: $B.html' line"; exit 1; }
 if grep -qE '^status: (concluded|killed)' "timeline/$ENTRY/entry.md"; then
   echo "$ENTRY is closed: open a new entry and give it a build line first"; exit 1
 fi
 SUBJECT=$(git log -1 --format=%s)
 tools/freeze.sh "$ENTRY" "$NEXT"
 # the new build line goes right after the newest one
-sed -i "/^build $LAST:/a build $NEXT: $(date +%F) · $SUBJECT" "timeline/$ENTRY/entry.md"
+sed -i "/$AFTER/a build $NEXT: $(date +%F) · $SUBJECT" "timeline/$ENTRY/entry.md"
 node tools/timeline.js --strict
 git add "timeline/$ENTRY" timeline/index.html
 git commit -q -m "Freeze $NEXT into $ENTRY" -m "$SUBJECT"

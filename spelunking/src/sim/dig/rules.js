@@ -17,7 +17,8 @@ export const BEDROCK = -1
 
 /**
  * @typedef {object} Action
- * @property {'walk' | 'mine' | 'build' | 'climb' | 'fall' | 'blocked'} kind `fall`: nothing held you (gravity)
+ * @property {'walk' | 'mine' | 'build' | 'climb' | 'fall' | 'probe' | 'blocked'} kind `fall`: nothing held you (gravity);
+ *   `probe`: stand still and send the seismic probe's rings out (D053)
  * @property {number} dx
  * @property {number} dy
  * @property {Cell} to where the character ends up (x wrapped)
@@ -52,6 +53,8 @@ export const BEDROCK = -1
  * @property {number} packSlots slots of SLOT units each (pack.js)
  * @property {number} [holdPauseTicks] a held run's pause after each step (D046; 18 = 0.3 s if missing)
  * @property {boolean} [gravity] after each step, fall if nothing holds you (floor below, wall left or right); a fall deeper than harmlessDrop lands, then teleports home (D035)
+ * @property {import('./light.js').Light} [light] the light's radius from the pack (D051); with it, the game keeps a seen map (D052)
+ * @property {import('./probe.js').Probe} [probe] the seismic probe's reach and speed (D053); probe.js's PROBE if missing
  * @property {Rules} rules
  */
 

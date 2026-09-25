@@ -42,9 +42,9 @@ for game in "$ROOT"/*/package.json; do
     [ -x tools/smoke.sh ] && { tools/smoke.sh >/dev/null || { tools/smoke.sh; echo "  $name: a page has errors in the browser"; exit 1; }; }
     node tools/timeline.js --strict >/dev/null || { echo "  $name: timeline has problems (npm run timeline)"; exit 1; }
     git diff --quiet -- timeline/index.html || { echo "  $name: timeline/index.html was stale; it's regenerated now, commit it"; exit 1; }
-    # every playable version is on the timeline (D037): the pushed commit's b1 must be a frozen build
+    # every playable version is on the timeline (D037): the pushed commit's newest bundle must be a frozen build
     if [ -x tools/unfrozen.sh ] && ! next=$(tools/unfrozen.sh); then
-      echo "  $name: b1 changed since its newest frozen build; push with npm run ship (freezes $next)"; exit 1
+      echo "  $name: ${next%.*} changed since its newest frozen build; push with npm run ship (freezes $next)"; exit 1
     fi
   fi
 done
