@@ -53,3 +53,11 @@ b1.1 rules b1.2 #1 59.0s ore 0 loot 0 depth 12 mined 11 built 0 | noOre:5 floor:
 - What's wanted: the stair block (D029). ↗ climbs onto it, and ↘ still walks through it.
 - The report's `EXAMPLE` line (`report-6659`, start pack soft 16 + soft 12) is the starting point for the stairs example (R8). The full report is in the user's `temp/2026-09-25_stairs-report-tick7166.txt`, which is local and not in the repo.
 - Changed: D039 (planks), with D040–D043 from the same design session: ruleset b1.6. The crossing is the example `plank-crossing`: ↗ asks, lays a plank at (364,14) and climbs the ↙ tunnel, and ↘ still runs down its own tunnel under the plank.
+
+## Later: digging turned into bridging (bug report, tick 3900, on b1.6)
+
+> A digging resulted in a bridge building. Is this a bug or an intentional rule that needs a fix?
+
+- Seen in the report (the replay matches exactly): → at the foot of a step asked, and the second → dug it. The run tunnelled level, walked out, stepped down, and at the gap laid 4 planks without asking.
+- The reason: D041's "once confirmed, the whole run is confirmed" (Claude's call, not discussed). The yes to dig also counted as a yes to build.
+- Changed: D044. A yes covers only its kind of action, and only while the run keeps doing it. The run now stops at the gap's edge (348,14) and asks. Example `dig-yes-not-build`.
