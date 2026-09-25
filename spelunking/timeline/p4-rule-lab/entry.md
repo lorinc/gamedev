@@ -8,6 +8,7 @@ from: p3
 dev: v4.html, b1.html
 build b1.3: 2026-09-25 · ruleset b1.3: cling above a chasm, any mining, gravity (D035); swipe cue disc, "?" on stops, bug reports
 build b1.4: 2026-09-25 · b1: deep-fall red + teleport charge (D036); every version on the timeline (D037, R13)
+build b1.5: 2026-09-25 · b1: the backpack on the character's back, 6 slots of 16, building paid in rock (D038)
 ---
 
 # p4 · Rule Lab (v4)
