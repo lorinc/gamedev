@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Runs before every push. The repo is public and GitHub Pages serves main, so a push publishes:
+# this is the only gate between a broken commit and the live site. ~2 s.
+# Enable once per clone:  git config core.hooksPath .githooks
+# Skip in an emergency:   git push --no-verify   (and say so in the next commit)
+# Note: it checks the working tree, so commit or stash unrelated edits first.
+set -euo pipefail
+ROOT=$(git rev-parse --show-toplevel)
+
+for game in "$ROOT"/*/package.json; do
+  dir=$(dirname "$game")
+  name=$(basename "$dir")
+  echo "pre-push · $name"
+  cd "$dir"
+  if [ ! -x node_modules/.bin/tsc ]; then echo "  $name: run npm install first (tsc is the type check)"; exit 1; fi
+  npx --no-install tsc -p . || { echo "  $name: type check failed"; exit 1; }
+  node --test --test-reporter=dot >/dev/null 2>&1 || { node --test 2>&1 | grep -E '^not ok|^# (pass|fail)'; echo "  $name: tests failed"; exit 1; }
+  if [ -f tools/timeline.js ]; then
+    node tools/timeline.js --strict >/dev/null || { echo "  $name: timeline has problems (npm run timeline)"; exit 1; }
+    git diff --quiet -- timeline/index.html || { echo "  $name: timeline/index.html was stale; it's regenerated now, commit it"; exit 1; }
+  fi
+done
+echo "pre-push · ok"

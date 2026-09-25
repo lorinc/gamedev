@@ -3,6 +3,7 @@ id: p3
 title: Dig Feel (b1)
 started: 2026-09-24
 status: playtesting
+budget: 3d
 from: p2
 cover: media/cover.png
 dev: b1.html
@@ -49,6 +50,17 @@ Every game must run in portrait, landscape and square, with touch and with mouse
 8. [?] Canvas2D with no dependencies runs without hitching on the Galaxy A41.
 9. [?] Stop rules as a tunable table (wall, drop, open space, new material, loot, hazard, junction) can make the movement feel right without new mechanics.
 
+## Limitations
+
+- [constraint ?] Coloured squares only: no art, and no effects beyond the juice. If it's fun as squares, art can only lift it.
+- [constraint ?] Casual, not survival: no fall damage, and a wrong move never ends a dive (D011).
+- [constraint ?] Everyone is an Engineer: one path, no loadouts to choose between (D014).
+- [constraint ?] No digging straight down: the way down through rock is the diagonal staircase. It was cut after first play, to see if the loop gets sharper without it (D019).
+- [constraint ?] Everything is lit: no darkness, so digging is judged on its own before b2 adds greed.
+- [cut] Zipline: moved to b1.2 (D014).
+- [cut] Torchlight: moved to b2, where darkness arrives (D014).
+- [cut] Moon bugs, Demolitionist and Ghost, the base, heat and raids: later bundles.
+
 ## Built
 
 **World:** the v3 terrain (the recipe archived in p2, live = cave), wrapping horizontally, with a surface strip on top and a home spot. The strip is 4 sky rows + 3 solid crust rows, and home is at x = 0.
@@ -82,9 +94,9 @@ Every game must run in portrait, landscape and square, with touch and with mouse
 **Dev panel:** backtick, or tap the top-left corner. It shows every tunable, frame time, device pixel ratio, viewport and input type. The **dive log** is copyable, so testers can paste it back.
 
 **Rules decided at first play (2026-09-25):**
-- **Mine first, then look.** A mining step moves into the mined cell only if you can stand there: it has a floor, or a 1-tile step down to one. Tunnels never walk you into a chasm.
-- **Step off by asking.** Walking still stops at every drop of 2+. Swiping into the gap again drops you to the floor if it's within `harmlessDrop` (default 4), and the walk then continues. A deeper gap stays a ledge.
-- **No digging straight down.** A down swipe only climbs over a ledge on the facing side, or continues a climb.
+- **Mine first, then look (D020).** A mining step moves into the mined cell only if you can stand there: it has a floor, or a 1-tile step down to one. Tunnels never walk you into a chasm.
+- **Step off by asking (D018).** Walking still stops at every drop of 2+. Swiping into the gap again drops you to the floor if it's within `harmlessDrop` (default 4), and the walk then continues. A deeper gap stays a ledge.
+- **No digging straight down (D019).** A down swipe only climbs over a ledge on the facing side, or continues a climb.
 
 **Tunables** (current values in `presets/`):
 
@@ -114,3 +126,4 @@ Open: playtesting. Next come the phone sessions on the A41, and two open problem
 - **Chasms:** voids deeper than the harmless drop. With the rules above you can't fall in, but there's no designed way across or down yet, except building a diagonal stair into one (paid in ore). The zipline (b1.2) was meant for this. Home at x = 0 sits above such a void.
 - **Climbing into a chasm:** should down at a ledge refuse a climb whose next step isn't possible (mine-then-look for climbs), or keep the stuck-then-teleport behaviour? Either way, draw a clinging pose.
 - The junction stop rule is on by default and may feel twitchy.
+- Decisions so far: [D014–D022](../decisions.md).

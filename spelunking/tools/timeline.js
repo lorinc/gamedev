@@ -1,6 +1,7 @@
 // Builds timeline/index.html: one card per prototype (timeline/pN-slug/entry.md), newest first,
-// with its question, assumption marks, Play buttons for its frozen builds, the conclusion,
-// and the full entry + feedback sessions behind a <details>. One static file, no runtime JS.
+// with its question, assumption marks, limitations, time box, Play buttons for its frozen builds,
+// the conclusion and the decisions it made (timeline/decisions.md), and the full entry + feedback
+// sessions behind a <details>. One static file; a few lines of inline JS count the time box days.
 // Usage: node tools/timeline.js [--out file] [--dev <base url of live bN.html>] [--strict]
 //   --strict  exit 1 on problems; otherwise they're printed as warnings.
 
@@ -9,7 +10,7 @@ import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { escapeHtml, inline, mdToHtml, parseEntry, sections } from './md.js'
 
-export const SECTIONS = ['Question', 'Assumptions', 'Built', 'Feedback', 'Conclusion → next']
+export const SECTIONS = ['Question', 'Assumptions', 'Limitations', 'Built', 'Feedback', 'Conclusion → next']
 const MARKS = /** @type {const} */ ({ '?': 'open', '✓': 'held', '✗': 'broken' })
 
 /**
@@ -17,9 +18,14 @@ const MARKS = /** @type {const} */ ({ '?': 'open', '✓': 'held', '✗': 'broken
  *   dir: string, id: string, title: string, meta: Record<string, string>,
  *   builds: { id: string, text: string, exists: boolean }[],
  *   parts: Record<string, string>, feedback: { name: string, md: string }[],
- *   assumptions: { mark: 'open' | 'held' | 'broken', text: string }[],
+ *   assumptions: { mark: 'open' | 'held' | 'broken', text: string, postHoc: boolean }[],
+ *   limitations: { kind: 'constraint' | 'cut', mark: 'open' | 'held' | 'broken' | null, text: string }[],
  * }} Entry
  */
+
+/** @typedef {{ id: string, date: string, from: string, status: string, text: string }} Decision */
+
+const POST_HOC = /\s*\(post-hoc\)\s*$/
 
 /**
  * @param {string} dir  folder name, e.g. p3-dig-feel
@@ -33,11 +39,20 @@ export function readEntry(dir, src, feedback, buildExists) {
   const parts = sections(body)
   const problems = []
   for (const s of SECTIONS) if (!(s in parts)) problems.push(`${dir}: missing section "## ${s}"`)
-  for (const k of ['id', 'title', 'started', 'status']) if (!meta[k]) problems.push(`${dir}: missing "${k}:" in frontmatter`)
+  for (const k of ['id', 'title', 'started', 'status', 'budget']) if (!meta[k]) problems.push(`${dir}: missing "${k}:" in frontmatter`)
+  if (meta.budget && !/^\d+d$/.test(meta.budget)) problems.push(`${dir}: budget must look like "3d", got "${meta.budget}"`)
+  const mark = (/** @type {string} */ c) => MARKS[/** @type {keyof MARKS} */ (c)] ?? 'open'
   const assumptions = []
   for (const line of (parts['Assumptions'] ?? '').split('\n')) {
     const m = line.match(/^\s*(?:\d+\.|[-*])\s+\[(.)\]\s+(.*)$/)
-    if (m) assumptions.push({ mark: MARKS[/** @type {keyof MARKS} */ (m[1])] ?? 'open', text: m[2] })
+    if (m) assumptions.push({ mark: mark(m[1]), text: m[2].replace(POST_HOC, ''), postHoc: POST_HOC.test(m[2]) })
+  }
+  const limitations = []
+  for (const line of (parts['Limitations'] ?? '').split('\n')) {
+    const m = line.match(/^\s*(?:\d+\.|[-*])\s+\[(constraint|cut)(?:\s+(.))?\]\s+(.*)$/)
+    if (!m) continue
+    const kind = /** @type {'constraint' | 'cut'} */ (m[1])
+    limitations.push({ kind, mark: kind === 'constraint' ? mark(m[2] ?? '?') : null, text: m[3] })
   }
   const entry = {
     dir,
@@ -48,9 +63,46 @@ export function readEntry(dir, src, feedback, buildExists) {
     parts,
     feedback,
     assumptions,
+    limitations,
   }
   for (const b of entry.builds) if (!b.exists) problems.push(`${dir}: build ${b.id} listed but builds/${b.id}/ is missing`)
   return { entry, problems }
+}
+
+/**
+ * The decision ledger: table rows `| D012 | 2026-09-25 | p3 | active | text |`.
+ * Status is `active` or `superseded by Dnnn`. `from` is an entry id, or `—` for decisions no prototype made.
+ * @param {string} md
+ * @param {Set<string>} entryIds
+ * @returns {{ decisions: Decision[], problems: string[] }}
+ */
+export function parseDecisions(md, entryIds) {
+  const decisions = []
+  const problems = []
+  for (const line of md.split('\n')) {
+    const cells = line.replace(/^\||\|\s*$/g, '').split('|').map((c) => c.trim())
+    if (!/^D\d{3}$/.test(cells[0] ?? '')) continue
+    const [id, date, from, status, ...rest] = cells
+    decisions.push({ id, date, from, status, text: rest.join(' | ') })
+  }
+  const ids = new Set()
+  for (const d of decisions) {
+    if (ids.has(d.id)) problems.push(`decisions.md: ${d.id} is used twice`)
+    ids.add(d.id)
+    if (d.from !== '—' && !entryIds.has(d.from)) problems.push(`decisions.md: ${d.id} comes from unknown entry "${d.from}"`)
+    const sup = d.status.match(/^superseded by (D\d{3})$/)
+    if (!sup && d.status !== 'active') problems.push(`decisions.md: ${d.id} status must be "active" or "superseded by Dnnn"`)
+  }
+  for (const d of decisions) {
+    const sup = d.status.match(/^superseded by (D\d{3})$/)
+    if (sup && !ids.has(sup[1])) problems.push(`decisions.md: ${d.id} is superseded by missing ${sup[1]}`)
+  }
+  return { decisions, problems }
+}
+
+/** Calendar days from `start` to `end` (YYYY-MM-DD), both counted. */
+export function daysUsed(/** @type {string} */ start, /** @type {string} */ end) {
+  return Math.round((Date.parse(end) - Date.parse(start)) / 86400000) + 1
 }
 
 /** First paragraph of a markdown section, as inline HTML. */
@@ -61,14 +113,23 @@ function lead(/** @type {string | undefined} */ md, /** @type {(h: string) => st
 
 /**
  * @param {Entry[]} entries
- * @param {{ game: string, devBase: string }} opts
+ * @param {{ game: string, devBase: string, decisions?: Decision[] }} opts
  */
 export function renderPage(entries, opts) {
+  const decisions = opts.decisions ?? []
   const byId = Object.fromEntries(entries.map((e) => [e.id, e]))
   const sorted = [...entries].sort((a, b) => b.id.localeCompare(a.id, 'en', { numeric: true }))
-  const cards = sorted.map((e) => card(e, byId, opts.devBase)).join('\n')
+  const cards = sorted.map((e) => card(e, byId, opts.devBase, decisions.filter((d) => d.from === e.id))).join('\n')
   const count = (/** @type {string} */ k) => entries.reduce((n, e) => n + e.assumptions.filter((a) => a.mark === k).length, 0)
   const builds = entries.reduce((n, e) => n + e.builds.length, 0)
+  const constraints = entries.reduce((n, e) => n + e.limitations.filter((l) => l.kind === 'constraint').length, 0)
+  const active = decisions.filter((d) => d.status === 'active').length
+  const ledger = decisions.length
+    ? `<details class="ledger"><summary>Decision ledger · ${active} active · ${decisions.length - active} superseded</summary>
+<table><thead><tr><th>ID</th><th>Date</th><th>From</th><th>Status</th><th>Decision</th></tr></thead><tbody>
+${decisions.map((d) => `<tr id="${d.id}" class="${d.status === 'active' ? '' : 'sup'}"><td>${d.id}</td><td>${escapeHtml(d.date)}</td><td>${byId[d.from] ? `<a href="#${d.from}">${d.from}</a>` : escapeHtml(d.from)}</td><td>${inline(d.status.replace(/(D\d{3})/, '[$1](#$1)'))}</td><td>${inline(d.text)}</td></tr>`).join('\n')}
+</tbody></table></details>`
+    : ''
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -82,12 +143,21 @@ export function renderPage(entries, opts) {
 <header class="top">
   <h1>${escapeHtml(opts.game)} <span>· prototype timeline</span></h1>
   <p>Every prototype: what we believed, what we built, how it played, what we decided. Newest first. Each ▶ plays the build exactly as it was tested.</p>
-  <p class="legend"><span class="a held">✓ ${count('held')} held</span> <span class="a broken">✗ ${count('broken')} broken</span> <span class="a open">? ${count('open')} open</span> · ${entries.length} prototypes · ${builds} builds</p>
+  <p class="legend"><span class="a held">✓ ${count('held')} held</span> <span class="a broken">✗ ${count('broken')} broken</span> <span class="a open">? ${count('open')} open</span> · ${constraints} constraints · ${entries.length} prototypes · ${builds} builds · <a href="#ledger">${active} decisions</a></p>
 </header>
 <main class="line">
 ${cards}
 </main>
+<section class="ledger-wrap" id="ledger">${ledger}</section>
 <footer>Generated by <code>npm run timeline</code> from <code>timeline/*/entry.md</code>.</footer>
+<script>
+// Open entries count their time box against today; closed ones were counted at generation time.
+for (const el of document.querySelectorAll('.budget[data-start]')) {
+  const d = Math.round((Date.now() - Date.parse(el.dataset.start)) / 86400000) + 1
+  el.textContent = 'day ' + d + ' of ' + el.dataset.budget
+  if (d > +el.dataset.budget) el.classList.add('over')
+}
+</script>
 </body>
 </html>
 `
@@ -97,14 +167,32 @@ ${cards}
  * @param {Entry} e
  * @param {Record<string, Entry>} byId
  * @param {string} devBase
+ * @param {Decision[]} decided
  */
-function card(e, byId, devBase) {
+function card(e, byId, devBase, decided) {
   const url = (/** @type {string} */ href) => rewrite(href, e)
   const m = e.meta
   const status = escapeHtml(m.status ?? 'building')
   const from = m.from && byId[m.from] ? `<a class="from" href="#${m.from}">grew out of ${m.from} · ${escapeHtml(byId[m.from].title)}</a>` : ''
   const cover = m.cover ? `<img class="cover" src="${url(m.cover)}" alt="${escapeHtml(e.title)}" loading="lazy">` : ''
-  const chips = e.assumptions.map((a) => `<li class="a ${a.mark}">${inline(a.text, url)}</li>`).join('')
+  const chips = e.assumptions
+    .map((a) => `<li class="a ${a.mark}">${inline(a.text, url)}${a.postHoc ? ' <span class="ph" title="added after the first build">post-hoc</span>' : ''}</li>`)
+    .join('')
+  const limits = e.limitations
+    .map((l) => `<li class="l ${l.kind} ${l.mark ?? ''}"><span class="k">${l.kind}</span>${inline(l.text, url)}</li>`)
+    .join('')
+  const budgetDays = +(m.budget ?? '').replace('d', '')
+  const budget = !budgetDays
+    ? ''
+    : m.ended
+      ? (() => {
+          const d = daysUsed(m.started ?? m.ended, m.ended)
+          return `<span class="budget${d > budgetDays ? ' over' : ''}">${d} of ${budgetDays} days</span>`
+        })()
+      : `<span class="budget" data-start="${escapeHtml(m.started ?? '')}" data-budget="${budgetDays}">budget ${budgetDays} days</span>`
+  const dec = decided
+    .map((d) => `<li class="${d.status === 'active' ? '' : 'sup'}"><a href="#${d.id}">${d.id}</a> ${inline(d.text, url)}</li>`)
+    .join('')
   const play = e.builds
     .filter((b) => b.exists)
     .map((b) => `<a class="play" href="${e.dir}/builds/${b.id}/index.html">▶ ${escapeHtml(b.id)}</a><span class="bt">${inline(b.text, url)}</span>`)
@@ -118,12 +206,14 @@ function card(e, byId, devBase) {
     .join('\n')
   const dates = `${escapeHtml(m.started ?? '')}${m.ended ? ` → ${escapeHtml(m.ended)}` : ''}`
   return `<article class="entry s-${status}" id="${e.id}">
-  <header><span class="pid">${e.id}</span><h2>${escapeHtml(e.title)}</h2><span class="status">${status}</span><time>${dates}</time>${from}</header>
+  <header><span class="pid">${e.id}</span><h2>${escapeHtml(e.title)}</h2><span class="status">${status}</span><time>${dates}</time>${budget}${from}</header>
   ${cover}
   <p class="q">${lead(e.parts['Question'], url)}</p>
   ${chips ? `<ul class="chips">${chips}</ul>` : ''}
+  ${limits ? `<ul class="limits">${limits}</ul>` : ''}
   ${play || dev ? `<div class="builds">${play}${dev}</div>` : ''}
   <p class="next"><b>→</b> ${lead(e.parts['Conclusion → next'], url) || '<i>open</i>'}</p>
+  ${dec ? `<ul class="decided">${dec}</ul>` : ''}
   <details><summary>Full entry${e.feedback.length ? ` · ${e.feedback.length} feedback session${e.feedback.length > 1 ? 's' : ''}` : ''}</summary>
 <div class="doc">
 ${body}
@@ -140,6 +230,8 @@ function rewrite(/** @type {string} */ href, /** @type {Entry} */ e) {
   if (fb) return `#${e.id}-fb-${slug(fb[1])}`
   const other = href.match(/^(?:\.\.\/)+(p\d+)[^/]*\/entry\.md$/)
   if (other) return `#${other[1]}`
+  const ledger = href.match(/^(?:\.\.\/)+decisions\.md(#D\d{3})?$/)
+  if (ledger) return ledger[1] ?? '#ledger'
   return `${e.dir}/${href.replace(/^\.\//, '')}`
 }
 
@@ -193,6 +285,20 @@ details { margin-top:8px; } summary { cursor:pointer; color:var(--dim); }
 .doc ul, .doc ol { padding-left:20px; }
 .fb { border-top:1px dashed var(--line); margin-top:16px; }
 footer { color:var(--dim); font-size:12px; }
+.budget { font-size:12px; color:var(--dim); border:1px dotted var(--line); border-radius:3px; padding:0 5px; }
+.budget.over { color:var(--broken); border-color:var(--broken); }
+.ph { font-size:10px; text-transform:uppercase; color:var(--broken); border:1px solid; border-radius:3px; padding:0 3px; margin-left:4px; }
+.limits { list-style:none; padding:0; margin:8px 0; display:flex; flex-wrap:wrap; gap:4px 6px; }
+.l { font-size:12px; border:1px dashed var(--line); border-radius:3px; padding:1px 6px; color:#bbb; }
+.l .k { font-size:10px; text-transform:uppercase; letter-spacing:1px; margin-right:6px; color:var(--dim); }
+.l.constraint { border-style:solid; border-color:var(--open); } .l.constraint .k::before { content:'⊘ '; }
+.l.constraint.held { border-color:var(--held); } .l.constraint.broken { border-color:var(--broken); }
+.l.cut .k::before { content:'✂ '; }
+.decided { list-style:none; padding:0; margin:4px 0 6px; font-size:12px; color:#bbb; }
+.decided li, .ledger tr { margin:2px 0; } .decided .sup, .ledger .sup td { text-decoration:line-through; color:var(--dim); }
+.ledger-wrap { max-width:880px; margin:0 auto 24px; }
+.ledger table { border-collapse:collapse; display:block; overflow-x:auto; font-size:12px; margin-top:8px; }
+.ledger th, .ledger td { border:1px solid var(--line); padding:3px 6px; text-align:left; vertical-align:top; }
 @media (max-width:520px) { .line { padding-left:18px; } .line::before { left:3px; } .entry::before { left:-21px; } .entry { padding:12px; } .from { margin-left:0; } }
 `
 
@@ -205,7 +311,7 @@ function main() {
   const devBase = opt('--dev') ?? '../'
   const problems = []
   const entries = []
-  for (const dir of readdirSync(tl).filter((d) => /^p\d+-/.test(d)).sort()) {
+  for (const dir of readdirSync(tl).filter((d) => /^p\d+-/.test(d)).sort()) { // _template/ and the rest are skipped
     const base = join(tl, dir)
     if (!existsSync(join(base, 'entry.md'))) continue
     const fbDir = join(base, 'feedback')
@@ -219,9 +325,14 @@ function main() {
     problems.push(...r.problems)
     entries.push(r.entry)
   }
+  const ledgerFile = join(tl, 'decisions.md')
+  const { decisions, problems: dp } = existsSync(ledgerFile)
+    ? parseDecisions(readFileSync(ledgerFile, 'utf8'), new Set(entries.map((e) => e.id)))
+    : { decisions: [], problems: ['timeline/decisions.md is missing'] }
+  problems.push(...dp)
   const game = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).name
   const title = game.charAt(0).toUpperCase() + game.slice(1)
-  writeFileSync(out, renderPage(entries, { game: title, devBase }))
+  writeFileSync(out, renderPage(entries, { game: title, devBase, decisions }))
   for (const p of problems) console.warn('⚠', p)
   console.log(`timeline: ${entries.length} entries → ${relative(process.cwd(), out) || out}`)
   if (problems.length && args.includes('--strict')) process.exit(1)

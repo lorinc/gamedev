@@ -4,6 +4,7 @@ title: Atomic terrain
 started: 2026-09-24
 ended: 2026-09-24
 status: concluded
+budget: 1d   # retro: no time box was set; it took one day
 from: p1
 cover: media/cover.png
 build v2: 2026-09-24 · CA Lab: one binary grid, a hand-built pipeline of gen and scale steps, every step visible
@@ -24,6 +25,12 @@ If one binary grid is designed step by step by hand, can it give good starter ca
 2. [✓] Scaling X and Y separately gives caves a horizontal or vertical character without separate layers.
 3. [✓] One recipe can be reused: with a different seed it splits soft from hard rock. Ore and loot go on top.
 4. [✓] The v3 terrain is good enough to test digging in (b1).
+
+## Limitations
+
+- [constraint ✓] One binary grid only (live / dead): no layers, no materials in v2. It made the output predictable enough to design by hand.
+- [constraint ✓] Every step is visible: the lab shows every intermediate grid, never just the result.
+- [cut] No character and no digging: v3 is judged by eye and by its stats (open / soft / hard / ore / loot, drop counts).
 
 ## Built
 
@@ -57,4 +64,5 @@ gen  d012 b345   ×1
 
 It worked: 5 steps on one binary grid give starter caves, cheaply and predictably. v2 stays frozen as the tool for finding terrain patterns. New terrain ideas become a new tool (v4, …). The v3 terrain feeds the first playtest: [p3 · Dig Feel](../p3-dig-feel/entry.md).
 
+- Decisions: [D004, D005](../decisions.md).
 - Deferred: depth tiers (the world is homogeneous for now), and chasms, which the recipe produces and which b1 now has to handle.

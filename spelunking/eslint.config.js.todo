@@ -1,0 +1,25 @@
+// TODO — START USING THIS WHEN either:
+//   - the same class of bug slips past tsc and the tests twice (e.g. a floating promise, a
+//     shadowed variable, == vs ===); log each one in ENGINEERING.md → Incidents when it happens, or
+//   - a second person writes code here, and style arguments start costing review time.
+// Skipped until then: ESLint is ~100 packages of dev dependencies plus config churn, and
+// `tsc --strict` over the JSDoc types already catches the bugs that matter in a prototype.
+//
+// To activate: npm i -D eslint @eslint/js, justify both in README → Dependencies, rename this
+// to eslint.config.js, add `"lint": "eslint src tools"` to package.json and to .githooks/pre-push.
+// Lint src/sim/ strictly; bundles are throwaway, so keep rules there to real bugs only.
+
+import js from '@eslint/js'
+
+export default [
+  { ignores: ['timeline/**/builds/**', 'node_modules/**'] },
+  js.configs.recommended,
+  {
+    files: ['src/sim/**/*.js'],
+    rules: {
+      eqeqeq: 'error',
+      'no-shadow': 'error',
+      'prefer-const': 'error',
+    },
+  },
+]

@@ -1,0 +1,19 @@
+# TODO — START USING THIS WHEN a game gets its first runtime dependency, or when the dev
+# dependencies grow beyond `typescript` (e.g. the GitHub Actions in checks-and-pages.yml go live).
+# Today there's nothing for it to update: zero runtime deps, one dev dep we bump by hand.
+# Security alerts don't need this file: they're a repo setting (Settings → Code security).
+#
+# To activate: rename to dependabot.yml. Expect PRs; each one is a dependency change and
+# needs the same justification as adding a dependency (ENGINEERING.md → Dependencies).
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /spelunking
+    schedule:
+      interval: monthly # one game a month: batch updates between games, not mid-prototype
+    open-pull-requests-limit: 3
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

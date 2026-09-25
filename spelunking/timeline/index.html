@@ -53,6 +53,20 @@ details { margin-top:8px; } summary { cursor:pointer; color:var(--dim); }
 .doc ul, .doc ol { padding-left:20px; }
 .fb { border-top:1px dashed var(--line); margin-top:16px; }
 footer { color:var(--dim); font-size:12px; }
+.budget { font-size:12px; color:var(--dim); border:1px dotted var(--line); border-radius:3px; padding:0 5px; }
+.budget.over { color:var(--broken); border-color:var(--broken); }
+.ph { font-size:10px; text-transform:uppercase; color:var(--broken); border:1px solid; border-radius:3px; padding:0 3px; margin-left:4px; }
+.limits { list-style:none; padding:0; margin:8px 0; display:flex; flex-wrap:wrap; gap:4px 6px; }
+.l { font-size:12px; border:1px dashed var(--line); border-radius:3px; padding:1px 6px; color:#bbb; }
+.l .k { font-size:10px; text-transform:uppercase; letter-spacing:1px; margin-right:6px; color:var(--dim); }
+.l.constraint { border-style:solid; border-color:var(--open); } .l.constraint .k::before { content:'⊘ '; }
+.l.constraint.held { border-color:var(--held); } .l.constraint.broken { border-color:var(--broken); }
+.l.cut .k::before { content:'✂ '; }
+.decided { list-style:none; padding:0; margin:4px 0 6px; font-size:12px; color:#bbb; }
+.decided li, .ledger tr { margin:2px 0; } .decided .sup, .ledger .sup td { text-decoration:line-through; color:var(--dim); }
+.ledger-wrap { max-width:880px; margin:0 auto 24px; }
+.ledger table { border-collapse:collapse; display:block; overflow-x:auto; font-size:12px; margin-top:8px; }
+.ledger th, .ledger td { border:1px solid var(--line); padding:3px 6px; text-align:left; vertical-align:top; }
 @media (max-width:520px) { .line { padding-left:18px; } .line::before { left:3px; } .entry::before { left:-21px; } .entry { padding:12px; } .from { margin-left:0; } }
 </style>
 </head>
@@ -60,16 +74,18 @@ footer { color:var(--dim); font-size:12px; }
 <header class="top">
   <h1>Spelunking <span>· prototype timeline</span></h1>
   <p>Every prototype: what we believed, what we built, how it played, what we decided. Newest first. Each ▶ plays the build exactly as it was tested.</p>
-  <p class="legend"><span class="a held">✓ 6 held</span> <span class="a broken">✗ 6 broken</span> <span class="a open">? 5 open</span> · 3 prototypes · 4 builds</p>
+  <p class="legend"><span class="a held">✓ 6 held</span> <span class="a broken">✗ 6 broken</span> <span class="a open">? 5 open</span> · 7 constraints · 3 prototypes · 4 builds · <a href="#ledger">20 decisions</a></p>
 </header>
 <main class="line">
 <article class="entry s-playtesting" id="p3">
-  <header><span class="pid">p3</span><h2>Dig Feel (b1)</h2><span class="status">playtesting</span><time>2026-09-24</time><a class="from" href="#p2">grew out of p2 · Atomic terrain</a></header>
+  <header><span class="pid">p3</span><h2>Dig Feel (b1)</h2><span class="status">playtesting</span><time>2026-09-24</time><span class="budget" data-start="2026-09-24" data-budget="3">budget 3 days</span><a class="from" href="#p2">grew out of p2 · Atomic terrain</a></header>
   <img class="cover" src="p3-dig-feel/media/cover.png" alt="Dig Feel (b1)" loading="lazy">
   <p class="q">Does &quot;move until something changes&quot; feel good <strong>on every target setup</strong>, and do I want another dive?</p>
   <ul class="chips"><li class="a open">&quot;Move until something changes&quot; (swipe, and the character walks, mines or builds until the environment changes) is fun enough that you start another dive without thinking.</li><li class="a broken">A mining step can move you into whatever it opens up. First play: tunnels walked the character into chasms. Now it mines first and then looks.</li><li class="a broken">Every direction should be diggable, including straight down. Removed after first play: the way down through rock is the diagonal staircase.</li><li class="a broken">Walking stops at every drop of 2+, and that's all you need at a ledge. First play: you couldn't step off a 2-deep drop even though it's harmless. Swiping into the gap again now drops you.</li><li class="a broken">Climbing down at a ledge is always a safe move. Going diagonally down into a chasm and then pressing down leaves you clinging over the void and stuck. Clinging is also drawn exactly like standing. The fix is open (see below).</li><li class="a open">One swipe recogniser (pointer events, commit at a distance) feels the same on touch and on mouse.</li><li class="a open">The keyboard feels as good as swiping, both with numpad intents and with held WASD.</li><li class="a open">Canvas2D with no dependencies runs without hitching on the Galaxy A41.</li><li class="a open">Stop rules as a tunable table (wall, drop, open space, new material, loot, hazard, junction) can make the movement feel right without new mechanics.</li></ul>
+  <ul class="limits"><li class="l constraint open"><span class="k">constraint</span>Coloured squares only: no art, and no effects beyond the juice. If it's fun as squares, art can only lift it.</li><li class="l constraint open"><span class="k">constraint</span>Casual, not survival: no fall damage, and a wrong move never ends a dive (D011).</li><li class="l constraint open"><span class="k">constraint</span>Everyone is an Engineer: one path, no loadouts to choose between (D014).</li><li class="l constraint open"><span class="k">constraint</span>No digging straight down: the way down through rock is the diagonal staircase. It was cut after first play, to see if the loop gets sharper without it (D019).</li><li class="l constraint open"><span class="k">constraint</span>Everything is lit: no darkness, so digging is judged on its own before b2 adds greed.</li><li class="l cut "><span class="k">cut</span>Zipline: moved to b1.2 (D014).</li><li class="l cut "><span class="k">cut</span>Torchlight: moved to b2, where darkness arrives (D014).</li><li class="l cut "><span class="k">cut</span>Moon bugs, Demolitionist and Ghost, the base, heat and raids: later bundles.</li></ul>
   <div class="builds"><a class="play" href="p3-dig-feel/builds/b1.1/index.html">▶ b1.1</a><span class="bt">2026-09-25 · first playable, plus the first-play rules (mine then look, no digging down, step off by asking) and numpad 5</span><a class="play dev" href="../b1.html">▶ live dev</a><span class="bt">latest, unfrozen, may break</span></div>
   <p class="next"><b>→</b> Open: playtesting. Next come the phone sessions on the A41, and two open problems.</p>
+  <ul class="decided"><li class=""><a href="#D014">D014</a> Everyone is an Engineer in b1. The zipline is cut to b1.2, torchlight to b2.</li><li class=""><a href="#D015">D015</a> The keyboard gets both models, numpad intents and held WASD, to A/B test.</li><li class=""><a href="#D016">D016</a> Surface strip of 4 sky rows + 3 crust rows, home at x = 0.</li><li class=""><a href="#D017">D017</a> Swipes use pointer events and commit at a distance threshold. A swipe made mid-tile applies at the next tile boundary.</li><li class=""><a href="#D018">D018</a> Step off by asking: swiping into a gap again drops you, if the floor is within <code>harmlessDrop</code> (4).</li><li class=""><a href="#D019">D019</a> No digging straight down: the way down through rock is the diagonal staircase.</li><li class=""><a href="#D020">D020</a> Mine first, then look: a mining step moves into the mined cell only if you can stand there.</li><li class=""><a href="#D021">D021</a> Numpad 5 mirrors the taps: tap = stop, hold = teleport home.</li><li class=""><a href="#D022">D022</a> Juice sits behind a master switch. Stop rules are judged with it off first.</li></ul>
   <details><summary>Full entry · 1 feedback session</summary>
 <div class="doc">
 <h2>Question</h2>
@@ -84,6 +100,8 @@ footer { color:var(--dim); font-size:12px; }
 <p><strong>Time box:</strong> 3 days. Running over means cutting features, not extending the deadline.</p>
 <h2>Assumptions</h2>
 <ol><li>[?] &quot;Move until something changes&quot; (swipe, and the character walks, mines or builds until the environment changes) is fun enough that you start another dive without thinking.</li><li>[✗] A mining step can move you into whatever it opens up. First play: tunnels walked the character into chasms. Now it mines first and then looks.</li><li>[✗] Every direction should be diggable, including straight down. Removed after first play: the way down through rock is the diagonal staircase.</li><li>[✗] Walking stops at every drop of 2+, and that's all you need at a ledge. First play: you couldn't step off a 2-deep drop even though it's harmless. Swiping into the gap again now drops you.</li><li>[✗] Climbing down at a ledge is always a safe move. Going diagonally down into a chasm and then pressing down leaves you clinging over the void and stuck. Clinging is also drawn exactly like standing. The fix is open (see below).</li><li>[?] One swipe recogniser (pointer events, commit at a distance) feels the same on touch and on mouse.</li><li>[?] The keyboard feels as good as swiping, both with numpad intents and with held WASD.</li><li>[?] Canvas2D with no dependencies runs without hitching on the Galaxy A41.</li><li>[?] Stop rules as a tunable table (wall, drop, open space, new material, loot, hazard, junction) can make the movement feel right without new mechanics.</li></ol>
+<h2>Limitations</h2>
+<ul><li>[constraint ?] Coloured squares only: no art, and no effects beyond the juice. If it's fun as squares, art can only lift it.</li><li>[constraint ?] Casual, not survival: no fall damage, and a wrong move never ends a dive (D011).</li><li>[constraint ?] Everyone is an Engineer: one path, no loadouts to choose between (D014).</li><li>[constraint ?] No digging straight down: the way down through rock is the diagonal staircase. It was cut after first play, to see if the loop gets sharper without it (D019).</li><li>[constraint ?] Everything is lit: no darkness, so digging is judged on its own before b2 adds greed.</li><li>[cut] Zipline: moved to b1.2 (D014).</li><li>[cut] Torchlight: moved to b2, where darkness arrives (D014).</li><li>[cut] Moon bugs, Demolitionist and Ghost, the base, heat and raids: later bundles.</li></ul>
 <h2>Built</h2>
 <p><strong>World:</strong> the v3 terrain (the recipe archived in p2, live = cave), wrapping horizontally, with a surface strip on top and a home spot. The strip is 4 sky rows + 3 solid crust rows, and home is at x = 0.</p>
 <p><strong>Character:</strong> 1 tile tall in the sim, drawn about 1.3 tiles. Everyone is an Engineer: walk, mine, build, climb down. The zipline is cut from b1.1 and comes in b1.2. Torchlight comes with b2's darkness.</p>
@@ -96,7 +114,7 @@ footer { color:var(--dim); font-size:12px; }
 <p><strong>Any aspect ratio:</strong> portrait shows deeper, landscape wider. The layout follows the window live.</p>
 <p><strong>Dev panel:</strong> backtick, or tap the top-left corner. It shows every tunable, frame time, device pixel ratio, viewport and input type. The <strong>dive log</strong> is copyable, so testers can paste it back.</p>
 <p><strong>Rules decided at first play (2026-09-25):</strong></p>
-<ul><li><strong>Mine first, then look.</strong> A mining step moves into the mined cell only if you can stand there: it has a floor, or a 1-tile step down to one. Tunnels never walk you into a chasm.</li><li><strong>Step off by asking.</strong> Walking still stops at every drop of 2+. Swiping into the gap again drops you to the floor if it's within <code>harmlessDrop</code> (default 4), and the walk then continues. A deeper gap stays a ledge.</li><li><strong>No digging straight down.</strong> A down swipe only climbs over a ledge on the facing side, or continues a climb.</li></ul>
+<ul><li><strong>Mine first, then look (D020).</strong> A mining step moves into the mined cell only if you can stand there: it has a floor, or a 1-tile step down to one. Tunnels never walk you into a chasm.</li><li><strong>Step off by asking (D018).</strong> Walking still stops at every drop of 2+. Swiping into the gap again drops you to the floor if it's within <code>harmlessDrop</code> (default 4), and the walk then continues. A deeper gap stays a ledge.</li><li><strong>No digging straight down (D019).</strong> A down swipe only climbs over a ledge on the facing side, or continues a climb.</li></ul>
 <p><strong>Tunables</strong> (current values in <code>presets/</code>):</p>
 <table><thead><tr><th>Tunable</th><th>Start value</th></tr></thead><tbody><tr><td>Walk speed</td><td>1 tile / tick unit (placeholder)</td></tr>
 <tr><td>Dig speed</td><td>3× slower than walking</td></tr>
@@ -112,7 +130,7 @@ footer { color:var(--dim); font-size:12px; }
 <ul><li><a href="#p3-fb-2026-09-25_lorinc_desktop">2026-09-25 · Lorinc · desktop</a>, first play of b1.1: &quot;the char should mine first, then check if the newly mined place is a viable location&quot;. Three rule changes, numpad 5, and the chasm-cling bug.</li><li>Phone (Galaxy A41) and the other ratios: not played yet. This is waiting on the public repo for the phone link.</li></ul>
 <h2>Conclusion → next</h2>
 <p>Open: playtesting. Next come the phone sessions on the A41, and two open problems.</p>
-<ul><li><strong>Chasms:</strong> voids deeper than the harmless drop. With the rules above you can't fall in, but there's no designed way across or down yet, except building a diagonal stair into one (paid in ore). The zipline (b1.2) was meant for this. Home at x = 0 sits above such a void.</li><li><strong>Climbing into a chasm:</strong> should down at a ledge refuse a climb whose next step isn't possible (mine-then-look for climbs), or keep the stuck-then-teleport behaviour? Either way, draw a clinging pose.</li><li>The junction stop rule is on by default and may feel twitchy.</li></ul>
+<ul><li><strong>Chasms:</strong> voids deeper than the harmless drop. With the rules above you can't fall in, but there's no designed way across or down yet, except building a diagonal stair into one (paid in ore). The zipline (b1.2) was meant for this. Home at x = 0 sits above such a void.</li><li><strong>Climbing into a chasm:</strong> should down at a ledge refuse a climb whose next step isn't possible (mine-then-look for climbs), or keep the stuck-then-teleport behaviour? Either way, draw a clinging pose.</li><li>The junction stop rule is on by default and may feel twitchy.</li><li>Decisions so far: <a href="#ledger">D014–D022</a>.</li></ul>
 <section class="fb" id="p3-fb-2026-09-25_lorinc_desktop"><h2>Feedback · 2026-09-25_lorinc_desktop</h2>
 <ul><li><strong>Build:</strong> b1.1 (first playable, commit <code>2054adc</code>), then fixes on the dev server, frozen as b1.1 (<code>12146ee</code>)</li><li><strong>Device:</strong> desktop, Chromium, keyboard + mouse</li><li><strong>Source:</strong> written on 2026-09-25 from the session notes; the quotes are verbatim.</li></ul>
 <h2>What was seen</h2>
@@ -132,18 +150,22 @@ footer { color:var(--dim); font-size:12px; }
   </details>
 </article>
 <article class="entry s-concluded" id="p2">
-  <header><span class="pid">p2</span><h2>Atomic terrain</h2><span class="status">concluded</span><time>2026-09-24 → 2026-09-24</time><a class="from" href="#p1">grew out of p1 · Cave generator</a></header>
+  <header><span class="pid">p2</span><h2>Atomic terrain</h2><span class="status">concluded</span><time>2026-09-24 → 2026-09-24</time><span class="budget">1 of 1 days</span><a class="from" href="#p1">grew out of p1 · Cave generator</a></header>
   <img class="cover" src="p2-atomic-terrain/media/cover.png" alt="Atomic terrain" loading="lazy">
   <p class="q">If one binary grid is designed step by step by hand, can it give good starter caves cheaply, with predictable output?</p>
   <ul class="chips"><li class="a held">One binary grid with a hand-built pipeline of <code>gen</code> (CA rule × repeat) and <code>scale</code> (integer X / Y) steps is predictable enough to design with.</li><li class="a held">Scaling X and Y separately gives caves a horizontal or vertical character without separate layers.</li><li class="a held">One recipe can be reused: with a different seed it splits soft from hard rock. Ore and loot go on top.</li><li class="a held">The v3 terrain is good enough to test digging in (b1).</li></ul>
+  <ul class="limits"><li class="l constraint held"><span class="k">constraint</span>One binary grid only (live / dead): no layers, no materials in v2. It made the output predictable enough to design by hand.</li><li class="l constraint held"><span class="k">constraint</span>Every step is visible: the lab shows every intermediate grid, never just the result.</li><li class="l cut "><span class="k">cut</span>No character and no digging: v3 is judged by eye and by its stats (open / soft / hard / ore / loot, drop counts).</li></ul>
   <div class="builds"><a class="play" href="p2-atomic-terrain/builds/v2/index.html">▶ v2</a><span class="bt">2026-09-24 · CA Lab: one binary grid, a hand-built pipeline of gen and scale steps, every step visible</span><a class="play" href="p2-atomic-terrain/builds/v3/index.html">▶ v3</a><span class="bt">2026-09-24 · Terrain: the archived v2 recipe gives the caves, soft / hard rock, ore and loot</span></div>
   <p class="next"><b>→</b> It worked: 5 steps on one binary grid give starter caves, cheaply and predictably. v2 stays frozen as the tool for finding terrain patterns. New terrain ideas become a new tool (v4, …). The v3 terrain feeds the first playtest: <a href="#p3">p3 · Dig Feel</a>.</p>
+  <ul class="decided"><li class=""><a href="#D004">D004</a> v2 CA Lab is frozen as the pattern-finding tool. New terrain ideas become a new tool version.</li><li class=""><a href="#D005">D005</a> The starter terrain is the archived seed-6712 recipe as v3 (caves, a reseeded soft / hard split, ore CA at 300 ‰, loot at 50 ‰). b1 digs in it.</li></ul>
   <details><summary>Full entry · 1 feedback session</summary>
 <div class="doc">
 <h2>Question</h2>
 <p>If one binary grid is designed step by step by hand, can it give good starter caves cheaply, with predictable output?</p>
 <h2>Assumptions</h2>
 <ol><li>[✓] One binary grid with a hand-built pipeline of <code>gen</code> (CA rule × repeat) and <code>scale</code> (integer X / Y) steps is predictable enough to design with.</li><li>[✓] Scaling X and Y separately gives caves a horizontal or vertical character without separate layers.</li><li>[✓] One recipe can be reused: with a different seed it splits soft from hard rock. Ore and loot go on top.</li><li>[✓] The v3 terrain is good enough to test digging in (b1).</li></ol>
+<h2>Limitations</h2>
+<ul><li>[constraint ✓] One binary grid only (live / dead): no layers, no materials in v2. It made the output predictable enough to design by hand.</li><li>[constraint ✓] Every step is visible: the lab shows every intermediate grid, never just the result.</li><li>[cut] No character and no digging: v3 is judged by eye and by its stats (open / soft / hard / ore / loot, drop counts).</li></ul>
 <h2>Built</h2>
 <p><strong>v2 · CA Lab</strong>, the pattern-finding tool, frozen by request: &quot;a fundamental tool for any terrain generation pattern finding&quot;.</p>
 <ul><li>One binary grid (live / dead). The pipeline is a list of steps: <code>gen</code> runs a keep / born / die rule N times, and <code>scale</code> enlarges by integer factors, separately on X and Y.</li><li>A thumbnail strip shows every step. You can see which rule changes what.</li><li>Scaling started as &quot;2× or nothing&quot;. It became any integer at Lorinc's request.</li><li>The recipe Lorinc found is archived as <a href="p2-atomic-terrain/media/starter-caves_seed6712.json">media/starter-caves_seed6712.json</a>:</li></ul>
@@ -159,7 +181,7 @@ gen  d012 b345   ×1</code></pre>
 <ul><li><a href="#p2-fb-2026-09-24_lorinc_desktop">2026-09-24 · Lorinc · desktop</a>: &quot;this is fairly good starter caves with minimal computation&quot;, and then for v3: &quot;This is perfect for testing bundle 1&quot;.</li></ul>
 <h2>Conclusion → next</h2>
 <p>It worked: 5 steps on one binary grid give starter caves, cheaply and predictably. v2 stays frozen as the tool for finding terrain patterns. New terrain ideas become a new tool (v4, …). The v3 terrain feeds the first playtest: <a href="#p3">p3 · Dig Feel</a>.</p>
-<ul><li>Deferred: depth tiers (the world is homogeneous for now), and chasms, which the recipe produces and which b1 now has to handle.</li></ul>
+<ul><li>Decisions: <a href="#ledger">D004, D005</a>.</li><li>Deferred: depth tiers (the world is homogeneous for now), and chasms, which the recipe produces and which b1 now has to handle.</li></ul>
 <section class="fb" id="p2-fb-2026-09-24_lorinc_desktop"><h2>Feedback · 2026-09-24_lorinc_desktop</h2>
 <ul><li><strong>Builds:</strong> v2, then v3, live on the dev server</li><li><strong>Device:</strong> desktop browser</li><li><strong>Source:</strong> reconstructed on 2026-09-25 from the session notes; the quotes are verbatim.</li></ul>
 <h2>Quotes</h2>
@@ -175,25 +197,29 @@ gen  d012 b345   ×1</code></pre>
   </details>
 </article>
 <article class="entry s-concluded" id="p1">
-  <header><span class="pid">p1</span><h2>Cave generator</h2><span class="status">concluded</span><time>2026-09-24 → 2026-09-24</time></header>
+  <header><span class="pid">p1</span><h2>Cave generator</h2><span class="status">concluded</span><time>2026-09-24 → 2026-09-24</time><span class="budget">1 of 1 days</span></header>
   <img class="cover" src="p1-cave-generator/media/cover.png" alt="Cave generator" loading="lazy">
   <p class="q">Can a port of Lorinc's old tileable cave generator (a cellular automaton in a Kaggle notebook) produce a world that's worth spelunking?</p>
   <ul class="chips"><li class="a held">The Python notebook's cellular automaton ports to the browser and runs live with sliders.</li><li class="a broken">Random CA caves are a good space to spelunk in.</li><li class="a broken">Stacking several CA layers (sideways galleries, vertical shafts, hard rock, ore, loot) with separate horizontal and vertical biases gives controllable shapes.</li><li class="a held">Editing keep / born / die rules with an interactive control beats typing them as text.</li></ul>
+  <ul class="limits"><li class="l cut "><span class="k">cut</span>No character and no digging: the generator is judged by eye, from the map and the stats.</li><li class="l cut "><span class="k">cut</span>No depth tiers: after the first feedback the whole map became homogeneous (D002).</li></ul>
   <div class="builds"><a class="play" href="p1-cave-generator/builds/v1/index.html">▶ v1</a><span class="bt">2026-09-24 · layered CA world, sliders for every parameter (TS + Vite + Pixi + Tweakpane, rebuilt 2026-09-25 from tag tools-v1-v3)</span></div>
   <p class="next"><b>→</b> Too volatile to design by hand: with several interacting layers, small input changes swing the output into chaos. Step back to a single binary grid, designed step by step: <a href="#p2">p2 · Atomic terrain</a>.</p>
+  <ul class="decided"><li class=""><a href="#D001">D001</a> Terrain is designed on one binary grid, step by step. Stacking many CA layers is dropped as the design method.</li><li class=""><a href="#D002">D002</a> The map is homogeneous for now: no top / bottom differentiation. Depth tiers come later.</li><li class=""><a href="#D003">D003</a> CA rules are edited with the keep / born / die toggle editor, never as text.</li></ul>
   <details><summary>Full entry · 1 feedback session</summary>
 <div class="doc">
 <h2>Question</h2>
 <p>Can a port of Lorinc's old tileable cave generator (a cellular automaton in a Kaggle notebook) produce a world that's worth spelunking?</p>
 <h2>Assumptions</h2>
 <ol><li>[✓] The Python notebook's cellular automaton ports to the browser and runs live with sliders.</li><li>[✗] Random CA caves are a good space to spelunk in.</li><li>[✗] Stacking several CA layers (sideways galleries, vertical shafts, hard rock, ore, loot) with separate horizontal and vertical biases gives controllable shapes.</li><li>[✓] Editing keep / born / die rules with an interactive control beats typing them as text.</li></ol>
+<h2>Limitations</h2>
+<ul><li>[cut] No character and no digging: the generator is judged by eye, from the map and the stats.</li><li>[cut] No depth tiers: after the first feedback the whole map became homogeneous (D002).</li></ul>
 <h2>Built</h2>
 <ul><li>A layered CA world: <strong>galleries</strong> (open space, stretched sideways) and <strong>shafts</strong> (open space, stretched vertically), a <strong>hard rock</strong> layer, <strong>ore</strong> and <strong>loot</strong> drops, and a sky strip and crust on top.</li><li>A slider for every layer parameter (seed, density, rule, steps, scale X / Y), a live map, stats and drop markers. The settings are saved in the browser.</li><li>The rule editor: a keep / born / die toggle per neighbour count. It replaced free-text rules and survives in v2 and v3.</li><li>During the session, the top / bottom differentiation was removed, which made the whole map homogeneous.</li><li>Stack: TypeScript + Vite + PixiJS + Tweakpane. That stack was retired on 2026-09-25. The generator lives on as <code>src/sim/gen/world.js</code>, which <code>npm run gallery</code> uses to dump every stage as PNGs.</li></ul>
 <h2>Feedback</h2>
 <ul><li><a href="#p1-fb-2026-09-24_lorinc_desktop">2026-09-24 · Lorinc · desktop</a>: &quot;these caves are truly random, and that does not make a great spelunking experience&quot;, and then: &quot;a volatile system … collapsing into chaos after a few steps&quot;.</li></ul>
 <h2>Conclusion → next</h2>
 <p>Too volatile to design by hand: with several interacting layers, small input changes swing the output into chaos. Step back to a single binary grid, designed step by step: <a href="#p2">p2 · Atomic terrain</a>.</p>
-<ul><li>Kept: the keep / born / die rule editor, and horizontal wrapping (the map tiles sideways).</li><li>Dropped: many-layer composition as the way to design terrain.</li></ul>
+<ul><li>Kept: the keep / born / die rule editor, and horizontal wrapping (the map tiles sideways).</li><li>Dropped: many-layer composition as the way to design terrain.</li><li>Decisions: <a href="#ledger">D001, D002, D003</a>.</li></ul>
 <section class="fb" id="p1-fb-2026-09-24_lorinc_desktop"><h2>Feedback · 2026-09-24_lorinc_desktop</h2>
 <ul><li><strong>Build:</strong> v1, live on the dev server</li><li><strong>Device:</strong> desktop browser</li><li><strong>Source:</strong> reconstructed on 2026-09-25 from the session notes; the quotes are verbatim.</li></ul>
 <h2>Quotes</h2>
@@ -206,6 +232,40 @@ gen  d012 b345   ×1</code></pre>
   </details>
 </article>
 </main>
+<section class="ledger-wrap" id="ledger"><details class="ledger"><summary>Decision ledger · 20 active · 3 superseded</summary>
+<table><thead><tr><th>ID</th><th>Date</th><th>From</th><th>Status</th><th>Decision</th></tr></thead><tbody>
+<tr id="D001" class=""><td>D001</td><td>2026-09-24</td><td><a href="#p1">p1</a></td><td>active</td><td>Terrain is designed on one binary grid, step by step. Stacking many CA layers is dropped as the design method.</td></tr>
+<tr id="D002" class=""><td>D002</td><td>2026-09-24</td><td><a href="#p1">p1</a></td><td>active</td><td>The map is homogeneous for now: no top / bottom differentiation. Depth tiers come later.</td></tr>
+<tr id="D003" class=""><td>D003</td><td>2026-09-24</td><td><a href="#p1">p1</a></td><td>active</td><td>CA rules are edited with the keep / born / die toggle editor, never as text.</td></tr>
+<tr id="D004" class=""><td>D004</td><td>2026-09-24</td><td><a href="#p2">p2</a></td><td>active</td><td>v2 CA Lab is frozen as the pattern-finding tool. New terrain ideas become a new tool version.</td></tr>
+<tr id="D005" class=""><td>D005</td><td>2026-09-24</td><td><a href="#p2">p2</a></td><td>active</td><td>The starter terrain is the archived seed-6712 recipe as v3 (caves, a reseeded soft / hard split, ore CA at 300 ‰, loot at 50 ‰). b1 digs in it.</td></tr>
+<tr id="D006" class=""><td>D006</td><td>2026-09-24</td><td>—</td><td>active</td><td>The character is 1 tile tall and climbs 1-tile steps without stopping.</td></tr>
+<tr id="D007" class=""><td>D007</td><td>2026-09-24</td><td>—</td><td>active</td><td>Controls signal intent, not movement: swipe (or press a key) and the character moves until something changes. What a swipe does depends on the context.</td></tr>
+<tr id="D008" class="sup"><td>D008</td><td>2026-09-24</td><td>—</td><td>superseded by <a href="#D019">D019</a></td><td>Swiping down on open floor digs straight down.</td></tr>
+<tr id="D009" class="sup"><td>D009</td><td>2026-09-24</td><td>—</td><td>superseded by <a href="#D010">D010</a></td><td>At a ledge, a swipe into the gap builds a bridge.</td></tr>
+<tr id="D010" class="sup"><td>D010</td><td>2026-09-24</td><td>—</td><td>superseded by <a href="#D018">D018</a></td><td>At a ledge, a swipe into the gap is an Engineer zipline.</td></tr>
+<tr id="D011" class=""><td>D011</td><td>2026-09-24</td><td>—</td><td>active</td><td>Casual, not survival: no fall damage. A wrong move never ends a dive; if you're stuck, you teleport home.</td></tr>
+<tr id="D012" class=""><td>D012</td><td>2026-09-24</td><td>—</td><td>active</td><td>Every game runs in portrait, landscape and square, with touch and with mouse / keyboard. b1 tests the whole matrix.</td></tr>
+<tr id="D013" class=""><td>D013</td><td>2026-09-25</td><td>—</td><td>active</td><td>Stack: plain JS ES modules with JSDoc types checked by <code>tsc</code>, no build step, Canvas2D, zero runtime dependencies. Every dependency needs a written justification.</td></tr>
+<tr id="D014" class=""><td>D014</td><td>2026-09-25</td><td><a href="#p3">p3</a></td><td>active</td><td>Everyone is an Engineer in b1. The zipline is cut to b1.2, torchlight to b2.</td></tr>
+<tr id="D015" class=""><td>D015</td><td>2026-09-25</td><td><a href="#p3">p3</a></td><td>active</td><td>The keyboard gets both models, numpad intents and held WASD, to A/B test.</td></tr>
+<tr id="D016" class=""><td>D016</td><td>2026-09-25</td><td><a href="#p3">p3</a></td><td>active</td><td>Surface strip of 4 sky rows + 3 crust rows, home at x = 0.</td></tr>
+<tr id="D017" class=""><td>D017</td><td>2026-09-25</td><td><a href="#p3">p3</a></td><td>active</td><td>Swipes use pointer events and commit at a distance threshold. A swipe made mid-tile applies at the next tile boundary.</td></tr>
+<tr id="D018" class=""><td>D018</td><td>2026-09-25</td><td><a href="#p3">p3</a></td><td>active</td><td>Step off by asking: swiping into a gap again drops you, if the floor is within <code>harmlessDrop</code> (4).</td></tr>
+<tr id="D019" class=""><td>D019</td><td>2026-09-25</td><td><a href="#p3">p3</a></td><td>active</td><td>No digging straight down: the way down through rock is the diagonal staircase.</td></tr>
+<tr id="D020" class=""><td>D020</td><td>2026-09-25</td><td><a href="#p3">p3</a></td><td>active</td><td>Mine first, then look: a mining step moves into the mined cell only if you can stand there.</td></tr>
+<tr id="D021" class=""><td>D021</td><td>2026-09-25</td><td><a href="#p3">p3</a></td><td>active</td><td>Numpad 5 mirrors the taps: tap = stop, hold = teleport home.</td></tr>
+<tr id="D022" class=""><td>D022</td><td>2026-09-25</td><td><a href="#p3">p3</a></td><td>active</td><td>Juice sits behind a master switch. Stop rules are judged with it off first.</td></tr>
+<tr id="D023" class=""><td>D023</td><td>2026-09-25</td><td>—</td><td>active</td><td>Build in public: the repo is public, and a push to <code>main</code> publishes. Every prototype is a timeline entry with frozen, playable builds.</td></tr>
+</tbody></table></details></section>
 <footer>Generated by <code>npm run timeline</code> from <code>timeline/*/entry.md</code>.</footer>
+<script>
+// Open entries count their time box against today; closed ones were counted at generation time.
+for (const el of document.querySelectorAll('.budget[data-start]')) {
+  const d = Math.round((Date.now() - Date.parse(el.dataset.start)) / 86400000) + 1
+  el.textContent = 'day ' + d + ' of ' + el.dataset.budget
+  if (d > +el.dataset.budget) el.classList.add('over')
+}
+</script>
 </body>
 </html>

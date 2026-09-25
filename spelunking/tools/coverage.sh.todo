@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# TODO — START USING THIS WHEN src/sim/ is shared by a second game (it has become a library),
+# or when a sim bug ships that a test should have caught. Measure the sim only, never
+# src/bundles/ or tools/: bundle code is throwaway, and a coverage target there buys nothing.
+# Skipped until then: tests are written per rule change (an ASCII-map test for every rule), which
+# covers what matters; a percentage would reward testing trivia.
+#
+# Zero dependencies: Node's built-in coverage. To activate: rename to coverage.sh, chmod +x,
+# add `"coverage": "tools/coverage.sh"` to package.json, and pick a floor from the first run
+# (a ratchet: it may only go up) rather than a round number.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+node --test --experimental-test-coverage \
+  --test-coverage-include='src/sim/**' --test-coverage-exclude='**/*.test.js' \
+  --test-coverage-lines=0 # TODO: set the floor from the first run

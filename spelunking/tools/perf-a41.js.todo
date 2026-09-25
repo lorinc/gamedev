@@ -1,0 +1,18 @@
+// TODO — START USING THIS WHEN a bundle adds real per-frame work (b2's darkness and light
+// radius, particles, a lighting pass), or when "it hitched on the A41" comes up in two
+// playtests. Until then the check is a human: play on the Galaxy A41 and read the frame-time
+// readout in the dev panel.
+//
+// What it would do: open a bundle in headless Chromium over CDP (no Puppeteer: raw CDP over
+// a WebSocket: built into Node 22+, or ~100 lines of our own on Node 20), emulate the A41 (411×913 @ 2.625, 4× CPU
+// throttling), play a scripted dive with synthetic swipes, read frame times from the page
+// (window.b1.game plus the dev panel's counter), and fail if p95 frame time > 16.7 ms.
+//
+// To activate: implement main() below, rename to perf-a41.js, add `"perf": "node tools/perf-a41.js"`.
+// Keep it out of .githooks/pre-push (too slow and too noisy); run it before freezing a build.
+
+async function main() {
+  throw new Error('not implemented: see the TODO above')
+}
+
+main()

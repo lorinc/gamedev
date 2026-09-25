@@ -12,7 +12,8 @@ npm test             # node --test: simulation tests, nothing to install
 npm install          # only needed for the type check
 npm run check        # tsc: type-checks the JSDoc types in src/ (emits nothing)
 npm run gallery -- 1 2 3   # v1 generator: stage-by-stage PNGs into gallery/
-npm run timeline     # timeline/*/entry.md → timeline/index.html
+npm run timeline     # timeline/*/entry.md + decisions.md → timeline/index.html
+npm run favicon      # redraw favicon.png and copy it next to every page
 npm run freeze -- p3-dig-feel b1.2   # freeze bN.html + src/ into the timeline and git tag it
 ```
 
@@ -52,12 +53,15 @@ Current state of each: `npm run timeline`, then open the generated page (the sta
 Planned bundles (from the concept doc): b2 · Greed & Darkness, b3 · Tiny Base, b4 · Vault.
 
 **Workflow:**
-1. **New prototype:** create `timeline/pN-slug/entry.md` and write its Question and Assumptions *before* building. Develop in `src/` + `bN.html` as usual.
+1. **New prototype:** copy `timeline/_template/` to `timeline/pN-slug/`, then write its Question, Assumptions, Limitations and time box *before* building. Develop in `src/` + `bN.html` as usual.
 2. **Playable:** commit, `npm run freeze -- pN-slug bN.M`, add the `build` line it prints, `npm run timeline -- --strict`, commit, push.
-3. **Play session:** a `feedback/YYYY-MM-DD_tester_device.md` with verbatim quotes and the dive log. Flip the assumption marks, record rule changes under Built.
-4. **End:** fill in Conclusion → next, set the status to `concluded` or `killed`, and copy the decisions back to the concept doc.
+3. **Play session:** a `feedback/YYYY-MM-DD_tester_device.md` from the template, with verbatim quotes and the dive log. Flip the assumption and constraint marks, record rule changes under Built, and append each decision to `timeline/decisions.md`.
+4. **End:** fill in Conclusion → next, set `ended:` and the status to `concluded` or `killed`, and copy the decisions back to the concept doc. The card shows the days used against the time box.
 
 ## Rules
+
+The engineering rules, what enforces each one, and the tools we're deliberately not using yet live in [../ENGINEERING.md](../ENGINEERING.md). Once per clone: `git config core.hooksPath .githooks` (the pre-push checks).
+
 
 - Tools and bundles only **add** to shared code; they never change behaviour another tool or bundle depends on. A different behaviour becomes a new version (v4, b1.2, …).
 - A build is **frozen when it ships**: `npm run freeze` copies it to `timeline/pN-slug/builds/bN.M/` and tags it `bN.M`. Frozen builds are never edited.

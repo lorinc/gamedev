@@ -4,6 +4,7 @@ title: Cave generator
 started: 2026-09-24
 ended: 2026-09-24
 status: concluded
+budget: 1d   # retro: no time box was set; it took one day
 cover: media/cover.png
 build v1: 2026-09-24 · layered CA world, sliders for every parameter (TS + Vite + Pixi + Tweakpane, rebuilt 2026-09-25 from tag tools-v1-v3)
 ---
@@ -23,6 +24,11 @@ Can a port of Lorinc's old tileable cave generator (a cellular automaton in a Ka
 3. [✗] Stacking several CA layers (sideways galleries, vertical shafts, hard rock, ore, loot) with separate horizontal and vertical biases gives controllable shapes.
 4. [✓] Editing keep / born / die rules with an interactive control beats typing them as text.
 
+## Limitations
+
+- [cut] No character and no digging: the generator is judged by eye, from the map and the stats.
+- [cut] No depth tiers: after the first feedback the whole map became homogeneous (D002).
+
 ## Built
 
 - A layered CA world: **galleries** (open space, stretched sideways) and **shafts** (open space, stretched vertically), a **hard rock** layer, **ore** and **loot** drops, and a sky strip and crust on top.
@@ -41,3 +47,4 @@ Too volatile to design by hand: with several interacting layers, small input cha
 
 - Kept: the keep / born / die rule editor, and horizontal wrapping (the map tiles sideways).
 - Dropped: many-layer composition as the way to design terrain.
+- Decisions: [D001, D002, D003](../decisions.md).

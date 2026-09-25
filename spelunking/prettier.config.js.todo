@@ -1,0 +1,14 @@
+// TODO — START USING THIS WHEN a second person writes code here, or formatting noise shows up
+// in diffs you have to read. Until then the code is formatted by whoever writes it, following
+// the settings below, which describe the current style.
+//
+// To activate: npm i -D prettier, justify it in README → Dependencies, rename this to
+// prettier.config.js, run `npx prettier --write src tools` once in its own commit (so it doesn't
+// hide real changes), and add `npx prettier --check src tools` to .githooks/pre-push.
+
+export default {
+  semi: false,
+  singleQuote: true,
+  printWidth: 140,
+  trailingComma: 'all',
+}

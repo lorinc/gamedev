@@ -1,0 +1,61 @@
+# TODO — START USING THIS WHEN any of these is true:
+#   - someone other than Lorinc pushes to main (the local pre-push hook only guards this clone), or
+#   - a broken commit reaches the live site despite the hook (e.g. someone pushed with --no-verify), or
+#   - testers rely on the Pages URL daily, so a broken deploy costs a play session.
+# Until then .githooks/pre-push runs the same checks locally, with no GitHub dependency.
+#
+# What it does: runs the checks on every push and PR, and deploys Pages only if they pass.
+# To activate:
+#   1. Rename to checks-and-pages.yml.
+#   2. Repo Settings → Pages → Source: "GitHub Actions" (instead of "Deploy from a branch").
+#   3. Pin every `uses:` to a full commit SHA (supply-chain hygiene), and add a row for each
+#      action to ENGINEERING.md → Dependencies: these are dependencies too.
+
+name: checks and pages
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        game: [spelunking] # one entry per game folder
+    defaults:
+      run:
+        working-directory: ${{ matrix.game }}
+    steps:
+      - uses: actions/checkout@v4 # TODO: pin to SHA
+      - uses: actions/setup-node@v4 # TODO: pin to SHA
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npx tsc -p .
+      - run: node --test
+      - run: node tools/timeline.js --strict && git diff --exit-code -- timeline/index.html
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: checks
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4 # TODO: pin to SHA
+      - uses: actions/upload-pages-artifact@v3 # TODO: pin to SHA
+        with:
+          path: .
+      - id: deploy
+        uses: actions/deploy-pages@v4 # TODO: pin to SHA
