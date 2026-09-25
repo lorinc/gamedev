@@ -320,6 +320,15 @@
         { "swipe": "→", "stop": "wall", "at": [8, 1] }
       ],
       "start": { "pack": ["soft 1"] }
+    },
+    {
+      "id": "plank-crossing-stop",
+      "note": "D045 (screenshot, b1.7): walking toward a plank bridge at head height stops in front of it, so you pick: → walks on under it (and doesn't stop again), ↗ climbs onto it.",
+      "map": ["#..........#", "#..........#", "#@...------#", "############"],
+      "swipes": [
+        { "swipe": "→", "stop": "crossing", "at": [4, 2] },
+        { "swipe": "→", "stop": "wall", "at": [10, 2] }
+      ]
     }
   ]
 }

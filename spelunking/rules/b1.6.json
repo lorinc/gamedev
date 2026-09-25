@@ -2,7 +2,7 @@
   "format": "spelunking-ruleset",
   "version": 1,
   "name": "b1.6",
-  "note": "b1.5 + planks and asking first (D039–D043). Every build places a plank: a tread along the top of an open cell, stood on from above, walked through underneath, never dug. Rows marked confirm ask first: the run stops, the same swipe again does it. Runs stop only at a wall (walking turns into mining) or to ask; no stops for break-outs, harder rock, ore, loot or junctions. → at a gap bridges (asks), never steps off (↓ does). On a plank ramp, → follows it up. A fresh → at a walkable step digs it (asks); a run steps up; a tunnelling run stays level. ↗ into rock with no floor under it mines it and stays. ↑ mines the rock above, climbs onto a tread overhead, or builds a plank ladder (asks). ↓ on a plank drops through if safe, else builds a plank ladder down (asks). b1.3 + the backpack (D038): 6 slots of 16, every material mined goes in, building costs 1 rock per tile (soft before hard), no room for rock drops it, no room for ore or loot refuses (packFull). b1.3 was: b1.2 + clinging above a chasm (D035): ↗ ↖ toward the wall you hold climb up it (stairUp), ↘ ↙ mine into rock while clinging, any mining is allowed, and gravity: nothing holds you → you fall; deeper than harmlessDrop → home.",
+  "note": "b1.5 + planks and asking first (D039–D043). Every build places a plank: a tread along the top of an open cell, stood on from above, walked through underneath, never dug. Rows marked confirm ask first: the run stops, the same swipe again does it. Runs stop only at a wall (walking turns into mining), in front of a plank that crosses your way (D045), or to ask; no stops for break-outs, harder rock, ore, loot or junctions. → at a gap bridges (asks), never steps off (↓ does). On a plank ramp, → follows it up. A fresh → at a walkable step digs it (asks); a run steps up; a tunnelling run stays level. ↗ into rock with no floor under it mines it and stays. ↑ mines the rock above, climbs onto a tread overhead, or builds a plank ladder (asks). ↓ on a plank drops through if safe, else builds a plank ladder down (asks). b1.3 + the backpack (D038): 6 slots of 16, every material mined goes in, building costs 1 rock per tile (soft before hard), no room for rock drops it, no room for ore or loot refuses (packFull). b1.3 was: b1.2 + clinging above a chasm (D035): ↗ ↖ toward the wall you hold climb up it (stairUp), ↘ ↙ mine into rock while clinging, any mining is allowed, and gravity: nothing holds you → you fall; deeper than harmlessDrop → home.",
   "swipes": {
     "swipePx": 24,
     "horizontalDeg": 30,
@@ -198,7 +198,8 @@
     "open": false,
     "loot": false,
     "harder": false,
-    "junction": false
+    "junction": false,
+    "crossing": true
   },
   "numbers": {
     "walkTicks": 7,

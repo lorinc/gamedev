@@ -61,3 +61,12 @@ b1.1 rules b1.2 #1 59.0s ore 0 loot 0 depth 12 mined 11 built 0 | noOre:5 floor:
 - Seen in the report (the replay matches exactly): → at the foot of a step asked, and the second → dug it. The run tunnelled level, walked out, stepped down, and at the gap laid 4 planks without asking.
 - The reason: D041's "once confirmed, the whole run is confirmed" (Claude's call, not discussed). The yes to dig also counted as a yes to build.
 - Changed: D044. A yes covers only its kind of action, and only while the run keeps doing it. The run now stops at the gap's edge (348,14) and asks. Example `dig-yes-not-build`.
+
+## Later: a run should stop at a plank crossing (screenshot, on b1.6 + D044)
+
+> The char should stop a run here, so user can pick a direction.
+
+> I think there's no naturally occurring "crossing" situation in the game, we added it with the plank.
+
+- Seen: walking along a tunnel toward a plank bridge at head height. The run walked on under it without a pause, so there was no chance to take ↗ up onto it.
+- Changed: D045, the `crossing` stop. Example `plank-crossing-stop`.

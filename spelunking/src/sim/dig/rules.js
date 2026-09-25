@@ -39,6 +39,7 @@ export const BEDROCK = -1
  * @property {boolean} harder the next tile is slower to mine than the last
  * @property {boolean} loot the next tile is ore or loot
  * @property {boolean} junction a side passage opens (a shaft overhead, a cave beside a dig-down)
+ * @property {boolean} [crossing] walking is about to step under a plank: a path you built crosses yours (D045)
  */
 
 /**
@@ -236,6 +237,10 @@ export function stopReason(world, at, prev, next, cfg) {
     const hardness = (/** @type {Action} */ a) => Math.max(0, ...a.digs.map((d) => digTicks(cfg, d.tile)))
     if (rules.harder && prev.kind === 'mine' && hardness(next) > hardness(prev)) return 'harder'
   }
+  // D045: the one place two ways meet is where a plank path crosses yours. Stop in front of it, so
+  // → (under) and ↗ (up onto it) are both one swipe away; walking on under it doesn't stop again.
+  const plank = (/** @type {Cell} */ c) => tileAt(world, c.x, c.y) === Tile.Plank
+  if (rules.crossing && next.kind === 'walk' && !plank(at) && plank(next.to)) return 'crossing'
   if (rules.junction && (next.kind === 'walk' || next.kind === 'mine') && junction(world, at, next)) return 'junction'
   return null
 }
