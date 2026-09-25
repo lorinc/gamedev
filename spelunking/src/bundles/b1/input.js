@@ -37,6 +37,8 @@ export function createInput(surface, t, send, hooks) {
   /** @type {{ id: number, x0: number, y0: number, t0: number, x: number, y: number, done: boolean } | null} */
   let press = null
   const held = new Set()
+  /** @type {{ t0: number, done: boolean } | null} numpad 5 held: charging the teleport */
+  let key5 = null
   let kind = '–'
 
   surface.addEventListener('contextmenu', (e) => e.preventDefault())
@@ -81,17 +83,25 @@ export function createInput(surface, t, send, hooks) {
     if (e.repeat) return
     hooks.gesture()
     kind = 'keyboard'
-    if (e.code === 'Numpad5') return send({ type: 'stop' }, e.timeStamp)
+    // Numpad 5 = tap and long-tap: stop on press (a key can't turn into a swipe), teleport if held.
+    if (e.code === 'Numpad5') {
+      key5 = { t0: e.timeStamp, done: false }
+      return send({ type: 'stop' }, e.timeStamp)
+    }
     if (NUMPAD[e.code]) return send({ type: 'intent', dx: move[0], dy: move[1] }, e.timeStamp)
     held.add(e.code)
     sendHeld(e.timeStamp)
   })
 
   window.addEventListener('keyup', (e) => {
+    if (e.code === 'Numpad5') key5 = null
     if (!held.delete(e.code)) return
     sendHeld(e.timeStamp)
   })
-  window.addEventListener('blur', () => held.clear())
+  window.addEventListener('blur', () => {
+    held.clear()
+    key5 = null
+  })
 
   // WASD: hold to move, two keys = diagonal, release all = stop. A stop rule pauses the run
   // (a soft stop) until a key is pressed again.
@@ -110,9 +120,16 @@ export function createInput(surface, t, send, hooks) {
   }
 
   return {
-    /** Teleport charge 0..1 at the pointer (CSS px), or null. Fires the teleport when full. */
-    /** @param {number} now */
+    /** Teleport charge 0..1 at the pointer (CSS px; null x / y = at the character), or null. Fires when full. */
+    /** @param {number} now @returns {{ p: number, x: number | null, y: number | null } | null} */
     charge(now) {
+      if (key5 && !key5.done) {
+        const p = (now - key5.t0) / t.input.longPressMs
+        if (p < 1) return { p, x: null, y: null }
+        key5.done = true
+        send({ type: 'teleport' }, now)
+        return null
+      }
       if (!press || press.done) return null
       const p = (now - press.t0) / t.input.longPressMs
       if (p >= 1) {

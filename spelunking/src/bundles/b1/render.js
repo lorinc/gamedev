@@ -60,7 +60,7 @@ export function createRenderer(canvas, game, t, juice) {
      * @param {number} alpha 0..1 into the next tick
      * @param {number} dt seconds since the last frame
      * @param {number} time seconds
-     * @param {{ p: number, x: number, y: number } | null} charge
+     * @param {{ p: number, x: number | null, y: number | null } | null} charge at the pointer, or at the character
      */
     draw(alpha, dt, time, charge) {
       if (Math.round(Math.min(canvas.width, canvas.height) / t.view.tilesShort) !== tilePx) resize()
@@ -143,7 +143,9 @@ export function createRenderer(canvas, game, t, juice) {
         ctx.strokeStyle = CHAR
         ctx.lineWidth = 4 * dpr
         ctx.beginPath()
-        ctx.arc(charge.x * dpr, charge.y * dpr, r, -Math.PI / 2, -Math.PI / 2 + charge.p * Math.PI * 2)
+        const rx = charge.x === null ? cx : charge.x * dpr
+        const ry = charge.y === null ? cy - chh / 2 : charge.y * dpr
+        ctx.arc(rx, ry, r, -Math.PI / 2, -Math.PI / 2 + charge.p * Math.PI * 2)
         ctx.stroke()
       }
     },

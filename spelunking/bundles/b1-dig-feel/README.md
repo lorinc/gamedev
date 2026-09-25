@@ -37,7 +37,7 @@ Design source: *Playtest Bundles → Bundle 1* and *Controls & Genre* in [spelun
   - At a ledge (2+ drop): swipe into the gap = Engineer zipline; down = climb down (overhangs up to 45°; steeper: drop if floor ≤4 below, else zipline out).
   - Mine or build: rock is mined, air is built (1 ore per 12 tiles).
 - **Taps:** tap the character = stop; tap elsewhere = torchlight; long-tap = charge the teleport home.
-- **Keyboard:** WASD (two keys = diagonal), numpad 1–9 (5 = stop), mouse click / hold = tap / long-tap.
+- **Keyboard:** WASD (two keys = diagonal), numpad 1–9 (5 = tap: stop; hold 5 = long-tap: teleport), mouse click / hold = tap / long-tap.
 - **Loop:** pack (3–5 slots), teleport home, loot counted at home.
 - **Juice:** screen shake, square chunks flying, per-material dig resistance.
 - **Dev panel** and **dive log** (see *Rules for Every Bundle* in the concept doc).
