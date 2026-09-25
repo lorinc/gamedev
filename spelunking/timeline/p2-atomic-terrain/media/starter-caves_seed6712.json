@@ -1,0 +1,14 @@
+{
+  "seed": 6712,
+  "width": 128,
+  "height": 64,
+  "density": 450,
+  "edge": "wrap",
+  "steps": [
+    { "kind": "gen", "rule": "d012 b5678", "repeat": 2 },
+    { "kind": "scale", "x": 4, "y": 1 },
+    { "kind": "gen", "rule": "d0124 b78", "repeat": 4 },
+    { "kind": "scale", "x": 2, "y": 2 },
+    { "kind": "gen", "rule": "d012 b345", "repeat": 1 }
+  ]
+}

@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>v2 · CA Lab</title>
+    <style>html,body{color:#ccc;background:#050508;height:100%;margin:0;font:11px monospace}body{display:flex}#left{flex-direction:column;flex:1;min-width:0;display:flex}#strip{border-bottom:1px solid #222;flex-shrink:0;gap:8px;padding:8px;display:flex;overflow-x:auto}.thumb{cursor:pointer;border:2px solid #0000;border-radius:3px;flex-shrink:0;max-width:140px;padding:3px}.thumb.selected{border-color:#e6dc5a}.thumb canvas{height:140px;margin-bottom:3px;display:block}.thumb div{white-space:nowrap;text-overflow:ellipsis;overflow:hidden}canvas{image-rendering:pixelated}#view{flex:1;padding:8px;overflow:auto}#panel{box-sizing:border-box;flex-shrink:0;width:330px;padding:8px;overflow:auto}#warn{color:#f66;padding:4px 8px}@media (width<=700px){body{flex-direction:column}#panel{width:100%;max-height:45%}}</style>
+    <script type="module" crossorigin src="./assets/index-yZj8djns.js"></script>
+  </head>
+  <body>
+    <div id="left">
+      <div id="strip"></div>
+      <div id="warn"></div>
+      <div id="view"><canvas id="big"></canvas></div>
+    </div>
+    <div id="panel"></div>
+  </body>
+</html>

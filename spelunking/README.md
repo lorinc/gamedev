@@ -1,6 +1,6 @@
 # Spelunking Base: prototypes
 
-Playtest bundles and dev tools for the game designed in [../concepts/spelunking_base.md](../concepts/spelunking_base.md) (the single source of truth for the design).
+Prototypes, playtest bundles and dev tools for the game designed in [../concepts/spelunking_base.md](../concepts/spelunking_base.md) (the single source of truth for the design).
 
 ## Run
 
@@ -12,7 +12,12 @@ npm test             # node --test: simulation tests, nothing to install
 npm install          # only needed for the type check
 npm run check        # tsc: type-checks the JSDoc types in src/ (emits nothing)
 npm run gallery -- 1 2 3   # v1 generator: stage-by-stage PNGs into gallery/
+npm run timeline     # timeline/*/entry.md → timeline/index.html
+npm run freeze -- p3-dig-feel b1.2   # freeze bN.html + src/ into the timeline and git tag it
+npm run deploy       # publish the timeline + live dev build to https://lorinc.github.io/spelunking-play/
 ```
+
+The history of every prototype, playable, is at http://localhost:8000/timeline/ (and public at the link above).
 
 ## Dependencies
 
@@ -34,32 +39,28 @@ Rules: the sim (`src/sim/`) imports only other sim modules, enforced by `src/sim
 | `src/sim/gen/` | Terrain: `ca.js` (cellular automaton), `pipeline.js` (v2 recipes), `terrain.js` (v3) + `starterCaves.js` (its recipe), `world.js` / `stats.js` |
 | `src/render/`, `src/ui/`, `src/input/` | Drawing, dev-panel widgets, touch / keyboard → commands |
 | `src/bundles/bN/` + `bN.html` | Playable bundle entry points: wire sim + render + input + dev panel only |
-| `bundles/bN-name/` | Bundle docs: README, `presets/`, `playtests/`, `releases/` |
+| `timeline/pN-slug/` | One prototype: `entry.md` (question, assumptions, built, feedback, conclusion), frozen `builds/`, `feedback/`, `media/`, `presets/`. Public. See [timeline/README.md](timeline/README.md) |
 | `archive/` | Frozen references: dated recipe JSON + PNG |
 | `gallery/` | Renders to look at (not in git) |
-| `tools/` | Node scripts (gallery export, PNG writer) |
+| `tools/` | Node scripts: gallery export, PNG writer, timeline generator (`timeline.js` + `md.js`), `freeze.sh`, `deploy.sh` |
 
-## Tools (retired)
+## Timeline
 
-The terrain tools lived on TS + Vite + Pixi + Tweakpane and were removed on 2026-09-25 with that stack. All three were frozen. To run them: `git checkout tools-v1-v3 && npm install && npm run dev`.
+Every prototype, tool or bundle, gets a timeline entry. The retired terrain tools (v1–v3, TS + Vite + Pixi + Tweakpane, tag `tools-v1-v3`) are there as frozen static builds, so they still play.
 
-| Tool | What |
-|---|---|
-| v1 · Cave generator | Layered CA world: galleries, shafts, hard rock, ore, loot. Its generator lives on in `src/sim/gen/world.js` (used by the gallery) |
-| v2 · CA Lab | One binary grid, hand-built gen / scale pipeline. The fundamental pattern-finding tool |
-| v3 · Terrain | A v2 recipe for caves and soft / hard rock, plus ore and loot. Its output is `src/sim/gen/terrain.js`, which b1 uses |
+Current state of each: `npm run timeline`, then open the generated page (the status chips there come from each entry's frontmatter, so nothing here goes stale).
 
-## Bundles
+Planned bundles (from the concept doc): b2 · Greed & Darkness, b3 · Tiny Base, b4 · Vault.
 
-| Bundle | Question | Status |
-|---|---|---|
-| [b1 · Dig Feel](bundles/b1-dig-feel/README.md) | Does "move until something changes" feel good, and do I want another dive? | scoping |
-| b2 · Greed & Darkness | Does "loot lights the way, and draws the bugs" create greed? | – |
-| b3 · Tiny Base | Does digging pull you into building, and back? | – |
-| b4 · Vault | Is the one-screen, three-path raid puzzle interesting? | – |
+**Workflow:**
+1. **New prototype:** create `timeline/pN-slug/entry.md` and write its Question and Assumptions *before* building. Develop in `src/` + `bN.html` as usual.
+2. **Playable:** commit, `npm run freeze -- pN-slug bN.M`, add the `build` line it prints, `npm run timeline`, `npm run deploy`.
+3. **Play session:** a `feedback/YYYY-MM-DD_tester_device.md` with verbatim quotes and the dive log. Flip the assumption marks, record rule changes under Built.
+4. **End:** fill in Conclusion → next, set the status to `concluded` or `killed`, and copy the decisions back to the concept doc.
 
 ## Rules
 
 - Tools and bundles only **add** to shared code; they never change behaviour another tool or bundle depends on. A different behaviour becomes a new version (v4, b1.2, …).
-- A bundle build is **frozen when it ships**: git tag `bN.M`, preset JSON and zip in `bundles/bN-name/releases/`.
-- Decisions a bundle produces go back into the concept doc; the bundle doc keeps the evidence.
+- A build is **frozen when it ships**: `npm run freeze` copies it to `timeline/pN-slug/builds/bN.M/` and tags it `bN.M`. Frozen builds are never edited.
+- The timeline is public. Entries stand alone: no links into the private repo (the deploy refuses them). Ask other testers before publishing their feedback.
+- Decisions a prototype produces go back into the concept doc; its timeline entry keeps the evidence.

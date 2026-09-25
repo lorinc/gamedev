@@ -97,7 +97,7 @@ Researched September 2026. Every URL below was fetched or surfaced by search at 
 5. **CrazyGames Basic Launch.** Live with no SDK and no monetisation for at least 7 days or 500 plays, and QA watches the metrics.
 6. A restricted itch.io page for friends. Optionally the GameAnalytics JS SDK (free account; progression and design events), if a platform allows external calls. Check each portal's rules first. `toolbox.md` notes some forbid external network calls.
 
-**Apply.** For each bundle, write the assumptions list before the first playtest. Copy that into the `playtests/` template.
+**Apply.** For each bundle, write the assumptions list before the first playtest. It goes in the Assumptions section of the bundle's timeline entry (`spelunking/timeline/pN-slug/entry.md`).
 
 ### 2.8 Freeze early; the last 10% is 90%
 

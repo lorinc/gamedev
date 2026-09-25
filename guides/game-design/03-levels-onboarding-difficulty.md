@@ -2,7 +2,7 @@
 
 Part 3 of the game-design reference library. Scope: teaching without tutorials, difficulty and pacing, navigation underground, and procedural generation used as a *design* tool rather than a tech showcase. Other topics live in their own guides and are not repeated here: design foundations / MDA, game feel / juice, player motivation and web-portal audiences, indie scope and process.
 
-Written against the current project: **spelunking** (see [spelunking_base.md](../../concepts/spelunking_base.md), [b1-dig-feel](../../spelunking/bundles/b1-dig-feel/README.md)). Every principle ends with "apply to spelunking".
+Written against the current project: **spelunking** (see [spelunking_base.md](../../concepts/spelunking_base.md), [b1-dig-feel](../../spelunking/timeline/p3-dig-feel/entry.md)). Every principle ends with "apply to spelunking".
 
 ---
 
