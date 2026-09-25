@@ -150,13 +150,15 @@ function next(g) {
     buildable: rock(g.pack),
   }
   const action = interpret(g.table, world, ch, run.dx, run.dy, ch.facing, cfg, inv)
-  const reason = run.prev
-    ? stopReason(world, ch, run.prev, action, cfg)
-    : action.kind === 'blocked'
-      ? (action.reason ?? 'blocked')
-      : null
+  const reason = run.prev ? stopReason(world, ch, run.prev, action, cfg) : action.kind === 'blocked' ? (action.reason ?? 'blocked') : null
   if (reason) {
-    g.events.push({ type: 'stop', reason, dx: run.dx, dy: run.dy, tried: reason === action.reason ? (action.tried ?? []) : [], rule: action.rule,
+    g.events.push({
+      type: 'stop',
+      reason,
+      dx: run.dx,
+      dy: run.dy,
+      tried: reason === action.reason ? (action.tried ?? []) : [],
+      rule: action.rule,
       next: (action.intended ?? action).kind, // what the run would have done next
     }) // a quiet stop tried nothing (D030)
     if (g.dive) g.dive.stops[reason] = (g.dive.stops[reason] ?? 0) + 1
@@ -248,5 +250,14 @@ function teleport(g) {
 
 /** @param {Game} g @returns {Dive} */
 function newDive(g) {
-  return { n: g.dives.length + 1, startTick: g.tick, ticks: 0, got: { soft: 0, hard: 0, ore: 0, loot: 0 }, depth: 0, mined: 0, built: 0, stops: {} }
+  return {
+    n: g.dives.length + 1,
+    startTick: g.tick,
+    ticks: 0,
+    got: { soft: 0, hard: 0, ore: 0, loot: 0 },
+    depth: 0,
+    mined: 0,
+    built: 0,
+    stops: {},
+  }
 }
