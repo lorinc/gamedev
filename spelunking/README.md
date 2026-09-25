@@ -14,10 +14,9 @@ npm run check        # tsc: type-checks the JSDoc types in src/ (emits nothing)
 npm run gallery -- 1 2 3   # v1 generator: stage-by-stage PNGs into gallery/
 npm run timeline     # timeline/*/entry.md → timeline/index.html
 npm run freeze -- p3-dig-feel b1.2   # freeze bN.html + src/ into the timeline and git tag it
-npm run deploy       # publish the timeline + live dev build to https://lorinc.github.io/spelunking-play/
 ```
 
-The history of every prototype, playable, is at http://localhost:8000/timeline/ (and public at the link above).
+The history of every prototype, playable, is at http://localhost:8000/timeline/. The repo is public and GitHub Pages serves `main` as it is, so a push publishes: https://lorinc.github.io/gamedev/spelunking/timeline/ (live dev build: …/spelunking/b1.html).
 
 ## Dependencies
 
@@ -42,7 +41,7 @@ Rules: the sim (`src/sim/`) imports only other sim modules, enforced by `src/sim
 | `timeline/pN-slug/` | One prototype: `entry.md` (question, assumptions, built, feedback, conclusion), frozen `builds/`, `feedback/`, `media/`, `presets/`. Public. See [timeline/README.md](timeline/README.md) |
 | `archive/` | Frozen references: dated recipe JSON + PNG |
 | `gallery/` | Renders to look at (not in git) |
-| `tools/` | Node scripts: gallery export, PNG writer, timeline generator (`timeline.js` + `md.js`), `freeze.sh`, `deploy.sh` |
+| `tools/` | Node scripts: gallery export, PNG writer, timeline generator (`timeline.js` + `md.js`), `favicon.js` (draws `favicon.png`, copies it next to every page), `freeze.sh` |
 
 ## Timeline
 
@@ -54,7 +53,7 @@ Planned bundles (from the concept doc): b2 · Greed & Darkness, b3 · Tiny Base,
 
 **Workflow:**
 1. **New prototype:** create `timeline/pN-slug/entry.md` and write its Question and Assumptions *before* building. Develop in `src/` + `bN.html` as usual.
-2. **Playable:** commit, `npm run freeze -- pN-slug bN.M`, add the `build` line it prints, `npm run timeline`, `npm run deploy`.
+2. **Playable:** commit, `npm run freeze -- pN-slug bN.M`, add the `build` line it prints, `npm run timeline -- --strict`, commit, push.
 3. **Play session:** a `feedback/YYYY-MM-DD_tester_device.md` with verbatim quotes and the dive log. Flip the assumption marks, record rule changes under Built.
 4. **End:** fill in Conclusion → next, set the status to `concluded` or `killed`, and copy the decisions back to the concept doc.
 
@@ -62,5 +61,5 @@ Planned bundles (from the concept doc): b2 · Greed & Darkness, b3 · Tiny Base,
 
 - Tools and bundles only **add** to shared code; they never change behaviour another tool or bundle depends on. A different behaviour becomes a new version (v4, b1.2, …).
 - A build is **frozen when it ships**: `npm run freeze` copies it to `timeline/pN-slug/builds/bN.M/` and tags it `bN.M`. Frozen builds are never edited.
-- The timeline is public. Entries stand alone: no links into the private repo (the deploy refuses them). Ask other testers before publishing their feedback.
+- Everything is public (build in public): a push to `main` is live in about a minute. Never commit secrets. Ask other testers before publishing their feedback.
 - Decisions a prototype produces go back into the concept doc; its timeline entry keeps the evidence.

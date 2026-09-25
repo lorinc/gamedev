@@ -1,6 +1,6 @@
 # Spelunking · prototype timeline
 
-**Play it:** https://lorinc.github.io/spelunking-play/
+**Play it:** https://lorinc.github.io/gamedev/spelunking/timeline/
 
 Spelunking Base is being built in public, one small prototype at a time. Each prototype asks one question, writes down what it assumes, ships a playable build, gets played, and ends with a decision. This folder is that history. Every build here is frozen exactly as it was tested.
 
@@ -34,4 +34,4 @@ build b1.1: 2026-09-25 · what this build changed
 
 `index.html` is generated from the entries (`npm run timeline`). Don't edit it by hand.
 
-Entries in the source repo are written to stand alone. The design docs they grew from are private. Links out of this folder are refused at publish time.
+The whole repo is public, including the design docs the entries grew from ([concepts/](../../concepts/)) and the research behind them ([guides/](../../guides/)). GitHub Pages serves `main` as it is: pushing is publishing.

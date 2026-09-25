@@ -20,6 +20,7 @@ fi
 mkdir -p "$DEST"
 git -C "$HERE" archive "$REV" "$PAGE" src | tar -x -C "$DEST" --exclude '*.test.js'
 mv "$DEST/$PAGE" "$DEST/index.html"
+cp "$HERE/favicon.png" "$DEST/" # the page links favicon.png next to itself
 
 if ! git -C "$HERE" rev-parse -q --verify "refs/tags/$BUILD" >/dev/null; then
   git -C "$HERE" tag "$BUILD" "$REV"

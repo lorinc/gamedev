@@ -11,7 +11,7 @@ build b1.1: 2026-09-25 · first playable, plus the first-play rules (mine then l
 
 # p3 · b1 · Dig Feel
 
-The first playtest bundle for Spelunking Base. The world is the v3 terrain from [p2](../p2-atomic-terrain/entry.md). The design itself lives in the (private) concept doc. This entry records what was built, tuned and learned.
+The first playtest bundle for Spelunking Base. The world is the v3 terrain from [p2](../p2-atomic-terrain/entry.md). The design itself lives in the [concept doc](../../../concepts/spelunking_base.md). This entry records what was built, tuned and learned.
 
 ## Question
 

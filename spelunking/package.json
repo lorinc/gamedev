@@ -8,9 +8,9 @@
     "check": "tsc",
     "test": "node --test",
     "gallery": "node tools/gallery.js",
-    "deploy": "tools/deploy.sh",
     "timeline": "node tools/timeline.js",
-    "freeze": "tools/freeze.sh"
+    "freeze": "tools/freeze.sh",
+    "favicon": "node tools/favicon.js"
   },
   "devDependencies": {
     "typescript": "~5.9.0"

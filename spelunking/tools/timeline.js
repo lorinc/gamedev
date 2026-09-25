@@ -2,7 +2,7 @@
 // with its question, assumption marks, Play buttons for its frozen builds, the conclusion,
 // and the full entry + feedback sessions behind a <details>. One static file, no runtime JS.
 // Usage: node tools/timeline.js [--out file] [--dev <base url of live bN.html>] [--strict]
-//   --strict  exit 1 on problems (deploy uses it); otherwise they're printed as warnings.
+//   --strict  exit 1 on problems; otherwise they're printed as warnings.
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
@@ -75,7 +75,7 @@ export function renderPage(entries, opts) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${escapeHtml(opts.game)} · Timeline</title>
-<link rel="icon" href="data:,">
+<link rel="icon" href="favicon.png">
 <style>${CSS}</style>
 </head>
 <body>
@@ -196,21 +196,6 @@ footer { color:var(--dim); font-size:12px; }
 @media (max-width:520px) { .line { padding-left:18px; } .line::before { left:3px; } .entry::before { left:-21px; } .entry { padding:12px; } .from { margin-left:0; } }
 `
 
-/**
- * Relative link targets in `md` that resolve outside `root`: they'd break in the public repo.
- * @param {string} md
- * @param {string} fromDir
- * @param {string} root
- */
-export function outsideLinks(md, fromDir, root) {
-  const bad = []
-  for (const [, href] of md.matchAll(/\]\(([^)\s]+)\)/g)) {
-    if (/^([a-z]+:|#|\/)/i.test(href)) continue
-    if (relative(root, join(fromDir, href.split('#')[0])).startsWith('..')) bad.push(href)
-  }
-  return bad
-}
-
 function main() {
   const root = join(dirname(fileURLToPath(import.meta.url)), '..')
   const tl = join(root, 'timeline')
@@ -231,9 +216,6 @@ function main() {
     const listed = new Set(r.entry.builds.map((b) => b.id))
     const onDisk = existsSync(join(base, 'builds')) ? readdirSync(join(base, 'builds')) : []
     for (const b of onDisk) if (!listed.has(b)) r.problems.push(`${dir}: builds/${b}/ has no "build ${b}:" line in the frontmatter`)
-    for (const [file, md] of [['entry.md', readFileSync(join(base, 'entry.md'), 'utf8')], ...feedback.map((f) => [join('feedback', f.name), f.md])]) {
-      r.problems.push(...outsideLinks(md, dirname(join(base, file)), tl).map((l) => `${dir}/${file}: links outside timeline/ (private repo only): ${l}`))
-    }
     problems.push(...r.problems)
     entries.push(r.entry)
   }

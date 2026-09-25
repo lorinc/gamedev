@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
 import { mdToHtml, parseEntry, sections } from './md.js'
-import { outsideLinks, readEntry, renderPage } from './timeline.js'
+import { readEntry, renderPage } from './timeline.js'
 
 const ENTRY = `---
 id: p9
@@ -96,9 +96,4 @@ describe('renderPage', () => {
     assert.match(html, /id="p9-fb-2026-01-02_me_phone"/)
     assert.match(html, /href="#p10"/)
   })
-})
-
-test('outsideLinks flags links that leave the timeline root', () => {
-  const md = '[a](feedback/x.md) [b](../p2-x/entry.md) [c](../../README.md) [d](https://x.y) [e](#top)'
-  assert.deepEqual(outsideLinks(md, '/r/timeline/p1-x', '/r/timeline'), ['../../README.md'])
 })
