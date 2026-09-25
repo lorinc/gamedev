@@ -48,6 +48,7 @@ export function replay(text) {
       .split('\n')
       .filter((l) => !l.startsWith('REPLAY '))
       .join('\n')
+      .trimEnd() // a saved or pasted report often gains a final newline
   const report = rec.report()
   return { report, same: story(report) === story(text), problems }
 }

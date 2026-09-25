@@ -40,3 +40,16 @@ b1.1 rules b1.2 #1 59.0s ore 0 loot 0 depth 12 mined 11 built 0 | noOre:5 floor:
 
 - Seen in the report: after ↓ climbed over the staircase's last step, every way back up refused: ↗ (`noFooting`), ↑ (`up`).
 - Changed: ruleset b1.3 (D035), with the examples `cling-climb-back`, `cling-mine-hold`, `cling-fall-home` and `cling-mine-down`.
+
+## Later: a staircase at a tunnel crossing (bug report, tick 7166)
+
+> In the next session, we will address the staircase problem. This is a prime example of when I need a staircase built instead of a solid wall.
+
+- Seen in the report (the replay matches exactly):
+  1. ↙ mined a diagonal tunnel down from (370,7).
+  2. From (363,14), ↘ mined a second diagonal down to (368,19), crossing the first in an X.
+  3. ↖ walked back up to the crossing.
+  4. ↗ then built its step at (364,14). That cell is the top of the ↘ tunnel, so the crossing now has a solid Built block in it, and the ↘ tunnel is plugged.
+- What's wanted: the stair block (D029). ↗ climbs onto it, and ↘ still walks through it.
+- The report's `EXAMPLE` line (`report-6659`, start pack soft 16 + soft 12) is the starting point for the stairs example (R8). The full report is in the user's `temp/2026-09-25_stairs-report-tick7166.txt`, which is local and not in the repo.
+- Changed: not yet. It's next session's work.
