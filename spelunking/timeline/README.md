@@ -26,6 +26,8 @@ Start a new entry by copying [_template/](_template/), which also holds the feed
 
 **Time box:** `budget: 3d`. Open entries count the days live on the page, closed ones show days used against the budget, in red when over. Over time means cutting features, not extending.
 
+**Rules at close:** when a playtest (an entry with `bN.M` builds) is concluded or killed, it records its rule table (the swipe table, stop rules and numbers of its last build) in a `## Rules at close` section. The card shows it, and `--strict` refuses a closed playtest without one. The next prototype starts from that baseline.
+
 **Decisions** go in [decisions.md](decisions.md), an append-only ledger: `| D024 | date | from entry | active | decision |`. A changed decision is a new row, and the old one becomes `superseded by D024`. Each card lists the decisions its prototype made.
 
 **Frontmatter** (flat `key: value` lines between `---`):

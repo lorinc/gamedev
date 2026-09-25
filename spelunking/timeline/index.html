@@ -52,6 +52,7 @@ details { margin-top:8px; } summary { cursor:pointer; color:var(--dim); }
 .doc blockquote { margin:6px 0; padding:2px 10px; border-left:3px solid var(--acc); color:#ddd; }
 .doc ul, .doc ol { padding-left:20px; }
 .fb { border-top:1px dashed var(--line); margin-top:16px; }
+details.rules > summary { color:var(--acc); }
 footer { color:var(--dim); font-size:12px; }
 .budget { font-size:12px; color:var(--dim); border:1px dotted var(--line); border-radius:3px; padding:0 5px; }
 .budget.over { color:var(--broken); border-color:var(--broken); }
@@ -74,18 +75,82 @@ footer { color:var(--dim); font-size:12px; }
 <header class="top">
   <h1>Spelunking <span>· prototype timeline</span></h1>
   <p>Every prototype: what we believed, what we built, how it played, what we decided. Newest first. Each ▶ plays the build exactly as it was tested.</p>
-  <p class="legend"><span class="a held">✓ 6 held</span> <span class="a broken">✗ 6 broken</span> <span class="a open">? 5 open</span> · 7 constraints · 3 prototypes · 4 builds · <a href="#ledger">21 decisions</a></p>
+  <p class="legend"><span class="a held">✓ 6 held</span> <span class="a broken">✗ 6 broken</span> <span class="a open">? 11 open</span> · 9 constraints · 4 prototypes · 5 builds · <a href="#ledger">23 decisions</a></p>
 </header>
 <main class="line">
-<article class="entry s-playtesting" id="p3">
-  <header><span class="pid">p3</span><h2>Dig Feel (b1)</h2><span class="status">playtesting</span><time>2026-09-24</time><span class="budget" data-start="2026-09-24" data-budget="3">budget 3 days</span><a class="from" href="#p2">grew out of p2 · Atomic terrain</a></header>
+<article class="entry s-building" id="p4">
+  <header><span class="pid">p4</span><h2>Rule Lab (v4)</h2><span class="status">building</span><time>2026-09-25</time><span class="budget" data-start="2026-09-25" data-budget="3">budget 3 days</span><a class="from" href="#p3">grew out of p3 · Dig Feel (b1)</a></header>
+  
+  <p class="q">Can the swipe table and stop rules live as a JSON ruleset, edited visually against small example situations, without losing any b1.2 behaviour?</p>
+  <ul class="chips"><li class="a open">Every b1.2 behaviour fits a first-match decision table: (swipe, situation) → action, over a small, fixed vocabulary of named conditions (next cell open, floor below, headroom, standing / clinging, drop ≤ N, …).</li><li class="a open">The data-driven sim stays deterministic and passes every current dig test unchanged.</li><li class="a open">Seeing a rule's situation (a small map, the swipe, the result) beside the rule makes changes faster and safer than editing code.</li><li class="a open">A ruleset JSON is small and readable enough to diff in git and paste into chat, like a terrain recipe.</li><li class="a open">The same situations (small ASCII maps + the expected result) can be both the editor's previews and the test suite.</li><li class="a open">The timeline's &quot;Rules at close&quot; table can be generated from the ruleset instead of written by hand.</li></ul>
+  <ul class="limits"><li class="l constraint open"><span class="k">constraint</span>No new mechanics: p4 only represents and edits the rules b1.2 already has. The Engineer is still the only character.</li><li class="l constraint open"><span class="k">constraint</span>The condition vocabulary is fixed in code. The editor combines conditions, it can't invent new ones. A new condition is a code change with a test.</li><li class="l cut "><span class="k">cut</span>Terrain editing: that stays in the v2 / v3 recipes.</li><li class="l cut "><span class="k">cut</span>Zipline, chasm crossing, the chasm-cling fix, Ghost and Demolitionist: these go to the next dig playtest, built on rulesets.</li><li class="l cut "><span class="k">cut</span>Phone layout for the editor: it's a desktop tool. The rulesets it makes are played on every device.</li></ul>
+  
+  <p class="next"><b>→</b> Open.</p>
+  
+  
+  <details><summary>Full entry</summary>
+<div class="doc">
+<h2>Question</h2>
+<p>Can the swipe table and stop rules live as a JSON ruleset, edited visually against small example situations, without losing any b1.2 behaviour?</p>
+<p><strong>Pass:</strong> <code>rules/b1.2.json</code> reproduces b1.2 exactly (every existing dig test passes on the data-driven sim). A rule change like D024 is made in the editor, checked against its situations, exported and loaded into b1, with no code change.</p>
+<p><strong>Kill:</strong> the table needs so many special conditions that it's code in disguise. Then keep the rules in code, and only make the numbers and stop toggles data.</p>
+<h2>Assumptions</h2>
+<ol><li>[?] Every b1.2 behaviour fits a first-match decision table: (swipe, situation) → action, over a small, fixed vocabulary of named conditions (next cell open, floor below, headroom, standing / clinging, drop ≤ N, …).</li><li>[?] The data-driven sim stays deterministic and passes every current dig test unchanged.</li><li>[?] Seeing a rule's situation (a small map, the swipe, the result) beside the rule makes changes faster and safer than editing code.</li><li>[?] A ruleset JSON is small and readable enough to diff in git and paste into chat, like a terrain recipe.</li><li>[?] The same situations (small ASCII maps + the expected result) can be both the editor's previews and the test suite.</li><li>[?] The timeline's &quot;Rules at close&quot; table can be generated from the ruleset instead of written by hand.</li></ol>
+<h2>Limitations</h2>
+<ul><li>[constraint ?] No new mechanics: p4 only represents and edits the rules b1.2 already has. The Engineer is still the only character.</li><li>[constraint ?] The condition vocabulary is fixed in code. The editor combines conditions, it can't invent new ones. A new condition is a code change with a test.</li><li>[cut] Terrain editing: that stays in the v2 / v3 recipes.</li><li>[cut] Zipline, chasm crossing, the chasm-cling fix, Ghost and Demolitionist: these go to the next dig playtest, built on rulesets.</li><li>[cut] Phone layout for the editor: it's a desktop tool. The rulesets it makes are played on every device.</li></ul>
+<h2>Built</h2>
+<p>Planned scope, nothing built yet:</p>
+<ul><li><strong>Ruleset format</strong> (<code>rules/&lt;name&gt;.json</code>):<ul><li><code>swipes</code>: ordered rows per swipe direction, each with <code>when</code> (condition ids) → <code>do</code> (action: walk, step down / up, mine then look, climb, build a step, drop, nothing), plus the blocked reason</li><li><code>stops</code>: the stop rules and their switches</li><li><code>numbers</code>: ticks, harmless drop, pack, build cost</li><li>A <code>version</code> field, and a migrate step like the one CA recipes already have.</li></ul></li><li><strong>Sim:</strong> <code>resolve()</code> becomes an interpreter of the table. <code>rules/b1.2.json</code> is the acceptance test: it must reproduce b1.2 exactly.</li><li><strong>Situations</strong> (<code>rules/situations/*.json</code>): the ASCII maps from <code>dig.test.js</code> as data, each with a swipe and the expected stop position and reason. They run as tests and render as the editor's previews.</li><li><strong>v4.html · Rule Lab:</strong><ul><li>A table editor: rows, condition and action dropdowns, reordering.</li><li>Beside each row, the situations it affects, redrawn live, with pass / fail.</li><li>A play pane: the b1 world on the edited rules.</li><li>Export and import JSON (copy / paste, like the v2 recipe), and saving in the browser.</li></ul></li><li><strong>b1 loads a ruleset</strong> from the Rule Lab or from <code>rules/</code>. The timeline's &quot;Rules at close&quot; table is rendered from the ruleset JSON.</li></ul>
+<h2>Feedback</h2>
+<p>None yet.</p>
+<h2>Conclusion → next</h2>
+<p>Open.</p>
+
+</div>
+  </details>
+</article>
+<article class="entry s-concluded" id="p3">
+  <header><span class="pid">p3</span><h2>Dig Feel (b1)</h2><span class="status">concluded</span><time>2026-09-24 → 2026-09-25</time><span class="budget">2 of 3 days</span><a class="from" href="#p2">grew out of p2 · Atomic terrain</a></header>
   <img class="cover" src="p3-dig-feel/media/cover.png" alt="Dig Feel (b1)" loading="lazy">
   <p class="q">Does &quot;move until something changes&quot; feel good <strong>on every target setup</strong>, and do I want another dive?</p>
   <ul class="chips"><li class="a open">&quot;Move until something changes&quot; (swipe, and the character walks, mines or builds until the environment changes) is fun enough that you start another dive without thinking.</li><li class="a broken">A mining step can move you into whatever it opens up. First play: tunnels walked the character into chasms. Now it mines first and then looks.</li><li class="a broken">Every direction should be diggable, including straight down. Removed after first play: the way down through rock is the diagonal staircase.</li><li class="a broken">Walking stops at every drop of 2+, and that's all you need at a ledge. First play: you couldn't step off a 2-deep drop even though it's harmless. Swiping into the gap again now drops you.</li><li class="a broken">Climbing down at a ledge is always a safe move. Going diagonally down into a chasm and then pressing down leaves you clinging over the void and stuck. Clinging is also drawn exactly like standing. The fix is open (see below).</li><li class="a open">One swipe recogniser (pointer events, commit at a distance) feels the same on touch and on mouse.</li><li class="a open">The keyboard feels as good as swiping, both with numpad intents and with held WASD.</li><li class="a open">Canvas2D with no dependencies runs without hitching on the Galaxy A41.</li><li class="a open">Stop rules as a tunable table (wall, drop, open space, new material, loot, hazard, junction) can make the movement feel right without new mechanics.</li></ul>
   <ul class="limits"><li class="l constraint open"><span class="k">constraint</span>Coloured squares only: no art, and no effects beyond the juice. If it's fun as squares, art can only lift it.</li><li class="l constraint open"><span class="k">constraint</span>Casual, not survival: no fall damage, and a wrong move never ends a dive (D011).</li><li class="l constraint open"><span class="k">constraint</span>Everyone is an Engineer: one path, no loadouts to choose between (D014).</li><li class="l constraint open"><span class="k">constraint</span>No digging straight down: the way down through rock is the diagonal staircase. It was cut after first play, to see if the loop gets sharper without it (D019).</li><li class="l constraint open"><span class="k">constraint</span>Everything is lit: no darkness, so digging is judged on its own before b2 adds greed.</li><li class="l cut "><span class="k">cut</span>Zipline: moved to b1.2 (D014).</li><li class="l cut "><span class="k">cut</span>Torchlight: moved to b2, where darkness arrives (D014).</li><li class="l cut "><span class="k">cut</span>Moon bugs, Demolitionist and Ghost, the base, heat and raids: later bundles.</li></ul>
-  <div class="builds"><a class="play" href="p3-dig-feel/builds/b1.1/index.html">▶ b1.1</a><span class="bt">2026-09-25 · first playable, plus the first-play rules (mine then look, no digging down, step off by asking) and numpad 5</span><a class="play dev" href="../b1.html">▶ live dev</a><span class="bt">latest, unfrozen, may break</span></div>
-  <p class="next"><b>→</b> Open: playtesting. Next come the phone sessions on the A41, and two open problems.</p>
-  <ul class="decided"><li class=""><a href="#D014">D014</a> Everyone is an Engineer in b1. The zipline is cut to b1.2, torchlight to b2.</li><li class=""><a href="#D015">D015</a> The keyboard gets both models, numpad intents and held WASD, to A/B test.</li><li class=""><a href="#D016">D016</a> Surface strip of 4 sky rows + 3 crust rows, home at x = 0.</li><li class=""><a href="#D017">D017</a> Swipes use pointer events and commit at a distance threshold. A swipe made mid-tile applies at the next tile boundary.</li><li class=""><a href="#D018">D018</a> Step off by asking: swiping into a gap again drops you, if the floor is within <code>harmlessDrop</code> (4).</li><li class=""><a href="#D019">D019</a> No digging straight down: the way down through rock is the diagonal staircase.</li><li class=""><a href="#D020">D020</a> Mine first, then look: a mining step moves into the mined cell only if you can stand there.</li><li class=""><a href="#D021">D021</a> Numpad 5 mirrors the taps: tap = stop, hold = teleport home.</li><li class=""><a href="#D022">D022</a> Juice sits behind a master switch. Stop rules are judged with it off first.</li><li class=""><a href="#D024">D024</a> The junction stop fires only for a real side passage: a shaft with rock on both sides overhead. Walking out of a tunnel into an open cave takes the 1-tile step down and walks on. Mining that breaks into open space still stops (the <code>open</code> rule).</li></ul>
+  <div class="builds"><a class="play" href="p3-dig-feel/builds/b1.1/index.html">▶ b1.1</a><span class="bt">2026-09-25 · first playable, plus the first-play rules (mine then look, no digging down, step off by asking) and numpad 5</span><a class="play" href="p3-dig-feel/builds/b1.2/index.html">▶ b1.2</a><span class="bt">2026-09-25 · closing build: seed-7727 terrain, zoomed out 3×, junction only at real side passages (D024), settings store only what you changed</span></div>
+  <p class="next"><b>→</b> Closed on 2026-09-25 without a full verdict. Lorinc: &quot;This is getting enjoyable, still a lot to improve&quot;. Every rule change so far was a change to the swipe table or the stop rules above, and each one needed code. Those rules are the game feel. So the next prototype makes them data, with a visual editor: <a href="#p4">p4 · Rule Lab</a>.</p>
+  <ul class="decided"><li class=""><a href="#D014">D014</a> Everyone is an Engineer in b1. The zipline is cut to b1.2, torchlight to b2.</li><li class=""><a href="#D015">D015</a> The keyboard gets both models, numpad intents and held WASD, to A/B test.</li><li class=""><a href="#D016">D016</a> Surface strip of 4 sky rows + 3 crust rows, home at x = 0.</li><li class=""><a href="#D017">D017</a> Swipes use pointer events and commit at a distance threshold. A swipe made mid-tile applies at the next tile boundary.</li><li class=""><a href="#D018">D018</a> Step off by asking: swiping into a gap again drops you, if the floor is within <code>harmlessDrop</code> (4).</li><li class=""><a href="#D019">D019</a> No digging straight down: the way down through rock is the diagonal staircase.</li><li class=""><a href="#D020">D020</a> Mine first, then look: a mining step moves into the mined cell only if you can stand there.</li><li class=""><a href="#D021">D021</a> Numpad 5 mirrors the taps: tap = stop, hold = teleport home.</li><li class=""><a href="#D022">D022</a> Juice sits behind a master switch. Stop rules are judged with it off first.</li><li class=""><a href="#D024">D024</a> The junction stop fires only for a real side passage: a shaft with rock on both sides overhead. Walking out of a tunnel into an open cave takes the 1-tile step down and walks on. Mining that breaks into open space still stops (the <code>open</code> rule).</li><li class=""><a href="#D025">D025</a> p3 (b1 · Dig Feel) closes at b1.2 without the phone matrix. Its open assumptions and constraints carry over to the next dig playtest. A closed playtest records its rule table (&quot;Rules at close&quot;).</li><li class=""><a href="#D026">D026</a> The next demo is p4 · Rule Lab (tool v4): movement and stop rules become a JSON ruleset with a visual editor, saved, exported and loaded like terrain recipes. b2 waits.</li></ul>
+  <details class="rules"><summary>Rules at close</summary><div class="doc"><p>The rules as they stood in b1.2, when this playtest closed. They live in code (<code>src/sim/dig/rules.js</code> + <code>src/bundles/b1/tunables.js</code>). p4 turns them into data.</p>
+<p><strong>What a swipe does</strong> (Engineer, 1 tile tall, never falls: it stands on a floor or clings to a wall):</p>
+<table><thead><tr><th>Swipe</th><th>Situation</th><th>Action</th></tr></thead><tbody><tr><td>← →</td><td>next cell open, with a floor</td><td>walk</td></tr>
+<tr><td>← →</td><td>next cell open, floor 1 below</td><td>step down 1, keep walking</td></tr>
+<tr><td>← →</td><td>next cell open, deeper gap</td><td>a running walk stops (<code>ledge</code>); a fresh swipe drops you if the floor is ≤ <code>harmlessDrop</code>, else blocked</td></tr>
+<tr><td>← →</td><td>next cell rock, headroom above you and it</td><td>step up 1, keep walking</td></tr>
+<tr><td>← →</td><td>next cell rock</td><td>mine it; step in only if it has a floor or a 1-step down (mine first, then look)</td></tr>
+<tr><td>↓</td><td>standing, a ledge on the facing side</td><td>climb down over it</td></tr>
+<tr><td>↓</td><td>standing, anything else</td><td>nothing (no digging straight down)</td></tr>
+<tr><td>↓</td><td>clinging</td><td>climb down; follow an overhang up to 45°; past that, drop if the floor is ≤ <code>harmlessDrop</code>, else stuck (<code>overhang</code>)</td></tr>
+<tr><td>↑</td><td>anywhere</td><td>nothing (straight up is the Ghost's)</td></tr>
+<tr><td>↗ ↖</td><td>standing</td><td>mine the headroom and the target, build a step under the target if it's air, walk up</td></tr>
+<tr><td>↘ ↙</td><td>standing</td><td>mine the cell beside you; target rock: mine it, step only onto a floor; target air: build a floor under it (ore) and step</td></tr>
+<tr><td>any diagonal</td><td>clinging</td><td>nothing (<code>noFooting</code>)</td></tr>
+<tr><td>any</td><td>pack full / out of ore for building</td><td>nothing (<code>packFull</code> / <code>noOre</code>)</td></tr></tbody></table>
+<p><strong>Stop rules</strong> (a run of steps goes on until one fires; a blocked action always stops):</p>
+<table><thead><tr><th>Rule</th><th>Stops the run when</th><th>b1.2</th></tr></thead><tbody><tr><td><code>wall</code></td><td>walking turns into mining (you reach rock)</td><td>on</td></tr>
+<tr><td><code>open</code></td><td>the action changes to anything but mining: typically you break out of rock into open space, or a walk turns into building</td><td>on</td></tr>
+<tr><td><code>loot</code></td><td>the next tile to mine is ore or loot</td><td>on</td></tr>
+<tr><td><code>harder</code></td><td>the next tile is slower to mine than the last</td><td>on</td></tr>
+<tr><td><code>junction</code></td><td>walking or tunnelling under a real side passage: a shaft with rock on both sides (D024)</td><td>on</td></tr>
+<tr><td><code>ledge</code></td><td>the next walk step would drop (always; only a fresh swipe steps off)</td><td>always</td></tr>
+<tr><td><code>floor</code></td><td>a climb reaches the ground</td><td>always</td></tr></tbody></table>
+<p><strong>Numbers</strong> (ticks at 60 per second):</p>
+<table><thead><tr><th>Tunable</th><th>b1.2</th></tr></thead><tbody><tr><td>walk / climb / fall per tile / build per tile</td><td>7 / 10 / 3 / 14</td></tr>
+<tr><td>mine soft / hard / ore / loot / built</td><td>14 / 42 / 21 / 14 / 7</td></tr>
+<tr><td>harmless drop</td><td>4 tiles</td></tr>
+<tr><td>pack slots</td><td>4</td></tr>
+<tr><td>tiles built per ore</td><td>12</td></tr>
+<tr><td>swipe commits after</td><td>24 CSS px; horizontal ±30°, vertical ±25°, the rest diagonal</td></tr>
+<tr><td>teleport charge</td><td>700 ms</td></tr>
+<tr><td>view</td><td>48 tiles across the short side, lookahead 3</td></tr>
+<tr><td>terrain</td><td>seed-7727 recipe, 384×64 + a 7-row surface strip</td></tr></tbody></table></div></details>
   <details><summary>Full entry · 1 feedback session</summary>
 <div class="doc">
 <h2>Question</h2>
@@ -129,8 +194,8 @@ footer { color:var(--dim); font-size:12px; }
 <h2>Feedback</h2>
 <ul><li><a href="#p3-fb-2026-09-25_lorinc_desktop">2026-09-25 · Lorinc · desktop</a>, first play of b1.1: &quot;the char should mine first, then check if the newly mined place is a viable location&quot;. Three rule changes, numpad 5, and the chasm-cling bug.</li><li>Phone (Galaxy A41) and the other ratios: not played yet. This is waiting on the public repo for the phone link.</li></ul>
 <h2>Conclusion → next</h2>
-<p>Open: playtesting. Next come the phone sessions on the A41, and two open problems.</p>
-<ul><li><strong>Chasms:</strong> voids deeper than the harmless drop. With the rules above you can't fall in, but there's no designed way across or down yet, except building a diagonal stair into one (paid in ore). The zipline (b1.2) was meant for this. Home at x = 0 sits above such a void.</li><li><strong>Climbing into a chasm:</strong> should down at a ledge refuse a climb whose next step isn't possible (mine-then-look for climbs), or keep the stuck-then-teleport behaviour? Either way, draw a clinging pose.</li><li>The junction stop rule is on by default and may feel twitchy: narrowed on 2026-09-25 (D024), watch it in the next session.</li><li>Decisions so far: <a href="#ledger">D014–D022, D024</a>.</li></ul>
+<p>Closed on 2026-09-25 without a full verdict. Lorinc: &quot;This is getting enjoyable, still a lot to improve&quot;. Every rule change so far was a change to the swipe table or the stop rules above, and each one needed code. Those rules are the game feel. So the next prototype makes them data, with a visual editor: <a href="#p4">p4 · Rule Lab</a>.</p>
+<ul><li>Not tested: the phone matrix (Galaxy A41, HD phone, portrait / landscape). The open assumptions (1, 6–9) and every constraint stay open. They carry over to the next dig playtest, which will run on p4's rule files.</li><li>Carried over, open: the chasm-cling bug (clinging is drawn like standing, and a climb into a chasm gets stuck); how to cross or descend chasms (the zipline was planned for b1.2).</li><li>Decisions: <a href="#ledger">D014–D022, D024–D026</a>.</li></ul>
 <section class="fb" id="p3-fb-2026-09-25_lorinc_desktop"><h2>Feedback · 2026-09-25_lorinc_desktop</h2>
 <ul><li><strong>Build:</strong> b1.1 (first playable, commit <code>2054adc</code>), then fixes on the dev server, frozen as b1.1 (<code>12146ee</code>)</li><li><strong>Device:</strong> desktop, Chromium, keyboard + mouse</li><li><strong>Source:</strong> written on 2026-09-25 from the session notes; the quotes are verbatim.</li></ul>
 <h2>What was seen</h2>
@@ -162,6 +227,7 @@ footer { color:var(--dim); font-size:12px; }
   <div class="builds"><a class="play" href="p2-atomic-terrain/builds/v2/index.html">▶ v2</a><span class="bt">2026-09-24 · CA Lab: one binary grid, a hand-built pipeline of gen and scale steps, every step visible</span><a class="play" href="p2-atomic-terrain/builds/v3/index.html">▶ v3</a><span class="bt">2026-09-24 · Terrain: the archived v2 recipe gives the caves, soft / hard rock, ore and loot</span></div>
   <p class="next"><b>→</b> It worked: 5 steps on one binary grid give starter caves, cheaply and predictably. v2 stays frozen as the tool for finding terrain patterns. New terrain ideas become a new tool (v4, …). The v3 terrain feeds the first playtest: <a href="#p3">p3 · Dig Feel</a>.</p>
   <ul class="decided"><li class=""><a href="#D004">D004</a> v2 CA Lab is frozen as the pattern-finding tool. New terrain ideas become a new tool version.</li><li class=""><a href="#D005">D005</a> The starter terrain is the archived seed-6712 recipe as v3 (caves, a reseeded soft / hard split, ore CA at 300 ‰, loot at 50 ‰). b1 digs in it.</li></ul>
+  
   <details><summary>Full entry · 1 feedback session</summary>
 <div class="doc">
 <h2>Question</h2>
@@ -209,6 +275,7 @@ gen  d012 b345   ×1</code></pre>
   <div class="builds"><a class="play" href="p1-cave-generator/builds/v1/index.html">▶ v1</a><span class="bt">2026-09-24 · layered CA world, sliders for every parameter (TS + Vite + Pixi + Tweakpane, rebuilt 2026-09-25 from tag tools-v1-v3)</span></div>
   <p class="next"><b>→</b> Too volatile to design by hand: with several interacting layers, small input changes swing the output into chaos. Step back to a single binary grid, designed step by step: <a href="#p2">p2 · Atomic terrain</a>.</p>
   <ul class="decided"><li class=""><a href="#D001">D001</a> Terrain is designed on one binary grid, step by step. Stacking many CA layers is dropped as the design method.</li><li class=""><a href="#D002">D002</a> The map is homogeneous for now: no top / bottom differentiation. Depth tiers come later.</li><li class=""><a href="#D003">D003</a> CA rules are edited with the keep / born / die toggle editor, never as text.</li></ul>
+  
   <details><summary>Full entry · 1 feedback session</summary>
 <div class="doc">
 <h2>Question</h2>
@@ -236,7 +303,7 @@ gen  d012 b345   ×1</code></pre>
   </details>
 </article>
 </main>
-<section class="ledger-wrap" id="ledger"><details class="ledger"><summary>Decision ledger · 21 active · 3 superseded</summary>
+<section class="ledger-wrap" id="ledger"><details class="ledger"><summary>Decision ledger · 23 active · 3 superseded</summary>
 <table><thead><tr><th>ID</th><th>Date</th><th>From</th><th>Status</th><th>Decision</th></tr></thead><tbody>
 <tr id="D001" class=""><td>D001</td><td>2026-09-24</td><td><a href="#p1">p1</a></td><td>active</td><td>Terrain is designed on one binary grid, step by step. Stacking many CA layers is dropped as the design method.</td></tr>
 <tr id="D002" class=""><td>D002</td><td>2026-09-24</td><td><a href="#p1">p1</a></td><td>active</td><td>The map is homogeneous for now: no top / bottom differentiation. Depth tiers come later.</td></tr>
@@ -262,6 +329,8 @@ gen  d012 b345   ×1</code></pre>
 <tr id="D022" class=""><td>D022</td><td>2026-09-25</td><td><a href="#p3">p3</a></td><td>active</td><td>Juice sits behind a master switch. Stop rules are judged with it off first.</td></tr>
 <tr id="D023" class=""><td>D023</td><td>2026-09-25</td><td>—</td><td>active</td><td>Build in public: the repo is public, and a push to <code>main</code> publishes. Every prototype is a timeline entry with frozen, playable builds.</td></tr>
 <tr id="D024" class=""><td>D024</td><td>2026-09-25</td><td><a href="#p3">p3</a></td><td>active</td><td>The junction stop fires only for a real side passage: a shaft with rock on both sides overhead. Walking out of a tunnel into an open cave takes the 1-tile step down and walks on. Mining that breaks into open space still stops (the <code>open</code> rule).</td></tr>
+<tr id="D025" class=""><td>D025</td><td>2026-09-25</td><td><a href="#p3">p3</a></td><td>active</td><td>p3 (b1 · Dig Feel) closes at b1.2 without the phone matrix. Its open assumptions and constraints carry over to the next dig playtest. A closed playtest records its rule table (&quot;Rules at close&quot;).</td></tr>
+<tr id="D026" class=""><td>D026</td><td>2026-09-25</td><td><a href="#p3">p3</a></td><td>active</td><td>The next demo is p4 · Rule Lab (tool v4): movement and stop rules become a JSON ruleset with a visual editor, saved, exported and loaded like terrain recipes. b2 waits.</td></tr>
 </tbody></table></details></section>
 <footer>Generated by <code>npm run timeline</code> from <code>timeline/*/entry.md</code>.</footer>
 <script>

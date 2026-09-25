@@ -30,3 +30,5 @@ D001–D023 were reconstructed on 2026-09-25 from the session notes.
 | D022 | 2026-09-25 | p3 | active | Juice sits behind a master switch. Stop rules are judged with it off first. |
 | D023 | 2026-09-25 | — | active | Build in public: the repo is public, and a push to `main` publishes. Every prototype is a timeline entry with frozen, playable builds. |
 | D024 | 2026-09-25 | p3 | active | The junction stop fires only for a real side passage: a shaft with rock on both sides overhead. Walking out of a tunnel into an open cave takes the 1-tile step down and walks on. Mining that breaks into open space still stops (the `open` rule). |
+| D025 | 2026-09-25 | p3 | active | p3 (b1 · Dig Feel) closes at b1.2 without the phone matrix. Its open assumptions and constraints carry over to the next dig playtest. A closed playtest records its rule table ("Rules at close"). |
+| D026 | 2026-09-25 | p3 | active | The next demo is p4 · Rule Lab (tool v4): movement and stop rules become a JSON ruleset with a visual editor, saved, exported and loaded like terrain recipes. b2 waits. |

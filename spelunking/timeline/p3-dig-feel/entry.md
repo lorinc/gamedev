@@ -2,12 +2,13 @@
 id: p3
 title: Dig Feel (b1)
 started: 2026-09-24
-status: playtesting
+ended: 2026-09-25
+status: concluded
 budget: 3d
 from: p2
 cover: media/cover.png
-dev: b1.html
 build b1.1: 2026-09-25 · first playable, plus the first-play rules (mine then look, no digging down, step off by asking) and numpad 5
+build b1.2: 2026-09-25 · closing build: seed-7727 terrain, zoomed out 3×, junction only at real side passages (D024), settings store only what you changed
 ---
 
 # p3 · b1 · Dig Feel
@@ -120,11 +121,58 @@ Every game must run in portrait, landscape and square, with touch and with mouse
 - [2026-09-25 · Lorinc · desktop](feedback/2026-09-25_lorinc_desktop.md), first play of b1.1: "the char should mine first, then check if the newly mined place is a viable location". Three rule changes, numpad 5, and the chasm-cling bug.
 - Phone (Galaxy A41) and the other ratios: not played yet. This is waiting on the public repo for the phone link.
 
+## Rules at close
+
+The rules as they stood in b1.2, when this playtest closed. They live in code (`src/sim/dig/rules.js` + `src/bundles/b1/tunables.js`). p4 turns them into data.
+
+**What a swipe does** (Engineer, 1 tile tall, never falls: it stands on a floor or clings to a wall):
+
+| Swipe | Situation | Action |
+|---|---|---|
+| ← → | next cell open, with a floor | walk |
+| ← → | next cell open, floor 1 below | step down 1, keep walking |
+| ← → | next cell open, deeper gap | a running walk stops (`ledge`); a fresh swipe drops you if the floor is ≤ `harmlessDrop`, else blocked |
+| ← → | next cell rock, headroom above you and it | step up 1, keep walking |
+| ← → | next cell rock | mine it; step in only if it has a floor or a 1-step down (mine first, then look) |
+| ↓ | standing, a ledge on the facing side | climb down over it |
+| ↓ | standing, anything else | nothing (no digging straight down) |
+| ↓ | clinging | climb down; follow an overhang up to 45°; past that, drop if the floor is ≤ `harmlessDrop`, else stuck (`overhang`) |
+| ↑ | anywhere | nothing (straight up is the Ghost's) |
+| ↗ ↖ | standing | mine the headroom and the target, build a step under the target if it's air, walk up |
+| ↘ ↙ | standing | mine the cell beside you; target rock: mine it, step only onto a floor; target air: build a floor under it (ore) and step |
+| any diagonal | clinging | nothing (`noFooting`) |
+| any | pack full / out of ore for building | nothing (`packFull` / `noOre`) |
+
+**Stop rules** (a run of steps goes on until one fires; a blocked action always stops):
+
+| Rule | Stops the run when | b1.2 |
+|---|---|---|
+| `wall` | walking turns into mining (you reach rock) | on |
+| `open` | the action changes to anything but mining: typically you break out of rock into open space, or a walk turns into building | on |
+| `loot` | the next tile to mine is ore or loot | on |
+| `harder` | the next tile is slower to mine than the last | on |
+| `junction` | walking or tunnelling under a real side passage: a shaft with rock on both sides (D024) | on |
+| `ledge` | the next walk step would drop (always; only a fresh swipe steps off) | always |
+| `floor` | a climb reaches the ground | always |
+
+**Numbers** (ticks at 60 per second):
+
+| Tunable | b1.2 |
+|---|---|
+| walk / climb / fall per tile / build per tile | 7 / 10 / 3 / 14 |
+| mine soft / hard / ore / loot / built | 14 / 42 / 21 / 14 / 7 |
+| harmless drop | 4 tiles |
+| pack slots | 4 |
+| tiles built per ore | 12 |
+| swipe commits after | 24 CSS px; horizontal ±30°, vertical ±25°, the rest diagonal |
+| teleport charge | 700 ms |
+| view | 48 tiles across the short side, lookahead 3 |
+| terrain | seed-7727 recipe, 384×64 + a 7-row surface strip |
+
 ## Conclusion → next
 
-Open: playtesting. Next come the phone sessions on the A41, and two open problems.
+Closed on 2026-09-25 without a full verdict. Lorinc: "This is getting enjoyable, still a lot to improve". Every rule change so far was a change to the swipe table or the stop rules above, and each one needed code. Those rules are the game feel. So the next prototype makes them data, with a visual editor: [p4 · Rule Lab](../p4-rule-lab/entry.md).
 
-- **Chasms:** voids deeper than the harmless drop. With the rules above you can't fall in, but there's no designed way across or down yet, except building a diagonal stair into one (paid in ore). The zipline (b1.2) was meant for this. Home at x = 0 sits above such a void.
-- **Climbing into a chasm:** should down at a ledge refuse a climb whose next step isn't possible (mine-then-look for climbs), or keep the stuck-then-teleport behaviour? Either way, draw a clinging pose.
-- The junction stop rule is on by default and may feel twitchy: narrowed on 2026-09-25 (D024), watch it in the next session.
-- Decisions so far: [D014–D022, D024](../decisions.md).
+- Not tested: the phone matrix (Galaxy A41, HD phone, portrait / landscape). The open assumptions (1, 6–9) and every constraint stay open. They carry over to the next dig playtest, which will run on p4's rule files.
+- Carried over, open: the chasm-cling bug (clinging is drawn like standing, and a climb into a chasm gets stuck); how to cross or descend chasms (the zipline was planned for b1.2).
+- Decisions: [D014–D022, D024–D026](../decisions.md).

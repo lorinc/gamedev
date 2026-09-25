@@ -39,6 +39,10 @@ dev: bN.html                  # while it's being played unfrozen; drop when conc
 
 - [YYYY-MM-DD · tester · device](feedback/YYYY-MM-DD_tester_device.md): "<the one quote that matters>"
 
+## Rules at close
+
+<Required when closing a playtest (an entry with bN.M builds): the swipe table, stop rules and numbers as they stood in the last build. Once rulesets exist (p4), paste or render the ruleset.>
+
 ## Conclusion → next
 
 <Verdict in one paragraph (the card shows it), then the decisions (append them to ../decisions.md) and the next step.>
