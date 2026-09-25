@@ -31,3 +31,12 @@ b1.1 rules b1.2 #1 59.0s ore 0 loot 0 depth 12 mined 11 built 0 | noOre:5 floor:
 
 - D030: a `noOre` / `packFull` refusal in the middle of a run gives way to the stop the run would have made anyway. A quiet stop has no tried cells, so there's no flash. Asking again with a fresh swipe still refuses and flashes. The new example `stairs-end` covers it, and `loot-pack` and `stair-into-chasm` were updated.
 - D031: the 🐞 bug report (the button bottom-left, or the B key) copies the last events. Replay a report with `npm run replay -- report.txt`, or open it in the Rule Lab with "paste bug report".
+
+## Later: stuck above a chasm (bug report, tick 1222)
+
+> I want to change some situation > intent > effect rules concerning the situation when the char is climbing on a wall above a chasm.
+
+> Any mining is allowed. And every time the char finds itself in a situation where, after the mine-check-move concluded, it is standing in open space with nothing to hold on, it falls. And if it falls more than the allowed safe threshold, it teleports home.
+
+- Seen in the report: after ↓ climbed over the staircase's last step, every way back up refused: ↗ (`noFooting`), ↑ (`up`).
+- Changed: ruleset b1.3 (D035), with the examples `cling-climb-back`, `cling-mine-hold`, `cling-fall-home` and `cling-mine-down`.

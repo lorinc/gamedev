@@ -1,5 +1,5 @@
 // b1 · Dig Feel: wires sim + input + render + juice + dev panel. Fixed 60 Hz sim, render interpolates.
-// The rules come from a ruleset: rules/b1.2.json, or with ?rules=lab the one the Rule Lab (v4.html)
+// The rules come from a ruleset: rules/b1.3.json, or with ?rules=lab the one the Rule Lab (v4.html)
 // saved in this browser.
 
 import { command, createGame, tick, withSurface } from '../../sim/dig/game.js'
@@ -16,7 +16,7 @@ import { assignDeep, changedFrom, DEFAULTS, presetId, RANGES } from './tunables.
 /** @typedef {import('../../sim/dig/ruleset.js').Ruleset} Ruleset */
 /** @typedef {import('../../sim/dig/ruleset.js').Table} Table */
 
-const BUILD = 'b1.3-dev' // the live build after b1.2
+const BUILD = 'b1.3'
 const STORE = 'b1-tunables-changed' // only values tuned away from DEFAULTS (was 'b1-tunables': a full snapshot)
 const LAB_STORE = 'rulelab-ruleset' // written by v4.html
 const TICK_MS = 1000 / 60
@@ -31,9 +31,9 @@ async function loadRuleset() {
     } catch {
       // no storage or bad JSON: the default ruleset
     }
-    alert('No Rule Lab ruleset saved in this browser: playing rules/b1.2.json')
+    alert('No Rule Lab ruleset saved in this browser: playing rules/b1.3.json')
   }
-  return (await fetch('rules/b1.2.json', { cache: 'no-cache' })).json()
+  return (await fetch('rules/b1.3.json', { cache: 'no-cache' })).json()
 }
 
 loadRuleset().then((ruleset) => {
@@ -213,8 +213,8 @@ function start(ruleset, table) {
       if (e.type === 'stop') {
         const flash = table.signals[e.reason] === 'flash' // a refusal that shows even mid-run (D027)
         if (asked || flash) renderer.attempt(e.dx, e.dy, e.reason === 'noOre' ? 'build' : e.reason === 'packFull' ? 'mine' : 'walk', true)
-        // a run that stopped on its own: just "?" (D034)
-        else renderer.attempt(e.dx, e.dy, 'walk', false, true)
+        // a run that stopped on its own: just "?" (D034); a fall shows itself
+        else if (e.next !== 'fall') renderer.attempt(e.dx, e.dy, 'walk', false, true)
         if (flash) renderer.fail()
         asked = false
       }

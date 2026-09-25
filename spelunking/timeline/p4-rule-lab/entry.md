@@ -82,6 +82,8 @@ The order is swipe > situation > meaning, because "ahead" means the swipe's side
 
 **The swipe cue (D032):** what a swipe attempts is now visible. A white disc, one step out in the swipe's direction, shows an arrow, stairs or a pickaxe, blinks red if refused and fades in 0.6 s. It replaces the red flash on the refused cells. The pack flash stays for now. A run that stops on its own shows the disc with just "?" in the run's direction, never red (D034; the exact trigger is in the bug report).
 
+**Ruleset b1.3 (D035), from a bug report** (clinging at the foot of your own staircase, above a chasm, with no way back up). ↗ ↖ toward the wall you hold climb it; any mining is allowed; gravity makes you fall when nothing holds you, and home after a fall deeper than `harmlessDrop`. b1 and the Rule Lab load `rules/b1.3.json`; `b1.2.json` stays as the frozen reference. Four new examples.
+
 **Pass criterion, half met:** `rules/b1.2.json` reproduces b1.2 exactly. A D024-style change made in the editor, checked against examples and played in b1 without code has been tried once, by the build check above. It's still open for you.
 
 ## Feedback

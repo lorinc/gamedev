@@ -163,6 +163,14 @@ export const MEANINGS = {
       return a.done('walk', x + f, y + 1)
     },
   },
+  mineUp: {
+    text: 'mine the cell diagonally up ahead; step in only onto a floor',
+    run: (a) => {
+      const { x, y, f } = a
+      if (!a.dig(x + f, y - 1)) return a.blocked('bedrock')
+      return a.standing(x + f, y - 1) ? a.done('walk', x + f, y - 1) : a.done('walk', x, y)
+    },
+  },
   refuse: { text: 'nothing: refuse with a reason', param: 'reason', run: (a) => a.blocked(a.row.reason ?? 'refused') },
 }
 
@@ -179,6 +187,8 @@ export const STOPS = {
 export const ALWAYS_STOPS = {
   ledge: 'the next walk step would drop (only a fresh swipe steps off)',
   floor: 'a climb reaches the ground',
+  fell: 'with gravity on: nothing holds you after a step, so you fall and land (up to harmlessDrop)',
+  fallHome: 'with gravity on: a fall deeper than harmlessDrop; you land, then teleport home (D035)',
 }
 
 /** Reasons the engine gives on its own: no row matched, the world's edge, the pack. */

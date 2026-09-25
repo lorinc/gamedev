@@ -1,5 +1,5 @@
 // The dig rules' spec (R8): every example in rules/examples.json plays out as written on
-// rules/b1.2.json, and every row of its table is used by at least one example.
+// the current ruleset (rules/b1.3.json), and every row of its table is used by at least one example.
 
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -8,11 +8,11 @@ import { runExample } from './examples.js'
 import { compile, simConfig } from './ruleset.js'
 
 const read = (/** @type {string} */ f) => JSON.parse(readFileSync(new URL(`../../../rules/${f}`, import.meta.url), 'utf8'))
-const B12 = read('b1.2.json')
+const B12 = read('b1.3.json') // the current ruleset
 const { examples } = read('examples.json')
 const table = /** @type {import('./ruleset.js').Table} */ (compile(B12).table)
 
-describe('examples on b1.2', () => {
+describe('examples on the current ruleset', () => {
   for (const ex of examples)
     test(`${ex.id}: ${ex.note}`, () => {
       assert.deepEqual(runExample(ex, table, simConfig(B12)).problems, [])

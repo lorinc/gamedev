@@ -17,7 +17,7 @@ export const BEDROCK = -1
 
 /**
  * @typedef {object} Action
- * @property {'walk' | 'mine' | 'build' | 'climb' | 'blocked'} kind
+ * @property {'walk' | 'mine' | 'build' | 'climb' | 'fall' | 'blocked'} kind `fall`: nothing held you (gravity)
  * @property {number} dx
  * @property {number} dy
  * @property {Cell} to where the character ends up (x wrapped)
@@ -50,6 +50,7 @@ export const BEDROCK = -1
  * @property {number} harmlessDrop deepest drop a swipe into a gap (or a climb that runs out of wall) will take
  * @property {number} packSlots
  * @property {number} tilesPerOre tiles built per ore spent
+ * @property {boolean} [gravity] after each step, fall if nothing holds you (floor below, wall left or right); a fall deeper than harmlessDrop lands, then teleports home (D035)
  * @property {Rules} rules
  */
 

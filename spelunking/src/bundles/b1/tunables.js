@@ -13,6 +13,7 @@ export const DEFAULTS = {
     harmlessDrop: 4,
     packSlots: 4, // TODO (2026-09-25 feedback): 32 per slot and all 4 materials: see Game.pack in sim/dig/game.js
     tilesPerOre: 12,
+    gravity: false, // rulesets from b1.3 on turn it on
     rules: { wall: true, open: true, harder: true, loot: true, junction: true },
   },
   input: {

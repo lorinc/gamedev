@@ -106,7 +106,8 @@ export function runExample(ex, table, cfg) {
     /** @type {Cell[]} */
     let tried = []
     command(g, { type: 'intent', dx, dy })
-    for (let i = 0; i < 2000 && stop === 'never stopped'; i++) {
+    // run to the stop, and through a fall that follows it (gravity)
+    for (let i = 0; i < 2000 && (stop === 'never stopped' || g.step); i++) {
       tick(g)
       for (const e of g.events) {
         if (e.type === 'step') {

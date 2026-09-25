@@ -106,7 +106,7 @@ function save() {
 const fetchJson = async (path) => (await fetch(path, { cache: 'no-cache' })).json()
 
 async function load() {
-  rs = migrate(stored(STORE) ?? (await fetchJson('rules/b1.2.json')))
+  rs = migrate(stored(STORE) ?? (await fetchJson('rules/b1.3.json')))
   exFile = stored(EX_STORE) ?? (await fetchJson('rules/examples.json'))
   render()
 }
@@ -152,7 +152,7 @@ function header() {
     button('paste examples', pasteExamples),
     button('paste bug report', pasteReport, "the text b1's 🐞 button copied: its last swipe becomes a draft example"),
     button('copy as Markdown', () => copyText(rulesetMarkdown(rs)), 'the "Rules at close" tables'),
-    button('reset to files', reset, 'reload rules/b1.2.json and rules/examples.json, dropping edits'),
+    button('reset to files', reset, 'reload rules/b1.3.json and rules/examples.json, dropping edits'),
     button('▶ play in b1', () => {
       save()
       open('b1.html?rules=lab', 'b1')
@@ -212,7 +212,7 @@ function pasteExamples() {
 
 async function reset() {
   if (!confirm('Drop all edits here and reload the files?')) return
-  rs = await fetchJson('rules/b1.2.json')
+  rs = await fetchJson('rules/b1.3.json')
   exFile = await fetchJson('rules/examples.json')
   selected = null
   save()
@@ -440,18 +440,27 @@ function numberInputs(obj, prefix) {
   return Object.entries(obj).flatMap(([k, v]) =>
     typeof v === 'object'
       ? numberInputs(v, `${prefix}${k}.`)
-      : [
-          h(
-            'label',
-            { class: 'kv' },
-            h('span', {}, prefix + k),
-            h('input', {
-              type: 'number',
-              value: v,
-              onchange: (/** @type {Event} */ e) => change(() => (obj[k] = Number(/** @type {HTMLInputElement} */ (e.target).value))),
-            }),
-          ),
-        ],
+      : typeof v === 'boolean'
+        ? [
+            h(
+              'label',
+              { class: 'kv' },
+              h('span', {}, prefix + k),
+              h('input', { type: 'checkbox', checked: v, onchange: () => change(() => (obj[k] = !obj[k])) }),
+            ),
+          ]
+        : [
+            h(
+              'label',
+              { class: 'kv' },
+              h('span', {}, prefix + k),
+              h('input', {
+                type: 'number',
+                value: v,
+                onchange: (/** @type {Event} */ e) => change(() => (obj[k] = Number(/** @type {HTMLInputElement} */ (e.target).value))),
+              }),
+            ),
+          ],
   )
 }
 

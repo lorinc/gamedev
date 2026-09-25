@@ -1,8 +1,8 @@
 // The dig game state and its fixed tick. Commands in (intent / stop / teleport), events out;
 // renderers read state and events and never write them.
 
-import { Tile } from '../gen/world.js'
-import { digTicks, stopReason } from './rules.js'
+import { isOpen, Tile } from '../gen/world.js'
+import { digTicks, stopReason, tileAt } from './rules.js'
 import { interpret } from './ruleset.js'
 
 /** @typedef {import('../gen/world.js').World} World */
@@ -31,6 +31,7 @@ import { interpret } from './ruleset.js'
  * @property {number} t ticks elapsed
  * @property {number} digT ticks spent mining / building before moving
  * @property {number} dur total ticks
+ * @property {boolean} [home] a deep fall: teleport home on landing
  */
 
 /**
@@ -201,6 +202,28 @@ function arrive(g, s) {
   g.ch.y = s.action.to.y
   if (g.dive) g.dive.depth = Math.max(g.dive.depth, g.ch.y - g.home.y)
   g.step = null
+  if (s.home) teleport(g)
+  else if (g.cfg.gravity && s.action.kind !== 'fall') fallIfLoose(g)
+}
+
+// Gravity (D035): nothing holds you (no floor below, no wall left or right) → fall straight down to
+// the first floor. Deeper than harmlessDrop: land, then teleport home. The run ends either way.
+/** @param {Game} g */
+function fallIfLoose(g) {
+  const { world, ch } = g
+  const open = (/** @type {number} */ x, /** @type {number} */ y) => isOpen(tileAt(world, x, y))
+  if (!open(ch.x, ch.y + 1) || !open(ch.x - 1, ch.y) || !open(ch.x + 1, ch.y)) return
+  let d = 1
+  while (open(ch.x, ch.y + d + 1)) d++
+  const deep = d > g.cfg.harmlessDrop
+  const reason = deep ? 'fallHome' : 'fell'
+  /** @type {Action} */
+  const action = { kind: 'fall', dx: 0, dy: 1, to: { x: ch.x, y: ch.y + d }, digs: [], builds: [], fall: d }
+  g.events.push({ type: 'stop', reason, dx: 0, dy: 1, tried: [], next: 'fall' })
+  if (g.dive) g.dive.stops[reason] = (g.dive.stops[reason] ?? 0) + 1
+  g.run = null
+  g.step = { action, from: { x: ch.x, y: ch.y }, t: 0, digT: 0, dur: Math.max(1, d * g.cfg.fallTicks), home: deep }
+  g.events.push({ type: 'step', action, fresh: false })
 }
 
 // Teleport home: the pack is counted into the stash and the dive is logged.
