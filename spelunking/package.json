@@ -11,7 +11,8 @@
     "timeline": "node tools/timeline.js",
     "freeze": "tools/freeze.sh",
     "favicon": "node tools/favicon.js",
-    "replay": "node tools/replay.js"
+    "replay": "node tools/replay.js",
+    "ship": "tools/ship.sh"
   },
   "devDependencies": {
     "typescript": "~5.9.0"

@@ -18,6 +18,10 @@ for game in "$ROOT"/*/package.json; do
   if [ -f tools/timeline.js ]; then
     node tools/timeline.js --strict >/dev/null || { echo "  $name: timeline has problems (npm run timeline)"; exit 1; }
     git diff --quiet -- timeline/index.html || { echo "  $name: timeline/index.html was stale; it's regenerated now, commit it"; exit 1; }
+    # every playable version is on the timeline (D037): the pushed commit's b1 must be a frozen build
+    if [ -x tools/unfrozen.sh ] && ! next=$(tools/unfrozen.sh); then
+      echo "  $name: b1 changed since its newest frozen build; push with npm run ship (freezes $next)"; exit 1
+    fi
   fi
 done
 echo "pre-push · ok"

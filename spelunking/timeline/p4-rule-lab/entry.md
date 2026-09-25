@@ -5,7 +5,7 @@ started: 2026-09-25
 status: building
 budget: 3d
 from: p3
-dev: v4.html
+dev: v4.html, b1.html
 build b1.3: 2026-09-25 · ruleset b1.3: cling above a chasm, any mining, gravity (D035); swipe cue disc, "?" on stops, bug reports
 ---
 

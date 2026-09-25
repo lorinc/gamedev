@@ -13,6 +13,7 @@ npm install          # only needed for the type check
 npm run check        # tsc: type-checks the JSDoc types in src/ (emits nothing)
 npm run gallery -- 1 2 3   # v1 generator: stage-by-stage PNGs into gallery/
 npm run timeline     # timeline/*/entry.md + decisions.md → timeline/index.html
+npm run ship         # push; if b1 changed, first freeze the next build (b1.N+1) onto the timeline (R13)
 npm run replay -- report.txt   # replay a b1 bug report (the 🐞 button / B key copies it) and check it reproduces
 npm run favicon      # redraw favicon.png and copy it next to every page
 npm run freeze -- p3-dig-feel b1.2   # freeze bN.html + src/ into the timeline and git tag it
@@ -58,7 +59,7 @@ Planned bundles (from the concept doc): b2 · Greed & Darkness, b3 · Tiny Base,
 
 **Workflow:**
 1. **New prototype:** copy `timeline/_template/` to `timeline/pN-slug/`, then write its Question, Assumptions, Limitations and time box *before* building. Develop in `src/` + `bN.html` as usual.
-2. **Playable:** commit, `npm run freeze -- pN-slug bN.M` (it copies `rules/` too), add the `build` line it prints, `npm run timeline -- --strict`, commit, push.
+2. **Playable:** commit, then `npm run ship`. It freezes the next b1 build into the entry that holds the newest one (with `rules/`, stamped with its id), adds the build line, tags it and pushes (R13). For another bundle or the first build in a new entry: `npm run freeze -- pN-slug bN.M` by hand, add the `build` line it prints, then ship.
 3. **Play session:** a `feedback/YYYY-MM-DD_tester_device.md` from the template, with the tester's quotes (minimal spelling / grammar fixes, never rewording) and the dive log. Flip the assumption and constraint marks, record rule changes under Built, and append each decision to `timeline/decisions.md`.
 4. **End:** fill in Conclusion → next (a playtest's `## Rules at close` can be the line `<!-- ruleset: builds/bN.M/rules/<name>.json -->`: the timeline renders the frozen ruleset's tables), set `ended:` and the status to `concluded` or `killed`, and copy the decisions back to the concept doc. The card shows the days used against the time box.
 

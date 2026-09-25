@@ -31,6 +31,7 @@ Code moves from throwaway to keeper by the **rule of two** (R7): when a second p
 | R10 | The timeline is consistent: required sections, a time box, a valid decision ledger, `index.html` up to date | The timeline is the project's memory | `tools/timeline.js --strict` in `.githooks/pre-push` | 2026-09-25 |
 | R11 | Nothing reaches `main` without the checks passing | The repo is public and a push publishes (D023) | `.githooks/pre-push` | 2026-09-25 |
 | R12 | No secrets in the repo, ever | Public repo: a leaked key is public within a minute | GitHub secret scanning + push protection (repo setting) | 2026-09-25 |
+| R13 | Every playable version is on the timeline: a pushed b1 is always a frozen build | You test what the timeline shows, and every version stays playable (D037) | `spelunking/tools/unfrozen.sh` in `.githooks/pre-push`; `npm run ship` freezes and pushes | 2026-09-25 |
 
 **Setup, once per clone:** `git config core.hooksPath .githooks`, and `npm install` in each game folder (for `tsc`).
 

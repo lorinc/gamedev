@@ -16,7 +16,7 @@ import { assignDeep, changedFrom, DEFAULTS, presetId, RANGES } from './tunables.
 /** @typedef {import('../../sim/dig/ruleset.js').Ruleset} Ruleset */
 /** @typedef {import('../../sim/dig/ruleset.js').Table} Table */
 
-const BUILD = 'b1.4-dev' // the live build after b1.3
+const BUILD = 'b1-dev' // the live build; npm run freeze stamps the build id into frozen copies
 const STORE = 'b1-tunables-changed' // only values tuned away from DEFAULTS (was 'b1-tunables': a full snapshot)
 const LAB_STORE = 'rulelab-ruleset' // written by v4.html
 const TICK_MS = 1000 / 60

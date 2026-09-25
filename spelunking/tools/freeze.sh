@@ -20,6 +20,9 @@ fi
 mkdir -p "$DEST"
 git -C "$HERE" archive "$REV" "$PAGE" src rules | tar -x -C "$DEST" --exclude '*.test.js'
 mv "$DEST/$PAGE" "$DEST/index.html"
+# the live page calls itself 'bN-dev'; the frozen copy is stamped with its build id
+MAIN="$DEST/src/bundles/${BUILD%%.*}/main.js"
+[ -f "$MAIN" ] && sed -i "s/const BUILD = '[^']*'/const BUILD = '$BUILD'/" "$MAIN"
 cp "$HERE/favicon.png" "$DEST/" # the page links favicon.png next to itself
 node "$HERE/tools/frozen.js" "$DEST" # MANIFEST.sha256: tools/frozen.test.js fails if the build ever changes
 
