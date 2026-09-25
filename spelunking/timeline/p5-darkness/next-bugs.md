@@ -97,7 +97,9 @@ that starts from the handoff and this file.
 2. Wild bugs, sim + drawing. Firefly-like (no physics, dim lights that blink
    in and out). They appear in the dark (never inside a tamed area), drift
    toward your glow, nibble pack ore (hearts + the ore particle effect), get
-   shooed by the probe, ignore planks. Taming at 16. **The user plays it.**
+   shooed by the probe, ignore planks. Taming at 16. A tamed bug turns a
+   warmer colour, so tamed and wild read apart at a glance (user,
+   2026-09-26). **The user plays it.**
 3. Tamed bugs, sim + drawing. Their den is where they were tamed, with a
    12-tile radius. They suck any seen ore in range through the wall at 4 a
    minute (the particle effect shows which ore goes to which bug), carry 8,
