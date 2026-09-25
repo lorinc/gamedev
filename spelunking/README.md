@@ -55,7 +55,7 @@ Planned bundles (from the concept doc): b2 · Greed & Darkness, b3 · Tiny Base,
 **Workflow:**
 1. **New prototype:** copy `timeline/_template/` to `timeline/pN-slug/`, then write its Question, Assumptions, Limitations and time box *before* building. Develop in `src/` + `bN.html` as usual.
 2. **Playable:** commit, `npm run freeze -- pN-slug bN.M`, add the `build` line it prints, `npm run timeline -- --strict`, commit, push.
-3. **Play session:** a `feedback/YYYY-MM-DD_tester_device.md` from the template, with verbatim quotes and the dive log. Flip the assumption and constraint marks, record rule changes under Built, and append each decision to `timeline/decisions.md`.
+3. **Play session:** a `feedback/YYYY-MM-DD_tester_device.md` from the template, with the tester's quotes (minimal spelling / grammar fixes, never rewording) and the dive log. Flip the assumption and constraint marks, record rule changes under Built, and append each decision to `timeline/decisions.md`.
 4. **End:** fill in Conclusion → next, set `ended:` and the status to `concluded` or `killed`, and copy the decisions back to the concept doc. The card shows the days used against the time box.
 
 ## Rules

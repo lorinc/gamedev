@@ -149,6 +149,7 @@ function frame(now) {
   for (const e of game.events) {
     juice.onEvent(e)
     if (e.type === 'mined' || e.type === 'built') renderer.setTile(e.x, e.y)
+    if (e.type === 'stop' && (e.reason === 'noOre' || e.reason === 'packFull')) renderer.fail(e.tried)
     if (e.type === 'teleport') {
       renderer.snap()
       if (e.dive) showLog(e.dive)

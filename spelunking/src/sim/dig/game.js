@@ -17,7 +17,7 @@ import { digTicks, resolve, stopReason } from './rules.js'
  * @typedef {{ type: 'step', action: Action, fresh: boolean }
  *   | { type: 'mined', x: number, y: number, tile: number }
  *   | { type: 'built', x: number, y: number }
- *   | { type: 'stop', reason: string, dx: number, dy: number }
+ *   | { type: 'stop', reason: string, dx: number, dy: number, tried: Cell[] }
  *   | { type: 'abort' }
  *   | { type: 'teleport', from: Cell, dive: Dive | null }} GameEvent
  */
@@ -54,6 +54,9 @@ import { digTicks, resolve, stopReason } from './rules.js'
  * @property {{ dx: number, dy: number, prev: Action | null } | null} run the current intent
  * @property {Step | null} step
  * @property {number[]} pack Tile.Ore / Tile.Loot items
+ *   TODO (Lorinc, 2026-09-25 feedback on b1.2): the pack is too limiting for this game's scale.
+ *   Collect all 4 materials (soft, hard, ore, loot), stacking 32 per slot: pack becomes
+ *   slots of { tile, count }, a dig adds to a matching stack below 32 or opens a new slot.
  * @property {number} credit tiles we can still build from ore already spent
  * @property {{ ore: number, loot: number }} stash counted at home
  * @property {Dive | null} dive
@@ -149,7 +152,7 @@ function next(g) {
       ? (action.reason ?? 'blocked')
       : null
   if (reason) {
-    g.events.push({ type: 'stop', reason, dx: run.dx, dy: run.dy })
+    g.events.push({ type: 'stop', reason, dx: run.dx, dy: run.dy, tried: action.tried ?? [] })
     if (g.dive) g.dive.stops[reason] = (g.dive.stops[reason] ?? 0) + 1
     g.run = null
     return

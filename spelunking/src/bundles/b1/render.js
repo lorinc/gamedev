@@ -1,5 +1,6 @@
 // Canvas2D view of the game: the world as a 1-px-per-tile canvas scaled up with nearest-neighbour,
-// a camera that follows with lookahead, the character, debris, the pack strip and the charge ring.
+// a camera that follows with lookahead, the character, debris, the pack strip and the charge ring,
+// and a red "I tried, can't do" flash when an action is refused for lack of ore or pack space.
 
 import { TILE_RGB } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
@@ -12,6 +13,7 @@ import { wrap } from '../../sim/dig/rules.js'
 const BG = '#050508'
 const BEDROCK = '#000'
 const CHAR = '#f4f1de'
+const FAIL_S = 0.7 // seconds the red "can't do" flash lasts
 
 /** @param {import('../../render/palette.js').Rgb} c */
 const css = ([r, g, b]) => `rgb(${r},${g},${b})`
@@ -34,6 +36,8 @@ export function createRenderer(canvas, game, t, juice) {
   let dpr = 1
   let tilePx = 16
   const cam = { x: game.ch.x + 0.5, y: game.ch.y + 0.5 }
+  /** The last refusal: the cells it tried, and seconds left of its flash. */
+  let fail = { cells: /** @type {{ x: number, y: number }[]} */ ([]), left: 0 }
 
   function resize() {
     dpr = window.devicePixelRatio || 1
@@ -54,6 +58,10 @@ export function createRenderer(canvas, game, t, juice) {
     snap() {
       cam.x = game.ch.x + 0.5
       cam.y = game.ch.y + 0.5
+    },
+    /** Flash these cells and the pack red: "I tried, can't do" (no ore to build, no room for loot). */
+    fail(/** @type {{ x: number, y: number }[]} */ cells) {
+      fail = { cells, left: FAIL_S }
     },
     info: () => ({ dpr, tilePx, w: canvas.width, h: canvas.height }),
     /**
@@ -116,6 +124,14 @@ export function createRenderer(canvas, game, t, juice) {
         x += n
       }
 
+      // "I tried, can't do": two quick red blinks that fade, over the refused cells and the pack.
+      fail.left = Math.max(0, fail.left - dt)
+      const failA = fail.left > 0 ? failAlpha(1 - fail.left / FAIL_S) : 0
+      if (failA > 0) {
+        ctx.fillStyle = `rgba(255,40,40,${failA})`
+        for (const c of fail.cells) ctx.fillRect(Math.round(sx(nearest(c.x, left, world.w))), Math.round(sy(c.y)), tp, tp)
+      }
+
       // Character: 1 tile in the sim, drawn ~1.3 tall. Squash on stops, a push while digging.
       const sq = juice.squash()
       const cw = tp * 0.7 * (1 + sq * 0.25)
@@ -136,7 +152,7 @@ export function createRenderer(canvas, game, t, juice) {
         ctx.fillRect(Math.round(sx(nearest(c.x, left, world.w))), Math.round(sy(c.y)), s, s)
       }
 
-      drawPack(ctx, game, W, H, dpr)
+      drawPack(ctx, game, W, H, dpr, failA)
 
       if (charge && charge.p > 0.12) {
         const r = 28 * dpr
@@ -153,8 +169,11 @@ export function createRenderer(canvas, game, t, juice) {
 }
 
 // The only persistent on-screen element: pack slots along the bottom edge.
-/** @param {CanvasRenderingContext2D} ctx @param {Game} game @param {number} W @param {number} H @param {number} dpr */
-function drawPack(ctx, game, W, H, dpr) {
+/**
+ * @param {CanvasRenderingContext2D} ctx @param {Game} game @param {number} W @param {number} H @param {number} dpr
+ * @param {number} failA alpha of the red "can't do" flash over the whole strip, 0 = none
+ */
+function drawPack(ctx, game, W, H, dpr, failA) {
   const slots = game.cfg.packSlots
   const s = Math.round(26 * dpr)
   const gap = Math.round(6 * dpr)
@@ -169,6 +188,16 @@ function drawPack(ctx, game, W, H, dpr) {
     const inset = item === undefined ? s / 2 - dpr : 3 * dpr
     ctx.fillRect(x + inset, y + inset, s - 2 * inset, s - 2 * inset)
   }
+  if (failA > 0) {
+    ctx.fillStyle = `rgba(255,40,40,${failA})`
+    ctx.fillRect(x0 - 3 * dpr, y - 3 * dpr, slots * (s + gap) - gap + 6 * dpr, s + 6 * dpr)
+  }
+}
+
+/** Alpha of the "can't do" flash at progress f (0..1): two blinks, fading out. */
+/** @param {number} f */
+function failAlpha(f) {
+  return 0.85 * (1 - 0.5 * f) * (Math.sin(f * Math.PI * 4) > 0 ? 1 : 0.25)
 }
 
 // Where the character is drawn: between the step's start and end, alpha into the next tick.

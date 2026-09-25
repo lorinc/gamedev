@@ -22,6 +22,8 @@ export const BEDROCK = -1
  * @property {Cell[]} builds cells filled with Built
  * @property {number} fall tiles dropped at the end (≤ harmlessDrop): stepping off a ledge, or letting go of a climb
  * @property {string} [reason] why it's blocked
+ * @property {Cell[]} [tried] blocked for lack of stock (`noOre`, `packFull`): the cells it would have
+ *   built or mined, so the view can show "I tried, can't do"
  */
 
 /**
@@ -81,6 +83,11 @@ export function digTicks(cfg, tile) {
  * @param {Inventory} inv
  * @returns {Action}
  */
+// TODO (Lorinc, 2026-09-25 feedback on b1.2), traversal is clumsy:
+//   - there's no way to dig a 1-block-high ledge;
+//   - there's no way to build a ramp down to the right and then go left: a stairs-type block
+//     is missing, where the character can choose to walk up it or straight on.
+// Design both as rules in the p4 Rule Lab (situations first), not as code here.
 export function resolve(world, at, dx, dy, facing, cfg, inv) {
   const { x, y } = at
   /** @type {Dug[]} */
@@ -125,8 +132,9 @@ export function resolve(world, at, dx, dy, facing, cfg, inv) {
     const kind = builds.length ? 'build' : digs.length ? 'mine' : base
     const to = { x: wrap(tx, world.w), y: ty + fall }
     const loot = digs.filter((d) => d.tile === Tile.Ore || d.tile === Tile.Loot).length
-    if (loot > inv.free) return blocked('packFull')
-    if (builds.length > inv.buildable) return blocked('noOre')
+    const lootCells = digs.filter((d) => d.tile === Tile.Ore || d.tile === Tile.Loot).map(({ x, y }) => ({ x, y }))
+    if (loot > inv.free) return { ...blocked('packFull'), tried: lootCells }
+    if (builds.length > inv.buildable) return { ...blocked('noOre'), tried: builds }
     return { kind, dx, dy, to, digs, builds, fall }
   }
   /** @param {string} reason @returns {Action} */

@@ -13,7 +13,7 @@
 
 ## Quotes
 
-> verbatim, typos and all
+> the tester's words, with minimal spelling and grammar fixes only
 
 ## Dive log
 

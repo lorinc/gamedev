@@ -2,21 +2,21 @@
 
 - **Builds:** v2, then v3, live on the dev server
 - **Device:** desktop browser
-- **Source:** reconstructed on 2026-09-25 from the session notes; the quotes are verbatim.
+- **Source:** reconstructed on 2026-09-25 from the session notes; the quotes are Lorinc's words with minimal spelling and grammar fixes.
 
 ## Quotes
 
 On v2:
 
-> make scaling an integer, not just 2 or nothing
+> Make scaling an integer, not just 2 or nothing.
 
-> *(recipe JSON pasted)* … this is fairly good starter caves with minimal computation
+> *(recipe JSON pasted)* … these are fairly good starter caves with minimal computation.
 
-> create an archive folder and add the current terrain generation json and png for futre reference. Also, make sure, this basic generator (lab.html) stays as-is, because it is a fundamental tool for any terrain generation pattern finding.
+> Create an archive folder and add the current terrain generation JSON and PNG for future reference. Also, make sure this basic generator (lab.html) stays as-is, because it is a fundamental tool for any terrain generation pattern finding.
 
 On v3:
 
-> This is perfect for testing bundle 1
+> This is perfect for testing bundle 1.
 
 ## What changed because of it
 

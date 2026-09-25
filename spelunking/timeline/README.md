@@ -28,6 +28,8 @@ Start a new entry by copying [_template/](_template/), which also holds the feed
 
 **Rules at close:** when a playtest (an entry with `bN.M` builds) is concluded or killed, it records its rule table (the swipe table, stop rules and numbers of its last build) in a `## Rules at close` section. The card shows it, and `--strict` refuses a closed playtest without one. The next prototype starts from that baseline.
 
+**Quotes:** everything here is public, so quoted comments get a minimal spelling and grammar fix before they're recorded: typos, capitals, missing words. Never rewording, never changing the meaning, and the tester's own terms stay.
+
 **Decisions** go in [decisions.md](decisions.md), an append-only ledger: `| D024 | date | from entry | active | decision |`. A changed decision is a new row, and the old one becomes `superseded by D024`. Each card lists the decisions its prototype made.
 
 **Frontmatter** (flat `key: value` lines between `---`):

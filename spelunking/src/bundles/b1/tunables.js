@@ -10,7 +10,7 @@ export const DEFAULTS = {
     buildTicks: 14,
     digTicks: { soft: 14, hard: 42, ore: 21, loot: 14, built: 7 }, // + walkTicks to step in: soft = 3× a walk
     harmlessDrop: 4,
-    packSlots: 4,
+    packSlots: 4, // TODO (2026-09-25 feedback): 32 per slot and all 4 materials: see Game.pack in sim/dig/game.js
     tilesPerOre: 12,
     rules: { wall: true, open: true, harder: true, loot: true, junction: true },
   },

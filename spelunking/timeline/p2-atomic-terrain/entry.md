@@ -58,7 +58,7 @@ gen  d012 b345   ×1
 
 ## Feedback
 
-- [2026-09-24 · Lorinc · desktop](feedback/2026-09-24_lorinc_desktop.md): "this is fairly good starter caves with minimal computation", and then for v3: "This is perfect for testing bundle 1".
+- [2026-09-24 · Lorinc · desktop](feedback/2026-09-24_lorinc_desktop.md): "these are fairly good starter caves with minimal computation", and then for v3: "This is perfect for testing bundle 1".
 
 ## Conclusion → next
 

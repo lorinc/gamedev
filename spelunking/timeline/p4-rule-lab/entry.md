@@ -52,6 +52,7 @@ Planned scope, nothing built yet:
   - Beside each row, the situations it affects, redrawn live, with pass / fail.
   - A play pane: the b1 world on the edited rules.
   - Export and import JSON (copy / paste, like the v2 recipe), and saving in the browser.
+- **Refusals are visible (D027):** every blocked reason in the table names the signal it shows, like the red "I tried, can't do" flash for `noOre` and `packFull`.
 - **b1 loads a ruleset** from the Rule Lab or from `rules/`. The timeline's "Rules at close" table is rendered from the ruleset JSON.
 
 ## Feedback

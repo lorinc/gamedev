@@ -200,6 +200,27 @@ describe('building', () => {
     const g = game(['#####', '#...#', '#@..#', '#####'])
     assert.equal(swipe(g, 1, -1), 'noOre')
   })
+
+  test('a refused build or mine reports the cells it tried (for the red flash)', () => {
+    const stopOf = (/** @type {any} */ g, /** @type {number} */ dx, /** @type {number} */ dy) => {
+      command(g, { type: 'intent', dx, dy })
+      for (let i = 0; i < 1000; i++) {
+        tick(g)
+        const stop = g.events.find((e) => e.type === 'stop')
+        g.events.length = 0
+        if (stop) return stop
+      }
+      assert.fail('run never stopped')
+    }
+    const build = stopOf(game(['#####', '#...#', '#@..#', '#####']), 1, -1)
+    assert.deepEqual([build.reason, build.tried], ['noOre', [{ x: 2, y: 2 }]]) // the step it would build
+    const g = game(['#########', '#@#oo$###', '#########'])
+    stopOf(g, 1, 0)
+    stopOf(g, 1, 0)
+    const full = stopOf(g, 1, 0)
+    assert.deepEqual([full.reason, full.tried], ['packFull', [{ x: 5, y: 1 }]]) // the loot it couldn't take
+    assert.deepEqual(stopOf(game(['#####', '#.@.#', '#####', '#####']), 0, 1).tried, []) // other stops: none
+  })
 })
 
 describe('dives', () => {
