@@ -1,0 +1,241 @@
+{
+  "format": "spelunking-ruleset",
+  "version": 1,
+  "name": "b1.7",
+  "note": "b1.6 + flick and hold (D046). A flick follows the world: it walks, walks up and down steps and ramps, and tunnels; where it would have to build a plank, it stops with \"?\" (reason hold). A hold goes in a straight line: → lays a plank over any gap (a 1-deep step down or a ramp mouth too) and digs a step you could walk up; ↑ ↓ ↗ ↘ build their plank ladders and stairs. A held run pauses holdPauseTicks after each step and ends on release; the stop switches are a flick's only. Nothing asks first any more (D041, D044 superseded). The rest is b1.6: every build places a plank (D039), runs stop only at a wall or a plank crossing (D040, D045), ↓ on a plank drops through if safe, the backpack pays 1 rock per build (D038), clinging and gravity (D035).",
+  "swipes": {
+    "swipePx": 24,
+    "horizontalDeg": 30,
+    "verticalDeg": 25
+  },
+  "situations": {
+    "always": [],
+    "onFloor": ["standing"],
+    "noFooting": ["!standing"],
+    "walkable": ["fwdOpen", "fwdFloor"],
+    "gap": ["standing", "fwdOpen"],
+    "clingGap": ["fwdOpen"],
+    "stepUpAhead": ["standing", "!fwdOpen", "fwdAboveOpen", "aboveOpen"],
+    "rockAhead": ["!fwdOpen"],
+    "ledgeAhead": ["standing", "fwdOpen", "fwdBelowOpen", "!fwdBelowFloor"],
+    "plankDrop": ["onPlank", "belowDrop"],
+    "onPlank": ["onPlank"],
+    "wallBelow": ["belowClimbable"],
+    "overhang": ["overhangStep"],
+    "dropBelow": ["belowDrop"],
+    "rockAbove": ["!aboveOpen"],
+    "underTread": ["inPlank"],
+    "wallAhead": ["!standing", "!fwdOpen"],
+    "rockOverhead": ["!upAheadOpen", "!upAheadFloor"],
+    "noStep": ["!upAheadFloor"],
+    "rockDownAhead": ["!fwdBelowOpen"],
+    "noFloorDown": ["!fwdBelowFloor"],
+    "rampFollow": ["onPlank", "fwdPlank", "fwdAboveOpen", "!held"],
+    "stepDownFollow": ["standing", "fwdOpen", "fwdBelowOpen", "fwdBelowFloor", "!held"],
+    "gapHeld": ["standing", "fwdOpen", "held"],
+    "stepUpHeld": ["standing", "!fwdOpen", "fwdAboveOpen", "aboveOpen", "held"],
+    "onPlankHeld": ["onPlank", "held"],
+    "held": ["held"],
+    "noStepHeld": ["!upAheadFloor", "held"],
+    "noFloorDownHeld": ["!fwdBelowFloor", "held"]
+  },
+  "table": {
+    "side": [
+      {
+        "if": "walkable",
+        "do": "walk"
+      },
+      {
+        "if": "rampFollow",
+        "do": "stepUp"
+      },
+      {
+        "if": "stepDownFollow",
+        "do": "stepDown"
+      },
+      {
+        "if": "gapHeld",
+        "do": "bridge",
+        "place": "plank"
+      },
+      {
+        "if": "gap",
+        "do": "refuse",
+        "reason": "hold"
+      },
+      {
+        "if": "clingGap",
+        "do": "refuse",
+        "reason": "ledge"
+      },
+      {
+        "if": "stepUpHeld",
+        "do": "tunnel"
+      },
+      {
+        "if": "stepUpAhead",
+        "do": "stepUp"
+      },
+      {
+        "if": "rockAhead",
+        "do": "tunnel"
+      }
+    ],
+    "down": [
+      {
+        "if": "plankDrop",
+        "do": "climbDrop"
+      },
+      {
+        "if": "onPlankHeld",
+        "do": "ladderDown",
+        "place": "plank"
+      },
+      {
+        "if": "onPlank",
+        "do": "refuse",
+        "reason": "hold"
+      },
+      {
+        "if": "ledgeAhead",
+        "do": "climbOver"
+      },
+      {
+        "if": "onFloor",
+        "do": "refuse",
+        "reason": "down"
+      },
+      {
+        "if": "wallBelow",
+        "do": "climbDown"
+      },
+      {
+        "if": "overhang",
+        "do": "followOverhang"
+      },
+      {
+        "if": "dropBelow",
+        "do": "climbDrop"
+      },
+      {
+        "if": "always",
+        "do": "refuse",
+        "reason": "overhang"
+      }
+    ],
+    "up": [
+      {
+        "if": "rockAbove",
+        "do": "mineAbove"
+      },
+      {
+        "if": "underTread",
+        "do": "climbUp"
+      },
+      {
+        "if": "held",
+        "do": "ladderUp",
+        "place": "plank"
+      },
+      {
+        "if": "always",
+        "do": "refuse",
+        "reason": "hold"
+      }
+    ],
+    "upSide": [
+      {
+        "if": "wallAhead",
+        "do": "stairUp",
+        "place": "plank"
+      },
+      {
+        "if": "noFooting",
+        "do": "refuse",
+        "reason": "noFooting"
+      },
+      {
+        "if": "rockOverhead",
+        "do": "mineUp"
+      },
+      {
+        "if": "noStepHeld",
+        "do": "stairUp",
+        "place": "plank"
+      },
+      {
+        "if": "noStep",
+        "do": "refuse",
+        "reason": "hold"
+      },
+      {
+        "if": "onFloor",
+        "do": "stairUp",
+        "place": "plank"
+      }
+    ],
+    "downSide": [
+      {
+        "if": "rockDownAhead",
+        "do": "mineDown"
+      },
+      {
+        "if": "noFooting",
+        "do": "refuse",
+        "reason": "noFooting"
+      },
+      {
+        "if": "noFloorDownHeld",
+        "do": "buildDown",
+        "place": "plank"
+      },
+      {
+        "if": "noFloorDown",
+        "do": "refuse",
+        "reason": "hold"
+      },
+      {
+        "if": "onFloor",
+        "do": "buildDown",
+        "place": "plank"
+      }
+    ]
+  },
+  "reasons": {
+    "hold": "none",
+    "ledge": "none",
+    "down": "none",
+    "overhang": "none",
+    "up": "none",
+    "noFooting": "none",
+    "bedrock": "none",
+    "noRule": "none",
+    "noRock": "flash",
+    "packFull": "flash"
+  },
+  "stops": {
+    "wall": true,
+    "open": false,
+    "loot": false,
+    "harder": false,
+    "junction": false,
+    "crossing": true
+  },
+  "numbers": {
+    "walkTicks": 7,
+    "climbTicks": 10,
+    "fallTicks": 3,
+    "buildTicks": 14,
+    "digTicks": {
+      "soft": 14,
+      "hard": 42,
+      "ore": 21,
+      "loot": 14,
+      "built": 7
+    },
+    "harmlessDrop": 4,
+    "packSlots": 6,
+    "holdPauseTicks": 18,
+    "gravity": true
+  }
+}
