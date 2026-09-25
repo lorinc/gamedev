@@ -19,7 +19,7 @@ import { interpret } from './ruleset.js'
  * @typedef {{ type: 'step', action: Action, fresh: boolean }
  *   | { type: 'mined', x: number, y: number, tile: number }
  *   | { type: 'built', x: number, y: number }
- *   | { type: 'stop', reason: string, dx: number, dy: number, tried: Cell[], rule?: Action['rule'] }
+ *   | { type: 'stop', reason: string, dx: number, dy: number, tried: Cell[], rule?: Action['rule'], next: Action['kind'] }
  *   | { type: 'abort' }
  *   | { type: 'teleport', from: Cell, dive: Dive | null }} GameEvent
  */
@@ -156,7 +156,9 @@ function next(g) {
       ? (action.reason ?? 'blocked')
       : null
   if (reason) {
-    g.events.push({ type: 'stop', reason, dx: run.dx, dy: run.dy, tried: reason === action.reason ? (action.tried ?? []) : [], rule: action.rule }) // a quiet stop tried nothing (D030)
+    g.events.push({ type: 'stop', reason, dx: run.dx, dy: run.dy, tried: reason === action.reason ? (action.tried ?? []) : [], rule: action.rule,
+      next: (action.intended ?? action).kind, // what the run would have done next
+    }) // a quiet stop tried nothing (D030)
     if (g.dive) g.dive.stops[reason] = (g.dive.stops[reason] ?? 0) + 1
     g.run = null
     return

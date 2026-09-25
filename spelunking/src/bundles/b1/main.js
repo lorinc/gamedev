@@ -213,6 +213,8 @@ function start(ruleset, table) {
       if (e.type === 'stop') {
         const flash = table.signals[e.reason] === 'flash' // a refusal that shows even mid-run (D027)
         if (asked || flash) renderer.attempt(e.dx, e.dy, e.reason === 'noOre' ? 'build' : e.reason === 'packFull' ? 'mine' : 'walk', true)
+        // a run that stopped on its own: what it would do next, with a "?" (D033)
+        else renderer.attempt(e.dx, e.dy, e.next === 'build' ? 'build' : e.next === 'mine' ? 'mine' : 'walk', false, true)
         if (flash) renderer.fail()
         asked = false
       }

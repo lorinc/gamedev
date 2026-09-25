@@ -118,9 +118,8 @@
       }
       #toast {
         position: fixed;
-        left: 50%;
-        bottom: 56px;
-        transform: translateX(-50%);
+        left: 8px;
+        bottom: calc(48px + env(safe-area-inset-bottom)); /* just above the bug button */
         padding: 8px 12px;
         background: rgba(5, 5, 8, 0.9);
         border: 1px solid #5ac878;

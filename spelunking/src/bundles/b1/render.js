@@ -42,7 +42,7 @@ export function createRenderer(canvas, game, t, juice) {
   /** Seconds left of the pack's red flash. */
   let failLeft = 0
   /** The swipe cue: what the character attempts, which way, refused or not, seconds left. */
-  let cue = { dx: 0, dy: 0, kind: /** @type {CueKind} */ ('walk'), refused: false, left: 0 }
+  let cue = { dx: 0, dy: 0, kind: /** @type {CueKind} */ ('walk'), refused: false, ask: false, left: 0 }
 
   function resize() {
     dpr = window.devicePixelRatio || 1
@@ -68,9 +68,12 @@ export function createRenderer(canvas, game, t, juice) {
     fail() {
       failLeft = FAIL_S
     },
-    /** Show the swipe cue: what the character attempts in direction (dx, dy); red if it's refused. */
-    attempt(/** @type {number} */ dx, /** @type {number} */ dy, /** @type {CueKind} */ kind, refused = false) {
-      cue = { dx, dy, kind, refused, left: CUE_S }
+    /**
+     * Show the swipe cue: what the character attempts in direction (dx, dy). refused: red. ask: a run
+     * stopped on its own, and this is what it would do next (a "?" badge, D033).
+     */
+    attempt(/** @type {number} */ dx, /** @type {number} */ dy, /** @type {CueKind} */ kind, refused = false, ask = false) {
+      cue = { dx, dy, kind, refused, ask, left: CUE_S }
     },
     info: () => ({ dpr, tilePx, w: canvas.width, h: canvas.height }),
     /**
@@ -210,7 +213,7 @@ function drawPack(ctx, game, W, H, dpr, failA) {
 // for a walk or climb, stairs for a build, a pickaxe for a dig. A refused one blinks red. Fades out.
 /**
  * @param {CanvasRenderingContext2D} ctx @param {number} x @param {number} y centre, device px @param {number} r radius
- * @param {{ dx: number, dy: number, kind: CueKind, refused: boolean }} cue @param {number} life 1 → 0
+ * @param {{ dx: number, dy: number, kind: CueKind, refused: boolean, ask: boolean }} cue @param {number} life 1 → 0
  */
 function drawCue(ctx, x, y, r, cue, life) {
   ctx.save()
@@ -226,6 +229,24 @@ function drawCue(ctx, x, y, r, cue, life) {
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
   const u = r * 0.62
+  if (cue.ask) {
+    // "?": a small badge on the disc's upper edge, away from the character
+    ctx.save()
+    const bx = r * 0.72
+    const by = -r * 0.72
+    ctx.beginPath()
+    ctx.arc(bx, by, r * 0.5, 0, Math.PI * 2)
+    ctx.fillStyle = '#fff'
+    ctx.fill()
+    ctx.lineWidth = r * 0.08
+    ctx.stroke()
+    ctx.fillStyle = BG
+    ctx.font = `bold ${Math.round(r * 0.8)}px monospace`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText('?', bx, by + r * 0.04)
+    ctx.restore()
+  }
   if (cue.kind === 'walk') {
     ctx.rotate(Math.atan2(cue.dy, cue.dx))
     ctx.lineWidth = u * 0.32
