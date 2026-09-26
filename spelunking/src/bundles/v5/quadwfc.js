@@ -46,7 +46,8 @@ export const QKNOBS = {
   thin: 0.9, // how thin walls can get, in cells: rock with open space on opposite sides within this distance is avoided (0 = off)
   wobble: 0.5, // rows the layer borders wobble by
   flat: 1, // caves and rock grow sideways more than up and down (1 = the same)
-  flatWalls: 1.75, // borders prefer to run level: floors and ceilings over side walls (1 = no preference)
+  flatWalls: 1.75, // floors (cave above, rock below) prefer to run level (1 = no preference; named before ceilings split off)
+  flatCeil: 1.75, // ceilings (rock above, cave below) prefer to run level (user: floors matter most)
   // below: constants that used to be hidden in the code (user: search them too)
   wallW: 3.3, // base weight of a wall tile (2 neighbouring corners open)
   nookW: 0.5, // … a nook (1 corner open)
@@ -63,6 +64,9 @@ export const QKNOBS = {
 
 /** Border tiles: the rock/cave boundary runs through them (saddles left out). */
 const EDGE = [false, false, true, true, true, false]
+
+/** Open corners per tile. */
+const QOPENS = Array.from({ length: 16 }, (_, t) => bit(t, 0) + bit(t, 1) + bit(t, 2) + bit(t, 3))
 
 const COUNT = [0, 0, 0, 0, 0, 0]
 for (const c of QCLASS) COUNT[c]++
@@ -304,8 +308,8 @@ export function generateQuads(G, seed, K) {
       let f = (w[t] * COUNT[c]) / inDom[c]
       // rock at a pinched corner would make a wall thinner than K.thin: it tends to break through instead
       for (let k = 0; k < 4; k++) if (thin[k] && !bit(t, k)) f *= K.thinForce
-      // a border through this quad (it crosses 2 edges): level borders by flatWalls
-      if (EDGE[c] && K.flatWalls !== 1) {
+      // a border through this quad (it crosses 2 edges): level floors by flatWalls, level ceilings by flatCeil
+      if (EDGE[c] && (K.flatWalls !== 1 || K.flatCeil !== 1)) {
         let dx = 0
         let dy = 0
         let sign = 1
@@ -315,7 +319,14 @@ export function generateQuads(G, seed, K) {
             dy += sign * G.ey[q * 4 + k]
             sign = -sign
           }
-        f *= K.flatWalls ** level(dx, dy)
+        // a floor when the open corners sit higher (smaller y) than the rock ones
+        let oy = 0
+        let ry = 0
+        for (let k = 0; k < 4; k++) {
+          if (bit(t, k)) oy += G.vy[q * 4 + k] / QOPENS[t]
+          else ry += G.vy[q * 4 + k] / (4 - QOPENS[t])
+        }
+        f *= (oy < ry ? K.flatWalls : K.flatCeil) ** level(dx, dy)
       }
       for (let k = 0; k < 4; k++) {
         const p = L.nb[q * 4 + k]

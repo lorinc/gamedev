@@ -136,6 +136,11 @@ weighs flatWalls^cos 2θ of its direction: floors and ceilings over side walls).
 mean levelness (+1 all level, −1 all upright) on seed 43344: 0.06 off, 0.18 at 3/3, 0.23 at 5/5.
 The user then set flat walls 1.75 (seed 12227), now the default: "this brought back some volatility,
 but the caves are easier to traverse now, and floor is the most important part of a cave".
+Then (user: "just the ceiling knob") flat walls split: **flat floors** (URL name `flatWalls`, a border with
+cave above and rock below) and **flat ceilings** (`flatCeil`, rock above), both 1.75 by default, so the
+default maps are unchanged (checked: identical tiles). Over 6 seeds the ceiling knob moves the ceilings'
+levelness (0.034 at 1, 0.069 at 1.75, 0.091 at 3) and drags the floors with it (0.068, 0.114, 0.134): a
+ceiling is often the next cave's floor seen from below.
 
 ## Feedback
 

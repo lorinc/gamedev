@@ -22,6 +22,7 @@ export function buildGrid(seed, iters, cols, rows) {
   const cy = new Float64Array(Q)
   const ex = new Float64Array(Q * 4) // edge k's midpoint, from the quad's centre, in fine cells
   const ey = new Float64Array(Q * 4)
+  const vy = new Float64Array(Q * 4) // corner k's height, from the quad's centre, in fine cells (down is +)
   const ux = 10 / Math.sqrt(3)
   mesh.faces.forEach((f, q) => {
     const xs = f.map((v) => near(mesh.x[v], mesh.x[f[0]], mesh.wrap) * ux)
@@ -31,6 +32,7 @@ export function buildGrid(seed, iters, cols, rows) {
     cx[q] = ((((mx / ux) % mesh.wrap) + mesh.wrap) % mesh.wrap) * ux
     cy[q] = my + 6
     for (let k = 0; k < 4; k++) {
+      vy[q * 4 + k] = ys[k] - my
       ex[q * 4 + k] = (xs[k] + xs[(k + 1) & 3]) / 2 - mx
       ey[q * 4 + k] = (ys[k] + ys[(k + 1) & 3]) / 2 - my
     }
@@ -38,6 +40,6 @@ export function buildGrid(seed, iters, cols, rows) {
   /** @type {[number, number][]} */
   const walls = [] // every edge's two vertices
   for (const [a, b] of edges(mesh)) walls.push([a, b])
-  return { mesh, W, H, cx, cy, ex, ey, walls, links: quadLinks(mesh.faces) }
+  return { mesh, W, H, cx, cy, ex, ey, vy, walls, links: quadLinks(mesh.faces) }
 }
 /** @typedef {ReturnType<typeof buildGrid>} Grid */
