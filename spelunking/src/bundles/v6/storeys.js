@@ -1,8 +1,8 @@
 // The storey pass (D068): walkable floors from the raster, the pod on natural floor near the centre, and
 // the storeys grown from it. A storey follows floors within ½ storey of its current Y and holds its Y
 // (a bridge in air, a tunnel in rock) where there's none; a 45° pass keeps every change walkable. Each
-// deeper storey starts at the foot of a 45° ramp near where the storey above started. Storeys closer
-// than ½ storey to the one above merge into it. Everything is in raster px (K per cell).
+// next storey, up or down from the pod's, starts at the foot of a 45° ramp near where the last one
+// started. A storey closer than ½ storey to the one it came from merges into it, meeting it at 45°. Everything is in raster px (K per cell).
 
 import { ICE, SURFACE } from '../v5/wfc.js'
 import { K, OPEN, ROCK, SKY } from './terrain.js'
@@ -127,50 +127,102 @@ export function storeys(T, S) {
 
   /** @type {{y: Int32Array, kind: Uint8Array, sx: number}[]} */
   const list = []
-  /** @type {{x: number, y: number, dir: number, len: number}[]} */
+  /** @type {{x: number, y: number, dir: number, len: number, up: boolean}[]} */
   const ramps = []
-  if (pod) {
-    let sx = pod.c
-    let sy = pod.base
+  /** @type {{x: number, y: number}[]} */
+  const joins = [] // where a storey merges into the one it came from
+  /**
+   * A chain of storeys from the pod's, up (user: "extend the network above the pod as well") or down.
+   * Each next storey starts at the foot of a 45° ramp near where the last one started.
+   * @param {{y: Int32Array, kind: Uint8Array, sx: number}} first @param {boolean} up
+   */
+  const chain = (first, up) => {
+    let from = first
+    const sign = up ? -1 : 1
     for (let n = 0; n < 16; n++) {
-      const y = grow(sx, sy)
-      const kind = Uint8Array.from(y, (v, x) => kindAt(x, v))
-      if (n > 0) {
-        const above = list[n - 1].y
-        for (let x = 0; x < w; x++) if (y[x] - above[x] < tol) kind[x] = MERGED
-      }
-      list.push({ y, kind, sx })
-      // the ramp down: near this storey's start, where its foot lands best on real floor
+      // the ramp: near this storey's start, where its foot lands best on real floor
       let best = { score: Infinity, x: 0, dir: 1, len: L }
       for (let r = -S.reach * K; r <= S.reach * K; r++) {
-        const x = wrap(sx + r)
-        if (kind[x] === MERGED) continue
+        const x = wrap(from.sx + r)
+        if (from.kind[x] === MERGED) continue
         for (const dir of [1, -1])
           for (let len = Math.ceil(L - tol); len <= L + tol; len++) {
             const fx = wrap(x + dir * len)
-            const fy = y[x] + len
+            const fy = from.y[x] + sign * len
             const onFloor = floors[fx].some((v) => v === fy && good(fx, v))
             let rock = 0
-            for (let i = 1; i < len; i++) if (at(x + dir * i, y[x] + i) === ROCK) rock++
+            for (let i = 1; i < len; i++) if (at(x + dir * i, from.y[x] + sign * i) === ROCK) rock++
             const score = (onFloor ? 0 : 50) + Math.abs(len - L) + rock * 0.25 + Math.abs(r) * 0.02
             if (score < best.score) best = { score, x, dir, len }
           }
       }
       const fx = wrap(best.x + best.dir * best.len)
-      const fy = y[best.x] + best.len
-      const b = band[Math.min(h - 1, fy) * w + fx]
-      if (fy >= h || (b !== ICE && b !== SURFACE)) break // the ice layer ends
-      ramps.push({ x: best.x, y: y[best.x], dir: best.dir, len: best.len })
-      sx = fx
-      sy = fy
+      const fy = from.y[best.x] + sign * best.len
+      if (up) {
+        if (fy - headPx < crust[fx] + K) break // no room under the crust
+      } else {
+        const b = band[Math.min(h - 1, fy) * w + fx]
+        if (fy >= h || (b !== ICE && b !== SURFACE)) break // the ice layer ends
+      }
+      ramps.push({ x: best.x, y: from.y[best.x], dir: best.dir, len: best.len, up })
+      const next = storey(fx, fy, from, up)
+      list.push(next)
+      from = next
     }
+  }
+  /**
+   * A storey from (sx, sy); closer than ½ storey to the one it came from (or past it), it merges: it
+   * takes that storey's line there, and climbs or drops into it at 45° (no dead ends).
+   * @param {number} sx @param {number} sy @param {{y: Int32Array} | null} from @param {boolean} up
+   */
+  const storey = (sx, sy, from, up) => {
+    const y = grow(sx, sy)
+    if (up) {
+      // it stays under the crust with its headroom: where it would break through, it dips (at 45°)
+      for (let x = 0; x < w; x++) y[x] = Math.max(y[x], crust[x] + K + headPx)
+      for (let pass = 0; pass < 2; pass++) {
+        for (let i = 0; i < 2 * w; i++) y[i % w] = Math.max(y[i % w], y[(i - 1 + w) % w] - 1)
+        for (let i = 2 * w; i > 0; i--) y[i % w] = Math.max(y[i % w], y[(i + 1) % w] - 1)
+      }
+    }
+    if (from) {
+      const f = from.y
+      const merged = Uint8Array.from(y, (v, x) => ((up ? f[x] - v : v - f[x]) < tol ? 1 : 0))
+      const v = Float64Array.from(y, (yy, x) => (merged[x] ? f[x] : yy))
+      // down chains merge upwards (lift the neighbours), up chains downwards (lower them)
+      for (let pass = 0; pass < 2; pass++) {
+        for (let i = 0; i < 2 * w; i++) {
+          const a = i % w
+          const b = (i - 1 + w) % w
+          v[a] = up ? Math.max(v[a], v[b] - 1) : Math.min(v[a], v[b] + 1)
+        }
+        for (let i = 2 * w; i > 0; i--) {
+          const a = i % w
+          const b = (i + 1) % w
+          v[a] = up ? Math.max(v[a], v[b] - 1) : Math.min(v[a], v[b] + 1)
+        }
+      }
+      for (let x = 0; x < w; x++) y[x] = v[x]
+      const kind = Uint8Array.from(y, (yy, x) => (yy === f[x] ? MERGED : kindAt(x, yy)))
+      for (let x = 0; x < w; x++)
+        if ((kind[x] === MERGED) !== (kind[wrap(x + 1)] === MERGED)) joins.push(kind[x] === MERGED ? { x, y: y[x] } : { x: wrap(x + 1), y: y[wrap(x + 1)] })
+      return { y, kind, sx }
+    }
+    return { y, kind: Uint8Array.from(y, (yy, x) => kindAt(x, yy)), sx }
+  }
+  if (pod) {
+    const first = storey(pod.c, pod.base, null, false)
+    list.push(first)
+    chain(first, false)
+    chain(first, true)
   }
 
   // divergence points: ramp heads and feet, and where a storey goes from floor to bridge or tunnel
   // and back (runs under a cell don't count)
   /** @type {{x: number, y: number}[]} */
   const points = []
-  for (const r of ramps) points.push({ x: r.x, y: r.y }, { x: wrap(r.x + r.dir * r.len), y: r.y + r.len })
+  for (const r of ramps) points.push({ x: r.x, y: r.y }, { x: wrap(r.x + r.dir * r.len), y: r.y + (r.up ? -r.len : r.len) })
+  points.push(...joins)
   for (const s of list) {
     const k = Array.from(s.kind, (v) => (v === FLOOR ? 0 : v === MERGED ? 2 : 1))
     for (let pass = 0; pass < 2; pass++)

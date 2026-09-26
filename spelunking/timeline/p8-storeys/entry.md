@@ -88,6 +88,17 @@ twice gives the same storeys. All pass.
   from the pod to the map's edges). Screenshots: `gallery/p8/v6_page_seed1.png`, stages
   `gallery/p8/v6_seeds1-4_*.png`.
 
+**Then (user, after seed 5512):** "Extend the network to above the pod as well, not just below. In early
+game, the player wants to manually collect a lot of materials, not picking up, what's above our head
+does not make any sense." A second chain now grows **up** from the pod's storey the same way (ramps up,
+near where the last storey started), until a ramp's foot has no headroom under the crust; an upper
+storey dips under the crust at 45° where it would break through (D070).
+- **Dead ends were a bug** (user: "is this a bug, or there's logic behind it?"): a storey merging into
+  the one it came from simply stopped, up to 1.5 cells short of it. Now it takes that storey's line where
+  merged and climbs or drops into it at 45°; the join is a divergence point. The crust clip made
+  fragments too, until it became a dip. `tools/storeys.js` checks for dead ends: none on 300 seeds.
+- Measured, 300 seeds: 11.2 storeys a map; 23% floor, 37% bridge, 40% tunnel; 16 ms median, 45 ms p90.
+
 ## Feedback
 
 ## Conclusion → next

@@ -104,7 +104,7 @@ export function paintStoreys(T, S, view, seed) {
   }
   if (view.floors) for (let x = 0; x < w; x++) for (const y of S.floors[x]) if (y < rows) set(x, SHEET_PX + y, FLOORC)
   if (view.storeys) {
-    for (const r of S.ramps) for (let i = 0; i <= r.len; i++) set(r.x + r.dir * i, SHEET_PX + r.y + i, RAMP_RGB)
+    for (const r of S.ramps) for (let i = 0; i <= r.len; i++) set(r.x + r.dir * i, SHEET_PX + r.y + (r.up ? -i : i), RAMP_RGB)
     for (const s of S.list)
       for (let x = 0; x < w; x++) {
         const k = s.kind[x]

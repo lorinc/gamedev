@@ -1,6 +1,6 @@
 // p8 · Storeys: writes the stages for seeds s … s+3 to gallery/p8/ (caves, floors, storeys, the lot),
 // and checks the pass over many seeds: every seed places its pod, every storey is walkable (45° at
-// most, across the wrap), the same seed gives the same storeys. Usage: node tools/storeys.js [seed] [n]
+// most, across the wrap), no storey dead-ends, the same seed gives the same storeys. Usage: node tools/storeys.js [seed] [n]
 
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { QCOLS, QROWS, buildGrid } from '../src/bundles/v5/quadcaves.js'
 import { QKNOBS, generateQuads } from '../src/bundles/v5/quadwfc.js'
 import { paintStoreys } from '../src/bundles/v6/paint.js'
-import { SKNOBS, storeys } from '../src/bundles/v6/storeys.js'
+import { MERGED, SKNOBS, storeys } from '../src/bundles/v6/storeys.js'
 import { rasterize } from '../src/bundles/v6/terrain.js'
 import { encodePng } from './png.js'
 
@@ -40,6 +40,14 @@ for (let seed = first; seed < first + many; seed++) {
   pods++
   for (const s of S.list)
     for (let x = 0; x < T.w; x++) if (Math.abs(s.y[x] - s.y[(x + 1) % T.w]) > 1) fail(`seed ${seed}: storey steeper than 45° at x ${x}`)
+  // no dead ends: where a storey's drawn run stops (it merges), another storey passes right there
+  for (const s of S.list)
+    for (let x = 0; x < T.w; x++) {
+      const a = s.kind[x] !== MERGED
+      if (a === (s.kind[(x + 1) % T.w] !== MERGED)) continue
+      const e = a ? x : (x + 1) % T.w
+      if (!S.list.some((o) => o !== s && Math.abs(o.y[e] - s.y[e]) <= 2)) fail(`seed ${seed}: dead end at x ${e}, y ${s.y[e]}`)
+    }
   sums.floor += S.share.floor
   sums.bridge += S.share.bridge
   sums.tunnel += S.share.tunnel
