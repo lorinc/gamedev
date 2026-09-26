@@ -398,7 +398,7 @@ export function createRenderer(canvas, game, t, juice) {
       if (game.pulling && game.stillFor >= STREAM_WAIT) streamTo(game.pulling, px + 0.5, p.y + 0.35)
       for (const b of game.bugs) {
         if (!b.target) continue
-        const at = drifted(b, game, alpha, time)
+        const at = drifted(b, game, alpha, time, false) // the bob's middle: a bobbing end would sway the whole arc
         streamTo(b.target, nearest(at.x, px, world.w), at.y)
       }
 
@@ -532,17 +532,17 @@ function glow(b, game, time) {
 /**
  * Where a bug is drawn, in tiles (its centre): between the cell it drifted from and its
  * cell, bobbing. They float in the upper part of their cell, fanned out, so two in one cell (or one
- * beside you) read apart.
+ * beside you) read apart. bob = false: the middle of its bob, which holds still (a dust stream's end, D063).
  * @param {import('../../sim/dig/bugs.js').Bug} b @param {Game} game @param {number} alpha @param {number} time seconds
  */
-function drifted(b, game, alpha, time) {
+function drifted(b, game, alpha, time, bob = true) {
   const cfg = /** @type {NonNullable<Game['cfg']['bugs']>} */ (game.cfg.bugs)
   const move = Math.max(1, b.kind === 'bar' ? b.pace || cfg.barMoveTicks : cfg.moveTicks)
   const f = Math.min(1, Math.max(0, (game.tick + alpha - b.movedAt) / move))
   const fx = b.from.x + wrapDelta(b.x - b.from.x, game.world.w) * f
   return {
-    x: fx + 0.5 + Math.sin(time * 1.3 + b.id * 2.1) * 0.3,
-    y: b.from.y + (b.y - b.from.y) * f + 0.2 - (b.id % 3) * 0.3 + Math.cos(time * 1.7 + b.id) * 0.2,
+    x: fx + 0.5 + (bob ? Math.sin(time * 1.3 + b.id * 2.1) * 0.3 : 0),
+    y: b.from.y + (b.y - b.from.y) * f + 0.2 - (b.id % 3) * 0.3 + (bob ? Math.cos(time * 1.7 + b.id) * 0.2 : 0),
   }
 }
 

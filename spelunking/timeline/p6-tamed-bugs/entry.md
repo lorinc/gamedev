@@ -11,7 +11,7 @@ build b3.2: 2026-09-26 · p6 · b3 Tamed Bugs step 2: wild bugs drift to you, ni
 build b3.3: 2026-09-26 · p6 · b3 Tamed Bugs step 2b: shared taming, the bug bar, the hold places a bug, bug lights (D060)
 build b3.4: 2026-09-26 · p6 · b3 Tamed Bugs step 2c: wild bugs live in the fog, 1 per 32×32 block, flicker and dark (D061), the wild light fades out
 build b3.5: 2026-09-26 · p6 · b3 Tamed Bugs step 3a: standing still pulls ore and loot, the bar calms the chasers, bar bugs roam (D062), bar bugs fly 2 to 8 off with inertia
-build b3.6: 2026-09-26 · p6 · b3 Tamed Bugs step 3: placed bugs mine and hand their ore over as you pass, the dust stream (D063)
+build b3.6: 2026-09-26 · p6 · b3 Tamed Bugs step 3: placed bugs mine and hand their ore over as you pass, the dust stream (D063), the bug stream holds still
 ---
 
 # p6 · b3 · Tamed Bugs
