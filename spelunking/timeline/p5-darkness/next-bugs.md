@@ -96,9 +96,8 @@ Bundle 2, and away from the vault/raid path: the concept doc gets updated.
   for the moment only (they never lift the fog for good).
 - So step 3 below is about **placed** bugs: the den is where you place one, not where it was tamed.
 
-## Decided by the user, fifth pass (2026-09-26, after b3.3): bugs live in the fog (plan, not built; b3.4)
-Build it as b3.4 in a fresh session. The user said "save as plan, implement in next clean session".
-Record it as a decision row then (the next id is in the handoff). *Italics* = Claude's defaults, shown to
+## Decided by the user, fifth pass (2026-09-26, after b3.3): bugs live in the fog (built as b3.4, D061)
+The user said "save as plan, implement in next clean session"; built as planned, recorded as D061. *Italics* = Claude's defaults, shown to
 the user with no objection.
 1. **Blocks (user):** the world is cut into fixed 32×32-tile blocks (x wraps like the world). The 64
    blocks nearest you each hold 1 wild bug, if the block has a dark open cave cell: not lit now, not

@@ -1,13 +1,20 @@
-// Moon bugs (D056, D059, D060), when the config has `bugs`. Fireflies with no physics: each sits in an
-// open cell (sky excluded; a plank's cell is open, so they ignore planks) and drifts one cell every
+// Moon bugs (D056, D059, D060, D061), when the config has `bugs`. Fireflies with no physics: each sits in
+// an open cell (sky excluded; a plank's cell is open, so they ignore planks) and drifts one cell every
 // moveTicks. They never enter rock, so they never burrow.
 //
-// Wild bugs appear every spawnTicks (up to `max` at once) in a dark cave cell you could reach: an open
-// cell within `seek` steps of you that isn't lit now, and never within `den` tiles of a placed bug. They
-// drift down the distance field toward you (a flood through open cells, `seek` steps deep) and stop
-// next to you. Next to you, with ore in the pack, one nibbles a unit every nibbleTicks (never loot):
-// event `nibble`. A probe ring that passes a wild bug scares it for scareTicks: it drifts away from you
-// and doesn't nibble. A wild bug the field lost wanders, and one more than `despawn` tiles away is gone.
+// Wild bugs live in the fog (D061). The world is cut into fixed `block`×`block` tiles blocks (x wraps
+// like the world; the last column and row may be smaller). The `blocks` blocks nearest you (by their
+// centres, x the short way round) each hold one wild bug; blocks beyond them lose theirs. A block's bug
+// appears in a random dark cell of the block: open, not lit now, not taken, `near` steps or more from you,
+// never within `den` tiles of a placed bug. It may be a cave sealed off by rock: that's the hint. A block
+// with no bug (tamed, gone, or no dark cell found) tries again refillTicks later (`g.refill`).
+//
+// A wild bug wanders: a random step inside its own block. At most `chasers` of them come for your ore:
+// the nearest (then lowest id) that can reach you through open cells within `seek` steps (the field).
+// A chaser still counts as its block's bug. It drifts down the field toward you and stops next to you;
+// next to you, with ore in the pack, it nibbles a unit every nibbleTicks (never loot): event `nibble`.
+// A chaser the field lost wanders again if it's in its block, else it's gone. A probe ring that passes
+// a wild bug scares it for scareTicks: it drifts away from you and doesn't nibble.
 //
 // Taming (D060): every nibble counts toward one shared total (`g.fed`). At `tame`, the bug that took
 // the last bite goes into the bug bar (`g.bar`, barSlots long; event `tamed`) and the count restarts.
@@ -29,15 +36,17 @@ import { wrap } from './rules.js'
 
 /**
  * @typedef {object} Bugs the numbers (a ruleset's `numbers.bugs`)
- * @property {number} max wild bugs at once
- * @property {number} spawnTicks a new wild bug may appear every this many ticks
+ * @property {number} block a fog block's side, in tiles (D061)
+ * @property {number} blocks how many blocks nearest you hold a wild bug
+ * @property {number} chasers wild bugs coming for your ore at once, at most
+ * @property {number} refillTicks a block with no bug tries for a new one this long after
+ * @property {number} near a wild bug appears at least this many steps from you
  * @property {number} moveTicks ticks per cell drifted
  * @property {number} seek steps through open cells a bug still finds you from
  * @property {number} nibbleTicks ticks between two nibbles of one bug
  * @property {number} tame ore eaten, by all the wild bugs together, to tame one (D060)
  * @property {number} scareTicks how long a probe ring scares a wild bug off
  * @property {number} den tiles around a placed bug where wild bugs never are
- * @property {number} despawn tiles away where a lost wild bug is gone
  * @property {number} barSlots tamed bugs you carry at most
  * @property {number} light a bar or placed bug's light radius
  * @property {number} orbitTicks ticks per step of a bar bug round you (12 steps a circle)
@@ -51,6 +60,8 @@ import { wrap } from './rules.js'
  * @property {Cell} from the cell it drifted from, for drawing
  * @property {number} movedAt the tick it last drifted (or appeared)
  * @property {'wild' | 'bar' | 'placed'} kind
+ * @property {number} block a wild bug's fog block (D061); -1 once tamed
+ * @property {boolean} chasing a wild bug coming for your ore
  * @property {Cell | null} den where it was placed; null until then
  * @property {Cell | null} glow a bar bug's light source: its cell when that's open, else yours
  * @property {number} scared until this tick
@@ -115,7 +126,20 @@ function denAt(g, c, r) {
 /** A new wild bug at (x, y). The game spawns them; tests place them. @param {Game} g @param {number} x @param {number} y */
 export function addBug(g, x, y) {
   /** @type {Bug} */
-  const bug = { id: g.nextBug++, x, y, from: { x, y }, movedAt: g.tick, kind: 'wild', den: null, glow: null, scared: 0, nibbleAt: 0 }
+  const bug = {
+    id: g.nextBug++,
+    x,
+    y,
+    from: { x, y },
+    movedAt: g.tick,
+    kind: 'wild',
+    block: blockOf(g, x, y),
+    chasing: false,
+    den: null,
+    glow: null,
+    scared: 0,
+    nibbleAt: 0,
+  }
   g.bugs.push(bug)
   return bug
 }
@@ -133,15 +157,24 @@ export function updateBugs(g) {
   if (!b) return
   const field = updateField(g, b)
   const rng = mulberry32(hashSeed(SALT, g.tick))
-  if (g.tick % Math.max(1, b.spawnTicks) === 0) spawn(g, b, field, rng)
+  const nearest = nearestBlocks(g, b)
+  g.bugs = g.bugs.filter((bug) => bug.kind !== 'wild' || nearest.includes(bug.block) || !gone(g, b, bug)) // beyond the nearest
+  fill(g, b, field, nearest, rng)
+  chase(g, b, field)
   for (const bug of g.bugs) {
     if (bug.kind !== 'wild') continue // a placed bug stays at its den (step 3 puts it to work)
     if (g.tick - bug.movedAt >= b.moveTicks) drift(g, b, field, bug, rng)
-    nibble(g, b, bug)
+    if (bug.chasing) nibble(g, b, bug)
   }
   g.bar.forEach((bug, k) => orbit(g, b, bug, k))
-  const far = b.despawn * b.despawn
-  g.bugs = g.bugs.filter((bug) => bug.kind !== 'wild' || field.dist.has(cellOf(g, bug)) || dist2(g, bug, g.ch) <= far)
+  // a chaser the field lost wanders again in its block, else it's gone
+  g.bugs = g.bugs.filter((bug) => bug.kind !== 'wild' || bug.chasing || bug.block === blockOf(g, bug.x, bug.y) || !gone(g, b, bug))
+}
+
+/** A wild bug leaves its block, which tries for a new one refillTicks later. Always true. @param {Game} g @param {Bugs} b @param {Bug} bug */
+function gone(g, b, bug) {
+  g.refill[bug.block] = g.tick + b.refillTicks
+  return true
 }
 
 // A bar bug's cell on its circle round you; it lights from there when it's open, else from your cell.
@@ -217,29 +250,97 @@ function updateField(g, b) {
   return g.bugField
 }
 
-// A new wild bug in a dark cell you could reach, at least 4 steps away, not in a den area.
-/** @param {Game} g @param {Bugs} b @param {Field} field @param {() => number} rng */
-function spawn(g, b, field, rng) {
-  if (g.bugs.filter((bug) => bug.kind === 'wild').length >= b.max) return
-  const lit = new Set(g.lit)
-  const taken = new Set(g.bugs.map((bug) => cellOf(g, bug)))
-  /** @type {number[]} */
-  const cells = []
-  for (const [i, d] of field.dist) if (d >= 4 && !lit.has(i) && !taken.has(i)) cells.push(i)
-  cells.sort((a, c) => a - c) // the Map's order is the flood's; sorted, the pick doesn't depend on it
-  const w = g.world.w
-  const ok = cells.filter((i) => !denAt(g, { x: i % w, y: Math.trunc(i / w) }, b.den))
-  if (!ok.length) return
-  const i = ok[rng() % ok.length]
-  addBug(g, i % w, Math.trunc(i / w))
+/** The fog block of cell (x, y) (D061): row by row, x wrapped. @param {Game} g @param {number} x @param {number} y */
+export function blockOf(g, x, y) {
+  const B = /** @type {Bugs} */ (g.cfg.bugs).block
+  return Math.floor(y / B) * Math.ceil(g.world.w / B) + Math.floor(wrap(x, g.world.w) / B)
 }
 
-// One cell: down the field toward you (not past next to you), away from you while scared, else a
-// random wander. Never into rock or sky, never into a den area; one caught inside a den area as a
-// bug was placed near it drifts out, away from that den.
+// The `blocks` blocks whose centres are nearest you (x the short way round; ties to the lower index),
+// in that order. Doubled coordinates keep the centres whole.
+/** @param {Game} g @param {Bugs} b @returns {number[]} */
+function nearestBlocks(g, b) {
+  const { w, h } = g.world
+  const B = b.block
+  const cols = Math.ceil(w / B)
+  const rows = Math.ceil(h / B)
+  const mx = 2 * g.ch.x + 1
+  const my = 2 * g.ch.y + 1
+  /** @type {[number, number][]} */
+  const all = []
+  for (let by = 0; by < rows; by++) {
+    for (let bx = 0; bx < cols; bx++) {
+      let dx = Math.abs(2 * bx * B + Math.min(B, w - bx * B) - mx)
+      dx = Math.min(dx, 2 * w - dx)
+      const dy = 2 * by * B + Math.min(B, h - by * B) - my
+      all.push([dx * dx + dy * dy, by * cols + bx])
+    }
+  }
+  all.sort((p, q) => p[0] - q[0] || p[1] - q[1])
+  return all.slice(0, b.blocks).map((p) => p[1])
+}
+
+// A wild bug for every near block that has none and is due: a random dark cell of the block, `near`
+// steps or more from you (a sealed cave is fine), not taken, never in a den area. None found: it tries
+// again refillTicks later.
+/** @param {Game} g @param {Bugs} b @param {Field} field @param {number[]} nearest @param {() => number} rng */
+function fill(g, b, field, nearest, rng) {
+  const held = new Set(g.bugs.flatMap((bug) => (bug.kind === 'wild' ? [bug.block] : [])))
+  /** @type {Set<number> | null} */
+  let lit = null
+  /** @type {Set<number> | null} */
+  let taken = null
+  const { w, h } = g.world
+  const B = b.block
+  const cols = Math.ceil(w / B)
+  for (const k of nearest) {
+    if (held.has(k) || (g.refill[k] ?? 0) > g.tick) continue
+    lit ??= new Set(g.lit)
+    taken ??= new Set(g.bugs.map((bug) => cellOf(g, bug)))
+    const x0 = (k % cols) * B
+    const y0 = Math.trunc(k / cols) * B
+    /** @type {number[]} */
+    const cells = []
+    for (let y = y0; y < Math.min(h, y0 + B); y++) {
+      for (let x = x0; x < Math.min(w, x0 + B); x++) {
+        const i = y * w + x
+        if (!roomy(g, x, y) || lit.has(i) || taken.has(i) || (field.dist.get(i) ?? Infinity) < b.near) continue
+        if (!denAt(g, { x, y }, b.den)) cells.push(i)
+      }
+    }
+    if (!cells.length) {
+      g.refill[k] = g.tick + b.refillTicks
+      continue
+    }
+    const i = cells[rng() % cells.length]
+    taken.add(i)
+    addBug(g, i % w, Math.trunc(i / w))
+  }
+}
+
+// Chasers: one the field lost stops chasing; then the nearest wild bugs in the field (then the lowest
+// id) join, up to `chasers`.
+/** @param {Game} g @param {Bugs} b @param {Field} field */
+function chase(g, b, field) {
+  const wild = g.bugs.filter((bug) => bug.kind === 'wild')
+  for (const bug of wild) if (bug.chasing && !field.dist.has(cellOf(g, bug))) bug.chasing = false
+  let free = b.chasers - wild.filter((bug) => bug.chasing).length
+  if (free <= 0) return
+  const d = (/** @type {Bug} */ bug) => /** @type {number} */ (field.dist.get(cellOf(g, bug)))
+  const next = wild.filter((bug) => !bug.chasing && field.dist.has(cellOf(g, bug))).sort((p, q) => d(p) - d(q) || p.id - q.id)
+  for (const bug of next) {
+    if (free-- <= 0) return
+    bug.chasing = true
+  }
+}
+
+// One cell: a chaser down the field toward you (not past next to you), away from you while scared; a
+// wanderer a random step inside its block (away from you while scared). Never into rock or sky, never
+// into a den area; one caught inside a den area as a bug was placed near it drifts out, away from that
+// den.
 /** @param {Game} g @param {Bugs} b @param {Field} field @param {Bug} bug @param {() => number} rng */
 function drift(g, b, field, bug, rng) {
-  const here = field.dist.get(cellOf(g, bug))
+  const here = bug.chasing ? field.dist.get(cellOf(g, bug)) : undefined
   const trapped = denAt(g, bug, b.den)
   const away = trapped ?? (g.tick < bug.scared ? g.ch : null)
   if (!away && here !== undefined && here <= 1) return // next to you: it hovers
@@ -252,6 +353,7 @@ function drift(g, b, field, bug, rng) {
   for (const [sx, sy] of STEPS) {
     const c = { x: wrap(bug.x + sx, g.world.w), y: bug.y + sy }
     if (!roomy(g, c.x, c.y) || (!trapped && denAt(g, c, b.den))) continue
+    if (!bug.chasing && blockOf(g, c.x, c.y) !== bug.block) continue
     const s = score(c)
     if (s < best) {
       best = s
@@ -266,7 +368,7 @@ function drift(g, b, field, bug, rng) {
   bug.movedAt = g.tick
 }
 
-// Next to you (8 around, or your cell), not scared, not in a den area, ore in the pack: one unit,
+// A chaser next to you (8 around, or your cell), not scared, not in a den area, ore in the pack: one unit,
 // every nibbleTicks. Every bite counts toward the shared taming count.
 /** @param {Game} g @param {Bugs} b @param {Bug} bug */
 function nibble(g, b, bug) {
@@ -277,7 +379,10 @@ function nibble(g, b, bug) {
   g.events.push({ type: 'nibble', id: bug.id, x: bug.x, y: bug.y, from: { x: g.ch.x, y: g.ch.y } })
   if (g.fed < b.tame || g.bar.length >= b.barSlots) return // with the bar full, the count waits at tame
   g.fed = 0
+  gone(g, b, bug)
   bug.kind = 'bar'
+  bug.block = -1
+  bug.chasing = false
   g.bar.push(bug)
   g.events.push({ type: 'tamed', id: bug.id, x: bug.x, y: bug.y, slot: g.bar.length - 1 })
 }

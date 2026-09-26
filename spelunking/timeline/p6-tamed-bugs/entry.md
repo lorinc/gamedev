@@ -48,6 +48,7 @@ Built in steps, one per session (user, 2026-09-25): 0 + 1 · 2 · 3 · 3b + 4.
 1. The probe centred on the probed block; ↑ into rock probes the ceiling; no teleport home (D055, ruleset b3.1).
 2. Wild bugs (D056, D059).
 2b. Shared taming, the bug bar, placing bugs with the hold (D060), after playing b3.2.
+2c. Wild bugs live in the fog (D061), after playing b3.3.
 3. Tamed bugs (D056).
 3b. The friendly area (D057).
 4. The build check, and b3.1 frozen.
@@ -68,6 +69,13 @@ Built in steps, one per session (user, 2026-09-25): 0 + 1 · 2 · 3 · 3b + 4.
 - The 1 s hold is back: it places the bar's first bug 2 above your head (or at the nearest open cell), where it's the mining utility for step 3, lit, with no wild bugs within 12.
 - Wild bugs show everywhere and light 2 around them for the moment they blink on, without making anything seen.
 - **Tests:** 12 bug tests (the shared count, a full bar, the orbit's light, placing, above rock, an empty bar) plus determinism with a `place`; 178 in all.
+
+**Bugs live in the fog (step 2c, D061):** ruleset `b3.4`. After b3.3, the user wanted wild bugs out in the dark, not spawning near you.
+- The world is cut into 32×32-tile blocks. The 64 nearest you each hold 1 wild bug, in a dark cave cell of the block, sealed caves included: they hint at hidden caves. Today's world has 36 blocks, so every block has one.
+- Wild bugs wander inside their block. At most 3, the nearest that can reach you within 20 steps of open cave, come for your ore as before. A block whose bug is tamed or gone gets a new one 5 s later.
+- Wild bugs flicker for 3–5 s, then go dark for 5–9 s, with no sync between them. Only bugs on screen are drawn, so zooming out shows more.
+- **Tests:** 7 new bug tests (one per block, the nearest blocks only, the refill, wanderers stay in their block, a sealed cave, at most 3 chasers, a lost chaser), and determinism covers the blocks; 184 in all. With 36 bugs the sim costs 0.03 ms a tick (0.01 without bugs).
+- **Screenshots** (local, `gallery/p6/`): zoomed out, the never-seen caves with the bugs flickering in them.
 
 Claude's calls in step 1, not discussed:
 - Only the home cell counts the pack in, and only when there's something in it, so walking past home logs no empty dives.

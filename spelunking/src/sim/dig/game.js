@@ -23,7 +23,7 @@
 // Without the teleport (D055, `teleport: false`): the command does nothing, a deep fall just lands, and
 // stepping onto the home cell with something in the pack counts it in (event `home`).
 //
-// Moon bugs (D056, D059, D060), only when the config has `bugs`: bugs.js, each tick before the light (a
+// Moon bugs (D056, D059, D060, D061), only when the config has `bugs`: bugs.js, each tick before the light (a
 // nibble changes the pack). A probe ring scares the wild bugs it passes. The command `place` (the 1 s
 // hold) places the bug bar's first bug. Bar and placed bugs light around themselves like you do.
 
@@ -133,6 +133,7 @@ import { bugGlows, place, scare, updateBugs } from './bugs.js'
  * @property {number} worldRev counts the ticks that mined or built something
  * @property {number} fed ore the wild bugs ate toward the next taming, all of them together (D060)
  * @property {import('./bugs.js').Bug[]} bar the tamed bugs you carry, in slot order (D060)
+ * @property {Record<number, number>} refill per fog block without a wild bug: the tick it tries for one again (D061)
  */
 
 // The generated terrain under a surface strip: sky rows to walk on, solid crust rows, home at x = 0.
@@ -177,6 +178,7 @@ export function createGame(world, home, cfg, table) {
     worldRev: 0,
     fed: 0,
     bar: [],
+    refill: {},
   }
   if (cfg.light) {
     g.seen = new Uint8Array(world.w * world.h)

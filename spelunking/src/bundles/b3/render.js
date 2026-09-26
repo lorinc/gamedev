@@ -7,9 +7,10 @@
 // lit now is clear. Whole tiles, a hard edge. It changes only on `seen` events and when `game.lit` does.
 // The probe (D053): thin circles over the fog around the cell it spreads from, the newest ring solid and
 // the ones before it fading out; they fade on for a moment after it ends.
-// Moon bugs (D056, D059, D060): a small square with a soft halo, over the fog (they're lights), so they
-// show even where nothing is seen yet. Wild ones are cool blue and blink in and out like fireflies,
-// steady next to you, flickering while scared; while on, they show the cave 2 around them through the
+// Moon bugs (D056, D059, D060, D061): a small square with a soft halo, over the fog (they're lights), so
+// they show even where nothing is seen yet; only the ones on screen are drawn. Wild ones are cool blue
+// and go between a flicker (3–5 s) and dark (5–9 s, not drawn at all), steady next to you, flickering
+// fast while scared; while on, they show the cave 2 around them through the
 // fog, for the moment only (their light never makes anything seen). Tamed ones are warm amber and
 // glow steadily: in the bar they circle you, placed they hover at their den. They drift between cells
 // and bob a little. The bug bar: b1.1's slot row along the bottom edge, a tamed bug per slot.
@@ -295,6 +296,9 @@ export function createRenderer(canvas, game, t, juice) {
       // a wild bug's light: the cave around it, over the fog, while it's on (never seen for good)
       for (const b of game.bugs) {
         if (b.kind !== 'wild') continue
+        const bx = sx(nearest(b.x, px, world.w))
+        const by = sy(b.y)
+        if (bx < -3 * tp || by < -3 * tp || bx > W + 3 * tp || by > H + 3 * tp) continue // off screen (D061)
         const on = glow(b, game, time)
         if (on <= 0.02) continue
         const key = `${b.x},${b.y},${game.worldRev}`
@@ -395,9 +399,25 @@ export function createRenderer(canvas, game, t, juice) {
   }
 }
 
+/** A number in 0..1 from a bug id, its blink cycle and a salt. @param {number} id @param {number} n @param {number} k */
+function hash01(id, n, k) {
+  let h = Math.imul(id, 0x9e3779b1) ^ Math.imul(n + 1, 0x85ebca6b) ^ Math.imul(k + 1, 0xc2b2ae35)
+  h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d)
+  return ((h ^ (h >>> 13)) >>> 0) / 2 ** 32
+}
+
+/** A wild bug's blink cycle n (D061): a flicker, then dark, lengths in seconds. @param {number} id @param {number} n */
+const cycle = (id, n) => ({ flick: 3 + 2 * hash01(id, n, 0), dark: 5 + 4 * hash01(id, n, 1) })
+
+/** Per wild bug: its current blink cycle and when it started (drawing only; renderers share it). @type {Map<number, { n: number, start: number }>} */
+const blinks = new Map()
+
+const FADE_S = 0.5 // a flicker fades in and out over this long
+
 /**
- * How bright a bug is now, 0..1. Wild: a firefly, on for 1.4 s then dark until the next blink; steady
- * next to you; flickering while scared. Tamed: a steady glow.
+ * How bright a bug is now, 0..1. Wild (D061): cycles of a flicker (fades in, 60–100% irregularly, fades
+ * out) and dark (0), each length drawn anew per cycle from the bug's id, so they never sync; steady next
+ * to you; flickering fast while scared. Tamed: a steady glow.
  * @param {import('../../sim/dig/bugs.js').Bug} b @param {Game} game @param {number} time seconds
  */
 function glow(b, game, time) {
@@ -405,9 +425,21 @@ function glow(b, game, time) {
   if (game.tick < b.scared) return Math.sin(time * 30 + b.id) > 0 ? 0.9 : 0.2
   const dx = wrapDelta(b.x - game.ch.x, game.world.w)
   const dy = b.y - game.ch.y
-  const period = 2.6 + (b.id % 4) * 0.4
-  const phase = (time + b.id * 0.77) % period
-  return dx * dx + dy * dy <= 2 ? 1 : phase < 1.4 ? Math.sin((Math.PI * phase) / 1.4) : 0
+  if (dx * dx + dy * dy <= 2) return 1
+  let s = blinks.get(b.id)
+  if (!s) {
+    const c = cycle(b.id, 0)
+    blinks.set(b.id, (s = { n: 0, start: time - hash01(b.id, 0, 2) * (c.flick + c.dark) })) // it starts mid-cycle
+  }
+  let c = cycle(b.id, s.n)
+  while (time >= s.start + c.flick + c.dark) {
+    s.start += c.flick + c.dark
+    c = cycle(b.id, ++s.n)
+  }
+  const u = time - s.start
+  if (u >= c.flick) return 0
+  const fade = Math.min(1, u / FADE_S, (c.flick - u) / FADE_S)
+  return fade * (0.8 + 0.2 * Math.sin(time * 7.3 + b.id) * Math.sin(time * 3.1 + b.id * 1.7))
 }
 
 /**
@@ -423,6 +455,9 @@ function drawBugs(ctx, game, alpha, time, me, sx, sy, tp) {
   if (!cfg) return
   const move = Math.max(1, cfg.moveTicks)
   const core = Math.max(2, Math.round(tp * 0.3))
+  const W = ctx.canvas.width
+  const H = ctx.canvas.height
+  if (blinks.size > game.bugs.length) for (const id of blinks.keys()) if (!game.bugs.some((b) => b.id === id)) blinks.delete(id)
   for (const b of game.bugs) {
     let x
     let y
@@ -437,10 +472,12 @@ function drawBugs(ctx, game, alpha, time, me, sx, sy, tp) {
       x = fx + 0.5 + Math.sin(time * 1.3 + b.id * 2.1) * 0.3
       y = b.from.y + (b.y - b.from.y) * f + 0.2 - (b.id % 3) * 0.3 + Math.cos(time * 1.7 + b.id) * 0.2
     }
-    const on = glow(b, game, time)
-    const [r, g, bl] = b.kind === 'wild' ? WILD : TAMED
     const cx = sx(x)
     const cy = sy(y)
+    if (cx < -2 * tp || cy < -2 * tp || cx > W + 2 * tp || cy > H + 2 * tp) continue // off screen (D061)
+    const on = glow(b, game, time)
+    if (on <= 0) continue // dark: no dot, no halo
+    const [r, g, bl] = b.kind === 'wild' ? WILD : TAMED
     const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, tp * 1.1)
     halo.addColorStop(0, `rgba(${r},${g},${bl},${0.35 * on})`)
     halo.addColorStop(1, `rgba(${r},${g},${bl},0)`)
