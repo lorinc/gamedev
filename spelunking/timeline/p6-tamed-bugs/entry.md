@@ -10,7 +10,7 @@ build b3.1: 2026-09-26 · p6 · b3 Tamed Bugs: the pivot recorded, the probe cen
 build b3.2: 2026-09-26 · p6 · b3 Tamed Bugs step 2: wild bugs drift to you, nibble ore with hearts, tamed at 16 turn warm (D059)
 build b3.3: 2026-09-26 · p6 · b3 Tamed Bugs step 2b: shared taming, the bug bar, the hold places a bug, bug lights (D060)
 build b3.4: 2026-09-26 · p6 · b3 Tamed Bugs step 2c: wild bugs live in the fog, 1 per 32×32 block, flicker and dark (D061), the wild light fades out
-build b3.5: 2026-09-26 · p6 · b3 Tamed Bugs step 3a: standing still pulls ore and loot, the bar calms the chasers, bar bugs roam (D062), calmer bar bugs
+build b3.5: 2026-09-26 · p6 · b3 Tamed Bugs step 3a: standing still pulls ore and loot, the bar calms the chasers, bar bugs roam (D062), bar bugs fly 2 to 8 off with inertia
 ---
 
 # p6 · b3 · Tamed Bugs

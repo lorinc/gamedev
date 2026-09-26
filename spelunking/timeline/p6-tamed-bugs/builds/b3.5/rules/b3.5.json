@@ -346,7 +346,7 @@
       "light": 2,
       "barMoveTicks": 12,
       "barNear": 2,
-      "barFar": 5
+      "barFar": 8
     },
     "pull": {
       "ticks": 300

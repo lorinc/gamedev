@@ -18,8 +18,8 @@
 //
 // Taming (D060): every nibble counts toward one shared total (`g.fed`). At `tame`, the bug that took
 // the last bite goes into the bug bar (`g.bar`, barSlots long; event `tamed`) and the count restarts.
-// With the bar full, nobody is tamed. A bar bug roams 2 to 4 steps from you with some inertia, one
-// step every barMoveTicks, and lights `light` tiles around itself like your light (game.js). Each bar bug keeps
+// With the bar full, nobody is tamed. A bar bug roams barNear to barFar steps from you with inertia,
+// one step every barMoveTicks, and lights `light` tiles around itself like your light (game.js). Each bar bug keeps
 // one chaser away (D062): with 3 in the bar, you're left in peace. The `place` command puts the bar's
 // first bug at the open cell nearest to 2 above you: its den, where it hovers and lights for good, and
 // no wild bug comes within `den` tiles. Placed bugs mine in step 3.
@@ -70,6 +70,7 @@ import { wrap } from './rules.js'
  * @property {number} scared until this tick
  * @property {number} nibbleAt its next nibble, not before this tick
  * @property {number} dir a bar bug's heading, an index into STEPS (the 4 neighbours); -1 for none
+ * @property {number} run steps a bar bug has gone on its heading
  * @property {number} pace ticks its last step took, for drawing
  */
 
@@ -126,6 +127,7 @@ export function addBug(g, x, y) {
     scared: 0,
     nibbleAt: 0,
     dir: -1,
+    run: 0,
     pace: 0,
   }
   g.bugs.push(bug)
@@ -165,11 +167,12 @@ function gone(g, b, bug) {
   return true
 }
 
-// A bar bug roams round you (D062, calmed after play): it keeps 2 to 4 steps from you (field steps,
-// barNear..barFar), one step every barMoveTicks, twice as fast while catching up. It keeps its heading
-// (inertia): it turns 1 step in TURN, never straight back unless it must; when rock or the band stops
-// it, it hovers a beat first, then heads off anywhere; and 1 step in PAUSE it hovers a beat. Outside the field (a long fall, too far) it jumps to your
-// cell. It lights from its cell, which is always open.
+// A bar bug roams round you (D062, calmed after play): it keeps barNear to barFar field steps from you,
+// one step every barMoveTicks, twice as fast while it catches up, and never pauses. It keeps its heading
+// (inertia): a voluntary turn 1 step in TURN, and only after MIN_RUN steps straight. A turn it has to
+// make takes, by preference: a side turn with room for MIN_RUN steps, any side turn, straight back with
+// room for MIN_RUN, then straight back. Outside the field (a long fall, too far) it jumps to your cell.
+// It lights from its cell, which is always open.
 /** @param {Game} g @param {Bugs} b @param {Field} field @param {Bug} bug @param {() => number} rng */
 function roam(g, b, field, bug, rng) {
   bug.glow = { x: bug.x, y: bug.y }
@@ -177,33 +180,37 @@ function roam(g, b, field, bug, rng) {
   const far = here === undefined || here > b.barFar
   const pace = far ? Math.max(1, b.barMoveTicks >> 1) : b.barMoveTicks
   if (g.tick - bug.movedAt < pace) return
-  /** @type {Cell | null} */
-  let to = null
+  /** @type {Cell} */
+  let to
   if (here === undefined) {
     to = { x: g.ch.x, y: g.ch.y }
     bug.dir = -1
   } else {
-    // the steps it may take: toward you when far, away when too close, else staying in the band
-    /** @type {number[]} */
-    const ok = []
-    STEPS.forEach(([sx, sy], k) => {
-      const d = field.dist.get(cellOf(g, { x: bug.x + sx, y: bug.y + sy }))
-      if (d === undefined) return
-      if (here > b.barFar ? d < here : here < b.barNear ? d > here : d >= b.barNear && d <= b.barFar) ok.push(k)
-    })
-    const keep = ok.includes(bug.dir) && (far || rng() % TURN !== 0)
-    const blocked = bug.dir >= 0 && !ok.includes(bug.dir) && !far
-    if (blocked || (!far && rng() % PAUSE === 0)) {
-      if (blocked) bug.dir = -1 // it stops at the edge, hovers a beat, then turns anywhere
-      bug.movedAt = g.tick
-      return
+    // may it go from a cell at `from` steps to one at `d`: toward you when far, away when too close, else in the band
+    const fits = (/** @type {number} */ from, /** @type {number | undefined} */ d) =>
+      d !== undefined && (from > b.barFar ? d < from : from < b.barNear ? d > from : d >= b.barNear && d <= b.barFar)
+    const dist = (/** @type {number} */ k, /** @type {number} */ n) =>
+      field.dist.get(cellOf(g, { x: bug.x + STEPS[k][0] * n, y: bug.y + STEPS[k][1] * n }))
+    const ok = [0, 1, 2, 3].filter((k) => fits(here, dist(k, 1)))
+    const roomy2 = (/** @type {number} */ k) => fits(/** @type {number} */ (dist(k, 1)), dist(k, 2))
+    const keep = ok.includes(bug.dir) && (far || bug.run < MIN_RUN || rng() % TURN !== 0)
+    let pick = keep ? bug.dir : -1
+    if (!keep) {
+      const back = bug.dir >= 0 ? bug.dir ^ 1 : -1
+      const side = ok.filter((k) => k !== back && k !== bug.dir)
+      const rest = ok.filter((k) => k === back || k === bug.dir) // straight back; or on, when a voluntary turn found no side way
+      for (const tier of [side.filter(roomy2), side, rest.filter(roomy2), rest]) {
+        if (!tier.length) continue
+        pick = tier[rng() % tier.length]
+        break
+      }
     }
-    const turns = ok.filter((k) => k !== (bug.dir ^ 1)) // not straight back, unless that's all there is
-    const pick = keep ? bug.dir : turns.length ? turns[rng() % turns.length] : ok.length ? ok[rng() % ok.length] : -1
     if (pick < 0) {
+      bug.from = { x: bug.x, y: bug.y } // hovers where it is (no snap back when drawn)
       bug.movedAt = g.tick
       return
     }
+    bug.run = pick === bug.dir ? bug.run + 1 : 1
     bug.dir = pick
     to = { x: wrap(bug.x + STEPS[pick][0], g.world.w), y: bug.y + STEPS[pick][1] }
   }
@@ -215,9 +222,9 @@ function roam(g, b, field, bug, rng) {
   bug.glow = { x: bug.x, y: bug.y }
 }
 
-/** A roaming bar bug turns 1 step in TURN, and hovers a beat 1 step in PAUSE. */
+/** A roaming bar bug turns on its own 1 step in TURN, and only after MIN_RUN steps straight. */
 const TURN = 6
-const PAUSE = 5
+const MIN_RUN = 2
 
 /**
  * The hold (D060): the bar's first bug goes to the open cell nearest to 2 above you (the first
