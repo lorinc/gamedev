@@ -119,7 +119,7 @@ test('with bugs and the pull: same seed + same commands → the same bugs (D056,
     light: 2,
     barMoveTicks: 12,
     barNear: 2,
-    barFar: 5,
+    barFar: 8,
   }
   const a = play(DEFAULT_TERRAIN.caveSeed, light, bugs, { ticks: 30 })
   const b = play(DEFAULT_TERRAIN.caveSeed, light, bugs, { ticks: 30 })

@@ -150,7 +150,7 @@ describe('tamed bugs: the bar and the hold (D060)', () => {
   const ROOM = ['#' + '#'.repeat(40) + '#', ...Array(7).fill('#' + '.'.repeat(40) + '#'), '#' + '#'.repeat(40) + '#']
   ROOM[4] = '#' + '.'.repeat(19) + '@' + '.'.repeat(20) + '#' // you at (20, 4)
 
-  test('a bar bug keeps 2 to 4 steps from you, keeps its heading, and lights 2 around itself for good (D062)', () => {
+  test('a bar bug keeps barNear to barFar steps from you, keeps its heading, and lights 2 around itself for good (D062)', () => {
     const g = game(ROOM, [])
     g.cfg.light = { base: 0, orePer: 0, lootPer: 0 } // your own light: just your cell
     const bug = inBar(g) // on your cell: it moves off first
