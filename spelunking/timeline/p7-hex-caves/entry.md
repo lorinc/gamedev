@@ -126,6 +126,15 @@ It turned thinnest wall off and made walls heavy (3.3) and inner corners rare (0
 faceted. The hidden knobs act on every layer: the pudding got less open (fixed by raising its open to
 0.65: 49% against the user's 54%), and the brine's worm tunnels became blocky rooms.
 
+**The user's tuning, and flat caves.** The user tuned on (seed 36048, then 43344: border next to open 2.1,
+next to rock 6.8, thinnest wall 0.9, walls straight 1): "variety, but also a lot of space to work with,
+small caves, bigger ones, almost no impractically massive ones, walls are thin enough for simple
+tunnels… great for gameplay", then "even better"; that is the default now. Asked for caves "more
+horizontal, less vertical", two knobs (1 = off, the default): **flat caves** (like next to like pulls
+harder sideways than up and down, by flat^cos 2θ of the link) and **flat walls** (a border tile's border
+weighs flatWalls^cos 2θ of its direction: floors and ceilings over side walls). Measured as the border's
+mean levelness (+1 all level, −1 all upright) on seed 43344: 0.06 off, 0.18 at 3/3, 0.23 at 5/5.
+
 ## Feedback
 
 - [2026-09-26 · v5](feedback/2026-09-26_lorinc_v5.md): hex version 6/10, the grid clearly visible (assumption 3 failed); the quad WFC "looks like real caves, not game design". Next: more middle-sized caves connected by tunnels, and a map about 1/5 the width and height.

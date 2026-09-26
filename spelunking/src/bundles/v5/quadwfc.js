@@ -19,6 +19,8 @@ export const QCLASSES = ['rock', 'open', 'wall', 'nook', 'inner', 'saddle']
 export const QSKY = 5
 
 const bit = (/** @type {number} */ t, /** @type {number} */ k) => (t >> k) & 1
+/** How level a direction is: 1 across, −1 up and down (cos 2θ). @param {number} dx @param {number} dy */
+const level = (dx, dy) => (dx * dx - dy * dy) / (dx * dx + dy * dy || 1)
 /** Class of each of the 16 corner patterns. */
 export const QCLASS = Array.from({ length: 16 }, (_, t) => {
   const n = bit(t, 0) + bit(t, 1) + bit(t, 2) + bit(t, 3)
@@ -29,10 +31,10 @@ export const QCLASS = Array.from({ length: 16 }, (_, t) => {
   return t === 5 || t === 10 ? QSADDLE : QWALL
 })
 /**
- * The quad WFC's own defaults, from a random search (tools/knobsearch.js) over every knob, the hidden ones
- * too (user): the ice as it looks on seed 18142 with the user's setting (open 0.275, pudding 0.4, brine
- * 0.05, caves grow 5, rock grows 2.5, walls straight 1.05, thinnest wall 0.8, wobble 0.5), but steadier
- * from seed to seed. Rounded; pudding open raised to 0.65 to keep the pudding about as open as before.
+ * The quad WFC's own defaults: a random search (tools/knobsearch.js) over every knob found the ice of
+ * seed 18142 with the user's setting, steadier; then the user tuned it further (seed 36048: "variety, but
+ * also a lot of space to work with … great for gameplay"; then seed 43344 with walls straight 1, "even better"). flat and flatWalls came after (user: "more
+ * horizontal, less vertical").
  */
 export const QKNOBS = {
   openIce: 0.51, // how open each layer is
@@ -40,17 +42,19 @@ export const QKNOBS = {
   openBrine: 0.05,
   grow: 6, // caves grow: open next to open
   rock: 2.35, // rock grows: rock next to rock
-  straight: 0.9, // a wall carries a neighbour's border straight on
-  thin: 0, // how thin walls can get, in cells: rock with open space on opposite sides within this distance is avoided (0 = off)
+  straight: 1, // a wall carries a neighbour's border straight on
+  thin: 0.9, // how thin walls can get, in cells: rock with open space on opposite sides within this distance is avoided (0 = off)
   wobble: 0.5, // rows the layer borders wobble by
+  flat: 1, // caves and rock grow sideways more than up and down (1 = the same)
+  flatWalls: 1, // borders prefer to run level: floors and ceilings over side walls (1 = no preference)
   // below: constants that used to be hidden in the code (user: search them too)
   wallW: 3.3, // base weight of a wall tile (2 neighbouring corners open)
   nookW: 0.5, // … a nook (1 corner open)
   innerW: 0.05, // … an inner corner (3 open)
   saddleW: 0.005, // … a saddle (2 opposite corners open)
   edgeAff: 0.3, // a border tile (wall, nook, inner) next to another border tile
-  openEdge: 0.92, // … next to an open tile
-  rockEdge: 0.66, // … next to a rock tile
+  openEdge: 2.1, // … next to an open tile
+  rockEdge: 6.8, // … next to a rock tile
   thinForce: 0.034, // the weight rock gets at a pinched corner (1 = no effect)
   thinAngle: 136, // how far apart (degrees) open corners must be to count as opposite sides
   relax: 150, // relaxation passes for the grid (fewer = more of the triangle lattice shows)
@@ -300,12 +304,26 @@ export function generateQuads(G, seed, K) {
       let f = (w[t] * COUNT[c]) / inDom[c]
       // rock at a pinched corner would make a wall thinner than K.thin: it tends to break through instead
       for (let k = 0; k < 4; k++) if (thin[k] && !bit(t, k)) f *= K.thinForce
+      // a border through this quad (it crosses 2 edges): level borders by flatWalls
+      if (EDGE[c] && K.flatWalls !== 1) {
+        let dx = 0
+        let dy = 0
+        let sign = 1
+        for (let k = 0; k < 4; k++)
+          if (bit(t, k) !== bit(t, (k + 1) & 3)) {
+            dx += sign * G.ex[q * 4 + k]
+            dy += sign * G.ey[q * 4 + k]
+            sign = -sign
+          }
+        f *= K.flatWalls ** level(dx, dy)
+      }
       for (let k = 0; k < 4; k++) {
         const p = L.nb[q * 4 + k]
         if (p < 0 || tile[p] < 0) continue
         const pc = QCLASS[tile[p]]
-        if (c === QROCK && pc === QROCK) f *= K.rock
-        else if (c === QOPEN && pc === QOPEN) f *= K.grow
+        // like grows next to like, more strongly sideways by flat (the link runs through edge k)
+        if (c === QROCK && pc === QROCK) f *= K.rock * K.flat ** level(G.ex[q * 4 + k], G.ey[q * 4 + k])
+        else if (c === QOPEN && pc === QOPEN) f *= K.grow * K.flat ** level(G.ex[q * 4 + k], G.ey[q * 4 + k])
         else if (EDGE[c] && EDGE[pc]) f *= K.edgeAff
         else if (EDGE[c] || EDGE[pc]) {
           const other = EDGE[c] ? pc : c

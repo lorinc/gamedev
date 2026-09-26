@@ -54,6 +54,8 @@ const QUAD_SLIDERS = [
   ['rock', 'rock grows', 1, 100, 0.5],
   ['straight', 'walls straight', 0.1, 20, 0.05],
   ['thin', 'thinnest wall (cells, 0 = any)', 0, 6, 0.1],
+  ['flat', 'flat caves (1 = any way)', 0.2, 5, 0.05],
+  ['flatWalls', 'flat walls (1 = any way)', 0.2, 5, 0.05],
   ['wallW', '· wall weight', 0.01, 10, 0.01],
   ['nookW', '· nook weight', 0.01, 10, 0.01],
   ['innerW', '· inner-corner weight', 0.01, 10, 0.01],
