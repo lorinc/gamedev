@@ -167,8 +167,9 @@ function sliders(list, target, defaults) {
 const hexGroup = sliders(HEX_SLIDERS, knobs, KNOBS)
 const quadGroup = sliders(QUAD_SLIDERS, qknobs, QKNOBS)
 function showSliders() {
-  hexGroup.style.display = gen === 'hex' ? '' : 'none'
-  quadGroup.style.display = gen === 'quads' ? '' : 'none'
+  // 'contents': the group's labels sit in the bar themselves, so they wrap at the page width
+  hexGroup.style.display = gen === 'hex' ? 'contents' : 'none'
+  quadGroup.style.display = gen === 'quads' ? 'contents' : 'none'
 }
 showSliders()
 const reset = el('button', {}, 'reset knobs')
