@@ -154,5 +154,10 @@ the Question with a partial fail (it works, fast and seamless, but the grid show
 user's eye ("looks like real caves, not game design"; "great for gameplay"). The layer roles aren't judged
 yet, and the cave/tunnel skeleton wasn't needed for now: the user got rooms and thin walls from the knobs.
 
+**A second setting to keep (user):** "I also like this layout a LOT, but it means more walling than opening -
+but this is still a great, interesting, challenging terrain. I will want a test run with this one too for
+the wall building, when we get there." Seed 24474:
+`?seed=24474&k=openIce:0.255,openPudding:0.65,openBrine:0.05,grow:15,rock:2.35,straight:0.9,thin:1,wobble:0.5,flat:2.9,flatWalls:3.5,flatCeil:2.35,wallW:7.44,nookW:1.47,innerW:1.61,saddleW:0.001,edgeAff:0.1,openEdge:2.5,rockEdge:6,thinForce:0.15,thinAngle:80,relax:140`
+
 **Next (user):** a new simulator zoomed in on the ice layer, and a talk about the player navigation / cave
 connection network (the lattice) before building it.
