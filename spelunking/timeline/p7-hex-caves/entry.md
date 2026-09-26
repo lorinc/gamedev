@@ -134,6 +134,8 @@ horizontal, less vertical", two knobs (1 = off, the default): **flat caves** (li
 harder sideways than up and down, by flat^cos 2θ of the link) and **flat walls** (a border tile's border
 weighs flatWalls^cos 2θ of its direction: floors and ceilings over side walls). Measured as the border's
 mean levelness (+1 all level, −1 all upright) on seed 43344: 0.06 off, 0.18 at 3/3, 0.23 at 5/5.
+The user then set flat walls 1.75 (seed 12227), now the default: "this brought back some volatility,
+but the caves are easier to traverse now, and floor is the most important part of a cave".
 
 ## Feedback
 

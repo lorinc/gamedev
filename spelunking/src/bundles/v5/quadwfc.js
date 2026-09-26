@@ -46,7 +46,7 @@ export const QKNOBS = {
   thin: 0.9, // how thin walls can get, in cells: rock with open space on opposite sides within this distance is avoided (0 = off)
   wobble: 0.5, // rows the layer borders wobble by
   flat: 1, // caves and rock grow sideways more than up and down (1 = the same)
-  flatWalls: 1, // borders prefer to run level: floors and ceilings over side walls (1 = no preference)
+  flatWalls: 1.75, // borders prefer to run level: floors and ceilings over side walls (1 = no preference)
   // below: constants that used to be hidden in the code (user: search them too)
   wallW: 3.3, // base weight of a wall tile (2 neighbouring corners open)
   nookW: 0.5, // … a nook (1 corner open)
