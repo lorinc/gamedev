@@ -54,6 +54,16 @@ const QUAD_SLIDERS = [
   ['rock', 'rock grows', 1, 100, 0.5],
   ['straight', 'walls straight', 0.1, 20, 0.05],
   ['thin', 'thinnest wall (cells, 0 = any)', 0, 6, 0.1],
+  ['wallW', '· wall weight', 0.01, 10, 0.01],
+  ['nookW', '· nook weight', 0.01, 10, 0.01],
+  ['innerW', '· inner-corner weight', 0.01, 10, 0.01],
+  ['saddleW', '· saddle weight', 0.001, 1, 0.001],
+  ['edgeAff', '· border next to border', 0.1, 10, 0.05],
+  ['openEdge', '· border next to open', 0.1, 10, 0.05],
+  ['rockEdge', '· border next to rock', 0.1, 10, 0.05],
+  ['thinForce', '· thin-wall force (1 = none)', 0.001, 1, 0.001],
+  ['thinAngle', '· thin-wall angle (°)', 60, 180, 1],
+  ['relax', '· grid relax passes', 0, 400, 10],
   ['wobble', 'layer wobble', 0, 4, 0.5],
 ]
 
@@ -188,7 +198,7 @@ function build() {
     const s = seed + n
     const t0 = performance.now()
     if (gen === 'quads') {
-      const G = buildGrid(s, 150, QCOLS, QROWS)
+      const G = buildGrid(s, qknobs.relax, QCOLS, QROWS)
       const tg = performance.now()
       const C = generateQuads(G, s, /** @type {typeof QKNOBS} */ (qknobs))
       const ms = performance.now() - tg

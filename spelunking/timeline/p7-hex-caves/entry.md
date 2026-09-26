@@ -112,6 +112,20 @@ wobble 0.5. The user: thinnest wall and walls straight had the largest impact, s
 grid steps, so it can take tenths; 1.0 comes closest to the old 1 step (seed 1643: 105 cavities and
 largest 51% against 112 and 59%).
 
+**A knob search (user: "ice layer stats similar to seed 18142 with these last settings, but less
+volatility", then: search the hidden parameters too).** The code's constants became knobs (tile family
+weights, border-tile affinities, the thin-wall force and angle, relaxation passes), shown as `·` sliders.
+`tools/knobsearch.js` scores a setting on 12 seeds: the ice's open share (3×), rooms (caves of 20+
+corners), their mean size, tiny caves and the largest cave's share against seed 18142's, plus their
+spread across seeds, plus half-weight drift of the pudding and brine; 800 random settings, 400 around the
+best 8, the finalists verified on 40 fresh seeds (about 7 minutes on 8 cores). Seed 18142 was unusual for
+the user's setting: on it the ice had 11 rooms of about 75 corners, the largest cave 21% of the open;
+over 40 seeds the setting averages 5.8 ± 2.4 rooms of 210 ± 128, largest 56 ± 22%. The winner (now the
+default) gives 12.1 ± 2.3 rooms of 67 ± 16, open 37 ± 4%, largest 22 ± 8%: the ice as on 18142, steady.
+It turned thinnest wall off and made walls heavy (3.3) and inner corners rare (0.05), so rooms are more
+faceted. The hidden knobs act on every layer: the pudding got less open (fixed by raising its open to
+0.65: 49% against the user's 54%), and the brine's worm tunnels became blocky rooms.
+
 ## Feedback
 
 - [2026-09-26 · v5](feedback/2026-09-26_lorinc_v5.md): hex version 6/10, the grid clearly visible (assumption 3 failed); the quad WFC "looks like real caves, not game design". Next: more middle-sized caves connected by tunnels, and a map about 1/5 the width and height.

@@ -50,7 +50,7 @@ for (let seed = first; seed < first + 4; seed++) {
   )
   const q0 = performance.now()
   // the quad map, a grid per seed, as on the page
-  const grid = buildGrid(seed, 150, QCOLS, QROWS)
+  const grid = buildGrid(seed, QKNOBS.relax, QCOLS, QROWS)
   const C = generateQuads(grid, seed, QKNOBS)
   const qms = performance.now() - q0
   const again2 = generateQuads(grid, seed, QKNOBS)

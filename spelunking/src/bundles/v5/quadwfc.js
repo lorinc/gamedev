@@ -29,20 +29,36 @@ export const QCLASS = Array.from({ length: 16 }, (_, t) => {
   return t === 5 || t === 10 ? QSADDLE : QWALL
 })
 /**
- * The quad WFC's own defaults: the user's setting for "enough big enough, but separable rooms" (seed 1643
- * on the 6 × 12 map). The user: thinnest wall and walls straight had the largest impact.
+ * The quad WFC's own defaults, from a random search (tools/knobsearch.js) over every knob, the hidden ones
+ * too (user): the ice as it looks on seed 18142 with the user's setting (open 0.275, pudding 0.4, brine
+ * 0.05, caves grow 5, rock grows 2.5, walls straight 1.05, thinnest wall 0.8, wobble 0.5), but steadier
+ * from seed to seed. Rounded; pudding open raised to 0.65 to keep the pudding about as open as before.
  */
 export const QKNOBS = {
-  openIce: 0.3, // how open each layer is
-  openPudding: 0.365,
-  openBrine: 0.04,
-  grow: 5, // caves grow: open next to open
-  rock: 2.5, // rock grows: rock next to rock
-  straight: 1, // a wall carries a neighbour's border straight on
-  thin: 1, // how thin walls can get, in cells: rock with open space on opposite sides within this distance is avoided (0 = off)
+  openIce: 0.51, // how open each layer is
+  openPudding: 0.65,
+  openBrine: 0.05,
+  grow: 6, // caves grow: open next to open
+  rock: 2.35, // rock grows: rock next to rock
+  straight: 0.9, // a wall carries a neighbour's border straight on
+  thin: 0, // how thin walls can get, in cells: rock with open space on opposite sides within this distance is avoided (0 = off)
   wobble: 0.5, // rows the layer borders wobble by
+  // below: constants that used to be hidden in the code (user: search them too)
+  wallW: 3.3, // base weight of a wall tile (2 neighbouring corners open)
+  nookW: 0.5, // … a nook (1 corner open)
+  innerW: 0.05, // … an inner corner (3 open)
+  saddleW: 0.005, // … a saddle (2 opposite corners open)
+  edgeAff: 0.3, // a border tile (wall, nook, inner) next to another border tile
+  openEdge: 0.92, // … next to an open tile
+  rockEdge: 0.66, // … next to a rock tile
+  thinForce: 0.034, // the weight rock gets at a pinched corner (1 = no effect)
+  thinAngle: 136, // how far apart (degrees) open corners must be to count as opposite sides
+  relax: 150, // relaxation passes for the grid (fewer = more of the triangle lattice shows)
 }
 /** @typedef {typeof QKNOBS} QKnobs */
+
+/** Border tiles: the rock/cave boundary runs through them (saddles left out). */
+const EDGE = [false, false, true, true, true, false]
 
 const COUNT = [0, 0, 0, 0, 0, 0]
 for (const c of QCLASS) COUNT[c]++
@@ -140,7 +156,7 @@ export function generateQuads(G, seed, K) {
   // class weights per band, shared by the class's tiles
   const base = [0, 1, 2, 3, 4].map((b) => {
     const o = opens[b]
-    const cls = [2 * (1 - o), 2 * o, 1, 0.5, 0.5, 0.02]
+    const cls = [2 * (1 - o), 2 * o, K.wallW, K.nookW, K.innerW, K.saddleW]
     return Float64Array.from({ length: 16 }, (_, t) => Math.max(cls[QCLASS[t]], 1e-6) / COUNT[QCLASS[t]])
   })
   // entropy per band and domain, cached
@@ -283,13 +299,19 @@ export function generateQuads(G, seed, K) {
       const c = QCLASS[t]
       let f = (w[t] * COUNT[c]) / inDom[c]
       // rock at a pinched corner would make a wall thinner than K.thin: it tends to break through instead
-      for (let k = 0; k < 4; k++) if (thin[k] && !bit(t, k)) f *= 0.01
+      for (let k = 0; k < 4; k++) if (thin[k] && !bit(t, k)) f *= K.thinForce
       for (let k = 0; k < 4; k++) {
         const p = L.nb[q * 4 + k]
         if (p < 0 || tile[p] < 0) continue
         const pc = QCLASS[tile[p]]
         if (c === QROCK && pc === QROCK) f *= K.rock
         else if (c === QOPEN && pc === QOPEN) f *= K.grow
+        else if (EDGE[c] && EDGE[pc]) f *= K.edgeAff
+        else if (EDGE[c] || EDGE[pc]) {
+          const other = EDGE[c] ? pc : c
+          if (other === QOPEN) f *= K.openEdge
+          else if (other === QROCK) f *= K.rockEdge
+        }
         // the neighbour's boundary enters through this edge: a wall carries it straight on
         if (bit(t, k) !== bit(t, (k + 1) & 3) && c === QWALL) f *= K.straight
       }
@@ -317,6 +339,7 @@ export function generateQuads(G, seed, K) {
     const stack = [v]
     /** @type {[number, number][]} */
     const dirs = []
+    const opposite = Math.cos((K.thinAngle * Math.PI) / 180)
     while (stack.length) {
       const a = /** @type {number} */ (stack.pop())
       for (const b of vadj[a]) {
@@ -330,7 +353,7 @@ export function generateQuads(G, seed, K) {
         if (vs[b] !== 1) continue
         const ux = dx / len
         const uy = dy / len
-        for (const [ox, oy] of dirs) if (ux * ox + uy * oy < -0.5) return true
+        for (const [ox, oy] of dirs) if (ux * ox + uy * oy < opposite) return true
         dirs.push([ux, uy])
       }
     }
