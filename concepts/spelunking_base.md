@@ -27,6 +27,7 @@ Built on the pillars in [opinionated_games.md](opinionated_games.md).
 
 ### Setting: A Little Moon Colony
 
+* **2026-09-26: the setting becomes Callisto** (D065; lore: [callisto_lore.md](callisto_lore.md), still a draft in its details; gameplay design: [callisto_design.md](callisto_design.md); the element pool: [callisto_elements.md](callisto_elements.md)). A decaying human colony in the ice around the 90-metre line. There are no ore veins, only isotope dust; concentrated by tamed bugs, it wakes the sleeping native life, and the caves bloom and, in time, grow breathable air. Theme: reclaiming the habitat as part of nature. This replaces the generic "small moon of a ringed gas planet" below, and "no radiation" becomes "radiation is the source of life". The tone stays light and pretty, never grim, and Jupiter is the sky's showpiece. It also fits the art style: translucent ice walls, dark asteroid chunks, glinting dust and the pitch-black ocean below are shader and particle material, not tiles.
 * **Why We Dig**
 * A tiny colony on a small moon orbiting a **giant ringed gas planet**. The surface is beautiful but has **no air**: anything you live in or run must be sealed underground.
 * Kept light and pretty, never grim: no radiation or doom, just no air. Colonists are cute and round.
