@@ -147,3 +147,12 @@ ceiling is often the next cave's floor seen from below.
 - [2026-09-26 · v5](feedback/2026-09-26_lorinc_v5.md): hex version 6/10, the grid clearly visible (assumption 3 failed); the quad WFC "looks like real caves, not game design". Next: more middle-sized caves connected by tunnels, and a map about 1/5 the width and height.
 
 ## Conclusion → next
+
+The user: "Let's go with this one" (2026-09-27): the quad WFC on the relaxed Townscaper-style grid, with the
+defaults as they are now (seed 12227's setting, flat floors and flat ceilings 1.75). The hex WFC answered
+the Question with a partial fail (it works, fast and seamless, but the grid shows); the quad WFC passes the
+user's eye ("looks like real caves, not game design"; "great for gameplay"). The layer roles aren't judged
+yet, and the cave/tunnel skeleton wasn't needed for now: the user got rooms and thin walls from the knobs.
+
+**Next (user):** a new simulator zoomed in on the ice layer, and a talk about the player navigation / cave
+connection network (the lattice) before building it.
