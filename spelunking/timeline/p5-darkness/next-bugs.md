@@ -130,6 +130,29 @@ bugs, headless screenshots zoomed out (never-seen caves with flickering bugs).
 - Bar bugs fly around you like normal bugs, no circling.
 - Claude's defaults (OK'd) and calls: D062.
 
+## Decided by the user, seventh pass (2026-09-26): placed bugs mine, and the dust stream (plan, not built; b3.6)
+Build it in a fresh session: the rest of session 3. Record it as D063. *Italics* = Claude's defaults, shown
+to the user; the user answered "a: ok" (read as: the stream as described, and ore only) and "2: R=4".
+1. **Placed bugs mine** (D056 as adjusted by D060, D062): a placed bug pulls *seen* ore within 12 of its
+   den, through the wall, reusing `pull.js` (`nearestValuable`, `toRock`): nearest first, the cell turns
+   to the rock round it. *4 a minute = 1 per 900 ticks.* **Ore only** (loot stays yours to pull).
+2. **Carry 8;** full, it stops pulling and glows (waits).
+3. **Hand-over (user: R = 4):** you within 4 tiles (straight distance) of a placed bug with ore → its ore
+   flies into your pack, *one unit every few ticks*, without stopping you; with your pack full, it waits.
+4. **The dust stream (user's addition):** the pulling itself isn't shown anywhere, so while a pull is under
+   way a continuous thin trickle of dust flows from the target cell to the puller (you or a placed bug), in
+   the material's colour, specks drifting along a slight arc; the existing flight lands when a unit
+   completes. *For you it starts ~0.5 s after you stop (short stops don't flicker it); for a bug whenever
+   it's pulling; none with nothing in reach, a full pack/bug, or when you move.* The sim keeps the current
+   target (`g.pulling` for you, `bug.target` per placed bug), picked by the same code as the pull, so the
+   stream always points at the cell that goes. The dust is drawing only, from time, no particle state,
+   on-screen only.
+5. Also: the flight bug → you on hand-over, wall → bug on a bug's pull (the existing flight, ore colour).
+Verification: ASCII-map tests (a placed bug pulls the nearest seen ore within 12 at its rate, only ore,
+ore → rock, carries 8 then stops, hands over within 4 and not at 5, waits with your pack full, `g.pulling`
+/ `bug.target` point at the next cell), determinism with placed bugs, headless screenshots of the stream
+(you and a bug). Then ship as b3.6.
+
 ## Steps (sequential sub-sessions, like p5; each one playable, user OK 2026-09-25)
 Sessions (user OK 2026-09-25): 0 + 1 · 2 · 3 · 3b + 4, each in a fresh session
 that starts from the handoff and this file.
