@@ -21,7 +21,8 @@
 // ceiling for ↑); the reach stays the same.
 //
 // Without the teleport (D055, `teleport: false`): the command does nothing, a deep fall just lands, and
-// stepping onto the home cell with something in the pack counts it in (event `home`).
+// stepping onto the home cell with something in the pack counts it in (event `home`). With `homeStone`
+// (D064), you leave home with that much soft rock, topped up each time you bank.
 //
 // Moon bugs (D056, D059, D060, D061), only when the config has `bugs`: bugs.js, each tick before the light (a
 // nibble changes the pack). A probe ring scares the wild bugs it passes. The command `place` (the 1 s
@@ -33,7 +34,7 @@
 
 import { isFloor, isOpen, Tile } from '../gen/world.js'
 import { digTicks, stopReason, tileAt } from './rules.js'
-import { add, fits, MATERIAL_NAME, material, rock, spendRock, valuable } from './pack.js'
+import { add, count, fits, MATERIAL_NAME, material, rock, spendRock, valuable } from './pack.js'
 import { interpret } from './ruleset.js'
 import { litCells, lightRadius, surfaceCells } from './light.js'
 import { PROBE, probeReach, ringCells } from './probe.js'
@@ -67,12 +68,13 @@ import { updateMine, updatePull } from './pull.js'
  *   | { type: 'tamed', id: number, x: number, y: number, slot: number }
  *   | { type: 'placed', id: number, x: number, y: number }
  *   | { type: 'pulled', x: number, y: number, tile: number, to: Cell, by: number }
- *   | { type: 'handed', id: number, x: number, y: number, to: Cell }} GameEvent seen: cells (y * w + x) seen for the first time, for a renderer's
+ *   | { type: 'handed', id: number, x: number, y: number, to: Cell }
+ *   | { type: 'returned', id: number, x: number, y: number, slot: number }} GameEvent seen: cells (y * w + x) seen for the first time, for a renderer's
  *   texture; ring: the probe from (x, y) reached ring r (D053); nibble: wild bug `id` at (x, y) ate an ore from the pack,
  *   carried from `from` (D056); tamed: the shared count reached `tame` with its bite, and it's in the bug bar's
  *   `slot` (D060); placed: the bar's first bug is at its den (x, y); pulled: you (by 0) or placed bug `by` (D063)
  *   pulled `tile` from (x, y) into the pack or the bug, at `to`, and the cell is rock now (D062); handed: placed bug
- *   `id` at (x, y) gave you an ore, at `to` (D063)
+ *   `id` at (x, y) gave you an ore, at `to` (D063); returned: placed bug `id` is back in the bar's `slot` (D064)
  */
 
 /**
@@ -193,6 +195,7 @@ export function createGame(world, home, cfg, table) {
     stillFor: 0,
     pulling: null,
   }
+  g.pack = homePack(cfg)
   if (cfg.light) {
     g.seen = new Uint8Array(world.w * world.h)
     g.surface = surfaceCells(world)
@@ -351,7 +354,7 @@ function next(g) {
   }
   const { ch, cfg, world } = g
   const inv = {
-    fits: (/** @type {number[]} */ tiles) => fits(g.pack, cfg.packSlots, tiles),
+    fits: (/** @type {number[]} */ tiles) => fits(g.pack, cfg.packSlots, tiles, cfg.packReserve),
     buildable: rock(g.pack),
   }
   /** What the next step is as a flick or as a hold, and whether the run stops before it. @param {boolean} held */
@@ -422,7 +425,7 @@ function apply(g, action) {
   // ore and loot first: the room they were promised (ruleset.js) mustn't go to rock mined alongside
   for (const d of [...action.digs.filter((d) => valuable(d.tile)), ...action.digs.filter((d) => !valuable(d.tile))]) {
     world.tiles[d.y * world.w + d.x] = Tile.Open
-    const kept = add(g.pack, g.cfg.packSlots, material(d.tile)) // rock with no room is dropped (D038)
+    const kept = add(g.pack, g.cfg.packSlots, material(d.tile), g.cfg.packReserve) // rock with no room is dropped (D038)
     if (g.dive) g.dive.mined++
     g.events.push({ type: 'mined', x: d.x, y: d.y, tile: d.tile, kept })
   }
@@ -485,24 +488,36 @@ function teleport(g) {
 }
 
 // Walked home (D055, without the teleport): the same count and log, and the run goes on. Only a dive
-// that brought something ends here, so walking past home on the surface doesn't log empty dives.
+// that brought something (the pack isn't just as it left home) ends here, so walking past home on the
+// surface doesn't log empty dives.
 /** @param {Game} g */
 function bank(g) {
-  if (!g.dive || !g.pack.some(Boolean)) return
+  const stone = g.cfg.homeStone ?? 0
+  if (!g.dive || (count(g.pack, Tile.Soft) === stone && g.pack.every((s) => !s || s.tile === Tile.Soft))) return
   g.events.push({ type: 'home', dive: endDive(g) })
 }
 
-// The pack counted into the stash, the dive logged; the pack is empty after.
+/** The pack you leave home with (D064): homeStone soft rock, or nothing. @param {SimConfig} cfg */
+function homePack(cfg) {
+  /** @type {Pack} */
+  const pack = []
+  for (let k = 0; k < (cfg.homeStone ?? 0); k++) add(pack, cfg.packSlots, Tile.Soft, cfg.packReserve)
+  return pack
+}
+
+// The pack counted into the stash, the dive logged; the pack is as you leave home after. The soft rock
+// home gave you doesn't count as brought.
 /** @param {Game} g */
 function endDive(g) {
   const dive = g.dive
   if (dive) {
     dive.ticks = g.tick - dive.startTick
     for (const s of g.pack) if (s) dive.got[/** @type {keyof Stash} */ (MATERIAL_NAME[s.tile])] += s.n
+    dive.got.soft = Math.max(0, dive.got.soft - (g.cfg.homeStone ?? 0))
     for (const [k, n] of Object.entries(dive.got)) g.stash[/** @type {keyof Stash} */ (k)] += n
     g.dives.push(dive)
   }
-  g.pack = []
+  g.pack = homePack(g.cfg)
   g.dive = null
   return dive
 }

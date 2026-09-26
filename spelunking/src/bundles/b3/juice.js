@@ -94,6 +94,8 @@ export function createJuice(t) {
       } else if (e.type === 'pulled') {
         flights.push({ x0: e.x + 0.5, y0: e.y + 0.5, x1: e.to.x + 0.5, y1: e.to.y + 0.35, tile: e.tile, age: 0 }) // wall → you or a bug
         if (!e.by) sound.play(e.tile === Tile.Loot ? 'loot' : 'ore') // a bug's pull is quiet: it may be far off
+      } else if (e.type === 'returned') {
+        sound.play('placed') // back in the bar (D064)
       } else if (e.type === 'handed') {
         flights.push({ x0: e.x + 0.5, y0: e.y + 0.3, x1: e.to.x + 0.5, y1: e.to.y + 0.35, tile: Tile.Ore, age: 0 }) // bug → you (D063)
         sound.play('handed')

@@ -153,7 +153,7 @@ ore → rock, carries 8 then stops, hands over within 4 and not at 5, waits with
 / `bug.target` point at the next cell), determinism with placed bugs, headless screenshots of the stream
 (you and a bug). Then ship as b3.6.
 
-## Decided by the user, eighth pass (2026-09-26): the TODOs after playing b3.6 (plan, not built)
+## Decided by the user, eighth pass (2026-09-26): the TODOs after playing b3.6 (built as b3.7, D064)
 From the p6 feedback (`p6-tamed-bugs/feedback/2026-09-26_lorinc_b3.6.md`); the user's answers in **bold**.
 1. **You and a bug on the same ore:** whoever targets it first keeps it; the other takes its next nearest
    (user: "ok").
@@ -164,6 +164,7 @@ From the p6 feedback (`p6-tamed-bugs/feedback/2026-09-26_lorinc_b3.6.md`); the u
    cells) (user: "perfect").
 5. **A placed bug whose area runs out of ore** seeks you out through the caves (**yes**, like a chaser),
    hands its ore over, and goes back into the bar. **With the bar full, it stays where it was placed.**
+   **Only when a bar slot is wholly empty, taming not even started in it** (user, during the build).
 Open, Claude's defaults to show before building: which stone the 8 are (*soft*), what "runs out" means
 (*no seen ore within reach and nothing left to pull*), and whether a seeking bug gives up past the field.
 

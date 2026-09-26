@@ -1,5 +1,5 @@
 // b3 · Tamed Bugs (forked from b2.1, p6): wires sim + input + render + juice + dev panel. Fixed 60 Hz sim, render interpolates.
-// The rules come from a ruleset: rules/b3.6.json, or with ?rules=lab the one the Rule Lab (v4.html)
+// The rules come from a ruleset: rules/b3.7.json, or with ?rules=lab the one the Rule Lab (v4.html)
 // saved in this browser.
 
 import { command, createGame, tick, withSurface } from '../../sim/dig/game.js'
@@ -32,9 +32,9 @@ async function loadRuleset() {
     } catch {
       // no storage or bad JSON: the default ruleset
     }
-    alert('No Rule Lab ruleset saved in this browser: playing rules/b3.6.json')
+    alert('No Rule Lab ruleset saved in this browser: playing rules/b3.7.json')
   }
-  return migrate(await (await fetch('rules/b3.6.json', { cache: 'no-cache' })).json())
+  return migrate(await (await fetch('rules/b3.7.json', { cache: 'no-cache' })).json())
 }
 
 loadRuleset().then((ruleset) => {

@@ -222,3 +222,69 @@ describe('placed bugs mine (D063)', () => {
     assert.equal(bug.target, null)
   })
 })
+
+describe('after playing b3.6 (D064, b3.7)', () => {
+  const B37 = rules('b3.7.json')
+  const SHARED = ['#####o##o#####', '#....@.......#', '##############']
+
+  test('you and a bug never take the same ore: the first to target it keeps it', () => {
+    const g = mineGame(SHARED, [], B37)
+    g.cfg.pull = B37.cfg.pull
+    const bug = placed(g, 6, 1)
+    tick(g) // you pick first this tick
+    assert.deepEqual(g.pulling, { x: 5, y: 0 })
+    assert.deepEqual(bug.target, { x: 8, y: 0 })
+    const h = mineGame(SHARED, [], B37)
+    h.cfg.pull = B37.cfg.pull
+    const first = placed(h, 6, 1)
+    first.target = { x: 5, y: 0 } // the bug was on it first
+    tick(h)
+    assert.deepEqual(first.target, { x: 5, y: 0 })
+    assert.deepEqual(h.pulling, { x: 8, y: 0 })
+  })
+
+  /** A corridor with you at x = 1 and one ore above x = 21; a bug placed at x = 20. @param {number} [w] */
+  function runOut(w = 30) {
+    const top = '#'.repeat(w).split('')
+    top[21] = 'o'
+    const g = mineGame([top.join(''), '#@' + '.'.repeat(w - 3) + '#', '#'.repeat(w)], [], B37)
+    return { g, bug: placed(g, 20, 1) }
+  }
+
+  test('its area run out, a bug comes to you, hands its ore over and goes back into the bar', () => {
+    const { g, bug } = runOut()
+    const events = eventsOf(g, MINE.ticks + 400, 'returned')
+    assert.equal(events.length, 1)
+    assert.equal(bug.kind, 'bar')
+    assert.deepEqual(g.bar, [bug])
+    assert.deepEqual(packText(g.pack), ['ore 1'])
+    assert.equal(bug.den, null)
+  })
+
+  test('it goes back only into a wholly empty slot: none with taming started in the last free one', () => {
+    const { g, bug } = runOut()
+    for (let k = 0; k < /** @type {import('./bugs.js').Bugs} */ (B37.cfg.bugs).barSlots - 1; k++) {
+      const b = addBug(g, 1, 1)
+      b.kind = 'bar'
+      b.block = -1
+      g.bar.push(b)
+    }
+    g.fed = 1
+    eventsOf(g, MINE.ticks + 400, 'returned')
+    assert.equal(bug.kind, 'placed')
+    assert.equal(bug.seeking, false)
+    assert.equal(bug.carry, 1)
+  })
+
+  test('a bug that never pulled stays; beyond the field it waits at its den', () => {
+    const idle = mineGame([WALL, '#@' + CORRIDOR[0].slice(2), WALL], [], B37)
+    const stays = placed(idle, 20, 1)
+    eventsOf(idle, 200, 'returned')
+    assert.equal(stays.seeking, false)
+    const { g, bug } = runOut(60)
+    g.ch.x = 50 // 30 steps off: beyond the field (seek 20), and out of reach of the hand-over
+    eventsOf(g, MINE.ticks + 200, 'returned')
+    assert.equal(bug.seeking, true)
+    assert.deepEqual([bug.x, bug.y], [20, 1])
+  })
+})

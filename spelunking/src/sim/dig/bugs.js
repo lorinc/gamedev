@@ -24,6 +24,11 @@
 // first bug at the open cell nearest to 2 above you: its den, where it hovers and lights for good, and
 // no wild bug comes within `den` tiles. Placed bugs mine with `mine` (D063, pull.js).
 //
+// A placed bug whose area ran out seeks you (D064): down the field like a chaser, a cell every half
+// barMoveTicks, lighting as it goes; while you're beyond the field it waits at its den, and once on its
+// way it jumps to you if the field loses it. Its slot in the bar is held for it, so no taming takes it.
+// Emptied (the hand-over) and within `mine.hand` of you, it's back in the bar (event `returned`).
+//
 // Randomness comes from the tick (rng.js), so replays and P2P checks stay exact. Integers only.
 
 import { isOpen, Tile } from '../gen/world.js'
@@ -86,6 +91,8 @@ import { wrap } from './rules.js'
  * @property {Cell | null} target the cell a placed bug pulls from now (D063), for the dust stream
  * @property {number} pullFor ticks it has pulled toward its next unit
  * @property {number} handAt its next hand-over, not before this tick
+ * @property {boolean} mined a placed bug has pulled since it was placed (D064)
+ * @property {boolean} seeking a placed bug whose area ran out, on its way back to the bar (D064)
  */
 
 /** @typedef {{ x: number, y: number, rev: number, dist: Map<number, number> }} Field steps from you (x, y) through open cells, for the world as of `rev` */
@@ -147,6 +154,8 @@ export function addBug(g, x, y) {
     target: null,
     pullFor: 0,
     handAt: 0,
+    mined: false,
+    seeking: false,
   }
   g.bugs.push(bug)
   return bug
@@ -175,6 +184,7 @@ export function updateBugs(g) {
     if (bug.chasing) nibble(g, b, bug)
   }
   for (const bug of g.bar) roam(g, b, field, bug, rng)
+  for (const bug of g.bugs) if (bug.seeking) seek(g, b, field, bug)
   // a chaser the field lost wanders again in its block, else it's gone
   g.bugs = g.bugs.filter((bug) => bug.kind !== 'wild' || bug.chasing || bug.block === blockOf(g, bug.x, bug.y) || !gone(g, b, bug))
 }
@@ -239,6 +249,53 @@ function roam(g, b, field, bug, rng) {
   bug.pace = pace
   bug.glow = { x: bug.x, y: bug.y }
 }
+
+// A seeking bug's cell (D064): down the field toward you, not past next to you; the first of the
+// neighbours nearest you, in STEPS order. Beyond the field: waits at its den, else jumps to you.
+/** @param {Game} g @param {Bugs} b @param {Field} field @param {Bug} bug */
+function seek(g, b, field, bug) {
+  const hand = b.mine?.hand ?? 0
+  if (bug.carry === 0 && dist2(g, bug, g.ch) <= hand * hand) {
+    bug.seeking = false
+    bug.mined = false
+    bug.kind = 'bar'
+    bug.den = null
+    bug.dir = -1
+    bug.run = 0
+    g.bar.push(bug)
+    g.events.push({ type: 'returned', id: bug.id, x: bug.x, y: bug.y, slot: g.bar.length - 1 })
+    return
+  }
+  const pace = Math.max(1, b.barMoveTicks >> 1)
+  if (g.tick - bug.movedAt < pace) return
+  const here = field.dist.get(cellOf(g, bug))
+  const home = bug.den && bug.x === bug.den.x && bug.y === bug.den.y
+  if (here === undefined && home) return // you're too far: it waits
+  /** @type {Cell | null} */
+  let to = null
+  if (here === undefined) to = { x: g.ch.x, y: g.ch.y }
+  else if (here > 1) {
+    let best = here
+    for (const [sx, sy] of STEPS) {
+      const c = { x: wrap(bug.x + sx, g.world.w), y: bug.y + sy }
+      const d = field.dist.get(cellOf(g, c))
+      if (d !== undefined && d < best) {
+        best = d
+        to = c
+      }
+    }
+  }
+  if (!to) return
+  bug.from = { x: bug.x, y: bug.y }
+  bug.x = to.x
+  bug.y = to.y
+  bug.movedAt = g.tick
+  bug.pace = pace
+  bug.glow = { x: to.x, y: to.y }
+}
+
+/** Bar slots taken: the bar's bugs and the placed ones on their way back (D064). @param {Game} g */
+export const barTaken = (g) => g.bar.length + g.bugs.filter((bug) => bug.seeking).length
 
 /** A roaming bar bug turns on its own 1 step in TURN, and only after MIN_RUN steps straight. */
 const TURN = 6
@@ -438,7 +495,7 @@ function nibble(g, b, bug) {
   g.fed = Math.min(b.tame, g.fed + 1)
   bug.nibbleAt = g.tick + b.nibbleTicks
   g.events.push({ type: 'nibble', id: bug.id, x: bug.x, y: bug.y, from: { x: g.ch.x, y: g.ch.y } })
-  if (g.fed < b.tame || g.bar.length >= b.barSlots) return // with the bar full, the count waits at tame
+  if (g.fed < b.tame || barTaken(g) >= b.barSlots) return // with the bar full, the count waits at tame
   g.fed = 0
   gone(g, b, bug)
   bug.kind = 'bar'

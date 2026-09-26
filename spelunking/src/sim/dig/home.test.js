@@ -6,7 +6,8 @@ import { readFileSync } from 'node:fs'
 import { describe, test } from 'node:test'
 import { parseMap } from './examples.js'
 import { command, createGame, tick } from './game.js'
-import { packText, parsePack } from './pack.js'
+import { add, packText, parsePack, take } from './pack.js'
+import { Tile } from '../gen/world.js'
 import { compile, migrate, simConfig } from './ruleset.js'
 
 /** @typedef {import('./game.js').Game} Game */
@@ -96,5 +97,40 @@ describe('no teleport home (D055, b3.1)', () => {
     assert.deepEqual([g.ch.x, g.ch.y], [1, 1])
     assert.equal(events.filter((e) => e.type === 'home').length, 0)
     assert.equal(g.dives.length, 0)
+  })
+})
+
+describe('reserved pack slots and 8 stone from home (D064, b3.7)', () => {
+  const B37 = rules('b3.7.json')
+  const RESERVE = /** @type {string[]} */ (B37.cfg.packReserve)
+
+  test('each material has its slot first; a full one overflows into the free ones', () => {
+    /** @type {import('./pack.js').Pack} */
+    const pack = []
+    for (const t of [Tile.Soft, Tile.Loot, ...Array(17).fill(Tile.Ore)]) assert.ok(add(pack, 6, t, RESERVE))
+    assert.deepEqual(packText(pack), ['ore 16', 'loot 1', 'soft 1', '-', 'ore 1'])
+    const full = parsePack(['ore 16', 'loot 16', 'soft 16', 'hard 16', 'ore 16', 'soft 16'])
+    assert.ok(!add(full, 6, Tile.Hard, RESERVE))
+    assert.ok(take(full, Tile.Soft)) // taken from the last slot: the free one empties first
+    assert.deepEqual(packText(full).slice(2), ['soft 16', 'hard 16', 'ore 16', 'soft 15'])
+  })
+
+  test('you leave home with 8 soft rock, and banking tops it up; home gave it, so it does not count', () => {
+    const g = game(CORRIDOR, { x: 1, y: 1 }, B37)
+    g.pack = parsePack(['ore 3', '-', 'soft 2'])
+    const events = play(g, flick(-1, 0))
+    const home = events.filter((e) => e.type === 'home')
+    assert.equal(home.length, 1)
+    assert.deepEqual(packText(g.pack), ['-', '-', `soft ${B37.cfg.homeStone}`])
+    assert.deepEqual(g.stash, { soft: 0, hard: 0, ore: 3, loot: 0 })
+  })
+
+  test('a new game starts with the 8, and walking home with just them logs nothing', () => {
+    const { world } = parseMap(CORRIDOR)
+    const g = createGame(world, { x: 1, y: 1 }, B37.cfg, B37.table)
+    assert.deepEqual(packText(g.pack), ['-', '-', 'soft 8'])
+    g.ch.x = 4
+    const events = play(g, flick(-1, 0))
+    assert.equal(events.filter((e) => e.type === 'home').length, 0)
   })
 })

@@ -12,21 +12,27 @@
 // the bug's id) and `handed`.
 //
 // The target of a pull under way is kept (`g.pulling` for you, `bug.target`), picked by the same code
-// as the pull, so the dust stream the renderers draw always points at the cell that goes.
+// as the pull, so the dust stream the renderers draw always points at the cell that goes. The first to
+// target a cell keeps it (D064): the others take their next nearest.
+//
+// A placed bug whose area has run out (it has pulled, and no seen ore is left in reach) heads back to
+// the bar when a bar slot is wholly empty, no taming started in it (D064): `seeking`, moved in bugs.js.
+// Otherwise it stays.
 
 import { Tile } from '../gen/world.js'
 import { lightRadius } from './light.js'
 import { add, fits, valuable } from './pack.js'
-import { dist2 } from './bugs.js'
+import { barTaken, dist2 } from './bugs.js'
 import { wrap } from './rules.js'
 
 /** @typedef {import('./game.js').Game} Game */
 /** @typedef {import('./rules.js').Cell} Cell */
+/** @typedef {import('./bugs.js').Bug} Bug */
 /** @typedef {{ ticks: number }} Pull ticks of standing still per unit pulled */
 
 /**
  * The nearest seen ore or loot cell within r of `at` that `ok` accepts (ties to the lowest cell index), or null.
- * @param {Game} g @param {Cell} at @param {number} r @param {(tile: number) => boolean} ok
+ * @param {Game} g @param {Cell} at @param {number} r @param {(tile: number, i: number) => boolean} ok i = y * w + x
  * @returns {Cell | null}
  */
 export function nearestValuable(g, at, r, ok) {
@@ -42,7 +48,7 @@ export function nearestValuable(g, at, r, ok) {
       const d = dx * dx + dy * dy
       if (d > r * r || d > bestD) continue
       const i = y * w + wrap(at.x + dx, w)
-      if (!seen[i] || !valuable(tiles[i]) || !ok(tiles[i])) continue
+      if (!seen[i] || !valuable(tiles[i]) || !ok(tiles[i], i)) continue
       if (d < bestD || i < best) {
         best = i
         bestD = d
@@ -79,12 +85,13 @@ export function updatePull(g) {
     g.stillFor = 0
     return
   }
-  const slots = g.cfg.packSlots
-  const c = nearestValuable(g, g.ch, lightRadius(g.pack, g.cfg.light), (t) => fits(g.pack, slots, [t]))
+  const { packSlots: slots, packReserve: reserve } = g.cfg
+  const claimed = targets(g, null)
+  const c = nearestValuable(g, g.ch, lightRadius(g.pack, g.cfg.light), (t, i) => !claimed.has(i) && fits(g.pack, slots, [t], reserve))
   g.pulling = c
   if (++g.stillFor % Math.max(1, p.ticks) || !c) return
   const tile = g.world.tiles[c.y * g.world.w + c.x]
-  add(g.pack, slots, tile)
+  add(g.pack, slots, tile, reserve)
   toRock(g, c.x, c.y)
   g.pulling = null // it's gone; the next one is picked next tick
   g.litFor.r = -1 // the pack and the rock changed: the light is read anew
@@ -95,18 +102,28 @@ export function updatePull(g) {
 export function updateMine(g) {
   const m = g.cfg.bugs?.mine
   if (!m) return
-  const slots = g.cfg.packSlots
+  const { packSlots: slots, packReserve: reserve } = g.cfg
   for (const bug of g.bugs) {
     if (bug.kind !== 'placed' || !bug.den) continue
     // hand-over first: a unit that leaves makes room for the next pull
-    if (bug.carry > 0 && g.tick >= bug.handAt && dist2(g, bug, g.ch) <= m.hand * m.hand && fits(g.pack, slots, [Tile.Ore])) {
-      add(g.pack, slots, Tile.Ore)
+    if (bug.carry > 0 && g.tick >= bug.handAt && dist2(g, bug, g.ch) <= m.hand * m.hand && fits(g.pack, slots, [Tile.Ore], reserve)) {
+      add(g.pack, slots, Tile.Ore, reserve)
       bug.carry--
       bug.handAt = g.tick + m.handTicks
       g.litFor.r = -1 // the pack changed: so may the light
       g.events.push({ type: 'handed', id: bug.id, x: bug.x, y: bug.y, to: { x: g.ch.x, y: g.ch.y } })
     }
-    bug.target = bug.carry < m.carry ? nearestValuable(g, bug.den, m.reach, (t) => t === Tile.Ore) : null
+    if (bug.seeking) {
+      bug.target = null
+      continue
+    }
+    const claimed = targets(g, bug)
+    const next = nearestValuable(g, bug.den, m.reach, (t, i) => t === Tile.Ore && !claimed.has(i))
+    // run out: back to the bar, only into a slot that's wholly empty, taming not started in it (user); the
+    // slot is held for it on the way
+    if (!next && bug.mined && barTaken(g) + (g.fed > 0 ? 1 : 0) < /** @type {import('./bugs.js').Bugs} */ (g.cfg.bugs).barSlots)
+      bug.seeking = true
+    bug.target = bug.carry < m.carry ? next : null
     if (!bug.target) {
       bug.pullFor = 0
       continue
@@ -115,8 +132,19 @@ export function updateMine(g) {
     const c = bug.target
     bug.pullFor = 0
     bug.carry++
+    bug.mined = true
     bug.target = null
     toRock(g, c.x, c.y)
     g.events.push({ type: 'pulled', x: c.x, y: c.y, tile: Tile.Ore, to: { x: bug.x, y: bug.y }, by: bug.id })
   }
+}
+
+/** The cells other pullers are on now (D064): yours, unless `self` is you (null), and every other bug's. @param {Game} g @param {Bug | null} self */
+function targets(g, self) {
+  const w = g.world.w
+  /** @type {Set<number>} */
+  const out = new Set()
+  if (self && g.pulling) out.add(g.pulling.y * w + g.pulling.x)
+  for (const b of g.bugs) if (b !== self && b.target) out.add(b.target.y * w + b.target.x)
+  return out
 }

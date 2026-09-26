@@ -52,6 +52,8 @@ export const BEDROCK = -1
  * @property {{ soft: number, hard: number, ore: number, loot: number, built: number }} digTicks per tile mined
  * @property {number} harmlessDrop deepest drop a swipe into a gap (or a climb that runs out of wall) will take
  * @property {number} packSlots slots of SLOT units each (pack.js)
+ * @property {string[]} [packReserve] the first slots each hold only this material (D064); none if missing
+ * @property {number} [homeStone] soft rock the pack holds as you leave home, topped up each time you bank (D064)
  * @property {number} [holdPauseTicks] a held run's pause after each step (D046; 18 = 0.3 s if missing)
  * @property {boolean} [gravity] after each step, fall if nothing holds you (floor below, wall left or right); a fall deeper than harmlessDrop lands, then teleports home (D035)
  * @property {import('./light.js').Light} [light] the light's radius from the pack (D051); with it, the game keeps a seen map (D052)

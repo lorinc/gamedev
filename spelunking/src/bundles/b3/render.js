@@ -22,6 +22,7 @@ import { Tile } from '../../sim/gen/world.js'
 import { PROBE } from '../../sim/dig/probe.js'
 import { litCells } from '../../sim/dig/light.js'
 import { wrap } from '../../sim/dig/rules.js'
+import { barTaken } from '../../sim/dig/bugs.js'
 import { FLIGHT_S, HEART_S } from './juice.js'
 import { AUTO_TILES, ZOOM_PX } from './tunables.js'
 
@@ -537,7 +538,7 @@ function glow(b, game, time) {
  */
 function drifted(b, game, alpha, time, bob = true) {
   const cfg = /** @type {NonNullable<Game['cfg']['bugs']>} */ (game.cfg.bugs)
-  const move = Math.max(1, b.kind === 'bar' ? b.pace || cfg.barMoveTicks : cfg.moveTicks)
+  const move = Math.max(1, b.kind === 'bar' || b.seeking ? b.pace || cfg.barMoveTicks : cfg.moveTicks)
   const f = Math.min(1, Math.max(0, (game.tick + alpha - b.movedAt) / move))
   const fx = b.from.x + wrapDelta(b.x - b.from.x, game.world.w) * f
   return {
@@ -624,10 +625,13 @@ function drawStream(ctx, x0, y0, x1, y1, rgb, seed, time, sx, sy, tp) {
 
 // The bug bar (D060): b1.1's pack row, back as the only HUD. barSlots squares along the bottom edge,
 // opaque, so the world behind never reads as a bug; a tamed bug is an amber square, an empty slot a
-// grey dot.
+// grey dot. The taming count fills the next free slot as a 4×4 grid of ore, like a pack slot (D064); a
+// slot held for a placed bug on its way back stays empty.
 /** @param {CanvasRenderingContext2D} ctx @param {Game} game @param {number} W @param {number} H @param {number} dpr */
 function drawBar(ctx, game, W, H, dpr) {
-  const slots = /** @type {NonNullable<Game['cfg']['bugs']>} */ (game.cfg.bugs).barSlots
+  const cfg = /** @type {NonNullable<Game['cfg']['bugs']>} */ (game.cfg.bugs)
+  const slots = cfg.barSlots
+  const next = barTaken(game)
   const s = Math.round(26 * dpr)
   const gap = Math.round(6 * dpr)
   const x0 = Math.round(W / 2 - (slots * (s + gap) - gap) / 2)
@@ -640,6 +644,18 @@ function drawBar(ctx, game, W, H, dpr) {
     ctx.fillStyle = full ? css(TAMED) : '#333'
     const inset = full ? Math.round(7 * dpr) : s / 2 - dpr
     ctx.fillRect(x + inset, y + inset, s - 2 * inset, s - 2 * inset)
+    if (i !== next || !game.fed) continue
+    // the taming count: a unit per bite, row by row from the bottom, SLOT_SIDE × SLOT_SIDE for `tame`
+    const units = Math.min(SLOT_SIDE * SLOT_SIDE, Math.floor((game.fed * SLOT_SIDE * SLOT_SIDE) / cfg.tame))
+    const pad = Math.round(3 * dpr)
+    const cells = split(s - 2 * pad, SLOT_SIDE)
+    const at = cells.map((_, k) => cells.slice(0, k).reduce((a, c) => a + c, 0))
+    ctx.fillStyle = css(TILE_RGB[Tile.Ore])
+    for (let k = 0; k < units; k++) {
+      const c = k % SLOT_SIDE
+      const r = SLOT_SIDE - 1 - Math.floor(k / SLOT_SIDE)
+      ctx.fillRect(x + pad + at[c], y + pad + at[r], cells[c], cells[r])
+    }
   }
 }
 

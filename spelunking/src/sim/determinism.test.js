@@ -45,13 +45,14 @@ const SCRIPT = [
  * @param {SimConfig['light']} [light] with it, the game keeps a seen map (D052), and the hash covers it
  * @param {SimConfig['bugs']} [bugs] with them, moon bugs (D056), and the hash covers them
  * @param {SimConfig['pull']} [pull] with it, you pull ore and loot while still (D062)
+ * @param {Partial<SimConfig>} [more] other numbers (D064: packReserve, homeStone)
  */
-function play(caveSeed = DEFAULT_TERRAIN.caveSeed, light, bugs, pull) {
+function play(caveSeed = DEFAULT_TERRAIN.caveSeed, light, bugs, pull, more = {}) {
   const { world, home } = withSurface(generateTerrain({ ...DEFAULT_TERRAIN, caveSeed }), 4, 3)
   const g = createGame(
     world,
     home,
-    { ...structuredClone(CFG), ...(light && { light }), ...(bugs && { bugs }), ...(pull && { pull }) },
+    { ...structuredClone(CFG), ...(light && { light }), ...(bugs && { bugs }), ...(pull && { pull }), ...more },
     TABLE,
   )
   if (bugs) g.bar.push(Object.assign(addBug(g, home.x, home.y), { kind: /** @type {const} */ ('bar'), block: -1 })) // one to place early
@@ -110,7 +111,7 @@ test('with light: same seed + same commands → the same seen map (D052)', () =>
   assert.equal(play().g.seen, null)
 })
 
-test('with bugs and the pull: same seed + same commands → the same bugs (D056, D062, D063)', () => {
+test('with bugs and the pull: same seed + same commands → the same bugs (D056, D062, D063, D064)', () => {
   const light = { base: 4, orePer: 16, lootPer: 8 }
   const bugs = {
     block: 32,
@@ -131,8 +132,9 @@ test('with bugs and the pull: same seed + same commands → the same bugs (D056,
     barFar: 8,
     mine: { ticks: 30, reach: 12, carry: 8, hand: 4, handTicks: 6 }, // placed bugs mine (D063)
   }
-  const a = play(DEFAULT_TERRAIN.caveSeed, light, bugs, { ticks: 30 })
-  const b = play(DEFAULT_TERRAIN.caveSeed, light, bugs, { ticks: 30 })
+  const more = { packReserve: ['ore', 'loot', 'soft', 'hard'], homeStone: 8 } // D064
+  const a = play(DEFAULT_TERRAIN.caveSeed, light, bugs, { ticks: 30 }, more)
+  const b = play(DEFAULT_TERRAIN.caveSeed, light, bugs, { ticks: 30 }, more)
   assert.equal(a.hash, b.hash)
   assert.ok(a.g.nextBug > 30, 'a bug per fog block (D061)')
   assert.ok(a.mined > 0, 'a placed bug mined (D063)')

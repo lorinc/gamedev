@@ -53,6 +53,7 @@ Built in steps, one per session (user, 2026-09-25): 0 + 1 · 2 · 3 · 3b + 4.
 2b. Shared taming, the bug bar, placing bugs with the hold (D060), after playing b3.2.
 2c. Wild bugs live in the fog (D061), after playing b3.3.
 3. Pulling ore and loot while you stand still, the bar calms the chasers, bar bugs roam (D062); then placed bugs mine, with the dust stream (D063).
+3a. The TODOs after playing b3.6: shared ore, reserved slots, 8 stone from home, taming progress in the bar, bugs going back to the bar (D064).
 3b. The friendly area (D057).
 4. The build check, and b3.1 frozen.
 
@@ -95,6 +96,15 @@ Built in steps, one per session (user, 2026-09-25): 0 + 1 · 2 · 3 · 3b + 4.
 - **Tests:** 7 new pull tests (a bug's nearest seen ore, ore only, the rate and the rock; it carries 8 then waits; the hand-over within 4 and not at 5; a full pack waits; walking past a full bug; b3.5's bugs only hover; `g.pulling` points at the next cell), and determinism places a bug mid-dive that mines; 202 in all.
 - **Screenshots** (local, `gallery/p6/b3.6_*`): both streams at once, a full bug's swollen halo, a hand-over.
 
+**The TODOs after playing b3.6 (D064):** ruleset `b3.7`, as planned in next-bugs.md's eighth pass.
+- The first to target an ore keeps it: you and a bug never pull the same cell.
+- The pack's first 4 slots are reserved for ore, loot, soft and hard stone; the last 2 are free, and a full reserved slot overflows into them.
+- You leave home with 8 soft stone, topped up each time you bank.
+- The taming count fills the bar's next free slot as a 4×4 grid, like a pack slot.
+- A placed bug whose area has run out comes to you, hands its ore over and goes back into the bar, but only when a bar slot is wholly empty (no taming started in it); otherwise it stays.
+- **Tests:** 7 new tests (the first target keeps its ore, both ways; reserved slots and overflow; 8 stone from home and the top-up; a new game's 8 with no empty dive logged; a bug coming back to the bar; none with taming started in the last free slot; a bug that never pulled stays, and one beyond the field waits at its den); determinism covers the reserve and the stone; 210 in all.
+- **Screenshots** (local, `gallery/p6/b3.7_*`): the 8 stone on your back, a bug coming back, the bar with a bug and the taming half done.
+
 Claude's calls in step 1, not discussed:
 - Only the home cell counts the pack in, and only when there's something in it, so walking past home logs no empty dives.
 - Home is a plain orange pod, 2 tiles wide, since you walk back to it now.
@@ -102,7 +112,7 @@ Claude's calls in step 1, not discussed:
 
 ## Feedback
 
-- [2026-09-26 · b3.6](feedback/2026-09-26_lorinc_b3.6.md): the bug's dust stream swayed (fixed in the refreeze). The user's TODOs, open:
+- [2026-09-26 · b3.6](feedback/2026-09-26_lorinc_b3.6.md): the bug's dust stream swayed (fixed in the refreeze). The user's TODOs, built in b3.7 (D064):
   - you and a bug can target the same ore;
   - reserve one pack slot for loot and one for ore;
   - leave base with 8 stone;
