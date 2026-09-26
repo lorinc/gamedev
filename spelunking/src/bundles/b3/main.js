@@ -1,5 +1,5 @@
 // b3 · Tamed Bugs (forked from b2.1, p6): wires sim + input + render + juice + dev panel. Fixed 60 Hz sim, render interpolates.
-// The rules come from a ruleset: rules/b3.4.json, or with ?rules=lab the one the Rule Lab (v4.html)
+// The rules come from a ruleset: rules/b3.5.json, or with ?rules=lab the one the Rule Lab (v4.html)
 // saved in this browser.
 
 import { command, createGame, tick, withSurface } from '../../sim/dig/game.js'
@@ -32,9 +32,9 @@ async function loadRuleset() {
     } catch {
       // no storage or bad JSON: the default ruleset
     }
-    alert('No Rule Lab ruleset saved in this browser: playing rules/b3.4.json')
+    alert('No Rule Lab ruleset saved in this browser: playing rules/b3.5.json')
   }
-  return migrate(await (await fetch('rules/b3.4.json', { cache: 'no-cache' })).json())
+  return migrate(await (await fetch('rules/b3.5.json', { cache: 'no-cache' })).json())
 }
 
 loadRuleset().then((ruleset) => {
@@ -221,7 +221,7 @@ function start(ruleset, table) {
     for (const e of game.events) {
       juice.onEvent(e)
       recorder.onEvent(e)
-      if (e.type === 'mined' || e.type === 'built') renderer.setTile(e.x, e.y)
+      if (e.type === 'mined' || e.type === 'built' || e.type === 'pulled') renderer.setTile(e.x, e.y)
       if (e.type === 'seen') renderer.seen(e.cells) // the darkness (D052)
       // The swipe cue (D032): what a swipe attempts, beside the character; red when it's refused.
       if (e.type === 'step' && e.fresh) {

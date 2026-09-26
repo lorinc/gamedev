@@ -22,7 +22,7 @@ export function createJuice(t) {
   let squash = 0
   let kick = { x: 0, y: 0 } // shake bias along the last dig
   const sound = createSound(t)
-  /** @type {{ x0: number, y0: number, x1: number, y1: number, age: number }[]} ore in flight, tile coords, seconds */
+  /** @type {{ x0: number, y0: number, x1: number, y1: number, tile: number, age: number }[]} ore or loot in flight, tile coords, seconds */
   const flights = []
   /** @type {{ x: number, y: number, age: number }[]} hearts over bugs; a negative age waits */
   const hearts = []
@@ -81,7 +81,7 @@ export function createJuice(t) {
       } else if (e.type === 'teleport') {
         sound.play('teleport')
       } else if (e.type === 'nibble') {
-        flights.push({ x0: e.from.x + 0.5, y0: e.from.y + 0.35, x1: e.x + 0.5, y1: e.y + 0.5, age: 0 })
+        flights.push({ x0: e.from.x + 0.5, y0: e.from.y + 0.35, x1: e.x + 0.5, y1: e.y + 0.5, tile: Tile.Ore, age: 0 })
         hearts.push({ x: e.x + 0.5, y: e.y + 0.2, age: -FLIGHT_S }) // pops when the ore lands
         sound.play('nibble')
       } else if (e.type === 'tamed') {
@@ -89,6 +89,9 @@ export function createJuice(t) {
         sound.play('tamed')
       } else if (e.type === 'placed') {
         sound.play('placed')
+      } else if (e.type === 'pulled') {
+        flights.push({ x0: e.x + 0.5, y0: e.y + 0.5, x1: e.to.x + 0.5, y1: e.to.y + 0.35, tile: e.tile, age: 0 }) // wall → you (D062)
+        sound.play(e.tile === Tile.Loot ? 'loot' : 'ore')
       }
     },
     /** @param {number} dt seconds */

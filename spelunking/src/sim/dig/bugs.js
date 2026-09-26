@@ -18,8 +18,9 @@
 //
 // Taming (D060): every nibble counts toward one shared total (`g.fed`). At `tame`, the bug that took
 // the last bite goes into the bug bar (`g.bar`, barSlots long; event `tamed`) and the count restarts.
-// With the bar full, nobody is tamed. A bar bug circles you, two cells out, one step every orbitTicks,
-// and lights `light` tiles around itself like your light (game.js). The `place` command puts the bar's
+// With the bar full, nobody is tamed. A bar bug roams within 2 steps of you, one step every
+// barMoveTicks, and lights `light` tiles around itself like your light (game.js). Each bar bug keeps
+// one chaser away (D062): with 3 in the bar, you're left in peace. The `place` command puts the bar's
 // first bug at the open cell nearest to 2 above you: its den, where it hovers and lights for good, and
 // no wild bug comes within `den` tiles. Placed bugs mine in step 3.
 //
@@ -49,7 +50,7 @@ import { wrap } from './rules.js'
  * @property {number} den tiles around a placed bug where wild bugs never are
  * @property {number} barSlots tamed bugs you carry at most
  * @property {number} light a bar or placed bug's light radius
- * @property {number} orbitTicks ticks per step of a bar bug round you (12 steps a circle)
+ * @property {number} barMoveTicks ticks per cell a bar bug roams (D062)
  */
 
 /**
@@ -71,25 +72,6 @@ import { wrap } from './rules.js'
 /** @typedef {{ x: number, y: number, rev: number, dist: Map<number, number> }} Field steps from you (x, y) through open cells, for the world as of `rev` */
 
 const SALT = 0xb065
-
-/** A bar bug's circle round you: 12 cells two out, clockwise from the right (y grows down). */
-export const ORBIT = [
-  [2, 0],
-  [2, 1],
-  [1, 2],
-  [0, 2],
-  [-1, 2],
-  [-2, 1],
-  [-2, 0],
-  [-2, -1],
-  [-1, -2],
-  [0, -2],
-  [1, -2],
-  [2, -1],
-]
-
-/** Where bar slot k is on its circle at tick t, in orbit steps (a fraction between steps, for drawing). @param {number} t @param {number} k @param {Bugs} b */
-export const orbitStep = (t, k, b) => t / Math.max(1, b.orbitTicks) + (k * ORBIT.length) / Math.max(1, b.barSlots)
 
 /** How far `place` looks for an open cell around 2 above you. */
 const PLACE_RINGS = 4
@@ -166,7 +148,7 @@ export function updateBugs(g) {
     if (g.tick - bug.movedAt >= b.moveTicks) drift(g, b, field, bug, rng)
     if (bug.chasing) nibble(g, b, bug)
   }
-  g.bar.forEach((bug, k) => orbit(g, b, bug, k))
+  for (const bug of g.bar) roam(g, b, field, bug, rng)
   // a chaser the field lost wanders again in its block, else it's gone
   g.bugs = g.bugs.filter((bug) => bug.kind !== 'wild' || bug.chasing || bug.block === blockOf(g, bug.x, bug.y) || !gone(g, b, bug))
 }
@@ -177,13 +159,38 @@ function gone(g, b, bug) {
   return true
 }
 
-// A bar bug's cell on its circle round you; it lights from there when it's open, else from your cell.
-/** @param {Game} g @param {Bugs} b @param {Bug} bug @param {number} k its slot */
-function orbit(g, b, bug, k) {
-  const [dx, dy] = ORBIT[Math.floor(orbitStep(g.tick, k, b)) % ORBIT.length]
-  bug.x = wrap(g.ch.x + dx, g.world.w)
-  bug.y = g.ch.y + dy
-  bug.glow = roomy(g, bug.x, bug.y) ? { x: bug.x, y: bug.y } : { x: g.ch.x, y: g.ch.y }
+// A bar bug roams round you (D062), a step every barMoveTicks: down the field when more than 2 steps
+// away, else a random open step that stays within 2. Outside the field (a long fall, too far) it jumps
+// to your cell. It lights from its cell, which is always open.
+/** @param {Game} g @param {Bugs} b @param {Field} field @param {Bug} bug @param {() => number} rng */
+function roam(g, b, field, bug, rng) {
+  bug.glow = { x: bug.x, y: bug.y }
+  if (g.tick - bug.movedAt < b.barMoveTicks) return
+  const here = field.dist.get(cellOf(g, bug))
+  /** @type {Cell[]} */
+  let options = []
+  if (here === undefined) options = [{ x: g.ch.x, y: g.ch.y }]
+  else {
+    let best = here > 2 ? here : Infinity
+    for (const [sx, sy] of STEPS) {
+      const c = { x: wrap(bug.x + sx, g.world.w), y: bug.y + sy }
+      const d = field.dist.get(cellOf(g, c))
+      if (d === undefined) continue
+      if (here <= 2) {
+        if (d <= 2) options.push(c)
+      } else if (d < best) {
+        best = d
+        options = [c]
+      } else if (d === best) options.push(c)
+    }
+  }
+  if (!options.length) return
+  const to = options[rng() % options.length]
+  bug.from = { x: bug.x, y: bug.y }
+  bug.x = to.x
+  bug.y = to.y
+  bug.movedAt = g.tick
+  bug.glow = { x: bug.x, y: bug.y }
 }
 
 /**
@@ -319,14 +326,17 @@ function fill(g, b, field, nearest, rng) {
 }
 
 // Chasers: one the field lost stops chasing; then the nearest wild bugs in the field (then the lowest
-// id) join, up to `chasers`.
+// id) join, up to `chasers` less one per bar bug (D062); over that, the farthest stop.
 /** @param {Game} g @param {Bugs} b @param {Field} field */
 function chase(g, b, field) {
   const wild = g.bugs.filter((bug) => bug.kind === 'wild')
   for (const bug of wild) if (bug.chasing && !field.dist.has(cellOf(g, bug))) bug.chasing = false
-  let free = b.chasers - wild.filter((bug) => bug.chasing).length
-  if (free <= 0) return
   const d = (/** @type {Bug} */ bug) => /** @type {number} */ (field.dist.get(cellOf(g, bug)))
+  const cap = Math.max(0, b.chasers - g.bar.length) // each bar bug keeps one away (D062)
+  const chasing = wild.filter((bug) => bug.chasing).sort((p, q) => d(p) - d(q) || p.id - q.id)
+  for (const bug of chasing.slice(cap)) bug.chasing = false // the farthest stop
+  let free = cap - Math.min(cap, chasing.length)
+  if (free <= 0) return
   const next = wild.filter((bug) => !bug.chasing && field.dist.has(cellOf(g, bug))).sort((p, q) => d(p) - d(q) || p.id - q.id)
   for (const bug of next) {
     if (free-- <= 0) return

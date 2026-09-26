@@ -59,6 +59,7 @@ export const BEDROCK = -1
  *   home cell counts the pack in. True if missing
  * @property {import('./probe.js').Probe} [probe] the seismic probe's reach and speed (D053); probe.js's PROBE if missing
  * @property {import('./bugs.js').Bugs} [bugs] moon bugs (D056); none if missing
+ * @property {import('./pull.js').Pull} [pull] you pull ore and loot out of the walls while standing still (D062); not if missing
  * @property {Rules} rules
  */
 

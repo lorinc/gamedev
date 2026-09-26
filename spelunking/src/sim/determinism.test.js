@@ -43,10 +43,16 @@ const SCRIPT = [
 /**
  * @param {SimConfig['light']} [light] with it, the game keeps a seen map (D052), and the hash covers it
  * @param {SimConfig['bugs']} [bugs] with them, moon bugs (D056), and the hash covers them
+ * @param {SimConfig['pull']} [pull] with it, you pull ore and loot while still (D062)
  */
-function play(caveSeed = DEFAULT_TERRAIN.caveSeed, light, bugs) {
+function play(caveSeed = DEFAULT_TERRAIN.caveSeed, light, bugs, pull) {
   const { world, home } = withSurface(generateTerrain({ ...DEFAULT_TERRAIN, caveSeed }), 4, 3)
-  const g = createGame(world, home, { ...structuredClone(CFG), ...(light && { light }), ...(bugs && { bugs }) }, TABLE)
+  const g = createGame(
+    world,
+    home,
+    { ...structuredClone(CFG), ...(light && { light }), ...(bugs && { bugs }), ...(pull && { pull }) },
+    TABLE,
+  )
   for (const [dx, dy] of SCRIPT) {
     command(g, { type: 'intent', dx, dy })
     for (let i = 0; i < 300; i++) tick(g)
@@ -57,7 +63,17 @@ function play(caveSeed = DEFAULT_TERRAIN.caveSeed, light, bugs) {
   const h = createHash('sha256')
   h.update(g.world.tiles)
   h.update(
-    JSON.stringify({ tick: g.tick, ch: g.ch, pack: g.pack, stash: g.stash, dives: g.dives, bugs: g.bugs, fed: g.fed, refill: g.refill }),
+    JSON.stringify({
+      tick: g.tick,
+      ch: g.ch,
+      pack: g.pack,
+      stash: g.stash,
+      dives: g.dives,
+      bugs: g.bugs,
+      fed: g.fed,
+      refill: g.refill,
+      stillFor: g.stillFor,
+    }),
   )
   if (g.seen) h.update(g.seen)
   return { hash: h.digest('hex'), g }
@@ -85,7 +101,7 @@ test('with light: same seed + same commands → the same seen map (D052)', () =>
   assert.equal(play().g.seen, null)
 })
 
-test('with bugs: same seed + same commands → the same bugs (D056)', () => {
+test('with bugs and the pull: same seed + same commands → the same bugs (D056, D062)', () => {
   const light = { base: 4, orePer: 16, lootPer: 8 }
   const bugs = {
     block: 32,
@@ -99,12 +115,12 @@ test('with bugs: same seed + same commands → the same bugs (D056)', () => {
     tame: 2,
     scareTicks: 60,
     den: 12,
-    barSlots: 4,
+    barSlots: 3,
     light: 2,
-    orbitTicks: 10,
+    barMoveTicks: 6,
   }
-  const a = play(DEFAULT_TERRAIN.caveSeed, light, bugs)
-  const b = play(DEFAULT_TERRAIN.caveSeed, light, bugs)
+  const a = play(DEFAULT_TERRAIN.caveSeed, light, bugs, { ticks: 30 })
+  const b = play(DEFAULT_TERRAIN.caveSeed, light, bugs, { ticks: 30 })
   assert.equal(a.hash, b.hash)
   assert.ok(a.g.nextBug > 30, 'a bug per fog block (D061)')
 })

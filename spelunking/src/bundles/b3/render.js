@@ -12,13 +12,12 @@
 // and go between a flicker (3–5 s) and dark (5–9 s, not drawn at all), steady next to you, flickering
 // fast while scared; while on, they show the cave 2 around them through the fog, fading out from the
 // bug (a radial gradient, not whole tiles), for the moment only (their light never makes anything
-// seen). Tamed ones are warm amber and glow steadily: in the bar they circle you, placed they hover at their den. They drift between cells
-// and bob a little. The bug bar: b1.1's slot row along the bottom edge, a tamed bug per slot.
+// seen). Tamed ones are warm amber and glow steadily: in the bar they roam round you, placed they
+// hover at their den. They drift between cells and bob a little. The bug bar: b1.1's slot row along the bottom edge, a tamed bug per slot.
 
 import { cellRgb, TILE_RGB, TREAD } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
 import { PROBE } from '../../sim/dig/probe.js'
-import { orbitStep } from '../../sim/dig/bugs.js'
 import { litCells } from '../../sim/dig/light.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { FLIGHT_S, HEART_S } from './juice.js'
@@ -372,7 +371,7 @@ export function createRenderer(canvas, game, t, juice) {
         ctx.globalAlpha = 1
       }
       if (wildLit.size > game.bugs.length) for (const id of wildLit.keys()) if (!game.bugs.some((b) => b.id === id)) wildLit.delete(id)
-      drawBugs(ctx, game, alpha, time, p, (x) => sx(nearest(x, px, world.w)), sy, tp)
+      drawBugs(ctx, game, alpha, time, (x) => sx(nearest(x, px, world.w)), sy, tp)
 
       // the pack's "can't do": two quick red blinks that fade
       failLeft = Math.max(0, failLeft - dt)
@@ -408,10 +407,11 @@ export function createRenderer(canvas, game, t, juice) {
         ctx.fillRect(Math.round(sx(nearest(c.x, left, world.w))), Math.round(sy(c.y)), s, s)
       }
 
-      // ore flying from the pack into a wild bug, and the hearts it pops (D056)
+      // ore flying from the pack into a wild bug, and the hearts it pops (D056); ore or loot pulled out
+      // of the wall flying to you (D062)
       const oreS = Math.max(2, Math.round(tp * 0.2))
-      ctx.fillStyle = css(TILE_RGB[Tile.Ore])
       for (const f of juice.flights) {
+        ctx.fillStyle = css(TILE_RGB[/** @type {Tile} */ (f.tile)])
         const k = Math.min(1, f.age / FLIGHT_S)
         const e = k * (2 - k) // eases out
         const x0 = nearest(f.x0, px, world.w)
@@ -501,13 +501,14 @@ function glow(b, game, time) {
 }
 
 /**
- * Where a wild or placed bug is drawn, in tiles (its centre): between the cell it drifted from and its
+ * Where a bug is drawn, in tiles (its centre): between the cell it drifted from and its
  * cell, bobbing. They float in the upper part of their cell, fanned out, so two in one cell (or one
  * beside you) read apart.
  * @param {import('../../sim/dig/bugs.js').Bug} b @param {Game} game @param {number} alpha @param {number} time seconds
  */
 function drifted(b, game, alpha, time) {
-  const move = Math.max(1, /** @type {NonNullable<Game['cfg']['bugs']>} */ (game.cfg.bugs).moveTicks)
+  const cfg = /** @type {NonNullable<Game['cfg']['bugs']>} */ (game.cfg.bugs)
+  const move = Math.max(1, b.kind === 'bar' ? cfg.barMoveTicks : cfg.moveTicks)
   const f = Math.min(1, Math.max(0, (game.tick + alpha - b.movedAt) / move))
   const fx = b.from.x + wrapDelta(b.x - b.from.x, game.world.w) * f
   return {
@@ -517,14 +518,12 @@ function drifted(b, game, alpha, time) {
 }
 
 /**
- * The moon bugs (D056, D060): wild and placed ones between the cell they drifted from and their cell,
- * bobbing; bar ones on a smooth circle two tiles round you (the sim's orbit, between its steps).
+ * The moon bugs (D056, D060, D062): between the cell they drifted from and their cell, bobbing.
  * @param {CanvasRenderingContext2D} ctx @param {Game} game @param {number} alpha @param {number} time seconds
- * @param {{ x: number, y: number }} me the character's drawn cell
  * @param {(x: number) => number} sx tile x → device px, the copy nearest the character
  * @param {(y: number) => number} sy @param {number} tp tile px
  */
-function drawBugs(ctx, game, alpha, time, me, sx, sy, tp) {
+function drawBugs(ctx, game, alpha, time, sx, sy, tp) {
   const cfg = game.cfg.bugs
   if (!cfg) return
   const core = Math.max(2, Math.round(tp * 0.3))
@@ -532,13 +531,7 @@ function drawBugs(ctx, game, alpha, time, me, sx, sy, tp) {
   const H = ctx.canvas.height
   if (blinks.size > game.bugs.length) for (const id of blinks.keys()) if (!game.bugs.some((b) => b.id === id)) blinks.delete(id)
   for (const b of game.bugs) {
-    let x
-    let y
-    if (b.kind === 'bar') {
-      const a = (orbitStep(game.tick + alpha, game.bar.indexOf(b), cfg) * Math.PI * 2) / 12
-      x = me.x + 0.5 + 2 * Math.cos(a)
-      y = me.y + 0.5 + 2 * Math.sin(a)
-    } else ({ x, y } = drifted(b, game, alpha, time))
+    const { x, y } = drifted(b, game, alpha, time)
     const cx = sx(x)
     const cy = sy(y)
     if (cx < -2 * tp || cy < -2 * tp || cx > W + 2 * tp || cy > H + 2 * tp) continue // off screen (D061)

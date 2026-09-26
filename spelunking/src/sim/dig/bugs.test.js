@@ -1,4 +1,4 @@
-// Moon bugs (D056, D059, D060, D061, ruleset b3.4). Wild ones live in the fog, one per block of the
+// Moon bugs (D056, D059, D060, D061, D062, ruleset b3.5). Wild ones live in the fog, one per block of the
 // nearest; up to 3 drift to you through open cells, nibble ore (never loot) from the pack, scatter from
 // a probe ring. They appear only in the dark and never near a placed bug. Their bites add up to one shared count; at `tame`, the last biter goes into the bug bar,
 // circles you and lights around itself. The hold places the bar's first bug. b3.1 has no bugs.
@@ -6,7 +6,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { describe, test } from 'node:test'
-import { addBug, blockOf, ORBIT } from './bugs.js'
+import { addBug, blockOf } from './bugs.js'
 import { parseMap } from './examples.js'
 import { command, createGame, tick } from './game.js'
 import { packText, parsePack } from './pack.js'
@@ -22,15 +22,15 @@ function rules(name) {
   const r = migrate(read(name))
   return { table: /** @type {import('./ruleset.js').Table} */ (compile(r).table), cfg: simConfig(r) }
 }
-const B34 = rules('b3.4.json')
+const B35 = rules('b3.5.json')
 const B31 = rules('b3.1.json')
-const BUGS = /** @type {Bugs} */ (B34.cfg.bugs)
+const BUGS = /** @type {Bugs} */ (B35.cfg.bugs)
 
 /**
  * A game on `rows` (you at '@', home in the top-left corner, out of the way). The blocks get no wild
  * bugs of their own unless `spawn`. @param {string[]} rows @param {string[]} pack @param {Partial<Bugs>} [bugs]
  */
-function game(rows, pack, bugs = {}, r = B34, spawn = false) {
+function game(rows, pack, bugs = {}, r = B35, spawn = false) {
   const { world, at } = parseMap(rows)
   const cfg = r.cfg.bugs ? { ...r.cfg, bugs: { ...BUGS, ...bugs } } : r.cfg
   const g = createGame(world, { x: 0, y: 0 }, structuredClone(cfg), r.table)
@@ -150,24 +150,32 @@ describe('tamed bugs: the bar and the hold (D060)', () => {
   const ROOM = ['#' + '#'.repeat(40) + '#', ...Array(7).fill('#' + '.'.repeat(40) + '#'), '#' + '#'.repeat(40) + '#']
   ROOM[4] = '#' + '.'.repeat(19) + '@' + '.'.repeat(20) + '#' // you at (20, 4)
 
-  test('a bar bug circles you, two out, and lights 2 around itself for good', () => {
+  test('a bar bug roams within 2 steps of you, and lights 2 around itself for good (D062)', () => {
     const g = game(ROOM, [])
     g.cfg.light = { base: 0, orePer: 0, lootPer: 0 } // your own light: just your cell
     const bug = inBar(g)
-    run(g, 1)
-    const [dx, dy] = ORBIT[Math.floor(1 / BUGS.orbitTicks) % ORBIT.length]
-    assert.deepEqual([bug.x, bug.y], [20 + dx, 4 + dy])
-    assert.ok(g.lit.includes(at(g, 24, 4)), 'lit 2 past the bug')
-    run(g, BUGS.orbitTicks * ORBIT.length) // a whole circle
+    /** @type {Set<string>} */
+    const cells = new Set()
+    for (let t = 0; t < 1200; t++) {
+      run(g, 1)
+      assert.ok(Math.abs(bug.x - 20) + Math.abs(bug.y - 4) <= 2, `${bug.x},${bug.y} strayed`)
+      cells.add(`${bug.x},${bug.y}`)
+    }
+    assert.ok(cells.size >= 8, `it roams: ${cells.size} cells`)
     const seen = /** @type {Uint8Array} */ (g.seen)
-    for (const [x, y] of [
-      [16, 4],
-      [24, 4],
-      [20, 0],
-      [20, 7],
-    ])
-      assert.equal(seen[at(g, x, y)], 1, `${x},${y} seen`)
-    assert.equal(seen[at(g, 25, 4)], 0, 'nothing past 4')
+    assert.equal(seen[at(g, 20, 0)], 1, 'seen 4 above you, lit from the bug')
+    assert.equal(seen[at(g, 26, 4)], 0, 'nothing past 4')
+  })
+
+  test('a bar bug follows you, and jumps to you when you get too far', () => {
+    const g = game(ROOM, [])
+    const bug = inBar(g)
+    g.ch.x = 32 // 12 steps off: it comes down the field
+    run(g, 12 * BUGS.barMoveTicks)
+    assert.ok(Math.abs(bug.x - 32) + Math.abs(bug.y - 4) <= 2, `${bug.x},${bug.y} is behind`)
+    g.ch.x = 5 // 27 steps off: past seek, so it jumps
+    run(g, BUGS.barMoveTicks + 1)
+    assert.ok(Math.abs(bug.x - 5) + Math.abs(bug.y - 4) <= 1, `${bug.x},${bug.y} didn't jump to you`)
   })
 
   test('the hold places the first bug 2 above your head, and the bar shifts', () => {
@@ -205,7 +213,7 @@ describe('where wild bugs are', () => {
   ROOM[4] = '#@' + '.'.repeat(39) + '#'
 
   test('one per block, in the dark, at least 4 steps away, never inside a den area (D061)', () => {
-    const g = game(ROOM, [], { block: 8, moveTicks: 1e9, den: 6 }, B34, true)
+    const g = game(ROOM, [], { block: 8, moveTicks: 1e9, den: 6 }, B35, true)
     placed(g, 30, 4)
     run(g, 1)
     const lit = new Set(g.lit)
@@ -227,7 +235,7 @@ describe('where wild bugs are', () => {
       ['#' + '#'.repeat(78) + '#', '#@' + '.'.repeat(77) + '#', '#' + '#'.repeat(78) + '#'],
       [],
       { block: 8, blocks: 3, moveTicks: 1e9 },
-      B34,
+      B35,
       true,
     )
     run(g, 1)
@@ -239,7 +247,7 @@ describe('where wild bugs are', () => {
   })
 
   test('a block whose bug was tamed gets a new one refillTicks later', () => {
-    const g = game(CORRIDOR, ['ore 16'], { tame: 2 }, B34, true)
+    const g = game(CORRIDOR, ['ore 16'], { tame: 2 }, B35, true)
     run(g, 1)
     const [first] = g.bugs
     let t = 0
@@ -254,7 +262,7 @@ describe('where wild bugs are', () => {
   })
 
   test('a wanderer never leaves its block', () => {
-    const g = game(ROOM, [], { block: 8, moveTicks: 1, seek: 1 }, B34, true)
+    const g = game(ROOM, [], { block: 8, moveTicks: 1, seek: 1 }, B35, true)
     for (let t = 0; t < 2000; t++) {
       run(g, 1)
       for (const b of g.bugs) assert.equal(blockOf(g, b.x, b.y), b.block)
@@ -263,7 +271,7 @@ describe('where wild bugs are', () => {
   })
 
   test('a sealed cave holds one too, and it never comes for you', () => {
-    const g = game(['##########', '#@..#....#', '##########'], ['ore 8'], {}, B34, true)
+    const g = game(['##########', '#@..#....#', '##########'], ['ore 8'], {}, B35, true)
     const events = run(g, 1000)
     const [b] = g.bugs
     assert.equal(g.bugs.length, 1)
@@ -273,7 +281,7 @@ describe('where wild bugs are', () => {
   })
 
   test('at most 3 chase you; only chasers nibble', () => {
-    const g = game(ROOM, ['ore 16', 'ore 16'], { block: 8, tame: 1e9 }, B34, true)
+    const g = game(ROOM, ['ore 16', 'ore 16'], { block: 8, tame: 1e9 }, B35, true)
     const events = run(g, 600)
     const chasers = g.bugs.filter((b) => b.chasing)
     assert.equal(g.bugs.length, 6)
@@ -304,6 +312,21 @@ describe('where wild bugs are', () => {
     assert.equal(of(events, 'placed').length, 1)
     assert.equal(of(events, 'nibble').length, 0)
     assert.equal(wild.x, 7) // out of the den area (x 8 to 14), and it stays out
+  })
+
+  test('each bar bug keeps one chaser away; a full bar leaves you in peace (D062)', () => {
+    const g = game(ROOM, ['ore 16', 'ore 16'], { block: 8, tame: 1e9 }, B35, true)
+    const bar = [inBar(g), inBar(g)]
+    run(g, 600)
+    assert.equal(g.bugs.filter((b) => b.chasing).length, 1)
+    bar.push(inBar(g))
+    run(g, 1)
+    assert.equal(g.bugs.filter((b) => b.chasing).length, 0)
+    assert.equal(of(run(g, 600), 'nibble').length, 0)
+    g.bar.pop() // one less in the bar (placing one would make a den area round you): one comes back
+    const events = run(g, 600)
+    assert.equal(g.bugs.filter((b) => b.chasing).length, 1)
+    assert.ok(of(events, 'nibble').length > 0)
   })
 
   test('b3.1 has no bugs', () => {

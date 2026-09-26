@@ -124,6 +124,12 @@ Verification: ASCII-map tests (one bug per block, the 64 nearest only, refill af
 in their block, sealed-cave bugs, at most 3 chasers), determinism, the node fuzz for cost with ~36
 bugs, headless screenshots zoomed out (never-seen caves with flickering bugs).
 
+## Decided by the user, sixth pass (2026-09-26, session 3 start): pulling, and the bar calms the chasers (built as b3.5, D062)
+- Standing still, you pull ore AND loot out of the walls like the bugs, 1 unit / 5 s; the cell reverts to stone.
+- Each tamed bug in the bar removes one wild follower (chaser); the bar has 3 slots.
+- Bar bugs fly around you like normal bugs, no circling.
+- Claude's defaults (OK'd) and calls: D062.
+
 ## Steps (sequential sub-sessions, like p5; each one playable, user OK 2026-09-25)
 Sessions (user OK 2026-09-25): 0 + 1 · 2 · 3 · 3b + 4, each in a fresh session
 that starts from the handoff and this file.
