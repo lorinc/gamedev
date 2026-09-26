@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>v5 · Hex Caves</title>
+    <link rel="icon" href="favicon.png" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #050508;
+        color: #ccc;
+        font: 12px monospace;
+      }
+      #bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 16px;
+        align-items: center;
+        padding: 8px 12px;
+        border-bottom: 1px solid #262633;
+        background: #0d0d14;
+      }
+      #bar b {
+        color: #e6dc5a;
+      }
+      #bar input[type='number'] {
+        width: 64px;
+      }
+      #bar label {
+        white-space: nowrap;
+      }
+      #bar input[type='range'] {
+        width: 90px;
+        vertical-align: middle;
+      }
+      #maps {
+        display: flex;
+        gap: 8px;
+        padding: 12px;
+        overflow-x: auto;
+      }
+      #maps figure {
+        margin: 0;
+        flex: 1 1 0;
+        min-width: 200px;
+      }
+      #maps canvas {
+        width: 100%;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        display: block;
+      }
+      #maps figcaption {
+        color: #999;
+        padding-top: 4px;
+        line-height: 1.5;
+      }
+      #maps figcaption b {
+        color: #ccc;
+      }
+    </style>
+    <script src="src/errors.js"></script>
+  </head>
+  <body>
+    <div id="bar"></div>
+    <div id="maps"></div>
+    <script type="module" src="src/bundles/v5/main.js"></script>
+  </body>
+</html>

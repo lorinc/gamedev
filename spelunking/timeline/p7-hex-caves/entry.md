@@ -50,6 +50,36 @@ WFC for terrain and go back to CA caves with a lattice fitted afterwards.
 
 ## Built
 
+Built per [spec.md](spec.md) in one session (D066). `v5.html` shows seeds s … s+3 side by side, with
+view toggles (painted, classes, hex grid, sockets), the knob sliders and stats under each map. The pure
+modules are in `src/bundles/v5/` (`hex.js`, `tiles.js`, `wfc.js`, `raster.js`, plus `paint.js`, which
+paints pixels for both the page and the gallery script). `node tools/hexcaves.js [seed]` writes the 5
+stages for 4 seeds to `gallery/p7/` and checks that every pair of neighbours matches on all 3 sockets
+(across the wrap too) and that the same seed gives the same map twice. Both checks pass.
+
+- **Tiles:** 486 (1 solid, 1 open, 36 walls, 117 passages, 330 junctions, 1 pocket).
+- **Measured, 100 seeds with the default knobs, in Node:** restarts median 2, p90 8, max 21, no
+  failures; time median 70 ms, p90 176 ms, max 393 ms. So assumption 6 (under 100 ms) holds for the
+  median but not for the tail: the restarts cost it. The browser shows about the same (25–180 ms).
+- **What changed from the spec's defaults while building (it fought the build):**
+  - At first open space flooded every map (60–90 % open). The single "open" tile beat the few walls
+    that fit at a cave's edge. So now **each class keeps its whole base weight among the tiles still
+    in the domain**: a cave's edge is a fair choice between "open" and the fitting walls.
+  - **New knob "rock grows"** (solid next to solid, and next to corridors), symmetric to "caves grow".
+    The layer openness knobs now weigh solid against open only, not walls and passages.
+  - **Noise is stronger than the spec's ~1 cell:** about 2 cells, knots every 8 and 4 cells. The
+    straight tile lines needed the bend.
+  - **A pocket stays a tile of its own**, though its sockets (all solid) duplicate solid rock.
+  - **Layer wobble is a knob too** (default ±2 rows). A bug fixed on the way: `hashSeed` barely mixes
+    its last argument, so neighbouring noise knots came out almost equal and the layer borders were
+    flat. `wobble`/noise now use `hash11` (a murmur3 finish).
+  - Defaults: open ice 0.3, pudding 0.35, brine 0.3; caves grow 2, rock grows 3; corridor on 4, turn
+    1.5, branch 0.7; walls straight 3.
+- **Seen, not fixed:** the ocean rows force every hex above them open at the bottom, so there's always
+  an open band over the ocean. Isolated open or solid hexes still show as hexagons (the socket band
+  snaps their edges straight). Thin passages (about 2 cells wide) come out as squiggles after the noise.
+- Screenshots: `gallery/p7/v5_page_*.png`; stages: `gallery/p7/v5_seeds1-4_{1..5}_*.png`.
+
 ## Feedback
 
 ## Conclusion → next
