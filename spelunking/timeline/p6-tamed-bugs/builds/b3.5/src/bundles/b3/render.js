@@ -508,7 +508,7 @@ function glow(b, game, time) {
  */
 function drifted(b, game, alpha, time) {
   const cfg = /** @type {NonNullable<Game['cfg']['bugs']>} */ (game.cfg.bugs)
-  const move = Math.max(1, b.kind === 'bar' ? cfg.barMoveTicks : cfg.moveTicks)
+  const move = Math.max(1, b.kind === 'bar' ? b.pace || cfg.barMoveTicks : cfg.moveTicks)
   const f = Math.min(1, Math.max(0, (game.tick + alpha - b.movedAt) / move))
   const fx = b.from.x + wrapDelta(b.x - b.from.x, game.world.w) * f
   return {
