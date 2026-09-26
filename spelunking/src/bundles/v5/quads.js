@@ -2,24 +2,24 @@
 // triangles, 3 to a side (54 per hex; a hex side's 3 triangle edges are its 3 sockets); random pairs of
 // neighbouring triangles in the same hex merge into quads; then every face is subdivided into quads
 // (a triangle into 3, a quad into 4: corner, edge midpoints, centre); then the mesh is relaxed, each
-// quad pulled towards a square. Positions are in hex unit space (circumradius 1), x wrapping at 16√3.
+// quad pulled towards a square. Positions are in hex unit space (circumradius 1), x wrapping at cols·√3.
+// The map's size is a parameter: cols × rows hexes (p7's first map was 16 × 32; the user asked for 1/5).
 
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
-import { COLS, INR, N, NX, NY, SQ3 } from './hex.js'
-
-export const WRAP = COLS * SQ3
+import { INR, NX, NY, SQ3 } from './hex.js'
 
 // The triangle lattice: point (i, j) = i·u + j·v, u = (√3/6, 1/6) and v = (0, 1/3), 60° apart.
-// Hex centres sit on it; a shift of 16 hexes east is (i + 96, j − 48).
-const PERIOD_I = 6 * COLS
-/** @param {number} i @param {number} j */
-function canon(i, j) {
-  const k = Math.floor(i / PERIOD_I)
-  return [i - k * PERIOD_I, j + (k * PERIOD_I) / 2]
+// Hex centres sit on it; a shift of `cols` hexes east is (i + 6·cols, j − 3·cols).
+/** @param {number} i @param {number} j @param {number} period 6·cols */
+function canon(i, j, period) {
+  const k = Math.floor(i / period)
+  return [i - k * period, j + (k * period) / 2]
 }
 
-/** Nearest copy of x to ref, across the wrap. @param {number} x @param {number} ref */
-export const near = (x, ref) => x - Math.round((x - ref) / WRAP) * WRAP
+/** Nearest copy of x to ref, across a wrap of width w. @param {number} x @param {number} ref @param {number} w */
+export const near = (x, ref, w) => x - Math.round((x - ref) / w) * w
+/** x into [0, w). @param {number} x @param {number} w */
+const wrapX = (x, w) => ((x % w) + w) % w
 
 /**
  * @typedef {object} Mesh
@@ -27,13 +27,16 @@ export const near = (x, ref) => x - Math.round((x - ref) / WRAP) * WRAP
  * @property {Float64Array} y
  * @property {number[][]} faces vertex ids, one winding
  * @property {number[]} hex the hex each face lies in
+ * @property {number} cols hexes across
+ * @property {number} rows hex rows
+ * @property {number} wrap the width in unit space: cols·√3
  */
 
 /** @param {number} a @param {number} b */
 const edgeKey = (a, b) => (a < b ? a * 1e6 + b : b * 1e6 + a)
 
-/** The triangles, 54 per hex. */
-export function triangles() {
+/** The triangles, 54 per hex. @param {number} cols @param {number} rows @returns {Mesh} */
+export function triangles(cols, rows) {
   /** @type {Map<string, number>} */
   const ids = new Map()
   /** @type {number[]} */
@@ -42,7 +45,7 @@ export function triangles() {
   const ys = []
   /** @param {number} i @param {number} j */
   const vert = (i, j) => {
-    ;[i, j] = canon(i, j)
+    ;[i, j] = canon(i, j, 6 * cols)
     const key = i + ',' + j
     let id = ids.get(key)
     if (id === undefined) {
@@ -63,9 +66,9 @@ export function triangles() {
   const faces = []
   /** @type {number[]} */
   const hex = []
-  for (let h = 0; h < N; h++) {
-    const c = h % COLS
-    const r = Math.floor(h / COLS)
+  for (let h = 0; h < cols * rows; h++) {
+    const c = h % cols
+    const r = Math.floor(h / cols)
     const ci = 6 * c + 3 * (r & 1)
     const cj = 4.5 * r - ci / 2
     for (let a = -6; a <= 6; a++)
@@ -81,7 +84,7 @@ export function triangles() {
         }
       }
   }
-  return { x: Float64Array.from(xs), y: Float64Array.from(ys), faces, hex }
+  return { x: Float64Array.from(xs), y: Float64Array.from(ys), faces, hex, cols, rows, wrap: cols * SQ3 }
 }
 
 /**
@@ -132,7 +135,7 @@ export function pair(m, seed) {
     faces.push([a, d, b, f[(k + 2) % 3]])
     hex.push(m.hex[n])
   }
-  return { x: m.x, y: m.y, faces, hex }
+  return { ...m, faces, hex }
 }
 
 /** Every face into quads: corner, next edge's midpoint, centre, previous edge's midpoint. @param {Mesh} m */
@@ -147,7 +150,7 @@ export function subdivide(m) {
     if (id === undefined) {
       id = xs.length
       mids.set(key, id)
-      xs.push((m.x[a] + near(m.x[b], m.x[a])) / 2)
+      xs.push((m.x[a] + near(m.x[b], m.x[a], m.wrap)) / 2)
       ys.push((m.y[a] + m.y[b]) / 2)
     }
     return id
@@ -160,7 +163,7 @@ export function subdivide(m) {
     let cx = 0
     let cy = 0
     for (const v of f) {
-      cx += near(m.x[v], m.x[f[0]])
+      cx += near(m.x[v], m.x[f[0]], m.wrap)
       cy += m.y[v]
     }
     const c = xs.length
@@ -172,8 +175,8 @@ export function subdivide(m) {
       hex.push(m.hex[n])
     }
   })
-  for (let i = 0; i < xs.length; i++) xs[i] = ((xs[i] % WRAP) + WRAP) % WRAP
-  return { x: Float64Array.from(xs), y: Float64Array.from(ys), faces, hex }
+  for (let i = 0; i < xs.length; i++) xs[i] = wrapX(xs[i], m.wrap)
+  return { ...m, x: Float64Array.from(xs), y: Float64Array.from(ys), faces, hex }
 }
 
 /**
@@ -203,6 +206,7 @@ export function edges(m) {
  * @param {Mesh} m @param {number} iters @param {boolean} pinHexes
  */
 export function relax(m, iters, pinHexes) {
+  const W = m.wrap
   const x = Float64Array.from(m.x)
   const y = Float64Array.from(m.y)
   const pinned = new Uint8Array(x.length)
@@ -210,9 +214,9 @@ export function relax(m, iters, pinHexes) {
   // the average centre-to-corner distance
   let rs = 0
   for (const f of m.faces) {
-    const cx = f.reduce((s, v) => s + near(x[v], x[f[0]]), 0) / 4
+    const cx = f.reduce((s, v) => s + near(x[v], x[f[0]], W), 0) / 4
     const cy = f.reduce((s, v) => s + y[v], 0) / 4
-    for (const v of f) rs += Math.hypot(near(x[v], x[f[0]]) - cx, y[v] - cy)
+    for (const v of f) rs += Math.hypot(near(x[v], x[f[0]], W) - cx, y[v] - cy)
   }
   const R = rs / (m.faces.length * 4)
   const fx = new Float64Array(x.length)
@@ -227,9 +231,9 @@ export function relax(m, iters, pinHexes) {
       const c = F[q + 2]
       const d = F[q + 3]
       const x0 = x[a]
-      const x1 = near(x[b], x0)
-      const x2 = near(x[c], x0)
-      const x3 = near(x[d], x0)
+      const x1 = near(x[b], x0, W)
+      const x2 = near(x[c], x0, W)
+      const x3 = near(x[d], x0, W)
       const cx = (x0 + x1 + x2 + x3) / 4
       const cy = (y[a] + y[b] + y[c] + y[d]) / 4
       // rotate each corner back by 90°·k onto corner 0 and average: the best-fitting square's corner 0
@@ -251,9 +255,9 @@ export function relax(m, iters, pinHexes) {
     }
     for (let v = 0; v < x.length; v++) {
       if (pinned[v]) continue
-      x[v] = (((x[v] + fx[v] * 0.1) % WRAP) + WRAP) % WRAP
+      x[v] = wrapX(x[v] + fx[v] * 0.1, W)
       y[v] += fy[v] * 0.1
     }
   }
-  return { x, y, faces: m.faces, hex: m.hex }
+  return { ...m, x, y }
 }

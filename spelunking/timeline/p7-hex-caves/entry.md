@@ -89,6 +89,14 @@ quads | hex switch, quads by default. 130–180 ms a map; the grid takes ~1 s on
 clustering needs ~10× the hex weights (`QKNOBS`: open 0.45 / 0.5 / 0.45, caves grow 30, rock grows 30,
 walls straight 10), with a tipping point near 0.5 open where rock or open floods the map.
 
+**The map at 1/5 (user: "1/5 width and height should be enough for a whole playthrough").** The quad map
+is now 3 × 6 hexes (30 × 57 cells, about 2,050 quads), with the layers scaled to its depth and a fresh
+grid per seed (about 30 ms, plus 5–20 ms for the WFC). A quad stays about one cell. The sliders move by
+one step per mouse-wheel notch, ten with Shift (user). New knob **thinnest wall** (user: "a slider for
+how thin walls can get"): rock at a corner with already-open corners on opposite sides (over 120° apart)
+within that many grid edges (about a cell each) is weighted down 100×, so thin walls break through and
+the caves join; since every merge adds open space, higher values push towards the open flood.
+
 ## Feedback
 
 - [2026-09-26 · v5](feedback/2026-09-26_lorinc_v5.md): hex version 6/10, the grid clearly visible (assumption 3 failed); the quad WFC "looks like real caves, not game design". Next: more middle-sized caves connected by tunnels, and a map about 1/5 the width and height.

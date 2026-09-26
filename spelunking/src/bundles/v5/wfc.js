@@ -59,11 +59,11 @@ export function hash11(...parts) {
 
 /**
  * How far the layer borders are shifted at a fine x (in rows): smooth, periodic in FW, from the seed.
- * @param {number} seed @param {number} x @param {number} amp
+ * @param {number} seed @param {number} x @param {number} amp @param {number} [period] the map's width in fine cells
  */
-export function wobble(seed, x, amp) {
-  const K = 8 // knots across the width, every 20 cells
-  const f = ((((x / FW) * K) % K) + K) % K
+export function wobble(seed, x, amp, period = FW) {
+  const K = Math.max(2, Math.round(period / 20)) // knots across the width, about every 20 cells
+  const f = ((((x / period) * K) % K) + K) % K
   const i = Math.floor(f)
   const t = f - i
   const s = t * t * (3 - 2 * t)

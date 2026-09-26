@@ -5,7 +5,7 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { SQ3 } from '../src/bundles/v5/hex.js'
-import { WRAP, edges, near, pair, relax, subdivide, triangles } from '../src/bundles/v5/quads.js'
+import { edges, near, pair, relax, subdivide, triangles } from '../src/bundles/v5/quads.js'
 import { encodePng } from './png.js'
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'gallery', 'p7')
@@ -70,17 +70,17 @@ function draw(m, name, opt = {}) {
       (fx(x + shift) - v.x0) * v.px,
       (fy(y) - v.y0) * v.px,
     ]
-    for (const shift of [-WRAP, 0, WRAP]) {
+    for (const shift of [-m.wrap, 0, m.wrap]) {
       if (opt.fillTris)
         m.faces.forEach((f) => {
-          const pts = f.map((q) => P(near(m.x[q], m.x[f[0]]), m.y[q], shift))
+          const pts = f.map((q) => P(near(m.x[q], m.x[f[0]], m.wrap), m.y[q], shift))
           c.fill(pts, f.length === 3 ? [200, 90, 60] : [40, 60, 90])
         })
       /** @type {number[][]} */
       const outline = []
       for (const [a, b, fs] of edges(m)) {
         const [x0, y0] = P(m.x[a], m.y[a], shift)
-        const [x1, y1] = P(near(m.x[b], m.x[a]), m.y[b], shift)
+        const [x1, y1] = P(near(m.x[b], m.x[a], m.wrap), m.y[b], shift)
         if (fs.length === 2 && m.hex[fs[0]] !== m.hex[fs[1]]) outline.push([x0, y0, x1, y1])
         else c.line(x0, y0, x1, y1, [150, 150, 165], 1)
       }
@@ -94,7 +94,7 @@ function draw(m, name, opt = {}) {
 }
 
 mkdirSync(OUT, { recursive: true })
-const tri = triangles()
+const tri = triangles(16, 32) // p7's first map; the page's quad map is 3 × 6
 const paired = pair(tri, seed)
 const sub = subdivide(paired)
 console.log(

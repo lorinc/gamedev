@@ -6,7 +6,7 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { N, NEIGHBOURS } from '../src/bundles/v5/hex.js'
-import { HEIGHT, WIDTH, paint, paintQuads } from '../src/bundles/v5/paint.js'
+import { HEIGHT, WIDTH, paint, paintQuads, quadSize } from '../src/bundles/v5/paint.js'
 import { buildGrid } from '../src/bundles/v5/quadcaves.js'
 import { QKNOBS, generateQuads, quadCavities } from '../src/bundles/v5/quadwfc.js'
 import { cavities, raster } from '../src/bundles/v5/raster.js'
@@ -21,7 +21,6 @@ const GAP = 8
 const tiles = makeTiles()
 const P = prepare(tiles)
 console.log(`tiles: ${tiles.length}`)
-const grid = buildGrid(1, 150)
 
 let bad = 0
 const fail = (/** @type {string} */ msg) => {
@@ -50,6 +49,8 @@ for (let seed = first; seed < first + 4; seed++) {
     `seed ${seed}: ${ms.toFixed(0)} ms, ${g.restarts} restarts, ${cav.count} cavities, largest ${(cav.largest * 100).toFixed(0)}%, ${cav.tiny} tiny`,
   )
   const q0 = performance.now()
+  // the quad map: 3 × 6 hexes (the user's 1/5), a grid per seed, as on the page
+  const grid = buildGrid(seed, 150, 3, 6)
   const C = generateQuads(grid, seed, QKNOBS)
   const qms = performance.now() - q0
   const again2 = generateQuads(grid, seed, QKNOBS)
@@ -60,7 +61,7 @@ for (let seed = first; seed < first + 4; seed++) {
     })
   const qc = quadCavities(grid, C)
   console.log(`  quads: ${qms.toFixed(0)} ms, ${qc.count} cavities, largest ${(qc.largest * 100).toFixed(0)}%, ${qc.tiny} tiny`)
-  maps.push({ g, R, C })
+  maps.push({ g, R, C, grid })
 }
 
 /** @type {[string, import('../src/bundles/v5/paint.js').View][]} */
@@ -72,7 +73,6 @@ const STAGES = [
   ['5_painted', { mode: 'painted', grid: false, sockets: false }],
 ]
 mkdirSync(OUT, { recursive: true })
-const w = WIDTH * 4 + GAP * 3
 /** @type {[string, import('../src/bundles/v5/paint.js').View, 'hex' | 'quads'][]} */
 const ALL = [
   ...STAGES.map(([n, v]) => /** @type {[string, typeof v, 'hex']} */ ([n, v, 'hex'])),
@@ -80,20 +80,22 @@ const ALL = [
   ['7_quads-classes', { mode: 'classes', grid: false, sockets: false }, 'quads'],
 ]
 for (const [name, view, kind] of ALL) {
-  const rgb = Buffer.alloc(w * HEIGHT * 3)
-  maps.forEach(({ g, R, C }, n) => {
+  const { w: mw, h: mh } = kind === 'hex' ? { w: WIDTH, h: HEIGHT } : quadSize(maps[0].grid)
+  const w = mw * 4 + GAP * 3
+  const rgb = Buffer.alloc(w * mh * 3)
+  maps.forEach(({ g, R, C, grid }, n) => {
     const px = kind === 'hex' ? paint(R, g.tiles, tiles, view) : paintQuads(grid, C, view)
-    for (let y = 0; y < HEIGHT; y++)
-      for (let x = 0; x < WIDTH; x++) {
-        const o = (y * w + n * (WIDTH + GAP) + x) * 3
-        const p = (y * WIDTH + x) * 4
+    for (let y = 0; y < mh; y++)
+      for (let x = 0; x < mw; x++) {
+        const o = (y * w + n * (mw + GAP) + x) * 3
+        const p = (y * mw + x) * 4
         rgb[o] = px[p]
         rgb[o + 1] = px[p + 1]
         rgb[o + 2] = px[p + 2]
       }
   })
   const file = join(OUT, `v5_seeds${first}-${first + 3}_${name}.png`)
-  writeFileSync(file, encodePng(w, HEIGHT, rgb))
+  writeFileSync(file, encodePng(w, mh, rgb))
   console.log(`wrote ${file}`)
 }
 if (bad) {

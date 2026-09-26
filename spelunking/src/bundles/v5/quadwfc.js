@@ -5,7 +5,7 @@
 // propagate. Saddles are allowed but rare, so there are no contradictions.
 
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
-import { COLS } from './hex.js'
+import { near } from './quads.js'
 import { BRINE, ICE, OCEAN, SURFACE, bandOf, wobble } from './wfc.js'
 
 export const QROCK = 0
@@ -34,6 +34,7 @@ export const QKNOBS = {
   grow: 30, // caves grow: open next to open
   rock: 30, // rock grows: rock next to rock
   straight: 10, // a wall carries a neighbour's border straight on
+  thin: 0, // how thin walls can get: rock with open space on opposite sides within this many cells is avoided (0 = off)
   wobble: 2, // rows the layer borders wobble by
 }
 /** @typedef {typeof QKNOBS} QKnobs */
@@ -94,11 +95,12 @@ export function generateQuads(G, seed, K) {
   const Q = faces.length
   const rng = mulberry32(hashSeed(seed, 0x51))
   const opens = [0, K.openIce, K.openPudding, K.openBrine, 0]
+  // bands by depth as a share of the map, on p7's 32-row scale, so any map size keeps the layers'
+  // proportions: a thin rock surface on top, the ocean's last 2 rows at the bottom
   const band = new Uint8Array(Q)
   for (let q = 0; q < Q; q++) {
-    const r = Math.floor(G.mesh.hex[q] / COLS)
-    band[q] =
-      r === 0 ? SURFACE : r >= 30 ? OCEAN : Math.min(BRINE, Math.max(ICE, bandOf((G.cy[q] - 6) / 9 + wobble(seed, G.cx[q], K.wobble))))
+    const row = (G.cy[q] / G.H) * 32 - 0.5
+    band[q] = row < 0.25 ? SURFACE : row >= 30 ? OCEAN : Math.min(BRINE, Math.max(ICE, bandOf(row + wobble(seed, G.cx[q], K.wobble, G.W))))
   }
   // class weights per band, shared by the class's tiles
   const base = [0, 1, 2, 3, 4].map((b) => {
@@ -125,6 +127,19 @@ export function generateQuads(G, seed, K) {
   }
 
   const dom = new Uint16Array(Q).fill(0xffff)
+  // each corner's value once a quad holding it is decided (-1 = not yet), for the thin-wall check
+  const vs = new Int8Array(G.mesh.x.length).fill(-1)
+  /** @type {number[][]} */
+  const vadj = Array.from({ length: vs.length }, () => [])
+  for (const [a, b] of G.walls) {
+    vadj[a].push(b)
+    vadj[b].push(a)
+  }
+  /** @param {number} q @param {number} t */
+  const settle = (q, t) => {
+    tile[q] = t
+    for (let k = 0; k < 4; k++) vs[faces[q][k]] = bit(t, k)
+  }
   const tile = new Int8Array(Q).fill(-1)
   const single = (/** @type {number} */ d) => (d & (d - 1)) === 0
 
@@ -187,7 +202,7 @@ export function generateQuads(G, seed, K) {
         const nd = dom[p] & allowed
         if (nd === dom[p]) continue
         dom[p] = nd
-        if (single(nd)) tile[p] = 31 - Math.clz32(nd)
+        if (single(nd)) settle(p, 31 - Math.clz32(nd))
         else push(p)
         queue.push(p)
       }
@@ -200,7 +215,7 @@ export function generateQuads(G, seed, K) {
     if (band[q] === SURFACE || band[q] === OCEAN) {
       const t = band[q] === SURFACE ? 0 : 15
       dom[q] = 1 << t
-      tile[q] = t
+      settle(q, t)
       fixed.push(q)
     }
   }
@@ -212,7 +227,7 @@ export function generateQuads(G, seed, K) {
     if (q < 0 || tile[q] >= 0) continue
     const t = choose(q)
     dom[q] = 1 << t
-    tile[q] = t
+    settle(q, t)
     propagate([q])
   }
 
@@ -228,11 +243,14 @@ export function generateQuads(G, seed, K) {
     const inDom = [0, 0, 0, 0, 0, 0]
     for (let t = 0; t < 16; t++) if (dom[q] & (1 << t)) inDom[QCLASS[t]]++
     const cw = new Float64Array(16)
+    const thin = K.thin > 0 ? faces[q].map(pinched) : [false, false, false, false]
     let sum = 0
     for (let t = 0; t < 16; t++) {
       if (!(dom[q] & (1 << t))) continue
       const c = QCLASS[t]
       let f = (w[t] * COUNT[c]) / inDom[c]
+      // rock at a pinched corner would make a wall thinner than K.thin: it tends to break through instead
+      for (let k = 0; k < 4; k++) if (thin[k] && !bit(t, k)) f *= 0.01
       for (let k = 0; k < 4; k++) {
         const p = L.nb[q * 4 + k]
         if (p < 0 || tile[p] < 0) continue
@@ -252,6 +270,39 @@ export function generateQuads(G, seed, K) {
       if (r < 0) return t
     }
     return 31 - Math.clz32(dom[q])
+  }
+
+  /**
+   * Is corner v pinched: already-decided open corners within K.thin cells of it, on opposite sides
+   * (more than 120° apart, seen from v)? A breadth-first walk along the grid's edges, about a cell each.
+   * @param {number} v
+   */
+  function pinched(v) {
+    const m = G.mesh
+    const seen = new Set([v])
+    let ring = [v]
+    /** @type {[number, number][]} */
+    const dirs = []
+    for (let d = 0; d < K.thin && ring.length; d++) {
+      /** @type {number[]} */
+      const next = []
+      for (const a of ring)
+        for (const b of vadj[a]) {
+          if (seen.has(b)) continue
+          seen.add(b)
+          next.push(b)
+          if (vs[b] !== 1) continue
+          const dx = near(m.x[b], m.x[v], m.wrap) - m.x[v]
+          const dy = m.y[b] - m.y[v]
+          const len = Math.hypot(dx, dy) || 1
+          const ux = dx / len
+          const uy = dy / len
+          for (const [ox, oy] of dirs) if (ux * ox + uy * oy < -0.5) return true
+          dirs.push([ux, uy])
+        }
+      ring = next
+    }
+    return false
   }
 }
 

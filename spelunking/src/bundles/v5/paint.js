@@ -4,7 +4,7 @@
 // the right to show the wrap; the sky with Jupiter sits above.
 
 import { CELL_W, FH, FW, N, SOCKET, SQ3, centre, hexAt } from './hex.js'
-import { WRAP, near } from './quads.js'
+import { near } from './quads.js'
 import { QCLASS } from './quadwfc.js'
 import { OCEAN } from './wfc.js'
 
@@ -45,20 +45,23 @@ export const CLASS_RGB = [
  * @property {boolean} sockets
  */
 
-/** A blank picture: the sky everywhere, with a big orange Jupiter; `set` fades the wrap copy. */
-function canvas() {
-  const px = new Uint8ClampedArray(WIDTH * HEIGHT * 4)
+/**
+ * A blank picture: the sky everywhere, with a big orange Jupiter; `set` fades x ≥ fadeFrom (the wrap copy).
+ * @param {number} w @param {number} h @param {number} fadeFrom
+ */
+function canvas(w = WIDTH, h = HEIGHT, fadeFrom = FW * S) {
+  const px = new Uint8ClampedArray(w * h * 4)
   const set = (/** @type {number} */ x, /** @type {number} */ y, /** @type {RGB} */ c) => {
-    if (x < 0 || y < 0 || x >= WIDTH || y >= HEIGHT) return
-    const o = (y * WIDTH + x) * 4
-    const fade = x >= FW * S
+    if (x < 0 || y < 0 || x >= w || y >= h) return
+    const o = (y * w + x) * 4
+    const fade = x >= fadeFrom
     px[o] = fade ? (c[0] + 255) / 2.4 : c[0]
     px[o + 1] = fade ? (c[1] + 255) / 2.4 : c[1]
     px[o + 2] = fade ? (c[2] + 255) / 2.4 : c[2]
     px[o + 3] = 255
   }
-  for (let y = 0; y < HEIGHT; y++)
-    for (let x = 0; x < WIDTH; x++) {
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
       const d = Math.hypot(x - 64, y - 30)
       set(x, y, d < 21 ? JUPITER : d < 23 ? [0, 0, 0] : SKYC)
     }
@@ -146,21 +149,29 @@ const QCLASS_RGB = [
 /** @param {RGB} c @returns {RGB} */
 const dim = (c) => [c[0] * 0.45, c[1] * 0.45, c[2] * 0.45]
 
+/** px per fine cell on the quad map (it's small), and the wrap copy's width in cells */
+export const QS = 8
+const QEXT = 10
+
+/** The quad map's picture size. @param {import('./quadcaves.js').Grid} G */
+export const quadSize = (G) => ({ w: (G.W + QEXT) * QS, h: SKY + G.H * QS })
+
 /**
  * The quad WFC's map: each quad of the relaxed grid painted by marching squares on its 4 corners, so
- * the rock/cave border cuts across the quads between edge midpoints, with a black line along it.
- * `grid` draws the quads themselves.
+ * the rock/cave border cuts across the quads between edge midpoints, with a black line along it. One
+ * hex column is repeated, faded, on the right to show the wrap. `grid` draws the quads themselves.
  * @param {import('./quadcaves.js').Grid} G
  * @param {{tile: Uint8Array, band: Uint8Array}} R
  * @param {View} view
- * @returns {Uint8ClampedArray} WIDTH × HEIGHT × 4
+ * @returns {Uint8ClampedArray} quadSize(G) × 4
  */
 export function paintQuads(G, R, view) {
-  const { px, set } = canvas()
+  const { w: WIDTH, h } = quadSize(G)
+  const { px, set } = canvas(WIDTH, h, G.W * QS)
   const m = G.mesh
-  const X = (/** @type {number} */ x) => ((x * CELL_W) / SQ3) * S
-  const Y = (/** @type {number} */ y) => SKY + (y * 6 + 6) * S
-  const shifts = [0, X(WRAP), -X(WRAP)]
+  const X = (/** @type {number} */ x) => ((x * CELL_W) / SQ3) * QS
+  const Y = (/** @type {number} */ y) => SKY + (y * 6 + 6) * QS
+  const shifts = [0, X(m.wrap), -X(m.wrap)]
 
   /** Fills a polygon (pixel centres inside, even-odd), with its wrapped copies. @param {number[]} xs @param {number[]} ys @param {RGB} col */
   const fill = (xs, ys, col) => {
@@ -189,7 +200,7 @@ export function paintQuads(G, R, view) {
 
   m.faces.forEach((f, q) => {
     const t = R.tile[q]
-    const xs = f.map((v) => X(near(m.x[v], m.x[f[0]])))
+    const xs = f.map((v) => X(near(m.x[v], m.x[f[0]], m.wrap)))
     const ys = f.map((v) => Y(m.y[v]))
     /** @type {RGB} */
     const rock = view.mode === 'classes' ? dim(QCLASS_RGB[QCLASS[t]]) : ROCK[R.band[q]]
@@ -227,7 +238,7 @@ export function paintQuads(G, R, view) {
   if (view.grid)
     for (const [a, b] of G.walls) {
       const ax = X(m.x[a])
-      line(ax, Y(m.y[a]), X(near(m.x[b], m.x[a])), Y(m.y[b]), [120, 120, 60])
+      line(ax, Y(m.y[a]), X(near(m.x[b], m.x[a], m.wrap)), Y(m.y[b]), [120, 120, 60])
     }
   return px
 }

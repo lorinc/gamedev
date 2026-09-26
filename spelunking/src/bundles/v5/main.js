@@ -2,7 +2,7 @@
 // the stats. Two generators: the quad WFC on the relaxed Townscaper-style grid (the default), and the
 // hex WFC it replaced (p7's first build). Everything else lives in the pure modules next to this one.
 
-import { HEIGHT, WIDTH, paint, paintQuads } from './paint.js'
+import { HEIGHT, WIDTH, paint, paintQuads, quadSize } from './paint.js'
 import { buildGrid } from './quadcaves.js'
 import { QKNOBS, generateQuads, quadCavities } from './quadwfc.js'
 import { cavities, raster } from './raster.js'
@@ -11,8 +11,10 @@ import { KNOBS, generate, prepare } from './wfc.js'
 
 const tiles = makeTiles()
 const P = prepare(tiles)
-/** @type {import('./quadcaves.js').Grid | null} */
-let grid = null
+// The quad map: 3 × 6 hexes, about 1/5 of p7's 16 × 32 each way (user: "1/5 width and height should
+// be enough for a whole playthrough"). Small enough to build a fresh grid per seed.
+const QCOLS = 3
+const QROWS = 6
 
 const params = new URLSearchParams(location.search)
 let seed = Number(params.get('seed')) || 1
@@ -28,9 +30,9 @@ const view = { mode: 'painted', grid: false, sockets: false }
 /** @typedef {[string, string, number, number, number]} Slider key, label, min, max, step */
 /** @type {Slider[]} */
 const OPEN = [
-  ['openIce', 'ice open', 0, 1, 0.01],
-  ['openPudding', 'pudding open', 0, 1, 0.01],
-  ['openBrine', 'brine open', 0, 1, 0.01],
+  ['openIce', 'ice open', 0, 1, 0.005],
+  ['openPudding', 'pudding open', 0, 1, 0.005],
+  ['openBrine', 'brine open', 0, 1, 0.005],
 ]
 /** @type {Slider[]} */
 const HEX_SLIDERS = [
@@ -46,9 +48,10 @@ const HEX_SLIDERS = [
 /** @type {Slider[]} */
 const QUAD_SLIDERS = [
   ...OPEN,
-  ['grow', 'caves grow', 1, 100, 1],
-  ['rock', 'rock grows', 1, 100, 1],
-  ['straight', 'walls straight', 1, 40, 1],
+  ['grow', 'caves grow', 1, 100, 0.5],
+  ['rock', 'rock grows', 1, 100, 0.5],
+  ['straight', 'walls straight', 1, 40, 0.5],
+  ['thin', 'thinnest wall (cells, 0 = any)', 0, 6, 1],
   ['wobble', 'layer wobble', 0, 4, 0.5],
 ]
 
@@ -121,11 +124,24 @@ function sliders(list, target, defaults) {
     const r = /** @type {HTMLInputElement} */ (el('input', { type: 'range', min: String(min), max: String(max), step: String(step) }))
     r.value = String(target[key])
     const out = el('span', {}, String(target[key]))
-    r.addEventListener('input', () => {
+    const changed = () => {
       target[key] = Number(r.value)
       out.textContent = r.value
       schedule()
-    })
+    }
+    r.addEventListener('input', changed)
+    // micro-tuning: the wheel moves one step, ten with Shift
+    r.addEventListener(
+      'wheel',
+      (e) => {
+        e.preventDefault()
+        const n = (e.deltaY < 0 || e.deltaX < 0 ? 1 : -1) * (e.shiftKey ? 10 : 1)
+        const v = Math.min(max, Math.max(min, Number(r.value) + n * step))
+        r.value = String(+(Math.round(v / step) * step).toFixed(3))
+        changed()
+      },
+      { passive: false },
+    )
     resets.push(() => {
       target[key] = defaults[key]
       r.value = out.textContent = String(defaults[key])
@@ -168,15 +184,16 @@ function build() {
   painters = []
   for (let n = 0; n < 4; n++) {
     const s = seed + n
-    if (gen === 'quads' && !grid) grid = buildGrid(1, 150)
     const t0 = performance.now()
-    if (gen === 'quads' && grid) {
-      const G = grid
+    if (gen === 'quads') {
+      const G = buildGrid(s, 150, QCOLS, QROWS)
+      const tg = performance.now()
       const C = generateQuads(G, s, /** @type {typeof QKNOBS} */ (qknobs))
-      const ms = performance.now() - t0
+      const ms = performance.now() - tg
       const cav = quadCavities(G, C)
+      size(n, quadSize(G))
       slots[n].cap.innerHTML =
-        `<b>seed ${s}</b> · ${ms.toFixed(0)} ms · ${G.mesh.faces.length} quads<br>` +
+        `<b>seed ${s}</b> · grid ${(tg - t0).toFixed(0)} ms + WFC ${ms.toFixed(0)} ms · ${G.mesh.faces.length} quads · ${G.W} × ${G.H} cells<br>` +
         `${cav.count} cavities · largest ${(cav.largest * 100).toFixed(0)}% of open · ${cav.tiny} tiny (&lt; 20 corners)`
       painters.push(() => paintQuads(G, C, view))
     } else {
@@ -184,6 +201,7 @@ function build() {
       const ms = performance.now() - t0
       const R = raster(tiles, g.tiles, s, knobs.wobble)
       const cav = cavities(R.open, R.band)
+      size(n, { w: WIDTH, h: HEIGHT })
       slots[n].cap.innerHTML =
         `<b>seed ${s}</b>${g.ok ? '' : ' <b style="color:#f05">FAILED</b>'} · ${g.restarts} restarts · ${ms.toFixed(0)} ms · ${tiles.length} tiles<br>` +
         `${cav.count} cavities · largest ${(cav.largest * 100).toFixed(0)}% of open · ${cav.tiny} tiny (&lt; 20 cells)`
@@ -193,10 +211,18 @@ function build() {
   draw()
 }
 
+/** @param {number} n @param {{w: number, h: number}} d */
+function size(n, d) {
+  const c = slots[n].canvas
+  if (c.width !== d.w) c.width = d.w
+  if (c.height !== d.h) c.height = d.h
+}
+
 function draw() {
   painters.forEach((p, n) => {
-    const ctx = /** @type {CanvasRenderingContext2D} */ (slots[n].canvas.getContext('2d'))
-    const img = ctx.createImageData(WIDTH, HEIGHT)
+    const c = slots[n].canvas
+    const ctx = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d'))
+    const img = ctx.createImageData(c.width, c.height)
     img.data.set(p())
     ctx.putImageData(img, 0, 0)
   })
@@ -223,6 +249,4 @@ function setSeed(s) {
   build()
 }
 
-// let the bar paint before the first build (the quad grid takes about a second)
-slots[0].cap.textContent = 'building the grid…'
-setTimeout(build, 30)
+build()
