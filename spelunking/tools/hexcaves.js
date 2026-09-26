@@ -6,7 +6,9 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { N, NEIGHBOURS } from '../src/bundles/v5/hex.js'
-import { HEIGHT, WIDTH, paint } from '../src/bundles/v5/paint.js'
+import { HEIGHT, WIDTH, paint, paintQuads } from '../src/bundles/v5/paint.js'
+import { buildGrid } from '../src/bundles/v5/quadcaves.js'
+import { QKNOBS, generateQuads, quadCavities } from '../src/bundles/v5/quadwfc.js'
 import { cavities, raster } from '../src/bundles/v5/raster.js'
 import { makeTiles, reversed, sideCode } from '../src/bundles/v5/tiles.js'
 import { KNOBS, generate, prepare } from '../src/bundles/v5/wfc.js'
@@ -19,6 +21,7 @@ const GAP = 8
 const tiles = makeTiles()
 const P = prepare(tiles)
 console.log(`tiles: ${tiles.length}`)
+const grid = buildGrid(1, 150)
 
 let bad = 0
 const fail = (/** @type {string} */ msg) => {
@@ -46,7 +49,18 @@ for (let seed = first; seed < first + 4; seed++) {
   console.log(
     `seed ${seed}: ${ms.toFixed(0)} ms, ${g.restarts} restarts, ${cav.count} cavities, largest ${(cav.largest * 100).toFixed(0)}%, ${cav.tiny} tiny`,
   )
-  maps.push({ g, R })
+  const q0 = performance.now()
+  const C = generateQuads(grid, seed, QKNOBS)
+  const qms = performance.now() - q0
+  const again2 = generateQuads(grid, seed, QKNOBS)
+  if (again2.tile.join() !== C.tile.join()) fail(`seed ${seed}: quads NOT deterministic`)
+  for (let q = 0; q < C.tile.length; q++)
+    grid.mesh.faces[q].forEach((v, k) => {
+      if (((C.tile[q] >> k) & 1) !== C.open[v]) fail(`seed ${seed}: quad ${q} disagrees with a neighbour on corner ${k}`)
+    })
+  const qc = quadCavities(grid, C)
+  console.log(`  quads: ${qms.toFixed(0)} ms, ${qc.count} cavities, largest ${(qc.largest * 100).toFixed(0)}%, ${qc.tiny} tiny`)
+  maps.push({ g, R, C })
 }
 
 /** @type {[string, import('../src/bundles/v5/paint.js').View][]} */
@@ -59,10 +73,16 @@ const STAGES = [
 ]
 mkdirSync(OUT, { recursive: true })
 const w = WIDTH * 4 + GAP * 3
-for (const [name, view] of STAGES) {
+/** @type {[string, import('../src/bundles/v5/paint.js').View, 'hex' | 'quads'][]} */
+const ALL = [
+  ...STAGES.map(([n, v]) => /** @type {[string, typeof v, 'hex']} */ ([n, v, 'hex'])),
+  ['6_quads', { mode: 'painted', grid: false, sockets: false }, 'quads'],
+  ['7_quads-classes', { mode: 'classes', grid: false, sockets: false }, 'quads'],
+]
+for (const [name, view, kind] of ALL) {
   const rgb = Buffer.alloc(w * HEIGHT * 3)
-  maps.forEach(({ g, R }, n) => {
-    const px = paint(R, g.tiles, tiles, view)
+  maps.forEach(({ g, R, C }, n) => {
+    const px = kind === 'hex' ? paint(R, g.tiles, tiles, view) : paintQuads(grid, C, view)
     for (let y = 0; y < HEIGHT; y++)
       for (let x = 0; x < WIDTH; x++) {
         const o = (y * w + n * (WIDTH + GAP) + x) * 3
@@ -80,4 +100,4 @@ if (bad) {
   console.log(`${bad} problems`)
   process.exit(1)
 }
-console.log('checks: sockets match across every edge (and the wrap); same seed, same map')
+console.log('checks: sockets match across every edge (and the wrap); quads agree on every shared corner; same seed, same map')

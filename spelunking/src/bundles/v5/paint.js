@@ -4,6 +4,8 @@
 // the right to show the wrap; the sky with Jupiter sits above.
 
 import { CELL_W, FH, FW, N, SOCKET, SQ3, centre, hexAt } from './hex.js'
+import { WRAP, near } from './quads.js'
+import { QCLASS } from './quadwfc.js'
 import { OCEAN } from './wfc.js'
 
 export const S = 2 // px per fine cell
@@ -43,14 +45,8 @@ export const CLASS_RGB = [
  * @property {boolean} sockets
  */
 
-/**
- * @param {{hex: Int16Array, plain: Uint8Array, open: Uint8Array, band: Uint8Array}} R the raster
- * @param {Int16Array} map tile id per hex
- * @param {import('./tiles.js').Tile[]} tiles
- * @param {View} view
- * @returns {Uint8ClampedArray} WIDTH × HEIGHT × 4
- */
-export function paint(R, map, tiles, view) {
+/** A blank picture: the sky everywhere, with a big orange Jupiter; `set` fades the wrap copy. */
+function canvas() {
   const px = new Uint8ClampedArray(WIDTH * HEIGHT * 4)
   const set = (/** @type {number} */ x, /** @type {number} */ y, /** @type {RGB} */ c) => {
     if (x < 0 || y < 0 || x >= WIDTH || y >= HEIGHT) return
@@ -61,14 +57,23 @@ export function paint(R, map, tiles, view) {
     px[o + 2] = fade ? (c[2] + 255) / 2.4 : c[2]
     px[o + 3] = 255
   }
-
-  // the sky, with a big orange Jupiter
-  for (let y = 0; y < SKY; y++)
+  for (let y = 0; y < HEIGHT; y++)
     for (let x = 0; x < WIDTH; x++) {
       const d = Math.hypot(x - 64, y - 30)
       set(x, y, d < 21 ? JUPITER : d < 23 ? [0, 0, 0] : SKYC)
     }
+  return { px, set }
+}
 
+/**
+ * @param {{hex: Int16Array, plain: Uint8Array, open: Uint8Array, band: Uint8Array}} R the raster
+ * @param {Int16Array} map tile id per hex
+ * @param {import('./tiles.js').Tile[]} tiles
+ * @param {View} view
+ * @returns {Uint8ClampedArray} WIDTH × HEIGHT × 4
+ */
+export function paint(R, map, tiles, view) {
+  const { px, set } = canvas()
   const grid = view.mode === 'plain' ? R.plain : R.open
   const isOpen = (/** @type {number} */ x, /** @type {number} */ y) => y >= 0 && y < FH && grid[y * FW + (((x % FW) + FW) % FW)] === 1
   for (let y = 0; y < FH; y++)
@@ -124,6 +129,105 @@ export function paint(R, map, tiles, view) {
           for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) set(X + dx, Y + dy, col)
         }
       }
+    }
+  return px
+}
+
+/** Quad classes for the classes view: rock, open, wall, nook, inner corner, saddle. @type {RGB[]} */
+const QCLASS_RGB = [
+  [110, 110, 110],
+  [235, 235, 235],
+  [74, 144, 217],
+  [229, 179, 59],
+  [217, 83, 79],
+  [155, 89, 182],
+]
+
+/** @param {RGB} c @returns {RGB} */
+const dim = (c) => [c[0] * 0.45, c[1] * 0.45, c[2] * 0.45]
+
+/**
+ * The quad WFC's map: each quad of the relaxed grid painted by marching squares on its 4 corners, so
+ * the rock/cave border cuts across the quads between edge midpoints, with a black line along it.
+ * `grid` draws the quads themselves.
+ * @param {import('./quadcaves.js').Grid} G
+ * @param {{tile: Uint8Array, band: Uint8Array}} R
+ * @param {View} view
+ * @returns {Uint8ClampedArray} WIDTH × HEIGHT × 4
+ */
+export function paintQuads(G, R, view) {
+  const { px, set } = canvas()
+  const m = G.mesh
+  const X = (/** @type {number} */ x) => ((x * CELL_W) / SQ3) * S
+  const Y = (/** @type {number} */ y) => SKY + (y * 6 + 6) * S
+  const shifts = [0, X(WRAP), -X(WRAP)]
+
+  /** Fills a polygon (pixel centres inside, even-odd), with its wrapped copies. @param {number[]} xs @param {number[]} ys @param {RGB} col */
+  const fill = (xs, ys, col) => {
+    const n = xs.length
+    for (const dx of shifts) {
+      const x0 = Math.floor(Math.min(...xs) + dx)
+      const x1 = Math.ceil(Math.max(...xs) + dx)
+      if (x1 < 0 || x0 >= WIDTH) continue
+      for (let y = Math.floor(Math.min(...ys)); y <= Math.max(...ys); y++)
+        for (let x = x0; x <= x1; x++) {
+          let inside = false
+          const cx = x + 0.5 - dx
+          const cy = y + 0.5
+          for (let i = 0, j = n - 1; i < n; j = i++)
+            if (ys[i] > cy !== ys[j] > cy && cx < ((xs[j] - xs[i]) * (cy - ys[i])) / (ys[j] - ys[i]) + xs[i]) inside = !inside
+          if (inside) set(x, y, col)
+        }
+    }
+  }
+  /** @param {number} ax @param {number} ay @param {number} bx @param {number} by @param {RGB} c */
+  const line = (ax, ay, bx, by, c) => {
+    const n = Math.ceil(Math.max(Math.abs(bx - ax), Math.abs(by - ay))) + 1
+    for (const dx of shifts)
+      for (let i = 0; i <= n; i++) set(Math.floor(ax + ((bx - ax) * i) / n + dx), Math.floor(ay + ((by - ay) * i) / n), c)
+  }
+
+  m.faces.forEach((f, q) => {
+    const t = R.tile[q]
+    const xs = f.map((v) => X(near(m.x[v], m.x[f[0]])))
+    const ys = f.map((v) => Y(m.y[v]))
+    /** @type {RGB} */
+    const rock = view.mode === 'classes' ? dim(QCLASS_RGB[QCLASS[t]]) : ROCK[R.band[q]]
+    /** @type {RGB} */
+    const open = view.mode === 'classes' ? QCLASS_RGB[QCLASS[t]] : R.band[q] === OCEAN ? WATER : CAVE
+    fill(xs, ys, rock)
+    if (t === 0) return
+    // the open part: open corners, and the midpoints of the edges the border crosses
+    const ox = []
+    const oy = []
+    /** @type {number[][]} */
+    const mids = []
+    for (let k = 0; k < 4; k++) {
+      const a = (t >> k) & 1
+      const b = (t >> ((k + 1) & 3)) & 1
+      if (a) (ox.push(xs[k]), oy.push(ys[k]))
+      if (a !== b) {
+        const mx = (xs[k] + xs[(k + 1) & 3]) / 2
+        const my = (ys[k] + ys[(k + 1) & 3]) / 2
+        ox.push(mx)
+        oy.push(my)
+        mids.push([mx, my])
+      }
+    }
+    fill(ox, oy, open)
+    if (view.mode !== 'painted' || R.band[q] === OCEAN) return
+    // the border: midpoints in pairs (a saddle has two)
+    if (mids.length === 2) line(mids[0][0], mids[0][1], mids[1][0], mids[1][1], [0, 0, 0])
+    if (mids.length === 4) {
+      const s = (t & 1) === 1 ? 0 : 1 // pair the midpoints around each open corner
+      line(mids[s][0], mids[s][1], mids[(s + 3) & 3][0], mids[(s + 3) & 3][1], [0, 0, 0])
+      line(mids[s + 1][0], mids[s + 1][1], mids[s + 2][0], mids[s + 2][1], [0, 0, 0])
+    }
+  })
+  if (view.grid)
+    for (const [a, b] of G.walls) {
+      const ax = X(m.x[a])
+      line(ax, Y(m.y[a]), X(near(m.x[b], m.x[a])), Y(m.y[b]), [120, 120, 60])
     }
   return px
 }

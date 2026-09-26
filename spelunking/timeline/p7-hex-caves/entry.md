@@ -80,6 +80,17 @@ stages for 4 seeds to `gallery/p7/` and checks that every pair of neighbours mat
   snaps their edges straight). Thin passages (about 2 cells wide) come out as squiggles after the noise.
 - Screenshots: `gallery/p7/v5_page_*.png`; stages: `gallery/p7/v5_seeds1-4_{1..5}_*.png`.
 
+**Then the quad WFC (D067), after the user's verdict on the hex version.** A Townscaper-style grid inside
+the hexes (`quads.js`, `tools/quadgrid.js`): 54 triangles per hex, random pairs within a hex, every face
+subdivided into quads, the whole mesh relaxed as one (58,530 quads). The WFC runs on those small quads
+(`quadwfc.js`): a tile is its 4 corners, open or rock; neighbours agree on shared corners; the entropy
+order is a heap; no contradictions. Painted by marching squares (`paintQuads`). The page has a
+quads | hex switch, quads by default. 130–180 ms a map; the grid takes ~1 s once. At one cell per quad
+clustering needs ~10× the hex weights (`QKNOBS`: open 0.45 / 0.5 / 0.45, caves grow 30, rock grows 30,
+walls straight 10), with a tipping point near 0.5 open where rock or open floods the map.
+
 ## Feedback
+
+- [2026-09-26 · v5](feedback/2026-09-26_lorinc_v5.md): hex version 6/10, the grid clearly visible (assumption 3 failed); the quad WFC "looks like real caves, not game design". Next: more middle-sized caves connected by tunnels, and a map about 1/5 the width and height.
 
 ## Conclusion → next
