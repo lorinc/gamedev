@@ -96,6 +96,35 @@ Bundle 2, and away from the vault/raid path: the concept doc gets updated.
   for the moment only (they never lift the fog for good).
 - So step 3 below is about **placed** bugs: the den is where you place one, not where it was tamed.
 
+## Decided by the user, fifth pass (2026-09-26, after b3.3): bugs live in the fog (plan, not built; b3.4)
+Build it as b3.4 in a fresh session. The user said "save as plan, implement in next clean session".
+Record it as a decision row then (the next id is in the handoff). *Italics* = Claude's defaults, shown to
+the user with no objection.
+1. **Blocks (user):** the world is cut into fixed 32×32-tile blocks (x wraps like the world). The 64
+   blocks nearest you each hold 1 wild bug, if the block has a dark open cave cell: not lit now, not
+   within 12 of a placed bug, *at least 4 steps from you*. Blocks beyond the nearest 64 lose theirs.
+   Today's world is 384×71 = 12×3 blocks (36, the last row 7 tall), so the cap of 64 matters only for
+   bigger worlds. They live in the sim (deterministic), unlike a screen-based count.
+2. **Refill:** *a block whose bug is tamed or gone gets a new one after 5 s*, at a random dark cell of
+   the block.
+3. **Wanderers:** *drift around the open cells of their own block, never leaving it.* They can be in
+   caves sealed off by rock: that's the point, they hint at hidden caves.
+4. **Chasers (user: 3 at most):** at most 3 come for your ore at once, as in b3.3. *The nearest
+   wanderers that can reach you through open cave within 20 steps (the field).* *A chaser still
+   counts as its block's bug: no refill while it's out.* This replaces b3.3's spawn near you (`max`,
+   spawnTicks near you).
+5. **Drawing (user):** only bugs on screen are drawn; zoom decides how many you see.
+6. Unchanged: the shared taming count, the bar, the hold, placed bugs (D060).
+7. **Blinking (user):** wild bugs go between a **flicker, 3–5 s** and **dark, 5–9 s**, each length drawn
+   anew per cycle (no sync), so they aren't constantly visible. Their temporary R 2 light follows the
+   flicker. *The flicker fades in ~0.5 s, flickers irregularly 60–100%, fades out; dark = invisible, no
+   dot, no light. A bug next to you glows steadily; a scared one flickers fast. Tamed ones glow
+   steadily.* Blinking is drawing only: timings from a hash of the bug id and its cycle number.
+
+Verification: ASCII-map tests (one bug per block, the 64 nearest only, refill after 5 s, wanderers stay
+in their block, sealed-cave bugs, at most 3 chasers), determinism, the node fuzz for cost with ~36
+bugs, headless screenshots zoomed out (never-seen caves with flickering bugs).
+
 ## Steps (sequential sub-sessions, like p5; each one playable, user OK 2026-09-25)
 Sessions (user OK 2026-09-25): 0 + 1 · 2 · 3 · 3b + 4, each in a fresh session
 that starts from the handoff and this file.
