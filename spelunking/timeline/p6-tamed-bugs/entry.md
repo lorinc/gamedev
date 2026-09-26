@@ -77,6 +77,7 @@ Built in steps, one per session (user, 2026-09-25): 0 + 1 · 2 · 3 · 3b + 4.
 - Wild bugs flicker for 3–5 s, then go dark for 5–9 s, with no sync between them. Only bugs on screen are drawn, so zooming out shows more.
 - **Tests:** 7 new bug tests (one per block, the nearest blocks only, the refill, wanderers stay in their block, a sealed cave, at most 3 chasers, a lost chaser), and determinism covers the blocks; 184 in all. With 36 bugs the sim costs 0.03 ms a tick (0.01 without bugs).
 - **Screenshots** (local, `gallery/p6/`): zoomed out, the never-seen caves with the bugs flickering in them.
+- A wild bug's light fades out from the bug (user, 2026-09-26: "the strict integer hard-cut light of the bugs is weird"): a radial gradient, and its lit cells' edge softened over a tile. Wild bugs only; your light and tamed bugs' keep the fog's hard tile edge (D052).
 
 Claude's calls in step 1, not discussed:
 - Only the home cell counts the pack in, and only when there's something in it, so walking past home logs no empty dives.

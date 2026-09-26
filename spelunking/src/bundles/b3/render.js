@@ -10,9 +10,9 @@
 // Moon bugs (D056, D059, D060, D061): a small square with a soft halo, over the fog (they're lights), so
 // they show even where nothing is seen yet; only the ones on screen are drawn. Wild ones are cool blue
 // and go between a flicker (3–5 s) and dark (5–9 s, not drawn at all), steady next to you, flickering
-// fast while scared; while on, they show the cave 2 around them through the
-// fog, for the moment only (their light never makes anything seen). Tamed ones are warm amber and
-// glow steadily: in the bar they circle you, placed they hover at their den. They drift between cells
+// fast while scared; while on, they show the cave 2 around them through the fog, fading out from the
+// bug (a radial gradient, not whole tiles), for the moment only (their light never makes anything
+// seen). Tamed ones are warm amber and glow steadily: in the bar they circle you, placed they hover at their den. They drift between cells
 // and bob a little. The bug bar: b1.1's slot row along the bottom edge, a tamed bug per slot.
 
 import { cellRgb, TILE_RGB, TREAD } from '../../render/palette.js'
@@ -44,6 +44,7 @@ const WILD = [150, 190, 255] // a wild bug: cool
 const TAMED = /** @type {const} */ ([255, 196, 90]) // a tamed bug: warm (user, 2026-09-26)
 const HEART = '#ff7aa0'
 const WILD_LIGHT = 2 // a wild bug's light radius, for the moment it's on (D060)
+const WILD_FADE = 2.5 // its light fades from full at the bug to nothing this many tiles out
 // a heart, in pixels
 const HEART_PX = ['.x.x.', 'xxxxx', 'xxxxx', '.xxx.', '..x..']
 /** @typedef {'walk' | 'build' | 'mine'} CueKind the symbol: an arrow, stairs, a pickaxe */
@@ -131,6 +132,37 @@ export function createRenderer(canvas, game, t, juice) {
   const rings = { x: 0, y: 0, r: 0, age: Infinity }
   /** Per wild bug: the cells its light shows, for the cell and world it was computed for. @type {Map<number, { key: string, cells: number[] }>} */
   const wildLit = new Map()
+  // a wild bug's light (D061 follow-up): one scratch canvas and one gradient, remade only when the zoom
+  // changes, and one 5×5 px mask for its lit cells. The gradient is built round (0, 0) and moved with
+  // setTransform, so it serves every bug.
+  const scratch = {
+    canvas: document.createElement('canvas'),
+    ctx: /** @type {CanvasRenderingContext2D | null} */ (null),
+    tp: 0,
+    fade: /** @type {CanvasGradient | null} */ (null),
+    maskCanvas: document.createElement('canvas'),
+    maskCtx: /** @type {CanvasRenderingContext2D | null} */ (null),
+    mask: /** @type {ImageData | null} */ (null),
+  }
+  scratch.maskCanvas.width = scratch.maskCanvas.height = 2 * WILD_LIGHT + 1
+  scratch.maskCtx = /** @type {CanvasRenderingContext2D} */ (scratch.maskCanvas.getContext('2d'))
+  scratch.mask = scratch.maskCtx.createImageData(2 * WILD_LIGHT + 1, 2 * WILD_LIGHT + 1)
+  /** The scratch, sized for tile px tp; its side in px. @param {number} tp */
+  function scratchFor(tp) {
+    const side = (2 * WILD_LIGHT + 1) * tp
+    if (scratch.tp !== tp) {
+      scratch.canvas.width = scratch.canvas.height = side
+      scratch.ctx = /** @type {CanvasRenderingContext2D} */ (scratch.canvas.getContext('2d'))
+      scratch.ctx.imageSmoothingEnabled = false
+      const fade = scratch.ctx.createRadialGradient(0, 0, 0, 0, 0, WILD_FADE * tp)
+      fade.addColorStop(0, 'rgba(0,0,0,1)')
+      fade.addColorStop(0.45, 'rgba(0,0,0,0.6)')
+      fade.addColorStop(1, 'rgba(0,0,0,0)')
+      scratch.fade = fade
+      scratch.tp = tp
+    }
+    return side
+  }
   /** The zoom setting tilePx was last set from (the camera keeps its world centre, so zooming is centred on the character). */
   let zoomSeen = NaN
 
@@ -304,13 +336,39 @@ export function createRenderer(canvas, game, t, juice) {
         const key = `${b.x},${b.y},${game.worldRev}`
         let cells = wildLit.get(b.id)
         if (cells?.key !== key) wildLit.set(b.id, (cells = { key, cells: litCells(world, b, WILD_LIGHT) }))
-        ctx.globalAlpha = on * 0.8
+        // the 5×5 cells round it into the scratch, then two cuts: the lit cells as a 5×5 px mask scaled
+        // up smoothly (its pixel centres on the cells' centres, so the set's edge fades over a tile), and
+        // the gradient centred where the bug is drawn; then over the fog
+        const side = scratchFor(tp)
+        const sc = /** @type {CanvasRenderingContext2D} */ (scratch.ctx)
+        const n = 2 * WILD_LIGHT + 1
+        const alphas = /** @type {ImageData} */ (scratch.mask).data
+        alphas.fill(0)
         for (const i of cells.cells) {
-          if (litNow[i]) continue
           const x = i % world.w
-          const y = (i - x) / world.w
-          ctx.drawImage(tex, x, y, 1, 1, sx(nearest(x, px, world.w)), sy(y), tp, tp)
+          alphas[((i - x) / world.w - b.y + WILD_LIGHT) * n * 4 + (wrapDelta(x - b.x, world.w) + WILD_LIGHT) * 4 + 3] = 255
         }
+        ;/** @type {CanvasRenderingContext2D} */ (scratch.maskCtx).putImageData(/** @type {ImageData} */ (scratch.mask), 0, 0)
+        sc.globalCompositeOperation = 'source-over'
+        sc.clearRect(0, 0, side, side)
+        for (let dy = -WILD_LIGHT; dy <= WILD_LIGHT; dy++) {
+          const y = b.y + dy
+          if (y < 0 || y >= world.h) continue
+          for (let dx = -WILD_LIGHT; dx <= WILD_LIGHT; dx++) {
+            sc.drawImage(tex, wrap(b.x + dx, world.w), y, 1, 1, (dx + WILD_LIGHT) * tp, (dy + WILD_LIGHT) * tp, tp, tp)
+          }
+        }
+        sc.globalCompositeOperation = 'destination-in'
+        sc.imageSmoothingEnabled = true
+        sc.drawImage(scratch.maskCanvas, 0, 0, side, side)
+        sc.imageSmoothingEnabled = false
+        const at = drifted(b, game, alpha, time)
+        sc.setTransform(1, 0, 0, 1, (wrapDelta(at.x - b.x, world.w) + WILD_LIGHT) * tp, (at.y - b.y + WILD_LIGHT) * tp)
+        sc.fillStyle = /** @type {CanvasGradient} */ (scratch.fade)
+        sc.fillRect(-2 * side, -2 * side, 4 * side, 4 * side)
+        sc.setTransform(1, 0, 0, 1, 0, 0)
+        ctx.globalAlpha = on * 0.8
+        ctx.drawImage(scratch.canvas, sx(nearest(b.x, px, world.w)) - WILD_LIGHT * tp, sy(b.y) - WILD_LIGHT * tp)
         ctx.globalAlpha = 1
       }
       if (wildLit.size > game.bugs.length) for (const id of wildLit.keys()) if (!game.bugs.some((b) => b.id === id)) wildLit.delete(id)
@@ -443,6 +501,22 @@ function glow(b, game, time) {
 }
 
 /**
+ * Where a wild or placed bug is drawn, in tiles (its centre): between the cell it drifted from and its
+ * cell, bobbing. They float in the upper part of their cell, fanned out, so two in one cell (or one
+ * beside you) read apart.
+ * @param {import('../../sim/dig/bugs.js').Bug} b @param {Game} game @param {number} alpha @param {number} time seconds
+ */
+function drifted(b, game, alpha, time) {
+  const move = Math.max(1, /** @type {NonNullable<Game['cfg']['bugs']>} */ (game.cfg.bugs).moveTicks)
+  const f = Math.min(1, Math.max(0, (game.tick + alpha - b.movedAt) / move))
+  const fx = b.from.x + wrapDelta(b.x - b.from.x, game.world.w) * f
+  return {
+    x: fx + 0.5 + Math.sin(time * 1.3 + b.id * 2.1) * 0.3,
+    y: b.from.y + (b.y - b.from.y) * f + 0.2 - (b.id % 3) * 0.3 + Math.cos(time * 1.7 + b.id) * 0.2,
+  }
+}
+
+/**
  * The moon bugs (D056, D060): wild and placed ones between the cell they drifted from and their cell,
  * bobbing; bar ones on a smooth circle two tiles round you (the sim's orbit, between its steps).
  * @param {CanvasRenderingContext2D} ctx @param {Game} game @param {number} alpha @param {number} time seconds
@@ -453,7 +527,6 @@ function glow(b, game, time) {
 function drawBugs(ctx, game, alpha, time, me, sx, sy, tp) {
   const cfg = game.cfg.bugs
   if (!cfg) return
-  const move = Math.max(1, cfg.moveTicks)
   const core = Math.max(2, Math.round(tp * 0.3))
   const W = ctx.canvas.width
   const H = ctx.canvas.height
@@ -465,13 +538,7 @@ function drawBugs(ctx, game, alpha, time, me, sx, sy, tp) {
       const a = (orbitStep(game.tick + alpha, game.bar.indexOf(b), cfg) * Math.PI * 2) / 12
       x = me.x + 0.5 + 2 * Math.cos(a)
       y = me.y + 0.5 + 2 * Math.sin(a)
-    } else {
-      const f = Math.min(1, Math.max(0, (game.tick + alpha - b.movedAt) / move))
-      const fx = b.from.x + wrapDelta(b.x - b.from.x, game.world.w) * f
-      // they float in the upper part of their cell, fanned out, so two in one cell (or one beside you) read apart
-      x = fx + 0.5 + Math.sin(time * 1.3 + b.id * 2.1) * 0.3
-      y = b.from.y + (b.y - b.from.y) * f + 0.2 - (b.id % 3) * 0.3 + Math.cos(time * 1.7 + b.id) * 0.2
-    }
+    } else ({ x, y } = drifted(b, game, alpha, time))
     const cx = sx(x)
     const cy = sy(y)
     if (cx < -2 * tp || cy < -2 * tp || cx > W + 2 * tp || cy > H + 2 * tp) continue // off screen (D061)
