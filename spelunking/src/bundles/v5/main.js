@@ -52,8 +52,8 @@ const QUAD_SLIDERS = [
   ...OPEN,
   ['grow', 'caves grow', 1, 100, 0.5],
   ['rock', 'rock grows', 1, 100, 0.5],
-  ['straight', 'walls straight', 1, 40, 0.5],
-  ['thin', 'thinnest wall (cells, 0 = any)', 0, 6, 1],
+  ['straight', 'walls straight', 0.1, 20, 0.05],
+  ['thin', 'thinnest wall (cells, 0 = any)', 0, 6, 0.1],
   ['wobble', 'layer wobble', 0, 4, 0.5],
 ]
 

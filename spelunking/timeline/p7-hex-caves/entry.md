@@ -105,6 +105,13 @@ The URL carries every knob (`k=name:value,…`) so a setting can be shared. The 
 user's best setting from the 3 × 6 map (seed 6398): open 0.12, caves grow 7.5, rock grows 1, walls
 straight 6, thinnest wall 0, wobble 0.5.
 
+**The user's room setting as defaults** (goal: "enough big enough, but separable rooms"; seed 1643):
+open ice 0.3, pudding 0.365, brine 0.04; caves grow 5, rock grows 2.5, walls straight 1, thinnest wall 1,
+wobble 0.5. The user: thinnest wall and walls straight had the largest impact, so they got finer steps
+(walls straight 0.05, thinnest wall 0.1). Thinnest wall is now a straight distance in cells instead of
+grid steps, so it can take tenths; 1.0 comes closest to the old 1 step (seed 1643: 105 cavities and
+largest 51% against 112 and 59%).
+
 ## Feedback
 
 - [2026-09-26 · v5](feedback/2026-09-26_lorinc_v5.md): hex version 6/10, the grid clearly visible (assumption 3 failed); the quad WFC "looks like real caves, not game design". Next: more middle-sized caves connected by tunnels, and a map about 1/5 the width and height.

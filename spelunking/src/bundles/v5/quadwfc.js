@@ -29,17 +29,17 @@ export const QCLASS = Array.from({ length: 16 }, (_, t) => {
   return t === 5 || t === 10 ? QSADDLE : QWALL
 })
 /**
- * The quad WFC's own defaults: the user's best setting on the 3 × 6 map (seed 6398 looked best):
- * open 0.12, caves grow 7.5, rock grows 1, walls straight 6, thinnest wall 0, wobble 0.5.
+ * The quad WFC's own defaults: the user's setting for "enough big enough, but separable rooms" (seed 1643
+ * on the 6 × 12 map). The user: thinnest wall and walls straight had the largest impact.
  */
 export const QKNOBS = {
-  openIce: 0.12, // how open each layer is
-  openPudding: 0.12,
-  openBrine: 0.12,
-  grow: 7.5, // caves grow: open next to open
-  rock: 1, // rock grows: rock next to rock
-  straight: 6, // a wall carries a neighbour's border straight on
-  thin: 0, // how thin walls can get: rock with open space on opposite sides within this many cells is avoided (0 = off)
+  openIce: 0.3, // how open each layer is
+  openPudding: 0.365,
+  openBrine: 0.04,
+  grow: 5, // caves grow: open next to open
+  rock: 2.5, // rock grows: rock next to rock
+  straight: 1, // a wall carries a neighbour's border straight on
+  thin: 1, // how thin walls can get, in cells: rock with open space on opposite sides within this distance is avoided (0 = off)
   wobble: 0.5, // rows the layer borders wobble by
 }
 /** @typedef {typeof QKNOBS} QKnobs */
@@ -306,34 +306,33 @@ export function generateQuads(G, seed, K) {
   }
 
   /**
-   * Is corner v pinched: already-decided open corners within K.thin cells of it, on opposite sides
-   * (more than 120° apart, seen from v)? A breadth-first walk along the grid's edges, about a cell each.
+   * Is corner v pinched: already-decided open corners within K.thin cells of it (straight distance, in
+   * fine cells), on opposite sides (more than 120° apart, seen from v)? A walk along the grid's edges
+   * that stays within the radius.
    * @param {number} v
    */
   function pinched(v) {
     const m = G.mesh
     const seen = new Set([v])
-    let ring = [v]
+    const stack = [v]
     /** @type {[number, number][]} */
     const dirs = []
-    for (let d = 0; d < K.thin && ring.length; d++) {
-      /** @type {number[]} */
-      const next = []
-      for (const a of ring)
-        for (const b of vadj[a]) {
-          if (seen.has(b)) continue
-          seen.add(b)
-          next.push(b)
-          if (vs[b] !== 1) continue
-          const dx = near(m.x[b], m.x[v], m.wrap) - m.x[v]
-          const dy = m.y[b] - m.y[v]
-          const len = Math.hypot(dx, dy) || 1
-          const ux = dx / len
-          const uy = dy / len
-          for (const [ox, oy] of dirs) if (ux * ox + uy * oy < -0.5) return true
-          dirs.push([ux, uy])
-        }
-      ring = next
+    while (stack.length) {
+      const a = /** @type {number} */ (stack.pop())
+      for (const b of vadj[a]) {
+        if (seen.has(b)) continue
+        seen.add(b)
+        const dx = ((near(m.x[b], m.x[v], m.wrap) - m.x[v]) * 10) / Math.sqrt(3)
+        const dy = (m.y[b] - m.y[v]) * 6
+        const len = Math.hypot(dx, dy)
+        if (len > K.thin) continue
+        stack.push(b)
+        if (vs[b] !== 1) continue
+        const ux = dx / len
+        const uy = dy / len
+        for (const [ox, oy] of dirs) if (ux * ox + uy * oy < -0.5) return true
+        dirs.push([ux, uy])
+      }
     }
     return false
   }
