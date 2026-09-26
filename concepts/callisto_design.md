@@ -63,11 +63,64 @@ on phone and PC: none of them found the full range of interactions.
 - Claude's addition, not decided: natural cavities are nodes too, so the lattice doubles as the
   ecosystem's topology (cavities = patches, realized paths = the one-hop links, sealing = cutting a link).
 
+**What the lattice is for (user, 2026-09-27).** For navigation, a great lattice lets the player:
+- cover horizontal and vertical distances with the fewest possible inputs;
+- take a precise, direct path towards a specific area;
+- is easy on the eyes, not just the fingers;
+- has the ideal density: you can get anywhere mostly straight, yet it's not an ugly web of catwalks;
+- **uses the natural cave floor to its max utility.**
+
+For building, the needs differ: isolate or merge areas easily, with the least material, at all angles;
+isolate areas with 0, 1 or 2 airlocks; connect areas with several links for better venting; build paths
+for ceiling surveying; build paths that give use to otherwise inaccessible open-air vaults and caverns.
+
+**One candidate set, two roles** (Claude, the user agreed to the summary): the lattice is the hidden
+candidates (building) and what's realized is the network (navigation), the floor plus what was built.
+How far a build pushes away nearby candidates balances the two: too wide and you can't add links for
+venting, too narrow and it's the ugly web.
+
+**Storeys (user, 2026-09-27):** "humans think in storeys". The network is mostly horizontal paths across
+several caverns, and you move between storeys on one single 45° ramp. **Nothing vertical:** "vertical
+paths literally break the flow". No ladders, no shafts.
+- **A storey follows cavern floors.** Entering the next cavern, if walkable floor there runs less than
+  ~½ storey height from the storey's Y in the cavern before, the storey takes that floor's Y. Otherwise it
+  keeps its Y and crosses as a bridge or a tunnel. "We want to run on cavern floors whenever it's
+  possible. Prettier, has resources, etc." The link between two caverns at different Y is a gentle slope
+  (under ½ storey of rise, never over 45°).
+- **Divergence points are set by the target, not the start** (user): where a link to a ledge or a floor
+  lands best, not simply at every floor end. So candidate links come first, and the points are where they
+  touch a floor, plus the stretch ends that are real stops. Claude: these are storey ends, ramp heads
+  and feet, and where a storey enters a cavern.
+- **Rooted at the pod** (user): the character starts underground in a large pod, never on the surface
+  (radiation is tolerable, but the temperature and meteors make it as inhospitable as open space, "just
+  prettier"). Storey 1 starts at the pod and grows both ways; each deeper storey starts at the foot of the
+  ramp from the storey above. So the whole network is reachable from the pod by construction (Claude).
+- **The 90 m, in practice** (user): the pod sits right below the map's current thin surface layer, and a
+  rugged, natural **sheet of ice is drawn** on top of that layer to show the depth. Drawing only: no caves
+  or lattice in it.
+- **Catwalks are for prospecting** (user): what's under a rock surface is only known by prospecting, and
+  what can't be prospected from above must be prospected from below, so the character walks a catwalk
+  and swipes up. Claude: a catwalk is the highest storey, running under the ceiling, where a ceiling is out
+  of prospecting reach from every floor; not a fourth link kind.
+- **Vents have no pipes** (user): they go up into the unseen dimension, so nothing crosses the cave or the
+  ice sheet. Outlets drawn on the surface are a very-very nice-to-have.
+- **Claude's defaults, not discussed further:** two storeys that drift closer than ~½ storey merge into
+  one; storey 1 runs on the pod's own floor and leaves through its doors; on a wrapping map, a storey's two
+  ends meet on the far side and join by a slope (or a ramp if they're more than ½ storey apart).
+- **Claude's building proposals, not decided:** walls go at waists (least material), tunnels through thin
+  rock between caverns (merging); 0 airlocks = a solid wall, 1 = an airlock at a waist, 2 = a tunnel with
+  an airlock at each mouth; more open links mix faster, each doorway showing its swirl.
+- **Generation:** a storey depends on the Y it had one cavern before, which a WFC comparing neighbours
+  can't see. So the storeys are **a pass after the quad WFC**, reading the collapsed caves (Claude; the
+  user: "if we CAN create the lattice WELL in WFC, I'll be happy", then agreed to the post-pass summary).
+
 **Moving:**
 - **Runs don't stop between divergence points.** The character walks; a tap or swipe is interpreted at
   the next divergence point reached (like Pac-Man turning at the junction).
 - Claude's details, to confirm in play: the queued command shows at the next point; the latest command
   wins; with no command, keep going straight, and stop where you can't.
+- **No "go there" taps** (user, 2026-09-27): "it kills the immersion". It's fine that the player sends
+  the character in the general direction of the target and corrects the route along the way.
 
 **Build intent:**
 - Buildable and interactable divergence points are **not shown during plain flick play**, only on build
@@ -393,7 +446,7 @@ locally, so the world is a patchwork of acts, and progress shows as how far the 
 ## Generation: wave function collapse (user, 2026-09-26)
 - **Procedural, not a hand-made map** (user: "easier, faster and generally better than hand-rolling some
   map"), with **wave function collapse** building terrain and lattice "in one swipe and not as layers".
-- **The lattice is WFC** (Claude): generation collapses the map (terrain, cavities, natural paths) but
+- ~~**The lattice is WFC**~~ (superseded 2026-09-27: the storeys are a pass after the WFC, see *Storeys*) (Claude): generation collapses the map (terrain, cavities, natural paths) but
   leaves some rock **uncollapsed**: the candidate tunnels and bridges, **and the cavity-separator walls**
   (user). At play, building is collapsing those tiles under the same adjacency rules: a tunnel, a bridge,
   a wall or an airlock at a waist. Revert un-collapses them (a removed wall merges the cavities). Paths and
