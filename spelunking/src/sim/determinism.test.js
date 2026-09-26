@@ -7,6 +7,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
+import { addBug } from './dig/bugs.js'
 import { command, createGame, tick, withSurface } from './dig/game.js'
 import { compile, migrate } from './dig/ruleset.js'
 import { DEFAULT_TERRAIN, generateTerrain } from './gen/terrain.js'
@@ -53,10 +54,17 @@ function play(caveSeed = DEFAULT_TERRAIN.caveSeed, light, bugs, pull) {
     { ...structuredClone(CFG), ...(light && { light }), ...(bugs && { bugs }), ...(pull && { pull }) },
     TABLE,
   )
-  for (const [dx, dy] of SCRIPT) {
+  if (bugs) g.bar.push(Object.assign(addBug(g, home.x, home.y), { kind: /** @type {const} */ ('bar'), block: -1 })) // one to place early
+  let mined = 0
+  SCRIPT.forEach(([dx, dy], k) => {
+    if (k === 6 && bugs) command(g, { type: 'place' }) // with bugs: it's placed mid-dive, where there's ore to mine (D063)
     command(g, { type: 'intent', dx, dy })
-    for (let i = 0; i < 300; i++) tick(g)
-  }
+    for (let i = 0; i < 300; i++) {
+      tick(g)
+      mined += g.events.filter((e) => e.type === 'pulled' && e.by > 0).length
+      g.events.length = 0
+    }
+  })
   command(g, { type: 'place' }) // with bugs: the bar's first bug, if one was tamed (D060)
   command(g, { type: 'teleport' })
   for (let i = 0; i < 300; i++) tick(g)
@@ -73,10 +81,11 @@ function play(caveSeed = DEFAULT_TERRAIN.caveSeed, light, bugs, pull) {
       fed: g.fed,
       refill: g.refill,
       stillFor: g.stillFor,
+      pulling: g.pulling,
     }),
   )
   if (g.seen) h.update(g.seen)
-  return { hash: h.digest('hex'), g }
+  return { hash: h.digest('hex'), g, mined }
 }
 
 test('same seed + same commands → same state', () => {
@@ -101,7 +110,7 @@ test('with light: same seed + same commands → the same seen map (D052)', () =>
   assert.equal(play().g.seen, null)
 })
 
-test('with bugs and the pull: same seed + same commands → the same bugs (D056, D062)', () => {
+test('with bugs and the pull: same seed + same commands → the same bugs (D056, D062, D063)', () => {
   const light = { base: 4, orePer: 16, lootPer: 8 }
   const bugs = {
     block: 32,
@@ -120,11 +129,13 @@ test('with bugs and the pull: same seed + same commands → the same bugs (D056,
     barMoveTicks: 12,
     barNear: 2,
     barFar: 8,
+    mine: { ticks: 30, reach: 12, carry: 8, hand: 4, handTicks: 6 }, // placed bugs mine (D063)
   }
   const a = play(DEFAULT_TERRAIN.caveSeed, light, bugs, { ticks: 30 })
   const b = play(DEFAULT_TERRAIN.caveSeed, light, bugs, { ticks: 30 })
   assert.equal(a.hash, b.hash)
   assert.ok(a.g.nextBug > 30, 'a bug per fog block (D061)')
+  assert.ok(a.mined > 0, 'a placed bug mined (D063)')
 })
 
 test('a different seed → a different state (the hash covers the world)', () => {

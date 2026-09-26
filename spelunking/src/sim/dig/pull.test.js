@@ -1,10 +1,12 @@
 // Pulling ore and loot out of the walls while you stand still (D062, ruleset b3.5): the nearest seen one
-// within your light, one every pull.ticks, and the cell turns to the rock round it.
+// within your light, one every pull.ticks, and the cell turns to the rock round it. Placed bugs mine the
+// same way and hand their ore over as you pass (D063, ruleset b3.6).
 
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { describe, test } from 'node:test'
 import { parseMap } from './examples.js'
+import { addBug, blockOf } from './bugs.js'
 import { command, createGame, tick } from './game.js'
 import { packText, parsePack } from './pack.js'
 import { compile, migrate, simConfig } from './ruleset.js'
@@ -95,5 +97,128 @@ describe('pulling ore and loot (D062)', () => {
   test('b3.4 has no pull', () => {
     const g = game(['#######', '#o.@..#', '#######'], [], rules('b3.4.json'))
     assert.deepEqual(pulls(g, TICKS * 2), [])
+  })
+})
+
+test('g.pulling points at the cell that goes, and clears when you move (D063)', () => {
+  const g = game(['#######', '#o.@..#', '#######'], [])
+  tick(g)
+  assert.deepEqual(g.pulling, { x: 1, y: 1 })
+  command(g, { type: 'intent', dx: 1, dy: 0 })
+  tick(g)
+  assert.equal(g.pulling, null)
+})
+
+const B36 = rules('b3.6.json')
+const MINE = /** @type {import('./bugs.js').Mine} */ (B36.cfg.bugs?.mine)
+
+/**
+ * A game on `rows` (you at '@') with no pull of your own and no wild bugs; every ore and loot cell is seen,
+ * as a probe would have made it. @param {string[]} rows @param {string[]} pack
+ */
+function mineGame(rows, pack, r = B36) {
+  const { world, at } = parseMap(rows)
+  const cfg = structuredClone(r.cfg)
+  delete cfg.pull
+  const g = createGame(world, { x: 0, y: 0 }, cfg, r.table)
+  g.ch.x = at.x
+  g.ch.y = at.y
+  g.pack = parsePack(pack)
+  for (let k = 0; k <= blockOf(g, world.w - 1, world.h - 1); k++) g.refill[k] = 1e9
+  const seen = /** @type {Uint8Array} */ (g.seen)
+  world.tiles.forEach((t, i) => {
+    if (t === Tile.Ore || t === Tile.Loot) seen[i] = 1
+  })
+  return g
+}
+/** A bug placed at (x, y), carrying `carry`. @param {Game} g @param {number} x @param {number} y */
+function placed(g, x, y, carry = 0) {
+  const bug = addBug(g, x, y)
+  bug.kind = 'placed'
+  bug.den = { x, y }
+  bug.glow = { x, y }
+  bug.carry = carry
+  return bug
+}
+/** Ticks n times; the events of `type`. @param {Game} g @param {number} n @param {string} type */
+function eventsOf(g, n, type) {
+  /** @type {GameEvent[]} */
+  const out = []
+  for (let t = 0; t < n; t++) {
+    tick(g)
+    out.push(...g.events.filter((e) => e.type === type))
+    g.events.length = 0
+  }
+  return out
+}
+const WALL = '#'.repeat(30)
+const CORRIDOR = ['#' + '.'.repeat(28) + '#']
+
+describe('placed bugs mine (D063)', () => {
+  test('the nearest seen ore within reach of its den, one every mine.ticks, ore only; the cell turns to rock', () => {
+    const top = WALL.split('')
+    top[22] = 'o' // 2 across, 1 up from the bug
+    top[5] = 'o' // 15 across: out of reach
+    const bottom = WALL.split('')
+    bottom[21] = '$' // the nearest, but loot stays yours
+    bottom[15] = 'o' // 5 across, 1 down
+    const g = mineGame([top.join(''), '#@' + CORRIDOR[0].slice(2), bottom.join('')], [])
+    const bug = placed(g, 20, 1)
+    tick(g)
+    assert.deepEqual(bug.target, { x: 22, y: 0 })
+    const pulled = (/** @type {number} */ n) => eventsOf(g, n, 'pulled').map((e) => e.type === 'pulled' && [e.x, e.y, e.tile, e.by])
+    assert.deepEqual(pulled(MINE.ticks - 2), [])
+    assert.deepEqual(pulled(1), [[22, 0, Tile.Ore, bug.id]])
+    assert.equal(tileAt(g, 22, 0), Tile.Soft)
+    assert.equal(bug.carry, 1)
+    tick(g)
+    assert.deepEqual(bug.target, { x: 15, y: 2 })
+    assert.deepEqual(pulled(MINE.ticks * 3), [[15, 2, Tile.Ore, bug.id]])
+    assert.equal(bug.target, null)
+    assert.equal(tileAt(g, 21, 2), Tile.Loot)
+    assert.equal(tileAt(g, 5, 0), Tile.Ore)
+  })
+
+  test('it carries mine.carry, then stops and waits', () => {
+    const g = mineGame([WALL.replace(/#/g, 'o').replace(/^o|o$/g, '#'), '#@' + CORRIDOR[0].slice(2), WALL], [])
+    const bug = placed(g, 20, 1)
+    assert.equal(eventsOf(g, MINE.ticks * (MINE.carry + 2), 'pulled').length, MINE.carry)
+    assert.equal(bug.carry, MINE.carry)
+    assert.equal(bug.target, null)
+  })
+
+  test('you within mine.hand tiles take its ore, one every handTicks; not a tile further', () => {
+    const near = mineGame([WALL, '#' + '.'.repeat(13) + '@' + '.'.repeat(14) + '#', WALL], [])
+    const bug = placed(near, 14 - MINE.hand, 1, 3)
+    const handed = eventsOf(near, MINE.handTicks * 3, 'handed')
+    assert.equal(handed.length, 3)
+    assert.deepEqual(packText(near.pack), ['ore 3'])
+    assert.equal(bug.carry, 0)
+    const far = mineGame([WALL, '#' + '.'.repeat(13) + '@' + '.'.repeat(14) + '#', WALL], [])
+    placed(far, 14 - MINE.hand - 1, 1, 3)
+    assert.equal(eventsOf(far, 200, 'handed').length, 0)
+  })
+
+  test('with your pack full, it waits', () => {
+    const g = mineGame([WALL, '#' + '.'.repeat(13) + '@' + '.'.repeat(14) + '#', WALL], Array(B36.cfg.packSlots).fill('ore 16'))
+    const bug = placed(g, 12, 1, 3)
+    assert.equal(eventsOf(g, 200, 'handed').length, 0)
+    assert.equal(bug.carry, 3)
+  })
+
+  test('walking past a full bug takes its ore without stopping you', () => {
+    const g = mineGame([WALL, '#@' + CORRIDOR[0].slice(2), WALL], [])
+    placed(g, 12, 1, MINE.carry)
+    command(g, { type: 'intent', dx: 1, dy: 0 })
+    eventsOf(g, 400, 'handed')
+    assert.equal(g.ch.x, 28)
+    assert.deepEqual(packText(g.pack), [`ore ${MINE.carry}`])
+  })
+
+  test('b3.5 placed bugs only hover', () => {
+    const g = mineGame(['#' + 'o'.repeat(28) + '#', '#@' + CORRIDOR[0].slice(2), WALL], [], rules('b3.5.json'))
+    const bug = placed(g, 20, 1)
+    assert.equal(eventsOf(g, 2000, 'pulled').length, 0)
+    assert.equal(bug.target, null)
   })
 })

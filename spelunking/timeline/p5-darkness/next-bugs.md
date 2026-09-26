@@ -130,7 +130,7 @@ bugs, headless screenshots zoomed out (never-seen caves with flickering bugs).
 - Bar bugs fly around you like normal bugs, no circling.
 - Claude's defaults (OK'd) and calls: D062.
 
-## Decided by the user, seventh pass (2026-09-26): placed bugs mine, and the dust stream (plan, not built; b3.6)
+## Decided by the user, seventh pass (2026-09-26): placed bugs mine, and the dust stream (built as b3.6, D063)
 Build it in a fresh session: the rest of session 3. Record it as D063. *Italics* = Claude's defaults, shown
 to the user; the user answered "a: ok" (read as: the stream as described, and ore only) and "2: R=4".
 1. **Placed bugs mine** (D056 as adjusted by D060, D062): a placed bug pulls *seen* ore within 12 of its

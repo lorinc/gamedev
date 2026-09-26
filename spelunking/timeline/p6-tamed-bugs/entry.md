@@ -51,7 +51,7 @@ Built in steps, one per session (user, 2026-09-25): 0 + 1 · 2 · 3 · 3b + 4.
 2. Wild bugs (D056, D059).
 2b. Shared taming, the bug bar, placing bugs with the hold (D060), after playing b3.2.
 2c. Wild bugs live in the fog (D061), after playing b3.3.
-3. Pulling ore and loot while you stand still, the bar calms the chasers, bar bugs roam (D062); then placed bugs mine (D056).
+3. Pulling ore and loot while you stand still, the bar calms the chasers, bar bugs roam (D062); then placed bugs mine, with the dust stream (D063).
 3b. The friendly area (D057).
 4. The build check, and b3.1 frozen.
 
@@ -86,6 +86,13 @@ Built in steps, one per session (user, 2026-09-25): 0 + 1 · 2 · 3 · 3b + 4.
 - Bar bugs roam round you instead of circling. After playing, the user found them hysterical ("their speed and random walk and their need to stay close is annoying"), then jittery ("like it's being pulled back then flies, then pulled back"; a pause snapped the drawing back a cell, fixed). Now they fly 2 to 8 steps from you at wild-bug speed (faster only to catch up), never pause, keep their heading for at least 2 steps, and turn round only when nothing else works.
 - **Tests:** 7 pull tests (nearest first, the rock round it, seen only, the light's reach, a move restarts, what fits, none in b3.4), 3 bug tests (roaming with its distance and inertia, following and the jump, the chaser cap); determinism covers the pull; 195 in all.
 - **Screenshots** (local, `gallery/p6/b3.5_*`): an ore pulled out of the wall, flying to you, eaten by the one chaser left with 2 bugs in the bar.
+
+**Placed bugs mine, and the dust stream (step 3, second part, D063):** ruleset `b3.6`, as planned in next-bugs.md's seventh pass.
+- A placed bug pulls the nearest seen ore (never loot) within 12 of its den, 4 a minute, and the cell turns to rock. It carries 8; full, it waits, its halo swelling.
+- Pass within 4 tiles of one with ore and it flies into your pack, 10 a second, without stopping you; with your pack full, it waits.
+- While a pull is under way, a thin trickle of dust in the material's colour flows from the cell that goes to the puller: to you half a second after you stop, to a placed bug whenever it's pulling.
+- **Tests:** 7 new pull tests (a bug's nearest seen ore, ore only, the rate and the rock; it carries 8 then waits; the hand-over within 4 and not at 5; a full pack waits; walking past a full bug; b3.5's bugs only hover; `g.pulling` points at the next cell), and determinism places a bug mid-dive that mines; 202 in all.
+- **Screenshots** (local, `gallery/p6/b3.6_*`): both streams at once, a full bug's swollen halo, a hand-over.
 
 Claude's calls in step 1, not discussed:
 - Only the home cell counts the pack in, and only when there's something in it, so walking past home logs no empty dives.

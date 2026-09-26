@@ -13,7 +13,9 @@
 // fast while scared; while on, they show the cave 2 around them through the fog, fading out from the
 // bug (a radial gradient, not whole tiles), for the moment only (their light never makes anything
 // seen). Tamed ones are warm amber and glow steadily: in the bar they roam round you, placed they
-// hover at their den. They drift between cells and bob a little. The bug bar: b1.1's slot row along the bottom edge, a tamed bug per slot.
+// hover at their den; a full one's halo swells (D063). They drift between cells and bob a little. The
+// bug bar: b1.1's slot row along the bottom edge, a tamed bug per slot. A dust stream flows from the
+// cell a pull takes to you or the placed bug pulling it (D063).
 
 import { cellRgb, TILE_RGB, TREAD } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
@@ -44,6 +46,8 @@ const TAMED = /** @type {const} */ ([255, 196, 90]) // a tamed bug: warm (user, 
 const HEART = '#ff7aa0'
 const WILD_LIGHT = 2 // a wild bug's light radius, for the moment it's on (D060)
 const WILD_FADE = 2.5 // its light fades from full at the bug to nothing this many tiles out
+const STREAM_WAIT = 30 // ticks you stand still before your pull's dust stream shows (short stops don't flicker it)
+const DUST_SPEED = 3 // tiles / s a speck of dust flows
 // a heart, in pixels
 const HEART_PX = ['.x.x.', 'xxxxx', 'xxxxx', '.xxx.', '..x..']
 /** @typedef {'walk' | 'build' | 'mine'} CueKind the symbol: an arrow, stairs, a pickaxe */
@@ -373,6 +377,31 @@ export function createRenderer(canvas, game, t, juice) {
       if (wildLit.size > game.bugs.length) for (const id of wildLit.keys()) if (!game.bugs.some((b) => b.id === id)) wildLit.delete(id)
       drawBugs(ctx, game, alpha, time, (x) => sx(nearest(x, px, world.w)), sy, tp)
 
+      // the dust streams (D063): from the cell a pull takes to you (once you've stood still a moment) or to
+      // the placed bug pulling it
+      const streamTo = (/** @type {import('../../sim/dig/rules.js').Cell} */ c, /** @type {number} */ x1, /** @type {number} */ y1) => {
+        const x0 = nearest(c.x + 0.5, x1, world.w)
+        drawStream(
+          ctx,
+          x0,
+          c.y + 0.5,
+          x1,
+          y1,
+          TILE_RGB[/** @type {Tile} */ (world.tiles[c.y * world.w + c.x])],
+          c.y * world.w + c.x,
+          time,
+          sx,
+          sy,
+          tp,
+        )
+      }
+      if (game.pulling && game.stillFor >= STREAM_WAIT) streamTo(game.pulling, px + 0.5, p.y + 0.35)
+      for (const b of game.bugs) {
+        if (!b.target) continue
+        const at = drifted(b, game, alpha, time)
+        streamTo(b.target, nearest(at.x, px, world.w), at.y)
+      }
+
       // the pack's "can't do": two quick red blinks that fade
       failLeft = Math.max(0, failLeft - dt)
       const failA = failLeft > 0 ? failAlpha(1 - failLeft / FAIL_S) : 0
@@ -538,14 +567,59 @@ function drawBugs(ctx, game, alpha, time, sx, sy, tp) {
     const on = glow(b, game, time)
     if (on <= 0) continue // dark: no dot, no halo
     const [r, g, bl] = b.kind === 'wild' ? WILD : TAMED
-    const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, tp * 1.1)
-    halo.addColorStop(0, `rgba(${r},${g},${bl},${0.35 * on})`)
+    // a placed bug that's full waits for you, its halo swelling slowly (D063)
+    const full = b.kind === 'placed' && cfg.mine && b.carry >= cfg.mine.carry
+    const hr = tp * (full ? 1.7 + 0.4 * Math.sin(time * 3 + b.id) : 1.1)
+    const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, hr)
+    halo.addColorStop(0, `rgba(${r},${g},${bl},${(full ? 0.5 : 0.35) * on})`)
     halo.addColorStop(1, `rgba(${r},${g},${bl},0)`)
     ctx.fillStyle = halo
-    ctx.fillRect(cx - tp * 1.1, cy - tp * 1.1, tp * 2.2, tp * 2.2)
+    ctx.fillRect(cx - hr, cy - hr, hr * 2, hr * 2)
     ctx.fillStyle = `rgba(${r},${g},${bl},${0.15 + 0.85 * on})`
     ctx.fillRect(Math.round(cx - core / 2), Math.round(cy - core / 2), core, core)
   }
+}
+
+/**
+ * A dust stream (D063): specks in the material's colour flowing from (x0, y0) to (x1, y1) along a slight
+ * arc, fading in and out at the ends. Drawing only: where a speck is comes from the time, so there's no
+ * particle state. Off screen, nothing is drawn.
+ * @param {CanvasRenderingContext2D} ctx @param {number} x0 @param {number} y0 @param {number} x1 @param {number} y1 tiles
+ * @param {import('../../render/palette.js').Rgb} rgb @param {number} seed the stream's cell, so its arc and specks stay put
+ * @param {number} time seconds @param {(x: number) => number} sx @param {(y: number) => number} sy @param {number} tp tile px
+ */
+function drawStream(ctx, x0, y0, x1, y1, rgb, seed, time, sx, sy, tp) {
+  const ax = sx(x0)
+  const ay = sy(y0)
+  const bx = sx(x1)
+  const by = sy(y1)
+  const m = 2 * tp
+  const W = ctx.canvas.width
+  const H = ctx.canvas.height
+  if (Math.max(ax, bx) < -m || Math.min(ax, bx) > W + m || Math.max(ay, by) < -m || Math.min(ay, by) > H + m) return
+  const len = Math.hypot(x1 - x0, y1 - y0)
+  if (len < 0.1) return
+  // the arc: a control point off the middle, to the side the seed picks
+  const side = hash01(seed, 0, 3) < 0.5 ? -1 : 1
+  const nx = (-(by - ay) / (len * tp)) * side
+  const ny = ((bx - ax) / (len * tp)) * side
+  const cx = (ax + bx) / 2 + nx * len * tp * 0.2
+  const cy = (ay + by) / 2 + ny * len * tp * 0.2
+  const n = Math.max(4, Math.round(len * 3))
+  const T = len / DUST_SPEED + 0.2
+  const size = Math.max(2, Math.round(tp * 0.1))
+  ctx.fillStyle = css(rgb)
+  for (let i = 0; i < n; i++) {
+    const h = hash01(seed, i, 4)
+    const u = (((time / T + (i + h * 0.6) / n) % 1) + 1) % 1
+    const v = 1 - u
+    const wob = Math.sin(time * 5 + i * 2.3) * tp * 0.08
+    const x = v * v * ax + 2 * u * v * cx + u * u * bx + nx * wob
+    const y = v * v * ay + 2 * u * v * cy + u * u * by + ny * wob
+    ctx.globalAlpha = 0.8 * Math.sin(u * Math.PI)
+    ctx.fillRect(Math.round(x - size / 2), Math.round(y - size / 2), size, size)
+  }
+  ctx.globalAlpha = 1
 }
 
 // The bug bar (D060): b1.1's pack row, back as the only HUD. barSlots squares along the bottom edge,

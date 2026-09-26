@@ -22,7 +22,7 @@
 // one step every barMoveTicks, and lights `light` tiles around itself like your light (game.js). Each bar bug keeps
 // one chaser away (D062): with 3 in the bar, you're left in peace. The `place` command puts the bar's
 // first bug at the open cell nearest to 2 above you: its den, where it hovers and lights for good, and
-// no wild bug comes within `den` tiles. Placed bugs mine in step 3.
+// no wild bug comes within `den` tiles. Placed bugs mine with `mine` (D063, pull.js).
 //
 // Randomness comes from the tick (rng.js), so replays and P2P checks stay exact. Integers only.
 
@@ -53,6 +53,16 @@ import { wrap } from './rules.js'
  * @property {number} barMoveTicks ticks per cell a bar bug roams (D062); half that while it catches up
  * @property {number} barNear a bar bug keeps at least this many steps from you
  * @property {number} barFar a bar bug heads back to you past this many steps
+ * @property {Mine} [mine] placed bugs mine (D063); they only hover without it
+ */
+
+/**
+ * @typedef {object} Mine placed bugs mining (D063), in pull.js
+ * @property {number} ticks ticks per unit a placed bug pulls
+ * @property {number} reach tiles from its den it pulls from
+ * @property {number} carry units it holds at most; full, it waits for you
+ * @property {number} hand you within this many tiles take its ore
+ * @property {number} handTicks ticks per unit handed over
  */
 
 /**
@@ -72,6 +82,10 @@ import { wrap } from './rules.js'
  * @property {number} dir a bar bug's heading, an index into STEPS (the 4 neighbours); -1 for none
  * @property {number} run steps a bar bug has gone on its heading
  * @property {number} pace ticks its last step took, for drawing
+ * @property {number} carry ore a placed bug holds (D063)
+ * @property {Cell | null} target the cell a placed bug pulls from now (D063), for the dust stream
+ * @property {number} pullFor ticks it has pulled toward its next unit
+ * @property {number} handAt its next hand-over, not before this tick
  */
 
 /** @typedef {{ x: number, y: number, rev: number, dist: Map<number, number> }} Field steps from you (x, y) through open cells, for the world as of `rev` */
@@ -97,7 +111,7 @@ function roomy(g, x, y) {
 }
 
 /** The squared distance between two cells, x the short way round. @param {Game} g @param {Cell} a @param {Cell} b */
-function dist2(g, a, b) {
+export function dist2(g, a, b) {
   let dx = wrap(a.x - b.x, g.world.w)
   if (dx > g.world.w - dx) dx = g.world.w - dx
   const dy = a.y - b.y
@@ -129,6 +143,10 @@ export function addBug(g, x, y) {
     dir: -1,
     run: 0,
     pace: 0,
+    carry: 0,
+    target: null,
+    pullFor: 0,
+    handAt: 0,
   }
   g.bugs.push(bug)
   return bug
@@ -152,7 +170,7 @@ export function updateBugs(g) {
   fill(g, b, field, nearest, rng)
   chase(g, b, field)
   for (const bug of g.bugs) {
-    if (bug.kind !== 'wild') continue // a placed bug stays at its den (step 3 puts it to work)
+    if (bug.kind !== 'wild') continue // a placed bug stays at its den (it mines in pull.js)
     if (g.tick - bug.movedAt >= b.moveTicks) drift(g, b, field, bug, rng)
     if (bug.chasing) nibble(g, b, bug)
   }

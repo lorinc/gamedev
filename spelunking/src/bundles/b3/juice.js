@@ -2,6 +2,8 @@
 // squash on stops, and one synthesized sound per material (no audio files). A low ping per probe ring (D053).
 // Moon bugs (D056): a nibble sends an ore flying from the pack into the bug, and a heart pops when it
 // lands; a taming pops a few. These show what happened to your ore, so they stay on with the juice off.
+// Pulls (D062, D063): the ore or loot flies from the wall to you or to the placed bug that pulled it, and
+// a placed bug's ore flies to you as you pass.
 
 import { TILE_RGB } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
@@ -90,8 +92,11 @@ export function createJuice(t) {
       } else if (e.type === 'placed') {
         sound.play('placed')
       } else if (e.type === 'pulled') {
-        flights.push({ x0: e.x + 0.5, y0: e.y + 0.5, x1: e.to.x + 0.5, y1: e.to.y + 0.35, tile: e.tile, age: 0 }) // wall → you (D062)
-        sound.play(e.tile === Tile.Loot ? 'loot' : 'ore')
+        flights.push({ x0: e.x + 0.5, y0: e.y + 0.5, x1: e.to.x + 0.5, y1: e.to.y + 0.35, tile: e.tile, age: 0 }) // wall → you or a bug
+        if (!e.by) sound.play(e.tile === Tile.Loot ? 'loot' : 'ore') // a bug's pull is quiet: it may be far off
+      } else if (e.type === 'handed') {
+        flights.push({ x0: e.x + 0.5, y0: e.y + 0.3, x1: e.to.x + 0.5, y1: e.to.y + 0.35, tile: Tile.Ore, age: 0 }) // bug → you (D063)
+        sound.play('handed')
       }
     },
     /** @param {number} dt seconds */
@@ -122,7 +127,7 @@ export function createJuice(t) {
   }
 }
 
-/** @typedef {'soft' | 'hard' | 'ore' | 'loot' | 'build' | 'thunk' | 'break' | 'bump' | 'teleport' | 'ping' | 'nibble' | 'tamed' | 'placed'} SoundName */
+/** @typedef {'soft' | 'hard' | 'ore' | 'loot' | 'build' | 'thunk' | 'break' | 'bump' | 'teleport' | 'ping' | 'nibble' | 'tamed' | 'placed' | 'handed'} SoundName */
 
 /** @param {Tunables} t */
 function createSound(t) {
@@ -147,6 +152,7 @@ function createSound(t) {
     nibble: ['triangle', 1200, 1600, 0, 0.05, 0.15], // a wild bug's bite: tiny and high
     tamed: ['sine', 520, 1040, 0, 0.4, 0.3],
     placed: ['sine', 780, 390, 0, 0.3, 0.3], // a bug set down (D060): the taming's chime, falling
+    handed: ['triangle', 990, 1320, 0, 0.06, 0.15], // a placed bug's ore into your pack (D063): a soft tick, 10 a second
   }
 
   return {

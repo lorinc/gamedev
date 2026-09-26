@@ -29,7 +29,7 @@
 //
 // Pulling (D062, `cfg.pull`): standing still, you pull the nearest seen ore or loot within your light
 // out of the wall, one unit every pull.ticks, and the cell turns to rock (pull.js). Before the bugs, so
-// the nibblers get it.
+// the nibblers get it. Placed bugs mine the same way and hand their ore over as you pass (D063, `bugs.mine`).
 
 import { isFloor, isOpen, Tile } from '../gen/world.js'
 import { digTicks, stopReason, tileAt } from './rules.js'
@@ -38,7 +38,7 @@ import { interpret } from './ruleset.js'
 import { litCells, lightRadius, surfaceCells } from './light.js'
 import { PROBE, probeReach, ringCells } from './probe.js'
 import { bugGlows, place, scare, updateBugs } from './bugs.js'
-import { updatePull } from './pull.js'
+import { updateMine, updatePull } from './pull.js'
 
 /** @typedef {import('../gen/world.js').World} World */
 /** @typedef {import('./rules.js').Action} Action */
@@ -66,11 +66,13 @@ import { updatePull } from './pull.js'
  *   | { type: 'nibble', id: number, x: number, y: number, from: Cell }
  *   | { type: 'tamed', id: number, x: number, y: number, slot: number }
  *   | { type: 'placed', id: number, x: number, y: number }
- *   | { type: 'pulled', x: number, y: number, tile: number, to: Cell }} GameEvent seen: cells (y * w + x) seen for the first time, for a renderer's
+ *   | { type: 'pulled', x: number, y: number, tile: number, to: Cell, by: number }
+ *   | { type: 'handed', id: number, x: number, y: number, to: Cell }} GameEvent seen: cells (y * w + x) seen for the first time, for a renderer's
  *   texture; ring: the probe from (x, y) reached ring r (D053); nibble: wild bug `id` at (x, y) ate an ore from the pack,
  *   carried from `from` (D056); tamed: the shared count reached `tame` with its bite, and it's in the bug bar's
- *   `slot` (D060); placed: the bar's first bug is at its den (x, y); pulled: you pulled `tile` from (x, y) into the
- *   pack, standing at `to`, and the cell is rock now (D062)
+ *   `slot` (D060); placed: the bar's first bug is at its den (x, y); pulled: you (by 0) or placed bug `by` (D063)
+ *   pulled `tile` from (x, y) into the pack or the bug, at `to`, and the cell is rock now (D062); handed: placed bug
+ *   `id` at (x, y) gave you an ore, at `to` (D063)
  */
 
 /**
@@ -141,6 +143,7 @@ import { updatePull } from './pull.js'
  * @property {number} fed ore the wild bugs ate toward the next taming, all of them together (D060)
  * @property {import('./bugs.js').Bug[]} bar the tamed bugs you carry, in slot order (D060)
  * @property {number} stillFor ticks you've stood still, for the pull (D062)
+ * @property {Cell | null} pulling the cell your pull takes next, while you stand still (D063: the dust stream)
  * @property {Record<number, number>} refill per fog block without a wild bug: the tick it tries for one again (D061)
  */
 
@@ -188,6 +191,7 @@ export function createGame(world, home, cfg, table) {
     bar: [],
     refill: {},
     stillFor: 0,
+    pulling: null,
   }
   if (cfg.light) {
     g.seen = new Uint8Array(world.w * world.h)
@@ -239,6 +243,7 @@ export function tick(g) {
   if (g.probe) spread(g, g.probe)
   else if (!g.step && g.run) next(g)
   updatePull(g)
+  updateMine(g)
   updateBugs(g)
   if (g.seen) updateLight(g)
 }

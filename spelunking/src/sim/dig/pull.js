@@ -1,14 +1,23 @@
-// Pulling ore and loot out of the walls (D062): you, while you stand still, and placed bugs next (step 3).
+// Pulling ore and loot out of the walls (D062): you, while you stand still, and placed bugs (D063).
 // A pull takes the nearest seen ore or loot cell within reach (straight distance, x the short way round,
 // through the wall), and the cell turns to rock, so no gap is left.
 //
 // You (`cfg.pull`): still = no step and no run, or a probe in progress. Every `ticks` of standing still,
 // one unit comes to you from within your light radius: the nearest that fits in the pack (ties to the
 // lowest cell index). Any move restarts the count. Event `pulled`.
+//
+// Placed bugs (`cfg.bugs.mine`, D063): each pulls the nearest seen ore (never loot) within `reach` of its
+// den, one unit every `ticks`, until it carries `carry`; full, it waits. You within `hand` tiles take its
+// ore, one unit every handTicks, without stopping; with your pack full, it waits. Events `pulled` (with
+// the bug's id) and `handed`.
+//
+// The target of a pull under way is kept (`g.pulling` for you, `bug.target`), picked by the same code
+// as the pull, so the dust stream the renderers draw always points at the cell that goes.
 
 import { Tile } from '../gen/world.js'
 import { lightRadius } from './light.js'
 import { add, fits, valuable } from './pack.js'
+import { dist2 } from './bugs.js'
 import { wrap } from './rules.js'
 
 /** @typedef {import('./game.js').Game} Game */
@@ -64,18 +73,50 @@ export function toRock(g, x, y) {
 /** Your pull, each tick (D062). @param {Game} g */
 export function updatePull(g) {
   const p = g.cfg.pull
+  g.pulling = null
   if (!p || !g.cfg.light) return
   if (g.step || (g.run && !g.probe)) {
     g.stillFor = 0
     return
   }
-  if (++g.stillFor % Math.max(1, p.ticks)) return
   const slots = g.cfg.packSlots
   const c = nearestValuable(g, g.ch, lightRadius(g.pack, g.cfg.light), (t) => fits(g.pack, slots, [t]))
-  if (!c) return
+  g.pulling = c
+  if (++g.stillFor % Math.max(1, p.ticks) || !c) return
   const tile = g.world.tiles[c.y * g.world.w + c.x]
   add(g.pack, slots, tile)
   toRock(g, c.x, c.y)
+  g.pulling = null // it's gone; the next one is picked next tick
   g.litFor.r = -1 // the pack and the rock changed: the light is read anew
-  g.events.push({ type: 'pulled', x: c.x, y: c.y, tile, to: { x: g.ch.x, y: g.ch.y } })
+  g.events.push({ type: 'pulled', x: c.x, y: c.y, tile, to: { x: g.ch.x, y: g.ch.y }, by: 0 })
+}
+
+/** Placed bugs pull ore and hand it over (D063), each tick after your pull. @param {Game} g */
+export function updateMine(g) {
+  const m = g.cfg.bugs?.mine
+  if (!m) return
+  const slots = g.cfg.packSlots
+  for (const bug of g.bugs) {
+    if (bug.kind !== 'placed' || !bug.den) continue
+    // hand-over first: a unit that leaves makes room for the next pull
+    if (bug.carry > 0 && g.tick >= bug.handAt && dist2(g, bug, g.ch) <= m.hand * m.hand && fits(g.pack, slots, [Tile.Ore])) {
+      add(g.pack, slots, Tile.Ore)
+      bug.carry--
+      bug.handAt = g.tick + m.handTicks
+      g.litFor.r = -1 // the pack changed: so may the light
+      g.events.push({ type: 'handed', id: bug.id, x: bug.x, y: bug.y, to: { x: g.ch.x, y: g.ch.y } })
+    }
+    bug.target = bug.carry < m.carry ? nearestValuable(g, bug.den, m.reach, (t) => t === Tile.Ore) : null
+    if (!bug.target) {
+      bug.pullFor = 0
+      continue
+    }
+    if (++bug.pullFor < Math.max(1, m.ticks)) continue
+    const c = bug.target
+    bug.pullFor = 0
+    bug.carry++
+    bug.target = null
+    toRock(g, c.x, c.y)
+    g.events.push({ type: 'pulled', x: c.x, y: c.y, tile: Tile.Ore, to: { x: bug.x, y: bug.y }, by: bug.id })
+  }
 }
