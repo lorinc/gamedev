@@ -102,7 +102,12 @@ Claude's calls in step 1, not discussed:
 
 ## Feedback
 
-None yet.
+- [2026-09-26 · b3.6](feedback/2026-09-26_lorinc_b3.6.md): the bug's dust stream swayed (fixed in the refreeze). The user's TODOs, open:
+  - you and a bug can target the same ore;
+  - reserve one pack slot for loot and one for ore;
+  - leave base with 8 stone;
+  - show the taming progress the way a 4×4 pack slot fills up;
+  - when a placed bug's area runs out of ore, it seeks you out, hands its ore over, and goes back into the bar.
 
 ## Conclusion → next
 
