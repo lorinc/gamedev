@@ -150,29 +150,44 @@ describe('tamed bugs: the bar and the hold (D060)', () => {
   const ROOM = ['#' + '#'.repeat(40) + '#', ...Array(7).fill('#' + '.'.repeat(40) + '#'), '#' + '#'.repeat(40) + '#']
   ROOM[4] = '#' + '.'.repeat(19) + '@' + '.'.repeat(20) + '#' // you at (20, 4)
 
-  test('a bar bug roams within 2 steps of you, and lights 2 around itself for good (D062)', () => {
+  test('a bar bug keeps 2 to 4 steps from you, keeps its heading, and lights 2 around itself for good (D062)', () => {
     const g = game(ROOM, [])
     g.cfg.light = { base: 0, orePer: 0, lootPer: 0 } // your own light: just your cell
-    const bug = inBar(g)
+    const bug = inBar(g) // on your cell: it moves off first
+    run(g, 100)
     /** @type {Set<string>} */
     const cells = new Set()
-    for (let t = 0; t < 1200; t++) {
+    let moves = 0
+    let straight = 0
+    let dir = bug.dir
+    for (let t = 0; t < 3000; t++) {
+      const was = bug.movedAt
       run(g, 1)
-      assert.ok(Math.abs(bug.x - 20) + Math.abs(bug.y - 4) <= 2, `${bug.x},${bug.y} strayed`)
+      const d = Math.abs(bug.x - 20) + Math.abs(bug.y - 4)
+      assert.ok(d >= BUGS.barNear && d <= BUGS.barFar, `${bug.x},${bug.y} is ${d} off`)
       cells.add(`${bug.x},${bug.y}`)
+      if (bug.movedAt !== was && `${bug.x},${bug.y}` !== `${bug.from.x},${bug.from.y}`) {
+        moves++
+        if (bug.dir === dir) straight++
+        dir = bug.dir
+      }
     }
-    assert.ok(cells.size >= 8, `it roams: ${cells.size} cells`)
+    assert.ok(cells.size >= 12, `it roams: ${cells.size} cells`)
+    assert.ok(straight > moves / 3, `inertia: ${straight} of ${moves} steps kept the heading`)
     const seen = /** @type {Uint8Array} */ (g.seen)
-    assert.equal(seen[at(g, 20, 0)], 1, 'seen 4 above you, lit from the bug')
-    assert.equal(seen[at(g, 26, 4)], 0, 'nothing past 4')
+    assert.ok(
+      [...seen].some((v, i) => v && Math.abs((i % g.world.w) - 20) + Math.abs(Math.trunc(i / g.world.w) - 4) >= 5),
+      'lit from the bug',
+    )
+    assert.equal(seen[at(g, 20 + BUGS.barFar + 3, 4)], 0, 'nothing past barFar + 2')
   })
 
-  test('a bar bug follows you, and jumps to you when you get too far', () => {
+  test('a bar bug follows you, twice as fast, and jumps to you when you get too far', () => {
     const g = game(ROOM, [])
     const bug = inBar(g)
-    g.ch.x = 32 // 12 steps off: it comes down the field
-    run(g, 12 * BUGS.barMoveTicks)
-    assert.ok(Math.abs(bug.x - 32) + Math.abs(bug.y - 4) <= 2, `${bug.x},${bug.y} is behind`)
+    g.ch.x = 32 // 12 steps off: it comes down the field at half barMoveTicks a step
+    run(g, (12 * BUGS.barMoveTicks) / 2 + 10)
+    assert.ok(Math.abs(bug.x - 32) + Math.abs(bug.y - 4) <= BUGS.barFar, `${bug.x},${bug.y} is behind`)
     g.ch.x = 5 // 27 steps off: past seek, so it jumps
     run(g, BUGS.barMoveTicks + 1)
     assert.ok(Math.abs(bug.x - 5) + Math.abs(bug.y - 4) <= 1, `${bug.x},${bug.y} didn't jump to you`)

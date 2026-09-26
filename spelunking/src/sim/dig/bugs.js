@@ -18,8 +18,8 @@
 //
 // Taming (D060): every nibble counts toward one shared total (`g.fed`). At `tame`, the bug that took
 // the last bite goes into the bug bar (`g.bar`, barSlots long; event `tamed`) and the count restarts.
-// With the bar full, nobody is tamed. A bar bug roams within 2 steps of you, one step every
-// barMoveTicks, and lights `light` tiles around itself like your light (game.js). Each bar bug keeps
+// With the bar full, nobody is tamed. A bar bug roams 2 to 4 steps from you with some inertia, one
+// step every barMoveTicks, and lights `light` tiles around itself like your light (game.js). Each bar bug keeps
 // one chaser away (D062): with 3 in the bar, you're left in peace. The `place` command puts the bar's
 // first bug at the open cell nearest to 2 above you: its den, where it hovers and lights for good, and
 // no wild bug comes within `den` tiles. Placed bugs mine in step 3.
@@ -50,7 +50,9 @@ import { wrap } from './rules.js'
  * @property {number} den tiles around a placed bug where wild bugs never are
  * @property {number} barSlots tamed bugs you carry at most
  * @property {number} light a bar or placed bug's light radius
- * @property {number} barMoveTicks ticks per cell a bar bug roams (D062)
+ * @property {number} barMoveTicks ticks per cell a bar bug roams (D062); half that while it catches up
+ * @property {number} barNear a bar bug keeps at least this many steps from you
+ * @property {number} barFar a bar bug heads back to you past this many steps
  */
 
 /**
@@ -67,6 +69,8 @@ import { wrap } from './rules.js'
  * @property {Cell | null} glow a bar bug's light source: its cell when that's open, else yours
  * @property {number} scared until this tick
  * @property {number} nibbleAt its next nibble, not before this tick
+ * @property {number} dir a bar bug's heading, an index into STEPS (the 4 neighbours); -1 for none
+ * @property {number} pace ticks its last step took, for drawing
  */
 
 /** @typedef {{ x: number, y: number, rev: number, dist: Map<number, number> }} Field steps from you (x, y) through open cells, for the world as of `rev` */
@@ -76,7 +80,7 @@ const SALT = 0xb065
 /** How far `place` looks for an open cell around 2 above you. */
 const PLACE_RINGS = 4
 
-// the 4 neighbours, in a fixed order
+// the 4 neighbours, in a fixed order; k ^ 1 is the way back
 const STEPS = [
   [1, 0],
   [-1, 0],
@@ -121,6 +125,8 @@ export function addBug(g, x, y) {
     glow: null,
     scared: 0,
     nibbleAt: 0,
+    dir: -1,
+    pace: 0,
   }
   g.bugs.push(bug)
   return bug
@@ -159,39 +165,59 @@ function gone(g, b, bug) {
   return true
 }
 
-// A bar bug roams round you (D062), a step every barMoveTicks: down the field when more than 2 steps
-// away, else a random open step that stays within 2. Outside the field (a long fall, too far) it jumps
-// to your cell. It lights from its cell, which is always open.
+// A bar bug roams round you (D062, calmed after play): it keeps 2 to 4 steps from you (field steps,
+// barNear..barFar), one step every barMoveTicks, twice as fast while catching up. It keeps its heading
+// (inertia): it turns 1 step in TURN, never straight back unless it must; when rock or the band stops
+// it, it hovers a beat first, then heads off anywhere; and 1 step in PAUSE it hovers a beat. Outside the field (a long fall, too far) it jumps to your
+// cell. It lights from its cell, which is always open.
 /** @param {Game} g @param {Bugs} b @param {Field} field @param {Bug} bug @param {() => number} rng */
 function roam(g, b, field, bug, rng) {
   bug.glow = { x: bug.x, y: bug.y }
-  if (g.tick - bug.movedAt < b.barMoveTicks) return
   const here = field.dist.get(cellOf(g, bug))
-  /** @type {Cell[]} */
-  let options = []
-  if (here === undefined) options = [{ x: g.ch.x, y: g.ch.y }]
-  else {
-    let best = here > 2 ? here : Infinity
-    for (const [sx, sy] of STEPS) {
-      const c = { x: wrap(bug.x + sx, g.world.w), y: bug.y + sy }
-      const d = field.dist.get(cellOf(g, c))
-      if (d === undefined) continue
-      if (here <= 2) {
-        if (d <= 2) options.push(c)
-      } else if (d < best) {
-        best = d
-        options = [c]
-      } else if (d === best) options.push(c)
+  const far = here === undefined || here > b.barFar
+  const pace = far ? Math.max(1, b.barMoveTicks >> 1) : b.barMoveTicks
+  if (g.tick - bug.movedAt < pace) return
+  /** @type {Cell | null} */
+  let to = null
+  if (here === undefined) {
+    to = { x: g.ch.x, y: g.ch.y }
+    bug.dir = -1
+  } else {
+    // the steps it may take: toward you when far, away when too close, else staying in the band
+    /** @type {number[]} */
+    const ok = []
+    STEPS.forEach(([sx, sy], k) => {
+      const d = field.dist.get(cellOf(g, { x: bug.x + sx, y: bug.y + sy }))
+      if (d === undefined) return
+      if (here > b.barFar ? d < here : here < b.barNear ? d > here : d >= b.barNear && d <= b.barFar) ok.push(k)
+    })
+    const keep = ok.includes(bug.dir) && (far || rng() % TURN !== 0)
+    const blocked = bug.dir >= 0 && !ok.includes(bug.dir) && !far
+    if (blocked || (!far && rng() % PAUSE === 0)) {
+      if (blocked) bug.dir = -1 // it stops at the edge, hovers a beat, then turns anywhere
+      bug.movedAt = g.tick
+      return
     }
+    const turns = ok.filter((k) => k !== (bug.dir ^ 1)) // not straight back, unless that's all there is
+    const pick = keep ? bug.dir : turns.length ? turns[rng() % turns.length] : ok.length ? ok[rng() % ok.length] : -1
+    if (pick < 0) {
+      bug.movedAt = g.tick
+      return
+    }
+    bug.dir = pick
+    to = { x: wrap(bug.x + STEPS[pick][0], g.world.w), y: bug.y + STEPS[pick][1] }
   }
-  if (!options.length) return
-  const to = options[rng() % options.length]
   bug.from = { x: bug.x, y: bug.y }
   bug.x = to.x
   bug.y = to.y
   bug.movedAt = g.tick
+  bug.pace = pace
   bug.glow = { x: bug.x, y: bug.y }
 }
+
+/** A roaming bar bug turns 1 step in TURN, and hovers a beat 1 step in PAUSE. */
+const TURN = 6
+const PAUSE = 5
 
 /**
  * The hold (D060): the bar's first bug goes to the open cell nearest to 2 above you (the first

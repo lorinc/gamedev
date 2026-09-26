@@ -83,8 +83,8 @@ Built in steps, one per session (user, 2026-09-25): 0 + 1 · 2 · 3 · 3b + 4.
 **Pulling, and the bar calms the chasers (step 3, first part, D062):** ruleset `b3.5`. The user: "manually collecting ore to tame bugs goes against the 'let's build tidy and regular hallways' goal. You zip around, try to mine with precision with a system that was designed for loose intent."
 - Standing still, you pull the nearest seen ore or loot within your light out of the wall, 1 every 5 s, and the cell turns to rock (soft or hard, like the rock round it). Any move restarts the count; the probe counts as standing.
 - Each bug in the bar keeps one wild chaser away: 3 chasers with an empty bar, none with a full one. The bar has 3 slots now.
-- Bar bugs roam within 2 steps of you, like the wild ones, instead of circling.
-- **Tests:** 7 pull tests (nearest first, the rock round it, seen only, the light's reach, a move restarts, what fits, none in b3.4), 3 bug tests (roaming, following and the jump, the chaser cap); determinism covers the pull; 194 in all.
+- Bar bugs roam round you instead of circling. After playing, the user found them hysterical ("their speed and random walk and their need to stay close is annoying"), so they keep 2 to 5 steps off, move at wild-bug speed (faster only to catch up), keep their heading and hover a beat now and then.
+- **Tests:** 7 pull tests (nearest first, the rock round it, seen only, the light's reach, a move restarts, what fits, none in b3.4), 3 bug tests (roaming with its distance and inertia, following and the jump, the chaser cap); determinism covers the pull; 195 in all.
 - **Screenshots** (local, `gallery/p6/b3.5_*`): an ore pulled out of the wall, flying to you, eaten by the one chaser left with 2 bugs in the bar.
 
 Claude's calls in step 1, not discussed:
