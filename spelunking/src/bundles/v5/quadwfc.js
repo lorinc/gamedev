@@ -15,6 +15,8 @@ export const QNOOK = 3 // 1 corner open
 export const QINNER = 4 // 3 corners open
 export const QSADDLE = 5 // 2 opposite corners open
 export const QCLASSES = ['rock', 'open', 'wall', 'nook', 'inner', 'saddle']
+/** The band of the sky row's quads (after SURFACE … OCEAN): no terrain, painted as sky. */
+export const QSKY = 5
 
 const bit = (/** @type {number} */ t, /** @type {number} */ k) => (t >> k) & 1
 /** Class of each of the 16 corner patterns. */
@@ -26,16 +28,19 @@ export const QCLASS = Array.from({ length: 16 }, (_, t) => {
   if (n === 3) return QINNER
   return t === 5 || t === 10 ? QSADDLE : QWALL
 })
-/** The quad WFC's own defaults: at one cell per quad, clustering must be much stronger than on hexes. */
+/**
+ * The quad WFC's own defaults: the user's best setting on the 3 × 6 map (seed 6398 looked best):
+ * open 0.12, caves grow 7.5, rock grows 1, walls straight 6, thinnest wall 0, wobble 0.5.
+ */
 export const QKNOBS = {
-  openIce: 0.45, // how open each layer is; there's a tipping point near 0.5, where open or rock floods
-  openPudding: 0.5,
-  openBrine: 0.45,
-  grow: 30, // caves grow: open next to open
-  rock: 30, // rock grows: rock next to rock
-  straight: 10, // a wall carries a neighbour's border straight on
+  openIce: 0.12, // how open each layer is
+  openPudding: 0.12,
+  openBrine: 0.12,
+  grow: 7.5, // caves grow: open next to open
+  rock: 1, // rock grows: rock next to rock
+  straight: 6, // a wall carries a neighbour's border straight on
   thin: 0, // how thin walls can get: rock with open space on opposite sides within this many cells is avoided (0 = off)
-  wobble: 2, // rows the layer borders wobble by
+  wobble: 0.5, // rows the layer borders wobble by
 }
 /** @typedef {typeof QKNOBS} QKnobs */
 
@@ -87,7 +92,8 @@ const MATCH = Array.from({ length: 16 }, (_, ij) =>
 /**
  * @param {import('./quadcaves.js').Grid} G
  * @param {number} seed @param {QKnobs} K
- * @returns {{tile: Uint8Array, band: Uint8Array, open: Uint8Array}} open: per mesh vertex
+ * @returns {{tile: Uint8Array, band: Uint8Array, open: Uint8Array, skyBits: Uint8Array, seaBits: Uint8Array}}
+ *   open: per mesh vertex; skyBits, seaBits: per quad, its corners in the sky or the ocean
  */
 export function generateQuads(G, seed, K) {
   const L = G.links
@@ -95,13 +101,42 @@ export function generateQuads(G, seed, K) {
   const Q = faces.length
   const rng = mulberry32(hashSeed(seed, 0x51))
   const opens = [0, K.openIce, K.openPudding, K.openBrine, 0]
-  // bands by depth as a share of the map, on p7's 32-row scale, so any map size keeps the layers'
-  // proportions: a thin rock surface on top, the ocean's last 2 rows at the bottom
-  const band = new Uint8Array(Q)
-  for (let q = 0; q < Q; q++) {
-    const row = (G.cy[q] / G.H) * 32 - 0.5
-    band[q] = row < 0.25 ? SURFACE : row >= 30 ? OCEAN : Math.min(BRINE, Math.max(ICE, bandOf(row + wobble(seed, G.cx[q], K.wobble, G.W))))
+  // The sky and the ocean: a hex row each above and below the terrain, relaxed with the rest. A corner is
+  // sky (ocean) when it lies above (below) a smooth, wavy line near the row border; hex outlines stay
+  // zigzags even relaxed, so the line, not the hex, decides. Quads wholly in the sky or the ocean take
+  // no part in the WFC; quads touching the sky are the rock surface; the ocean is painted over the
+  // quads it cuts. The layers go by depth between the two lines, on p7's 32-row scale (surface 0,
+  // ocean 30), so any map size keeps their proportions.
+  const { rows } = G.mesh
+  const V = G.mesh.x.length
+  const top = 9 * 0.5 + 6 // fine y of the border between the sky row and the terrain
+  const bottom = 9 * (rows - 1.5) + 6 // … and between the terrain and the ocean row
+  const sky = new Uint8Array(V)
+  const sea = new Uint8Array(V)
+  for (let v = 0; v < V; v++) {
+    const x = (G.mesh.x[v] * 10) / Math.sqrt(3)
+    const y = G.mesh.y[v] * 6 + 6
+    sky[v] = y < top + wobble(seed + 1, x, 2.5, G.W) ? 1 : 0
+    sea[v] = y > bottom + wobble(seed + 2, x, 2.5, G.W) ? 1 : 0
   }
+  const band = new Uint8Array(Q)
+  const skyBits = new Uint8Array(Q)
+  const seaBits = new Uint8Array(Q)
+  for (let q = 0; q < Q; q++) {
+    const f = faces[q]
+    for (let k = 0; k < 4; k++) {
+      skyBits[q] |= sky[f[k]] << k
+      seaBits[q] |= sea[f[k]] << k
+    }
+    if (skyBits[q] === 15) band[q] = QSKY
+    else if (seaBits[q] === 15) band[q] = OCEAN
+    else if (skyBits[q]) band[q] = SURFACE
+    else {
+      const row = ((G.cy[q] - top) / (bottom - top)) * 30
+      band[q] = Math.min(BRINE, Math.max(ICE, bandOf(row + wobble(seed, G.cx[q], K.wobble, G.W))))
+    }
+  }
+  const outside = (/** @type {number} */ q) => band[q] === QSKY || band[q] === OCEAN
   // class weights per band, shared by the class's tiles
   const base = [0, 1, 2, 3, 4].map((b) => {
     const o = opens[b]
@@ -194,7 +229,7 @@ export function generateQuads(G, seed, K) {
       const d = dom[q]
       for (let k = 0; k < 4; k++) {
         const p = L.nb[q * 4 + k]
-        if (p < 0) continue
+        if (p < 0 || outside(p)) continue
         // the corner pairs q still allows on this edge
         const ij = L.ci[q * 4 + k] * 4 + L.cj[q * 4 + k]
         let allowed = 0
@@ -209,18 +244,16 @@ export function generateQuads(G, seed, K) {
     }
   }
 
-  // fixed: the surface row is rock, the ocean rows open
+  // fixed: the surface is rock
   const fixed = []
-  for (let q = 0; q < Q; q++) {
-    if (band[q] === SURFACE || band[q] === OCEAN) {
-      const t = band[q] === SURFACE ? 0 : 15
-      dom[q] = 1 << t
-      settle(q, t)
+  for (let q = 0; q < Q; q++)
+    if (band[q] === SURFACE) {
+      dom[q] = 1
+      settle(q, 0)
       fixed.push(q)
     }
-  }
   propagate(fixed)
-  for (let q = 0; q < Q; q++) if (tile[q] < 0) push(q)
+  for (let q = 0; q < Q; q++) if (tile[q] < 0 && !outside(q)) push(q)
 
   while (hk.length) {
     const q = pop()
@@ -233,9 +266,9 @@ export function generateQuads(G, seed, K) {
 
   const open = new Uint8Array(G.mesh.x.length)
   faces.forEach((f, q) => {
-    for (let k = 0; k < 4; k++) if (bit(tile[q], k)) open[f[k]] = 1
+    if (tile[q] >= 0) for (let k = 0; k < 4; k++) if (bit(tile[q], k)) open[f[k]] = 1
   })
-  return { tile: Uint8Array.from(tile), band, open }
+  return { tile: Uint8Array.from(tile, (t) => Math.max(t, 0)), band, open, skyBits, seaBits }
 
   /** @param {number} q */
   function choose(q) {
@@ -308,13 +341,13 @@ export function generateQuads(G, seed, K) {
 
 /**
  * Cavities: open vertices joined by open-open edges, leaving out the ocean's quads' corners.
- * @param {import('./quadcaves.js').Grid} G @param {{open: Uint8Array, band: Uint8Array}} R
+ * @param {import('./quadcaves.js').Grid} G @param {{open: Uint8Array, seaBits: Uint8Array}} R
  */
 export function quadCavities(G, R) {
   const V = R.open.length
   const sea = new Uint8Array(V)
   G.mesh.faces.forEach((f, q) => {
-    if (R.band[q] === OCEAN) for (const v of f) sea[v] = 1
+    for (let k = 0; k < 4; k++) if ((R.seaBits[q] >> k) & 1) sea[f[k]] = 1
   })
   /** @type {number[][]} */
   const adj = Array.from({ length: V }, () => [])

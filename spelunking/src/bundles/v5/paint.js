@@ -5,7 +5,7 @@
 
 import { CELL_W, FH, FW, N, SOCKET, SQ3, centre, hexAt } from './hex.js'
 import { near } from './quads.js'
-import { QCLASS } from './quadwfc.js'
+import { QCLASS, QSKY } from './quadwfc.js'
 import { OCEAN } from './wfc.js'
 
 export const S = 2 // px per fine cell
@@ -150,7 +150,7 @@ const QCLASS_RGB = [
 const dim = (c) => [c[0] * 0.45, c[1] * 0.45, c[2] * 0.45]
 
 /** px per fine cell on the quad map (it's small), and the wrap copy's width in cells */
-export const QS = 8
+export const QS = 4
 const QEXT = 10
 
 /** The quad map's picture size. @param {import('./quadcaves.js').Grid} G */
@@ -161,7 +161,7 @@ export const quadSize = (G) => ({ w: (G.W + QEXT) * QS, h: SKY + G.H * QS })
  * the rock/cave border cuts across the quads between edge midpoints, with a black line along it. One
  * hex column is repeated, faded, on the right to show the wrap. `grid` draws the quads themselves.
  * @param {import('./quadcaves.js').Grid} G
- * @param {{tile: Uint8Array, band: Uint8Array}} R
+ * @param {{tile: Uint8Array, band: Uint8Array, skyBits: Uint8Array, seaBits: Uint8Array}} R
  * @param {View} view
  * @returns {Uint8ClampedArray} quadSize(G) × 4
  */
@@ -172,6 +172,8 @@ export function paintQuads(G, R, view) {
   const X = (/** @type {number} */ x) => ((x * CELL_W) / SQ3) * QS
   const Y = (/** @type {number} */ y) => SKY + (y * 6 + 6) * QS
   const shifts = [0, X(m.wrap), -X(m.wrap)]
+  // below the ocean row's middle it's all water (the mesh's pinned bottom edge is a zigzag)
+  for (let y = Math.floor(Y(1.5 * (m.rows - 1))); y < h; y++) for (let x = 0; x < WIDTH; x++) set(x, y, WATER)
 
   /** Fills a polygon (pixel centres inside, even-odd), with its wrapped copies. @param {number[]} xs @param {number[]} ys @param {RGB} col */
   const fill = (xs, ys, col) => {
@@ -198,25 +200,25 @@ export function paintQuads(G, R, view) {
       for (let i = 0; i <= n; i++) set(Math.floor(ax + ((bx - ax) * i) / n + dx), Math.floor(ay + ((by - ay) * i) / n), c)
   }
 
-  m.faces.forEach((f, q) => {
-    const t = R.tile[q]
-    const xs = f.map((v) => X(near(m.x[v], m.x[f[0]], m.wrap)))
-    const ys = f.map((v) => Y(m.y[v]))
-    /** @type {RGB} */
-    const rock = view.mode === 'classes' ? dim(QCLASS_RGB[QCLASS[t]]) : ROCK[R.band[q]]
-    /** @type {RGB} */
-    const open = view.mode === 'classes' ? QCLASS_RGB[QCLASS[t]] : R.band[q] === OCEAN ? WATER : CAVE
-    fill(xs, ys, rock)
-    if (t === 0) return
-    // the open part: open corners, and the midpoints of the edges the border crosses
+  /**
+   * Marching squares on a quad: the part whose corners are set in `bits` (the corners, and the midpoints
+   * of the edges the border crosses), and those midpoints in order.
+   * @param {number} bits @param {number[]} xs @param {number[]} ys
+   */
+  const march = (bits, xs, ys) => {
+    /** @type {number[]} */
     const ox = []
+    /** @type {number[]} */
     const oy = []
     /** @type {number[][]} */
     const mids = []
     for (let k = 0; k < 4; k++) {
-      const a = (t >> k) & 1
-      const b = (t >> ((k + 1) & 3)) & 1
-      if (a) (ox.push(xs[k]), oy.push(ys[k]))
+      const a = (bits >> k) & 1
+      const b = (bits >> ((k + 1) & 3)) & 1
+      if (a) {
+        ox.push(xs[k])
+        oy.push(ys[k])
+      }
       if (a !== b) {
         const mx = (xs[k] + xs[(k + 1) & 3]) / 2
         const my = (ys[k] + ys[(k + 1) & 3]) / 2
@@ -225,14 +227,40 @@ export function paintQuads(G, R, view) {
         mids.push([mx, my])
       }
     }
-    fill(ox, oy, open)
-    if (view.mode !== 'painted' || R.band[q] === OCEAN) return
-    // the border: midpoints in pairs (a saddle has two)
-    if (mids.length === 2) line(mids[0][0], mids[0][1], mids[1][0], mids[1][1], [0, 0, 0])
+    return { ox, oy, mids, o: /** @type {[number[], number[]]} */ ([ox, oy]) }
+  }
+  /** The border line through the midpoints (a saddle has two). @param {number} bits @param {number[][]} mids @param {RGB} c */
+  const border = (bits, mids, c) => {
+    if (mids.length === 2) line(mids[0][0], mids[0][1], mids[1][0], mids[1][1], c)
     if (mids.length === 4) {
-      const s = (t & 1) === 1 ? 0 : 1 // pair the midpoints around each open corner
-      line(mids[s][0], mids[s][1], mids[(s + 3) & 3][0], mids[(s + 3) & 3][1], [0, 0, 0])
-      line(mids[s + 1][0], mids[s + 1][1], mids[s + 2][0], mids[s + 2][1], [0, 0, 0])
+      const s = (bits & 1) === 1 ? 0 : 1 // pair the midpoints around each set corner
+      line(mids[s][0], mids[s][1], mids[(s + 3) & 3][0], mids[(s + 3) & 3][1], c)
+      line(mids[s + 1][0], mids[s + 1][1], mids[s + 2][0], mids[s + 2][1], c)
+    }
+  }
+
+  m.faces.forEach((f, q) => {
+    const t = R.tile[q]
+    const xs = f.map((v) => X(near(m.x[v], m.x[f[0]], m.wrap)))
+    const ys = f.map((v) => Y(m.y[v]))
+    /** @type {RGB} */
+    const rock = view.mode === 'classes' ? dim(QCLASS_RGB[QCLASS[t]]) : ROCK[R.band[q]]
+    /** @type {RGB} */
+    const open = view.mode === 'classes' ? QCLASS_RGB[QCLASS[t]] : R.band[q] === OCEAN ? WATER : CAVE
+    if (R.band[q] === QSKY || R.band[q] === OCEAN) return fill(xs, ys, R.band[q] === QSKY ? SKYC : WATER)
+    fill(xs, ys, rock)
+    const black = /** @type {RGB} */ ([0, 0, 0])
+    if (t) {
+      const cave = march(t, xs, ys)
+      fill(cave.ox, cave.oy, open)
+      if (view.mode === 'painted') border(t, cave.mids, black)
+    }
+    // the ocean over the quads its line cuts; the sky over the surface's quads, outlined
+    if (R.seaBits[q]) fill(...march(R.seaBits[q], xs, ys).o, WATER)
+    if (R.skyBits[q]) {
+      const air = march(R.skyBits[q], xs, ys)
+      fill(air.ox, air.oy, SKYC)
+      border(R.skyBits[q], air.mids, black)
     }
   })
   if (view.grid)

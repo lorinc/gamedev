@@ -4,6 +4,11 @@
 import { edges, near, pair, relax, subdivide, triangles } from './quads.js'
 import { quadLinks } from './quadwfc.js'
 
+/** The quad map: 6 × 12 terrain hexes plus a sky row on top and an ocean row below (user: 1/5 of p7's
+ * 16 × 32 each way, then twice that). */
+export const QCOLS = 6
+export const QROWS = 14
+
 /**
  * The relaxed grid of cols × rows hexes. Fine cells: a hex is 10 wide, rows 9 apart, as in hex.js.
  * @param {number} seed @param {number} iters @param {number} cols @param {number} rows

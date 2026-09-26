@@ -3,7 +3,7 @@
 // hex WFC it replaced (p7's first build). Everything else lives in the pure modules next to this one.
 
 import { HEIGHT, WIDTH, paint, paintQuads, quadSize } from './paint.js'
-import { buildGrid } from './quadcaves.js'
+import { QCOLS, QROWS, buildGrid } from './quadcaves.js'
 import { QKNOBS, generateQuads, quadCavities } from './quadwfc.js'
 import { cavities, raster } from './raster.js'
 import { makeTiles } from './tiles.js'
@@ -11,10 +11,6 @@ import { KNOBS, generate, prepare } from './wfc.js'
 
 const tiles = makeTiles()
 const P = prepare(tiles)
-// The quad map: 3 × 6 hexes, about 1/5 of p7's 16 × 32 each way (user: "1/5 width and height should
-// be enough for a whole playthrough"). Small enough to build a fresh grid per seed.
-const QCOLS = 3
-const QROWS = 6
 
 const params = new URLSearchParams(location.search)
 let seed = Number(params.get('seed')) || 1
@@ -26,6 +22,12 @@ const knobs = { ...KNOBS }
 const qknobs = { ...QKNOBS }
 /** @type {import('./paint.js').View} */
 const view = { mode: 'painted', grid: false, sockets: false }
+// the URL carries every knob (k=name:value,…), so a setting can be shared as a link
+for (const kv of (params.get('k') || '').split(',')) {
+  const [name, v] = kv.split(':')
+  const target = gen === 'hex' ? knobs : qknobs
+  if (name in target && isFinite(Number(v))) target[name] = Number(v)
+}
 
 /** @typedef {[string, string, number, number, number]} Slider key, label, min, max, step */
 /** @type {Slider[]} */
@@ -233,12 +235,16 @@ function schedule() {
   if (pending) return
   pending = requestAnimationFrame(() => {
     pending = 0
+    url()
     build()
   })
 }
 
 function url() {
-  history.replaceState(null, '', `?seed=${seed}${gen === 'hex' ? '&gen=hex' : ''}`)
+  const k = Object.entries(gen === 'hex' ? knobs : qknobs)
+    .map(([name, v]) => `${name}:${v}`)
+    .join(',')
+  history.replaceState(null, '', `?seed=${seed}${gen === 'hex' ? '&gen=hex' : ''}&k=${k}`)
 }
 
 /** @param {number} s */

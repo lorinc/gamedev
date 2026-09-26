@@ -7,11 +7,11 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { N, NEIGHBOURS } from '../src/bundles/v5/hex.js'
 import { HEIGHT, WIDTH, paint, paintQuads, quadSize } from '../src/bundles/v5/paint.js'
-import { buildGrid } from '../src/bundles/v5/quadcaves.js'
+import { QCOLS, QROWS, buildGrid } from '../src/bundles/v5/quadcaves.js'
 import { QKNOBS, generateQuads, quadCavities } from '../src/bundles/v5/quadwfc.js'
 import { cavities, raster } from '../src/bundles/v5/raster.js'
 import { makeTiles, reversed, sideCode } from '../src/bundles/v5/tiles.js'
-import { KNOBS, generate, prepare } from '../src/bundles/v5/wfc.js'
+import { KNOBS, OCEAN, generate, prepare } from '../src/bundles/v5/wfc.js'
 import { encodePng } from './png.js'
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'gallery', 'p7')
@@ -49,16 +49,18 @@ for (let seed = first; seed < first + 4; seed++) {
     `seed ${seed}: ${ms.toFixed(0)} ms, ${g.restarts} restarts, ${cav.count} cavities, largest ${(cav.largest * 100).toFixed(0)}%, ${cav.tiny} tiny`,
   )
   const q0 = performance.now()
-  // the quad map: 3 × 6 hexes (the user's 1/5), a grid per seed, as on the page
-  const grid = buildGrid(seed, 150, 3, 6)
+  // the quad map, a grid per seed, as on the page
+  const grid = buildGrid(seed, 150, QCOLS, QROWS)
   const C = generateQuads(grid, seed, QKNOBS)
   const qms = performance.now() - q0
   const again2 = generateQuads(grid, seed, QKNOBS)
   if (again2.tile.join() !== C.tile.join()) fail(`seed ${seed}: quads NOT deterministic`)
   for (let q = 0; q < C.tile.length; q++)
-    grid.mesh.faces[q].forEach((v, k) => {
-      if (((C.tile[q] >> k) & 1) !== C.open[v]) fail(`seed ${seed}: quad ${q} disagrees with a neighbour on corner ${k}`)
-    })
+    if (C.band[q] < OCEAN)
+      // the sky and the ocean take no part
+      grid.mesh.faces[q].forEach((v, k) => {
+        if (((C.tile[q] >> k) & 1) !== C.open[v]) fail(`seed ${seed}: quad ${q} disagrees with a neighbour on corner ${k}`)
+      })
   const qc = quadCavities(grid, C)
   console.log(`  quads: ${qms.toFixed(0)} ms, ${qc.count} cavities, largest ${(qc.largest * 100).toFixed(0)}%, ${qc.tiny} tiny`)
   maps.push({ g, R, C, grid })

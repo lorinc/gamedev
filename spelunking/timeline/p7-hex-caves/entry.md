@@ -97,6 +97,14 @@ how thin walls can get"): rock at a corner with already-open corners on opposite
 within that many grid edges (about a cell each) is weighted down 100×, so thin walls break through and
 the caves join; since every merge adds open space, higher values push towards the open flood.
 
+**Then (user):** the map doubled each way, to 6 × 12 terrain hexes (60 × 129 cells, about 8,200 quads),
+plus a sky hex row on top and an ocean row below that relax with the rest. The hex outlines stay
+zigzags even relaxed, so a corner is sky or ocean by a smooth wavy line near the row border, painted by
+marching squares: the surface and the shore are natural curves, with a 1-quad rock crust under the sky.
+The URL carries every knob (`k=name:value,…`) so a setting can be shared. The quad defaults are now the
+user's best setting from the 3 × 6 map (seed 6398): open 0.12, caves grow 7.5, rock grows 1, walls
+straight 6, thinnest wall 0, wobble 0.5.
+
 ## Feedback
 
 - [2026-09-26 · v5](feedback/2026-09-26_lorinc_v5.md): hex version 6/10, the grid clearly visible (assumption 3 failed); the quad WFC "looks like real caves, not game design". Next: more middle-sized caves connected by tunnels, and a map about 1/5 the width and height.
