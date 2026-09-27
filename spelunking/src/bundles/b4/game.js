@@ -26,6 +26,8 @@
 // Garden (b4.10, garden.js): tamed bugs green the back wall, vines grow on green, vines make red fruit, a
 // resource: your pull takes fruit within the light too, seen or not. Your pull goes for the kind the ledger holds least
 // of (b4.12), the nearest of it.
+// Upgrades (b4.13, the user): fruit on the ledger is spent by itself on the bugs' reach: the first costs
+// swarm.upgradeCost (16), each next twice the last; each adds swarm.upgradeReach px.
 // Worms (b4.12, worms.js): dense fruit spawns worms; they eat 8 fruit, burrow and curl up into an ore deposit.
 // Bugs (b4.3): b3.7's wild ones (`src/sim/dig/bugs.js`, D056–D061) with the `ledger` switch: they nibble ore
 // from the ledger; at 16 fed (D060) the last biter is +1 bug on the ledger. Tamed bugs are abstract workers
@@ -92,6 +94,7 @@ export const CONFIG = {
  *   | { type: 'refused', edge: number, reason: 'ore' | 'off' | 'far' | 'built' }
  *   | { type: 'dug', x: number, y: number, tile: number, by: number } | { type: 'haul', x: number, y: number, ore: number, loot: number, fruit: number }
  *   | { type: 'worm', x: number, y: number } | { type: 'eaten', x: number, y: number } | { type: 'deposit', cells: number[] }
+ *   | { type: 'upgrade', level: number }
  *   | { type: 'board', car: number } | { type: 'exit', car: number }
  *   | { type: 'nibble', id: number, x: number, y: number, from: Cell } | { type: 'tamed', id: number, x: number, y: number, slot: number }
  *  } GameEvent bugs.js adds the wild bugs'; tamed has slot -1 (to the ledger); tile FRUIT_TILE is a fruit (b4.10)
@@ -121,6 +124,7 @@ export const CONFIG = {
  * @property {{ ore: number, loot: number, bugs: number, fruit: number }} ledger b4.3; fruit b4.10
  * @property {import('./garden.js').GardenState} garden b4.10
  * @property {import('./worms.js').Worm[]} worms b4.12
+ * @property {number} level bug reach upgrades bought (b4.13)
  * @property {import('./swarm.js').Worker[]} swarm the ledger's bugs at work
  * @property {Uint8Array} seen
  * @property {number[]} lit
@@ -163,6 +167,7 @@ export function createGame(map, cfg) {
     ledger: { ore: 0, loot: 0, bugs: 0, fruit: 0 },
     garden: createGarden(world.w * world.h),
     worms: [],
+    level: 0,
     swarm: [],
     seen: new Uint8Array(world.w * world.h),
     lit: [],
@@ -222,6 +227,11 @@ export function tick(g) {
   updateSwarm(g)
   updateGarden(g)
   updateWorms(g)
+  while (g.ledger.fruit >= nextCost(g)) {
+    g.ledger.fruit -= nextCost(g)
+    g.level++
+    g.events.push({ type: 'upgrade', level: g.level })
+  }
   updateLight(g)
 }
 
@@ -376,6 +386,9 @@ function pull(g) {
   g.litFor.r = -1
   g.events.push({ type: 'pulled', x: c.x, y: c.y, tile, to: { x: g.ch.x, y: g.ch.y } })
 }
+
+/** The fruit the next reach upgrade costs: upgradeCost × 2^level (b4.13). @param {Game} g */
+export const nextCost = (g) => Math.max(1, g.cfg.swarm.upgradeCost) * 2 ** g.level
 
 /** A pulled or dug unit that was a fruit (b4.10), not a tile. */
 export const FRUIT_TILE = -1

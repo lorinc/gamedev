@@ -38,6 +38,8 @@ export const SWARM = {
   pullTicks: 60, // a unit a second at most, like your pull
   spawn: 12, // px round a network node (nodeReach)
   fruitCarry: 8, // fruit a bug holds at most (the user, b4.10)
+  upgradeCost: 16, // fruit for the first reach upgrade, doubling each time: 16, 32, 64… (the user, b4.13)
+  upgradeReach: 1, // px of reach an upgrade adds (Claude's call)
 }
 /** @typedef {typeof SWARM} Swarm */
 
@@ -137,7 +139,7 @@ function step(g, b, rng) {
  * pullTicks of having one, it comes out, to the haul. @param {import('./game.js').Game} g @param {Swarm} s @param {Worker} b @param {number} k its index */
 function pull(g, s, b, k) {
   const { w, h, tiles } = g.world
-  const r = Math.max(0, s.reach)
+  const r = Math.max(0, s.reach + g.level * s.upgradeReach)
   let best = -1
   let bestD = Infinity
   for (let dy = -r; dy <= r; dy++)

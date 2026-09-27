@@ -109,6 +109,7 @@ test('a tamed bug works near the network and sends its haul to the ledger', () =
   const g = fresh()
   g.cfg.swarm.tripTicks = 3600
   g.cfg.swarm.reach = 4
+  g.cfg.swarm.upgradeCost = 1e9 // no fruit spent on upgrades here
   g.ledger.bugs = 3
   tick(g)
   assert.equal(g.swarm.length, 3)
@@ -257,4 +258,19 @@ test('your pull goes for the kind the ledger holds least of, even when another i
     g.events.length = 0
   }
   assert.equal(first, Tile.Ore)
+})
+
+test('fruit buys the bugs reach by itself: 16, 32, 64… each +1 px (b4.13)', async () => {
+  const { nextCost } = await import('./game.js')
+  const g = fresh()
+  g.cfg.worms.max = 0
+  assert.equal(nextCost(g), 16)
+  g.ledger.fruit = 15
+  tick(g)
+  assert.equal(g.level, 0)
+  g.ledger.fruit = 16 + 32 + 5
+  tick(g)
+  assert.equal(g.level, 2)
+  assert.equal(g.ledger.fruit, 5)
+  assert.equal(nextCost(g), 64)
 })

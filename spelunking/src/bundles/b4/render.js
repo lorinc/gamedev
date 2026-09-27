@@ -15,8 +15,7 @@
 
 import { cellRgb } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
-import { drawBugs } from '../b3/render.js'
-import { botAt, FRUIT_TILE, shown } from './game.js'
+import { botAt, FRUIT_TILE, nextCost, shown } from './game.js'
 import { FRUIT, GREEN as MOSS, VINE } from './garden.js'
 import { OPEN, ROCK, SHEET, SPACE } from './world.js'
 import { ledgerKinds } from './ledger.js'
@@ -39,6 +38,7 @@ const GREEN = '#5ac878'
 const RED = '#ff2828'
 const LOOT = 'rgb(64,232,214)'
 const BUG = [255, 190, 90] // tamed: amber (D059)
+const WILD = [90, 170, 255] // wild: blue (D059)
 const RING_TRAIL = 4
 const EDGE = 3 // px over which the light fades out
 const FRUIT_C = [235, 40, 50]
@@ -181,7 +181,8 @@ export function createRenderer(canvas, game, ui, view) {
         tctx.putImageData(timg, 0, 0, i % w, Math.floor(i / w), 1, 1)
       }
     else if (e.type === 'ring') rings.push({ x: e.x, y: e.y, r: e.r, s: now })
-    else if (e.type === 'nibble') fly(icon('ore'), cell(e), now, 0.5, ORE, 0)
+    else if (e.type === 'upgrade')
+      for (let k = 0; k < 8; k++) fly(icon('fruit'), icon('bugs'), now + k * 0.05, 0.6, `rgb(${FRUIT_C})`, 0) // no particles for a nibble (b4.13)
     else if (e.type === 'tamed') fly(cell(e), icon('bugs'), now, 0.9, `rgb(${BUG})`, 0)
     else if (e.type === 'haul') {
       for (let k = 0; k < Math.min(e.ore, 12); k++) fly(cell(e), icon('ore'), now + k * 0.06, 0.9, ORE, 0)
@@ -204,40 +205,39 @@ export function createRenderer(canvas, game, ui, view) {
   function drawLedger(now) {
     const refused = now - ui.refusedAt < 0.7 && Math.sin((now - ui.refusedAt) * Math.PI * 8) > 0
     const L = game.ledger
-    const counts = { ore: L.ore, loot: L.loot, bugs: L.bugs, fruit: L.fruit }
+    // fruit shows the next upgrade's target; bugs a bug icon per upgrade, next to the first (b4.13)
+    const text = { ore: `${L.ore}`, loot: `${L.loot}`, bugs: `${L.bugs}`, fruit: `${L.fruit}/${nextCost(game)}` }
     ctx.font = `bold ${Math.round(16 * dpr)}px monospace`
     ctx.textAlign = 'right'
     ctx.textBaseline = 'middle'
     for (const kind of ledgerKinds) {
       const [x, y] = ledgerIcon(kind)
       const r = 7 * dpr
+      const icons = kind === 'bugs' ? 1 + game.level : 1
+      const gap = 16 * dpr
+      const label = text[/** @type {'ore' | 'loot' | 'bugs' | 'fruit'} */ (kind)]
+      const tx = x - 14 * dpr - (icons - 1) * gap
+      const bw = ctx.measureText(label).width + (tx - x) * -1 + 26 * dpr
       ctx.fillStyle = 'rgba(0,0,0,0.55)'
-      ctx.fillRect(x - 90 * dpr, y - 13 * dpr, 104 * dpr, 26 * dpr)
-      if (kind === 'fruit') {
-        ctx.fillStyle = `rgba(${FRUIT_C},0.35)`
-        ctx.beginPath()
-        ctx.arc(x, y, r * 1.5, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.fillStyle = `rgb(${FRUIT_C})`
-        ctx.beginPath()
-        ctx.arc(x, y, r * 0.8, 0, Math.PI * 2)
-        ctx.fill()
-      } else if (kind === 'bugs') {
-        const halo = ctx.createRadialGradient(x, y, 0, x, y, r * 1.8)
-        halo.addColorStop(0, `rgba(${BUG},0.8)`)
-        halo.addColorStop(1, `rgba(${BUG},0)`)
-        ctx.fillStyle = halo
-        ctx.fillRect(x - r * 2, y - r * 2, r * 4, r * 4)
-        ctx.fillStyle = `rgb(${BUG})`
-        ctx.fillRect(x - r / 2, y - r / 2, r, r)
-      } else {
-        ctx.fillStyle = kind === 'ore' ? ORE : LOOT
-        ctx.fillRect(x - r, y - r, 2 * r, 2 * r)
+      ctx.fillRect(x + 14 * dpr - bw, y - 13 * dpr, bw, 26 * dpr)
+      for (let k = 0; k < icons; k++) {
+        const ix = x - k * gap
+        if (kind === 'fruit') {
+          ctx.fillStyle = `rgb(${FRUIT_C})`
+          ctx.beginPath()
+          ctx.arc(ix, y, r * 0.8, 0, Math.PI * 2)
+          ctx.fill()
+        } else if (kind === 'bugs') dot(ix, y, r, r * 1.8, BUG)
+        else {
+          ctx.fillStyle = kind === 'ore' ? ORE : LOOT
+          ctx.fillRect(ix - r, y - r, 2 * r, 2 * r)
+        }
       }
       ctx.fillStyle = kind === 'ore' && refused ? RED : CHAR
-      ctx.fillText(String(counts[/** @type {'ore' | 'loot' | 'bugs' | 'fruit'} */ (kind)]), x - 14 * dpr, y + dpr)
+      ctx.fillText(label, tx, y + dpr)
     }
   }
+
 
   /** A stream's colour: the unit at c. @param {Cell} c */
   function unitColor(c) {
@@ -274,6 +274,31 @@ export function createRenderer(canvas, game, ui, view) {
     let dx = b.x - b.from.x
     if (Math.abs(dx) > 1) dx = -Math.sign(dx)
     return { x: b.from.x + dx * f, y: b.from.y + (b.y - b.from.y) * f }
+  }
+
+  /** Wild bugs (b4.13): like the tamed, in blue. @param {number} alpha */
+  function drawWild(alpha) {
+    const s = Math.max(T, 2 * dpr)
+    const hr = Math.max(T * 2, 6 * dpr)
+    for (const b of game.bugs) {
+      const f = Math.min(1, (game.tick - b.movedAt + alpha) / Math.max(1, game.cfg.bugs.moveTicks))
+      let dx = b.x - b.from.x
+      if (Math.abs(dx) > 1) dx = -Math.sign(dx)
+      const [x, y] = at({ x: b.from.x + dx * f, y: b.from.y + (b.y - b.from.y) * f })
+      if (x < -hr || y < -hr || x > W + hr || y > H + hr) continue
+      dot(x, y, s, hr, WILD)
+    }
+  }
+
+  /** A bug: its pixel and a small halo. @param {number} x @param {number} y @param {number} s @param {number} hr @param {number[]} rgb */
+  function dot(x, y, s, hr, rgb) {
+    const halo = ctx.createRadialGradient(x, y, 0, x, y, hr)
+    halo.addColorStop(0, `rgba(${rgb},0.5)`)
+    halo.addColorStop(1, `rgba(${rgb},0)`)
+    ctx.fillStyle = halo
+    ctx.fillRect(x - hr, y - hr, hr * 2, hr * 2)
+    ctx.fillStyle = `rgb(${rgb})`
+    ctx.fillRect(Math.round(x - s / 2), Math.round(y - s / 2), Math.round(s), Math.round(s))
   }
 
   /** Tamed bugs at work (b4.3): warm dots with a small halo, drawn over the fog (they're yours). @param {number} alpha @param {number} now */
@@ -329,7 +354,7 @@ export function createRenderer(canvas, game, ui, view) {
     if (!game.ride) drawBot(bot, now)
     drawRings(now)
     drawStreams(now)
-    drawBugs(ctx, /** @type {any} */ (game), alpha, now, sx, sy, T) // b3.7's wild bugs (D056–D061)
+    drawWild(alpha) // b3.7's wild bugs (D056–D061), drawn like the tamed ones, in blue (b4.13)
     drawSwarm(alpha, now)
     drawWorms()
     drawFlights(now)
