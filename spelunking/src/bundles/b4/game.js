@@ -8,9 +8,9 @@
 // `walkSpeed`; its pixel (`ch`) is where that position is, and it may only be an open one; it climbs the back
 // wall, D077; no gravity. Into rock, it slides along the open side (the move's x or y part alone).
 // Scan: pointing into rock fires b3's probe at the rock pixel, rings out to `scan.radius`, then it cools down
-// for `scan.cooldown` ticks (1 s, the user, b4.3). Pull: b3's (D062): standing still, the nearest seen ore or
+// for `scan.cooldown` ticks (1 s, the user, b4.3). Pull: b3's (D062): the nearest seen ore or
 // loot in the light is pulled, one unit every `pull.ticks`, and the pixel turns to rock; it goes straight to
-// the ledger (b4.3).
+// the ledger (b4.3). Walking doesn't stop it (b4.5), a moving car does.
 // The ledger (b4.3, the user): every collectible, one count each: ore, loot, bugs. No pack.
 // Light (b4.3): a fixed radius (`light.base`, 8 px; upgrades later), line of sight (light.js sightCells).
 // Nodes (b4.2, D080): a node on the network (the pod's, and the ends of built edges) shows for good; any
@@ -117,7 +117,7 @@ export const CONFIG = {
  * @property {{ x: number, y: number, r: number, glows: string }} litFor
  * @property {{ x: number, y: number, r: number, t: number } | null} probe
  * @property {number} scanAt the tick the scan is ready again
- * @property {number} stillFor
+ * @property {number} stillFor ticks something was in the pull's reach since the last unit
  * @property {Cell | null} pulling
  * @property {Uint8Array} net per node: on the network (D080)
  * @property {import('../../sim/dig/bugs.js').Bug[]} bugs b3's (D056)
@@ -295,17 +295,19 @@ function ring(g, p, r) {
   g.events.push({ type: 'ring', x: p.x, y: p.y, r })
 }
 
-// b3's pull (D062), for b4's bot: still = not stepping, not pointed, not riding a car that moves
+// b3's pull (D062), for b4's bot, also while walking (the user, after b4.4); not in a moving car. `stillFor`
+// counts the ticks something was in reach since the last unit: a unit every pull.ticks
 /** @param {Game} g */
 function pull(g) {
   g.pulling = null
-  if (g.move || g.ride?.run) {
+  const c = g.ride?.run ? null : nearestValuable(/** @type {any} */ (g), g.ch, g.cfg.light.base, () => true)
+  if (!c) {
     g.stillFor = 0
     return
   }
-  const c = nearestValuable(/** @type {any} */ (g), g.ch, g.cfg.light.base, () => true)
   g.pulling = c
-  if (++g.stillFor % Math.max(1, g.cfg.pull.ticks) || !c) return
+  if (++g.stillFor < Math.max(1, g.cfg.pull.ticks)) return
+  g.stillFor = 0
   const tile = g.world.tiles[c.y * g.world.w + c.x]
   if (tile === Tile.Ore) g.ledger.ore++
   else g.ledger.loot++

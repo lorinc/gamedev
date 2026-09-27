@@ -162,7 +162,8 @@ export function createRenderer(canvas, game, ui, view) {
       paintTile(e.y * w + e.x)
       tctx.putImageData(timg, 0, 0, e.x, e.y, 1, 1)
       // yours flies to you (and counts on the ledger: no stream to it, the user); a bug's to the bug
-      fly(cell(e), cell(e.to), now, e.type === 'pulled' ? 0.45 : 0.3, e.tile === Tile.Ore ? ORE : LOOT, e.type === 'pulled' ? 1 : 0.2)
+      const to = e.type === 'pulled' ? () => /** @type {[number, number]} */ (at(botAt(game, 0))) : cell(e.to) // yours follows you as you walk
+      fly(cell(e), to, now, e.type === 'pulled' ? 0.45 : 0.3, e.tile === Tile.Ore ? ORE : LOOT, e.type === 'pulled' ? 1 : 0.2)
     } else if (e.type === 'ring') rings.push({ x: e.x, y: e.y, r: e.r, s: now })
     else if (e.type === 'nibble') fly(icon('ore'), cell(e), now, 0.5, ORE, 0)
     else if (e.type === 'tamed') fly(cell(e), icon('bugs'), now, 0.9, `rgb(${BUG})`, 0)
@@ -412,7 +413,7 @@ export function createRenderer(canvas, game, ui, view) {
 
   /** Dust from the pixel being pulled to the bot. @param {number} now */
   function drawStreams(now) {
-    if (game.pulling && game.stillFor > 20) specks(game.pulling, { x: game.ch.x, y: game.ch.y }, now, ORE)
+    if (game.pulling && game.stillFor > 20) specks(game.pulling, botAt(game, 0), now, ORE)
   }
   /** @param {Cell} from @param {Cell} to @param {number} now @param {string} color */
   function specks(from, to, now, color) {

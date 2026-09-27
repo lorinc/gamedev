@@ -38,6 +38,19 @@ test('walking any angle: a drag at 23° glides along 23°, sub-pixel, at walkSpe
   assert.equal(g.ch.x, Math.floor(g.pos.x / 1000))
 })
 
+test('the pull goes on while walking (b4.5)', () => {
+  const g = createGame(MAP, JSON.parse(JSON.stringify(CONFIG)))
+  g.cfg.light.base = 20
+  let walking = 0
+  for (let i = 0; i < 1200; i++) {
+    if (i % 200 === 0) command(g, { type: 'move', dx: i % 400 ? -1 : 1, dy: 0 })
+    tick(g)
+    for (const e of g.events) if (e.type === 'pulled' && g.move) walking++
+    g.events.length = 0
+  }
+  assert.ok(walking > 0, 'pulled while walking')
+})
+
 test('building takes the price from the ledger at once; short of it, refused', () => {
   const g = fresh()
   const from = MAP.podNodes.find((n) => MAP.edges.some((e) => e.a === n || e.b === n))
