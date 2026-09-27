@@ -19,6 +19,7 @@ build b4.10: 2026-09-28 · p11: b4.10, the garden: bugs green the back wall, vin
 build b4.11: 2026-09-28 · p11: b4.11, bugs mine within 4 px (D090)
 build b4.12: 2026-09-28 · p11: b4.12, worms turn fruit into ore deposits, fruit stops glowing, your pull favours the scarcest resource (D091–D093)
 build b4.13: 2026-09-28 · p11: b4.13, fruit buys the bugs' reach (16, 32, 64…), wild bugs drawn like tamed in blue, no taming particles (D094)
+build b4.14: 2026-09-28 · p11: b4.14, taming hearts, ore-eating lizards that burrow into loot, ore and loot as specks in the rock (D095)
 ---
 
 # p11 · b4 · Rail Loop
