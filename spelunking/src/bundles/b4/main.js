@@ -2,7 +2,7 @@
 // interpolates. The URL carries the seed and every knob tuned away from its default (`?seed=1&k=price:12`).
 
 import { createPanel } from '../b3/panel.js'
-import { buildable, command, CONFIG, createGame, near, shown, tick } from './game.js'
+import { buildable, command, CONFIG, createGame, HEADING, near, shown, tick } from './game.js'
 import { createInput } from './input.js'
 import { createRenderer, ZOOM_PX } from './render.js'
 import { makeMap, WKNOBS } from './world.js'
@@ -56,7 +56,7 @@ const panel = createPanel(
   {
     'world.ore': [100, 600, 10],
     'world.loot': [0, 200, 5],
-    'sim.walkTicks': [2, 20, 1],
+    'sim.walkSpeed': [1, 60, 1],
     'sim.scan.radius': [4, 64, 1],
     'sim.scan.cooldown': [0, 600, 10],
     'sim.scan.ringTicks': [1, 20, 1],
@@ -65,7 +65,7 @@ const panel = createPanel(
     'sim.nodeReach': [2, 40, 1],
     'sim.light.base': [4, 48, 1],
     'sim.streamTicks': [1, 20, 1],
-    'sim.rideTicks': [1, 20, 1],
+    'sim.rideSpeed': [10, 400, 5],
     'view.zoom': [-1, ZOOM_PX.length - 1, 1],
   },
   {
@@ -92,7 +92,7 @@ const panel = createPanel(
   },
 )
 
-/** The unbuilt edge from `node` whose heading (3 tiles out) is closest to the drag. @param {number} node @param {number} dx @param {number} dy */
+/** The unbuilt edge from `node` whose heading is closest to the drag. @param {number} node @param {number} dx @param {number} dy */
 function aimEdge(node, dx, dy) {
   const a0 = Math.atan2(dy, dx)
   let best = -1
@@ -100,7 +100,7 @@ function aimEdge(node, dx, dy) {
   map.edges.forEach((e, k) => {
     if (game.built[k] || (e.a !== node && e.b !== node)) return
     const p = e.a === node ? e.path : [...e.path].reverse()
-    const q = p[Math.min(3, p.length - 1)]
+    const q = p[Math.min(HEADING, p.length - 1)]
     let ex = q.x - p[0].x
     if (Math.abs(ex) > map.world.w / 2) ex -= Math.sign(ex) * map.world.w
     let d = Math.abs(Math.atan2(q.y - p[0].y, ex) - a0)

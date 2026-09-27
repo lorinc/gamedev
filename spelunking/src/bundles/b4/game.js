@@ -33,7 +33,8 @@ import { ROCK } from './world.js'
 
 /** The sim's numbers; the dev panel tunes them live. */
 export const CONFIG = {
-  walkTicks: 8, // ticks per straight step (a diagonal takes 1.4×)
+  // D081: the intent is a rail about 7× faster than walking; start at 12 and 80 px/s (a b4.1 tile was 4 px)
+  walkSpeed: 12, // px/s (a step takes whole ticks: 60 / speed, rounded; a diagonal √2 times that)
   // at 1 px a tile (D080) the light, the scan and the node detection grow ×4 with the scale (D081: "otherwise
   // the player will not find them"): b4.1's radius 6 → 24, light 4 → 16 (+1 per 4 ore or 2 loot, b3's
   // +1 per 16 ore or 8 loot ×4), nodes within 3 → 12; a ring a tick keeps the scan's time about b4.1's 0.5 s
@@ -44,7 +45,7 @@ export const CONFIG = {
   nodeReach: 12, // D079's 3 tiles (user) ×4
   price: 10, // ore per edge (user: 8–12, tuned later)
   streamTicks: 4,
-  rideTicks: 4, // ticks per tile in a car
+  rideSpeed: 80, // px/s in a car (several px a tick: an integer budget, 60 a straight px, 85 a diagonal)
 }
 /** @typedef {typeof CONFIG} Config */
 
@@ -67,7 +68,8 @@ export const CONFIG = {
  * @typedef {object} Ride you in a car
  * @property {number} car
  * @property {number} node the node it's at or last left
- * @property {{ edge: number, i: number, dir: 1 | -1, t: number } | null} run on edge, going from path[i] to path[i + dir], t ticks in
+ * @property {{ edge: number, i: number, dir: 1 | -1, acc: number } | null} run on edge, going from path[i] to path[i + dir], with
+ *   acc of the step's cost (STEP or DIAG) covered
  * @property {{ dx: number, dy: number } | null} want the direction pointed
  * @property {boolean} stopNext a tap: stop at the next node
  */
@@ -191,7 +193,8 @@ function walk(g) {
   for (const [ex, ey] of tries) {
     if (!open(g, g.ch.x + ex, g.ch.y + ey)) continue
     if (ex && ey && !open(g, g.ch.x + ex, g.ch.y) && !open(g, g.ch.x, g.ch.y + ey)) continue // no squeezing between two rock corners
-    g.step = { from: { x: g.ch.x, y: g.ch.y }, t: 0, dur: ex && ey ? Math.round(g.cfg.walkTicks * 1.4) : g.cfg.walkTicks }
+    const dur = Math.max(1, Math.round(((ex && ey ? Math.SQRT2 : 1) * 60) / Math.max(1, g.cfg.walkSpeed)))
+    g.step = { from: { x: g.ch.x, y: g.ch.y }, t: 0, dur }
     g.ch.x = wrap(g.ch.x + ex, g.world.w)
     g.ch.y += ey
     return
@@ -303,9 +306,13 @@ function feed(g) {
 
 // Riding --------------------------------------------------------------------------------------------
 
+/** An edge's heading is read this many px out from its node (b4.1's 3 tiles = 3 of the router's cells). */
+export const HEADING = 12
+
 /** The built edge from node `n` that fits the direction best (within 67.5°), as a run, or null. @param {Game} g @param {number} n @param {{ dx: number, dy: number }} want */
 function pick(g, n, want) {
   const a0 = Math.atan2(want.dy, want.dx)
+  /** @type {NonNullable<Ride['run']> | null} */
   let best = null
   let bestD = (67.5 * Math.PI) / 180 + 1e-9
   g.map.edges.forEach((e, k) => {
@@ -313,17 +320,17 @@ function pick(g, n, want) {
     const dir = e.a === n ? 1 : -1
     const p = e.path
     const i = dir === 1 ? 0 : p.length - 1
-    const j = dir === 1 ? Math.min(p.length - 1, 3) : Math.max(0, p.length - 4) // its heading: 3 tiles out
+    const j = dir === 1 ? Math.min(p.length - 1, HEADING) : Math.max(0, p.length - 1 - HEADING) // its heading
     let dx = p[j].x - p[i].x
     if (Math.abs(dx) > g.world.w / 2) dx -= Math.sign(dx) * g.world.w
     let d = Math.abs(Math.atan2(p[j].y - p[i].y, dx) - a0)
     if (d > Math.PI) d = 2 * Math.PI - d
     if (d < bestD) {
       bestD = d
-      best = { edge: k, i, dir: /** @type {1 | -1} */ (dir), t: 0 }
+      best = { edge: k, i, dir: /** @type {1 | -1} */ (dir), acc: 0 }
     }
   })
-  return best
+  return /** @type {NonNullable<Ride['run']> | null} */ (best) // set in the callback: tsc can't see it
 }
 
 /** Pointed while in a car. @param {Game} g @param {Ride} r @param {{ dx: number, dy: number } | null} dir */
@@ -343,26 +350,39 @@ function point(g, r, dir) {
   g.move = dir
 }
 
+// A car's budget per px: 60 a straight step, 85 a diagonal (60√2); it gains rideSpeed a tick
+const STEP = 60
+const DIAG = 85
+
+/** The cost of the step from path[i] to path[i + dir]. @param {Cell[]} p @param {number} i @param {number} dir */
+const stepCost = (p, i, dir) => (p[i].x !== p[i + dir].x && p[i].y !== p[i + dir].y ? DIAG : STEP)
+
 /** @param {Game} g @param {Ride} r */
 function rideTick(g, r) {
-  const run = r.run
+  let run = r.run
   if (!run) return
-  if (++run.t < g.cfg.rideTicks) return
-  run.t = 0
-  const p = g.map.edges[run.edge].path
-  run.i += run.dir
-  g.ch.x = p[run.i].x
-  g.ch.y = p[run.i].y
-  const end = run.dir === 1 ? p.length - 1 : 0
-  if (run.i !== end) return
-  const e = g.map.edges[run.edge]
-  r.node = run.dir === 1 ? e.b : e.a
-  g.cars[r.car].node = r.node
-  const next = r.stopNext || !r.want ? null : pick(g, r.node, r.want)
-  r.run = next
-  if (!next) {
-    r.stopNext = false
-    r.want = null // stopped: the next direction pointed starts it again
+  run.acc += Math.max(1, g.cfg.rideSpeed)
+  for (;;) {
+    const p = g.map.edges[run.edge].path
+    const cost = stepCost(p, run.i, run.dir)
+    if (run.acc < cost) return
+    run.acc -= cost
+    run.i += run.dir
+    g.ch.x = p[run.i].x
+    g.ch.y = p[run.i].y
+    if (run.i !== (run.dir === 1 ? p.length - 1 : 0)) continue
+    const e = g.map.edges[run.edge]
+    r.node = run.dir === 1 ? e.b : e.a
+    g.cars[r.car].node = r.node
+    const next = r.stopNext || !r.want ? null : pick(g, r.node, r.want)
+    r.run = next
+    if (!next) {
+      r.stopNext = false
+      r.want = null // stopped: the next direction pointed starts it again
+      return
+    }
+    next.acc = run.acc // the budget carries on through the node
+    run = next
   }
 }
 
@@ -380,7 +400,7 @@ export function botAt(g, alpha) {
     const p = g.map.edges[run.edge].path
     const n = p[run.i + run.dir]
     if (n) {
-      const f = Math.min(1, (run.t + alpha) / g.cfg.rideTicks)
+      const f = Math.min(1, (run.acc + alpha * g.cfg.rideSpeed) / stepCost(p, run.i, run.dir))
       let dx = n.x - g.ch.x
       if (Math.abs(dx) > 1) dx = -Math.sign(dx)
       return { x: g.ch.x + dx * f, y: g.ch.y + (n.y - g.ch.y) * f }
