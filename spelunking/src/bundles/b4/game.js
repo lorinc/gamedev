@@ -22,8 +22,9 @@ import { reveal } from '../../sim/dig/game.js'
 import { ringCells } from '../../sim/dig/probe.js'
 import { nearestValuable, toRock } from '../../sim/dig/pull.js'
 import { add, count, fits, take } from '../../sim/dig/pack.js'
-import { litCells, lightRadius, surfaceCells } from '../../sim/dig/light.js'
+import { litCells, lightRadius } from '../../sim/dig/light.js'
 import { wrap } from '../../sim/dig/rules.js'
+import { ROCK } from './world.js'
 
 /** @typedef {import('./world.js').Map} Map */
 /** @typedef {import('./world.js').Cell} Cell */
@@ -31,11 +32,14 @@ import { wrap } from '../../sim/dig/rules.js'
 /** The sim's numbers; the dev panel tunes them live. */
 export const CONFIG = {
   walkTicks: 8, // ticks per straight step (a diagonal takes 1.4×)
-  scan: { radius: 6, cooldown: 180, ringTicks: 5 }, // D079: radius 6 (user), 3 s cooldown (user)
+  // at 1 px a tile (D080) the light, the scan and the node detection grow ×4 with the scale (D081: "otherwise
+  // the player will not find them"): b4.1's radius 6 → 24, light 4 → 16 (+1 per 4 ore or 2 loot, b3's
+  // +1 per 16 ore or 8 loot ×4), nodes within 3 → 12; a ring a tick keeps the scan's time about b4.1's 0.5 s
+  scan: { radius: 24, cooldown: 180, ringTicks: 1 }, // 3 s cooldown (user, D079)
   pull: { ticks: 60 }, // b3's pull was 300 (5 s a unit); 1 s here, or an edge is a minute of standing still
-  light: { base: 4, orePer: 16, lootPer: 8 },
+  light: { base: 16, orePer: 4, lootPer: 2, face: 4 }, // face: lit rock goes this deep (b3's lit face was a tile: 4 px here)
   packSlots: 6,
-  nodeReach: 3, // D079 (user)
+  nodeReach: 12, // D079's 3 tiles (user) ×4
   price: 10, // ore per edge (user: 8–12, tuned later)
   streamTicks: 4,
   rideTicks: 4, // ticks per tile in a car
@@ -111,7 +115,7 @@ export function createGame(map, cfg) {
     seen: new Uint8Array(world.w * world.h),
     lit: [],
     radius: 0,
-    surface: surfaceCells(world),
+    surface: [], // no sky inside the map any more: nothing is always lit (b4.2)
     litFor: { x: -1, y: -1, r: -1 },
     probe: null,
     scanAt: 0,
@@ -126,7 +130,7 @@ export function createGame(map, cfg) {
     events: [],
   }
   for (const n of map.podNodes) g.revealed[n] = 1
-  reveal(/** @type {any} */ (g), g.surface)
+  reveal(/** @type {any} */ (g), map.podCells) // the pod's interior starts seen
   updateLight(g)
   return g
 }
@@ -192,9 +196,11 @@ function walk(g) {
     g.ch.y += ey
     return
   }
-  // pointed into rock: the scan (D079), if it's ready; the rock tile pointed at is its centre
+  // pointed into rock: the scan (D079), if it's ready; the rock tile pointed at is its centre. The sheet,
+  // the sea and space aren't rock: nothing to scan
   const y = g.ch.y + dy
   if (g.probe || g.tick < g.scanAt || y < 0 || y >= g.world.h) return
+  if (g.map.kind[y * g.world.w + wrap(g.ch.x + dx, g.world.w)] !== ROCK) return
   g.probe = { x: wrap(g.ch.x + dx, g.world.w), y, r: 0, t: 0 }
   g.scanAt = g.tick + g.cfg.scan.cooldown
   g.events.push({ type: 'scan', x: g.probe.x, y })
@@ -398,9 +404,42 @@ function updateLight(g) {
   if (at.x === g.ch.x && at.y === g.ch.y && at.r === r) return
   g.litFor = { x: g.ch.x, y: g.ch.y, r }
   g.radius = r
-  const cells = litCells(g.world, g.ch, r)
+  const cells = deepen(g.world, litCells(g.world, g.ch, r), g.ch, r, g.cfg.light.face)
   g.lit = union(g.surface, cells)
   reveal(/** @type {any} */ (g), cells)
+}
+
+/**
+ * b3's lit rock faces, `face` px deep (b4.2): the rock cells light.js lit, then rock 8-bordering them, face − 1
+ * times, within the radius. At 1 px a tile, b3's one-tile face was a hairline. Sorted.
+ * @param {import('../../sim/gen/world.js').World} world @param {number[]} cells @param {Cell} at @param {number} r @param {number} face
+ */
+function deepen(world, cells, at, r, face) {
+  const { w, h, tiles } = world
+  const set = new Set(cells)
+  let front = cells.filter((i) => !isOpen(tiles[i]))
+  for (let d = 1; d < face; d++) {
+    /** @type {number[]} */
+    const next = []
+    for (const i of front) {
+      const x = i % w
+      const y = (i - x) / w
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          const ny = y + dy
+          if (ny < 0 || ny >= h) continue
+          const n = ny * w + wrap(x + dx, w)
+          if (set.has(n) || isOpen(tiles[n])) continue
+          let ex = Math.abs(wrap(x + dx, w) - at.x)
+          ex = Math.min(ex, w - ex)
+          if (ex * ex + (ny - at.y) ** 2 > r * r) continue
+          set.add(n)
+          next.push(n)
+        }
+    }
+    front = next
+  }
+  return [...set].sort((a, b) => a - b)
 }
 
 /** Two sorted lists as one, sorted, no repeats. @param {number[]} a @param {number[]} b */

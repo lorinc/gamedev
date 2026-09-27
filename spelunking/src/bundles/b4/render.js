@@ -1,6 +1,10 @@
 // b4's Canvas2D view (throwaway: rendering moves to PixiJS later, so nothing here is tuned). b3's look: the
 // world 1 px per tile scaled up, b3's palette, b3's fog (never seen = black, seen = dim, lit = clear), the
-// probe's rings. New: revealed nodes glow, built rails, the travel pods (cars), the spider bot, ore flying
+// probe's rings. At b4.2 a tile is one v5 pixel (D080): the sheet, the space above it and the sea are drawn
+// as v6 draws them, the sheet and space with no fog (scenery); the bot is its pixel with a halo, so it's
+// seen; the zoom levels go down to 2 device px a tile; the textures change pixel by pixel, never whole
+// (123k tiles: a whole repaint each step was too slow to play, not tuning).
+// New: revealed nodes glow, built rails, the travel pods (cars), the spider bot, ore flying
 // into the pack and out into a node, the ore count against an edge's price, and the build buttons in b3's
 // cue style (a disc with its symbol cut out): a red X and a green hammer.
 
@@ -8,13 +12,14 @@ import { cellRgb } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
 import { count } from '../../sim/dig/pack.js'
 import { botAt } from './game.js'
+import { OPEN, ROCK, SHEET, SPACE } from './world.js'
 
 /** @typedef {import('./game.js').Game} Game */
 /** @typedef {import('./world.js').Cell} Cell */
 /** @typedef {{ preview: number | null, select: { node: number, edge: number } | null, refusedAt: number }} Ui */
 
-export const ZOOM_PX = [10, 12, 14, 16, 18, 20, 24, 30, 36, 40, 48] // tile sizes in device px
-const AUTO_TILES = 22 // the default zoom: about this many tiles across the short side
+export const ZOOM_PX = [2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24] // tile sizes in device px
+const AUTO_TILES = 100 // the default zoom: about this many tiles across the short side
 
 const BG_RGB = [5, 5, 8]
 const DIM_A = 0.65
@@ -41,26 +46,54 @@ export function createRenderer(canvas, game, ui, view) {
   fog.width = w
   fog.height = h
   const fctx = /** @type {CanvasRenderingContext2D} */ (fog.getContext('2d'))
-  let tilesDirty = true
-  let fogDirty = true
+  const scenic = (/** @type {number} */ i) => map.kind[i] !== ROCK && map.kind[i] !== OPEN
+  const unfogged = (/** @type {number} */ i) => map.kind[i] === SHEET || map.kind[i] === SPACE // scenery: the sea is fogged
+  const timg = tctx.createImageData(w, h)
+  const fimg = fctx.createImageData(w, h)
+  /** @param {number} i */
+  const paintTile = (i) => {
+    if (scenic(i)) timg.data.set(map.scenery.subarray(i * 4, i * 4 + 4), i * 4)
+    else timg.data.set([...cellRgb(/** @type {any} */ (world.tiles[i])), 255], i * 4)
+  }
+  const lit = new Uint8Array(w * h)
+  const DIM = Math.round(DIM_A * 255)
+  /** @param {number} i */
+  const paintFogAt = (i) => {
+    fimg.data[i * 4 + 3] = lit[i] || unfogged(i) ? 0 : game.seen[i] ? DIM : 255
+  }
+  for (let i = 0; i < w * h; i++) {
+    paintTile(i)
+    fimg.data.set(BG_RGB, i * 4)
+    paintFogAt(i)
+  }
+  tctx.putImageData(timg, 0, 0)
+  fctx.putImageData(fimg, 0, 0)
   /** @type {number[]} */
   let litDrawn = []
-
-  function paintTiles() {
-    const img = tctx.createImageData(w, h)
-    for (let i = 0; i < w * h; i++) img.data.set([...cellRgb(/** @type {any} */ (world.tiles[i])), 255], i * 4)
-    tctx.putImageData(img, 0, 0)
-    tilesDirty = false
+  /** @type {{ x0: number, x1: number, y0: number, y1: number } | null} */
+  let fogBox = null
+  /** @param {number} i */
+  const fogChanged = (i) => {
+    paintFogAt(i)
+    const x = i % w
+    const y = (i - x) / w
+    fogBox = fogBox
+      ? { x0: Math.min(fogBox.x0, x), x1: Math.max(fogBox.x1, x), y0: Math.min(fogBox.y0, y), y1: Math.max(fogBox.y1, y) }
+      : { x0: x, x1: x, y0: y, y1: y }
   }
+  /** The fog, only where it changed: the light's old and new cells, and the ones seen since. */
   function paintFog() {
-    const img = fctx.createImageData(w, h)
-    const lit = new Uint8Array(w * h)
-    for (const i of game.lit) lit[i] = 1
-    const a = Math.round(DIM_A * 255)
-    for (let i = 0; i < w * h; i++) img.data.set([BG_RGB[0], BG_RGB[1], BG_RGB[2], lit[i] ? 0 : game.seen[i] ? a : 255], i * 4)
-    fctx.putImageData(img, 0, 0)
-    litDrawn = game.lit
-    fogDirty = false
+    if (litDrawn !== game.lit) {
+      for (const i of litDrawn) lit[i] = 0
+      for (const i of game.lit) lit[i] = 1
+      for (const i of litDrawn) fogChanged(i)
+      for (const i of game.lit) fogChanged(i)
+      litDrawn = game.lit
+    }
+    if (!fogBox) return
+    const b = fogBox
+    fctx.putImageData(fimg, 0, 0, b.x0, b.y0, b.x1 - b.x0 + 1, b.y1 - b.y0 + 1)
+    fogBox = null
   }
 
   let dpr = 1
@@ -102,24 +135,26 @@ export function createRenderer(canvas, game, ui, view) {
 
   /** @param {import('./game.js').GameEvent} e @param {number} now seconds */
   function onEvent(e, now) {
-    if (e.type === 'seen') fogDirty = true
+    if (e.type === 'seen') e.cells.forEach(fogChanged)
     else if (e.type === 'pulled') {
-      tilesDirty = true
+      const i = e.y * w + e.x
+      paintTile(i)
+      tctx.putImageData(timg, 0, 0, e.x, e.y, 1, 1)
       flights.push({ from: { x: e.x, y: e.y }, to: e.to, s: now, dur: 0.45, color: e.tile === Tile.Ore ? ORE : 'rgb(64,232,214)' })
     } else if (e.type === 'fed') {
       flights.push({ from: e.from, to: map.nodes[e.node], s: now, dur: 0.35, color: ORE })
     } else if (e.type === 'ring') rings.push({ x: e.x, y: e.y, r: e.r, s: now })
   }
 
-  /** Where the build buttons are, in tiles (centres): the X over the node, the hammer 3 tiles along the edge. */
+  /** Where the build buttons are, in tiles (centres): the X over the node, the hammer along the edge, a thumb apart on screen. */
   function buttons() {
     const s = ui.select
     if (!s) return null
     const e = map.edges[s.edge]
     const p = e.a === s.node ? e.path : [...e.path].reverse()
-    const k = Math.min(p.length - 1, 3)
+    const k = Math.min(p.length - 1, Math.round((56 * dpr) / T))
     const n = map.nodes[s.node]
-    return { cancel: { x: n.x + 0.5, y: n.y - 1.1 }, build: { x: p[k].x + 0.5, y: p[k].y + 0.5 } }
+    return { cancel: { x: n.x + 0.5, y: n.y + 0.5 - (48 * dpr) / T }, build: { x: p[k].x + 0.5, y: p[k].y + 0.5 } }
   }
 
   /** CSS px → tiles (fractional, x wrapped). @param {number} cx @param {number} cy */
@@ -130,8 +165,7 @@ export function createRenderer(canvas, game, ui, view) {
 
   /** @param {number} alpha @param {number} dt @param {number} now seconds */
   function draw(alpha, dt, now) {
-    if (tilesDirty) paintTiles()
-    if (fogDirty || litDrawn !== game.lit) paintFog()
+    paintFog()
     T = ZOOM_PX[level()]
     const bot = botAt(game, alpha)
     // the camera follows the bot, the short way round
@@ -184,17 +218,17 @@ export function createRenderer(canvas, game, ui, view) {
       if (!game.built[i]) return
       pathLine(e.path)
       ctx.strokeStyle = '#000'
-      ctx.lineWidth = T * 0.45
+      ctx.lineWidth = Math.max(T * 0.9, 4 * dpr)
       ctx.stroke()
       ctx.strokeStyle = RAIL
-      ctx.lineWidth = T * 0.18
+      ctx.lineWidth = Math.max(T * 0.45, 2 * dpr)
       ctx.stroke()
     })
     // the edges of the node held, or the one selected, over the fog: they glow (D079)
     const glow = (/** @type {number} */ i, /** @type {number} */ a, /** @type {number} */ wd) => {
       pathLine(map.edges[i].path)
       ctx.strokeStyle = `rgba(${NODE},${a})`
-      ctx.lineWidth = T * wd
+      ctx.lineWidth = Math.max(T, 4 * dpr) * wd * 2
       ctx.stroke()
     }
     const pulse = 0.55 + 0.25 * Math.sin(now * 6)
@@ -210,7 +244,7 @@ export function createRenderer(canvas, game, ui, view) {
       if (!game.revealed[i]) return
       const [x, y] = at(n)
       const busy = ui.preview === i || ui.select?.node === i
-      const r = T * (busy ? 0.42 : 0.3) * (1 + 0.12 * Math.sin(now * 4 + i))
+      const r = Math.max(T * 0.7, 3.5 * dpr) * (busy ? 1.4 : 1) * (1 + 0.12 * Math.sin(now * 4 + i))
       const halo = ctx.createRadialGradient(x, y, 0, x, y, r * 3)
       halo.addColorStop(0, `rgba(${NODE},0.55)`)
       halo.addColorStop(1, `rgba(${NODE},0)`)
@@ -229,8 +263,8 @@ export function createRenderer(canvas, game, ui, view) {
       const riding = game.ride?.car === i
       const p = riding ? bot : map.nodes[c.node]
       const [x, y] = at(p)
-      const cw = T * 1.1
-      const ch = T * 0.8
+      const cw = Math.max(T * 3, 14 * dpr)
+      const ch = cw * 0.7
       ctx.fillStyle = '#000'
       ctx.fillRect(x - cw / 2 - 2, y - ch / 2 - 2, cw + 4, ch + 4)
       ctx.fillStyle = CAR
@@ -240,36 +274,25 @@ export function createRenderer(canvas, game, ui, view) {
     })
   }
 
-  /** The spider bot: a pale body, four legs a side, scuttling while it moves. @param {{ x: number, y: number }} bot @param {number} now */
+  /** The spider bot at 1 px (D080): its pixel in its own colour, and a small halo so it's seen at every zoom. @param {{ x: number, y: number }} bot @param {number} now */
   function drawBot(bot, now) {
     const [x, y] = at(bot)
-    const moving = !!game.step
-    ctx.strokeStyle = CHAR
-    ctx.lineWidth = Math.max(1, T * 0.08)
-    for (let s = -1; s <= 1; s += 2)
-      for (let l = 0; l < 4; l++) {
-        const a = ((l - 1.5) * 0.45 + (moving ? Math.sin(now * 20 + l * 1.7 + s) * 0.25 : 0)) * s
-        const ex = x + s * Math.cos(a) * T * 0.48
-        const ey = y + Math.sin(a) * T * 0.4 + T * 0.1
-        ctx.beginPath()
-        ctx.moveTo(x, y)
-        ctx.lineTo((x + ex) / 2 + s * T * 0.05, (y + ey) / 2 - T * 0.15)
-        ctx.lineTo(ex, ey)
-        ctx.stroke()
-      }
+    const hr = Math.max(T * 3, 10 * dpr) * (1 + 0.08 * Math.sin(now * 5))
+    const halo = ctx.createRadialGradient(x, y, 0, x, y, hr)
+    halo.addColorStop(0, 'rgba(244,241,222,0.45)')
+    halo.addColorStop(1, 'rgba(244,241,222,0)')
+    ctx.fillStyle = halo
+    ctx.fillRect(x - hr, y - hr, hr * 2, hr * 2)
+    const s = Math.max(T, 2 * dpr)
     ctx.fillStyle = CHAR
-    ctx.beginPath()
-    ctx.arc(x, y, T * 0.24, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.fillStyle = `rgb(${BG_RGB})`
-    ctx.fillRect(x + game.ch.facing * T * 0.08 - T * 0.04, y - T * 0.08, T * 0.08, T * 0.08) // an eye
+    ctx.fillRect(Math.round(x - s / 2), Math.round(y - s / 2), Math.round(s), Math.round(s))
   }
 
   /** @param {number} now */
   function drawRings(now) {
     const ringS = game.cfg.scan.ringTicks / 60
     while (rings.length && now - rings[0].s > ringS * RING_TRAIL) rings.shift()
-    ctx.lineWidth = Math.max(1, T * 0.08)
+    ctx.lineWidth = Math.max(1, dpr)
     for (const r of rings) {
       const a = 1 - (now - r.s) / (ringS * RING_TRAIL)
       ctx.strokeStyle = `rgba(230,230,255,${a})`
@@ -293,9 +316,9 @@ export function createRenderer(canvas, game, ui, view) {
     ctx.fillStyle = color
     const d = Math.hypot(x1 - x0, y1 - y0) / T
     for (let i = 0; i < 4; i++) {
-      const t = (now * (3 / Math.max(1, d)) + i / 4) % 1
-      const s = T * 0.12
-      ctx.fillRect(x0 + (x1 - x0) * t - s / 2, y0 + (y1 - y0) * t - T * 0.6 * Math.sin(t * Math.PI) * 0.4 - s / 2, s, s)
+      const t = (now * (12 / Math.max(4, d)) + i / 4) % 1
+      const s = Math.max(T * 0.6, 2 * dpr)
+      ctx.fillRect(x0 + (x1 - x0) * t - s / 2, y0 + (y1 - y0) * t - d * T * 0.15 * Math.sin(t * Math.PI) - s / 2, s, s)
     }
   }
 
@@ -310,9 +333,9 @@ export function createRenderer(canvas, game, ui, view) {
       }
       const [x0, y0] = at(f.from)
       const [x1, y1] = at(f.to)
-      const s = T * 0.3 * (1 - t * 0.5)
+      const s = Math.max(T * 1.2, 4 * dpr) * (1 - t * 0.5)
       ctx.fillStyle = f.color
-      ctx.fillRect(x0 + (x1 - x0) * t - s / 2, y0 + (y1 - y0) * t - T * Math.sin(t * Math.PI) - s / 2, s, s)
+      ctx.fillRect(x0 + (x1 - x0) * t - s / 2, y0 + (y1 - y0) * t - Math.max(T * 4, 16 * dpr) * Math.sin(t * Math.PI) - s / 2, s, s)
     }
   }
 
