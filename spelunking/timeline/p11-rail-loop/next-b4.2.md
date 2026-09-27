@@ -74,12 +74,31 @@ share of rock is about the same.
     scans find some, on a bigger map. The price stays 10 (user: 8–12). The pull stays 1 s per unit, unless
     the user wants b3's 5 s back.
 
-## Questions for the user (the ones that block building)
+## The user's answers (2026-09-27, D080)
 
-1. Scale: A, B or C (point 1)?
-2. Digging and the inventory (point 7): dig again, or a pack of ore and loot only?
-3. OK or change: the solid ice sheet (3), the place-bug gesture (4), the crop (6), network nodes staying
-   shown (8), and walk 3 / ride 20 tiles/s (10).
+1. Scale: "I want to be a 1px character in a world drawn in v5. not a 1 tile character. 1px." A tile is one
+   v5 pixel (`QS` = `K` = 4 per fine cell), so the world is v6's raster (`T.cls`) as it is, with no
+   sampling. The rails are routed on cells, so each edge's path (cell centres 4 px apart) is filled in
+   pixel by pixel, 8-way.
+2. "True. No digging, no rock in inventory (yet). But the visuals of that hard/soft rock was natural, I need
+   that." The pack holds ore and loot and is drawn as b3.7's (the reserved soft/hard slots and the home
+   stone go). b3.7's hard/soft split stays, for its look.
+3. The solid ice sheet: yes. A bug: a 1 s hold near the bot places one, if a bug is tamed. The hard/soft
+   split wraps: STARTER_CAVES scales 12× across and 2× down, so it runs with a base of map width / 12 ×
+   map height / 2 (240 px → 20), wrapping natively with no seam. Network nodes stay shown: yes. Walk
+   3 / ride 20 tiles/s: "sure, test it".
+
+## Still open (ask first thing next session)
+
+1. **Depth:** only the ice layer, as v6–v8 frame it (240 × ~160 px, with the sheet on top, the pod, and the
+   network C lying there), or the whole of v5's map (240 × 516 px: pudding, brine, ocean)? **[Claude]** The
+   ice layer: the pod, the network and the sheet are all defined over it.
+2. **Numbers at the new scale.** Every number in D079 was said in tiles when a tile was a cell (scan radius 6,
+   nodes within 3, walk 3 / ride 20 tiles/s), and b3.7's (light 4, bug blocks 32, bug reach 12) were said
+   in tiles when the character was 1 tile, so they already fit a 1 px character. Nodes are 12 px apart
+   now. **[Claude]** b3.7's numbers as they are (they're relative to the character). D079's numbers ×4 in px
+   (scan 24, nodes within 12, walk 12 / ride 80 px/s), so the spacing between nodes and the reach still
+   match. Otherwise nodes 12 px apart could never be seen from within 3 px.
 
 ## Order of work (once answered)
 
