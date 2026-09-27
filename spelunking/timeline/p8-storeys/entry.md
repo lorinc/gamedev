@@ -143,6 +143,21 @@ then only one path is needed."
 - Measured, 300 seeds: 100% of floors reached; 81.6 links a map (about half of them cutoffs) and 28
   divergence points; detour median 1.63×, worst per map median 2.76× (p90 3.81×); 58 ms median.
 
+**Then (user): "Seed 5512 div point immediately left of the pod - why branch, then run in parallel?
+Wasteful and loses on simplicity. Branch only when needed to, not before. Seed 5513: pathways crossing
+each other in X-shape? What's the benefit of that? Pathways running in parallel 2 and 3 blocks from each
+other? Apart from these two kinds of problems - this is the best yet."** (D073)
+- A built link is refused if it crosses a chosen link (it should join it instead), or if over 30% of
+  its middle (its first and last ½ storey don't count) runs within a storey of floor or a chosen link
+  **going the same way** (slopes within 0.5). That holds in the spanning tree and the detour pass;
+  floors that only clashing links can reach get their cheapest link anyway.
+- The first try counted any floor within a storey, in any direction: clean, but in this maze there's
+  floor every few cells, so nearly every detour ramp was refused (detour median 2.63×, worst 6.2×).
+  Counting only paths running the same way brought part of it back.
+- Measured, 300 seeds: 100% of floors reached; 75 links and 21 divergence points a map (from 82 and
+  28); detour median 2.09× (from 1.63×), worst floor per map median 4.6×; 113 ms median. The price of
+  simplicity is longer walks.
+
 ## Feedback
 
 ## Conclusion → next

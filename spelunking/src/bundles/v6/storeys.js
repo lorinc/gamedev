@@ -281,14 +281,52 @@ export function storeys(T, S) {
     chosen.add(l)
     cutsChosen.push(l)
   }
-  for (const l of all) {
-    const p = cf(l.a)
-    const q = cf(l.b)
-    if (p === q || size[p] < minPx || size[q] < minPx) continue
-    comp[p] = q
-    size[q] += size[p]
-    chosen.add(l)
+  // what's there already, by column: every floor, and every link chosen so far (user: "branch only when
+  // needed, not before"; no X crossings; no paths running 2-3 blocks apart)
+  // (each with its local slope, so only paths running the same way count as parallel)
+  /** @param {number[]} ys @param {number} i */
+  const slopeAt = (ys, i) => {
+    const a = Math.max(0, i - 2)
+    const b = Math.min(ys.length - 1, i + 2)
+    return b > a ? (ys[b] - ys[a]) / (b - a) : 0
   }
+  /** @type {{y: number, link: boolean, s: number}[][]} */
+  const taken = Array.from({ length: w }, () => [])
+  runs.forEach((run) => run.xs.forEach((x, i) => taken[x].push({ y: run.ys[i], link: false, s: slopeAt(run.ys, i) })))
+  const take = (/** @type {Link} */ l) => {
+    const ys = l.px.map((p) => p[1])
+    for (let i = 1; i < l.px.length - 1; i++) taken[l.px[i][0]].push({ y: l.px[i][1], link: true, s: slopeAt(ys, i) })
+  }
+  for (const l of chosen) take(l)
+  /** A link crosses a chosen link, or runs parallel within a storey of floor or links for over 30% of its middle. @param {Link} l */
+  const clashes = (l) => {
+    const m = Math.ceil(tol)
+    const ys = l.px.map((p) => p[1])
+    let near = 0
+    let count = 0
+    for (let i = 1; i < l.px.length - 1; i++) {
+      const [x, y] = l.px[i]
+      const col = taken[x]
+      if (col.some((t) => t.link && Math.abs(t.y - y) <= 1)) return true
+      if (i < m || i > l.px.length - 1 - m) continue
+      count++
+      const sl = slopeAt(ys, i)
+      if (col.some((t) => Math.abs(t.y - y) <= L && Math.abs(t.s - sl) <= 0.5)) near++ // within a storey, same way (user: 2-3 blocks apart is too close)
+    }
+    return near > 0.3 * count
+  }
+  for (const pass of [true, false])
+    for (const l of all) {
+      const p = cf(l.a)
+      const q = cf(l.b)
+      if (p === q || size[p] < minPx || size[q] < minPx) continue
+      // first only links that clash with nothing; then, for floors still apart, the cheapest anyway
+      if (pass && clashes(l)) continue
+      comp[p] = q
+      size[q] += size[p]
+      chosen.add(l)
+      take(l)
+    }
   const podRun = pod ? runAt(pod.c, pod.base) : -1
   if (podRun >= 0) for (let r = 0; r < runs.length; r++) runs[r].net = cf(r) === cf(podRun)
   for (const l of [...chosen]) if (!runs[l.a].net) chosen.delete(l)
@@ -383,7 +421,7 @@ export function storeys(T, S) {
     let pick = null
     let pickD = now * 0.9
     for (const l of all) {
-      if (chosen.has(l)) continue
+      if (chosen.has(l) || clashes(l)) continue
       for (const [r, i, r2, i2] of [
         [l.a, l.ai, l.b, l.bi],
         [l.b, l.bi, l.a, l.ai],
@@ -398,6 +436,7 @@ export function storeys(T, S) {
       continue
     }
     chosen.add(pick)
+    take(pick)
     dist = walk()
   }
 
