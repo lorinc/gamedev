@@ -75,9 +75,39 @@ footer { color:var(--dim); font-size:12px; }
 <header class="top">
   <h1>Spelunking <span>· prototype timeline</span></h1>
   <p>Every prototype: what we believed, what we built, how it played, what we decided. Newest first. Each ▶ plays the build exactly as it was tested.</p>
-  <p class="legend"><span class="a held">✓ 10 held</span> <span class="a broken">✗ 6 broken</span> <span class="a open">? 35 open</span> · 14 constraints · 10 prototypes · 18 builds · <a href="#ledger">71 decisions</a></p>
+  <p class="legend"><span class="a held">✓ 10 held</span> <span class="a broken">✗ 6 broken</span> <span class="a open">? 38 open</span> · 14 constraints · 11 prototypes · 18 builds · <a href="#ledger">71 decisions</a></p>
 </header>
 <main class="line">
+<article class="entry s-building" id="p11">
+  <header><span class="pid">p11</span><h2>Rail Loop (b4)</h2><span class="status">building</span><time>2026-09-27</time><span class="budget" data-start="2026-09-27" data-budget="3">budget 3 days</span><a class="from" href="#p10">grew out of p10 · Rails (v8)</a></header>
+  
+  <p class="q">Does exploring as a spider bot, mining on the way, and building rails node by node make a loop you want to repeat into the next cavern?</p>
+  <ul class="chips"><li class="a open">b3's probe, pull, pack, light and bugs work unchanged on the new terrain once it's in b3's tile</li><li class="a open">D078's lattice (3 cells apart, Gabriel, rock ×5, bend 15, overlap +100%, crossing 100) gives</li><li class="a open">The player can't trap themselves (user: &quot;we will have to adjust to make sure&quot;): from wherever you</li></ul>
+  <ul class="limits"><li class="l cut "><span class="k">cut</span>The shield timer (D077), walls, gates and buildables (small, big, titan): later (user).</li><li class="l cut "><span class="k">cut</span>Rendering stays b3's Canvas2D; it moves to PixiJS later.</li></ul>
+  
+  <p class="next"><b>→</b> <i>open</i></p>
+  
+  
+  <details><summary>Full entry</summary>
+<div class="doc">
+<h2>Question</h2>
+<p>Does exploring as a spider bot, mining on the way, and building rails node by node make a loop you want to repeat into the next cavern?</p>
+<p><strong>Pass:</strong> the player scans and mines to afford the next edge, not as a chore; building an edge and riding it to a new cavern feels like a reward; they go for the next one without being asked.</p>
+<p><strong>Kill:</strong> walking around to fill the pack feels like waiting for the build, or the rails feel like a menu rather than a place. Then the costs or the node spacing change before anything is added.</p>
+<h2>Assumptions</h2>
+<ol><li>[?] b3's probe, pull, pack, light and bugs work unchanged on the new terrain once it's in b3's tile world (<code>Tile</code>: open, soft, hard, ore, loot).</li><li>[?] D078's lattice (3 cells apart, Gabriel, rock ×5, bend 15, overlap +100%, crossing 100) gives reachable, affordable edges from the pod on every seed.</li><li>[?] The player can't trap themselves (user: &quot;we will have to adjust to make sure&quot;): from wherever you stand, some edge is affordable, or ore to afford one is within reach.</li></ol>
+<h2>Limitations</h2>
+<ul><li>[cut] The shield timer (D077), walls, gates and buildables (small, big, titan): later (user).</li><li>[cut] Rendering stays b3's Canvas2D; it moves to PixiJS later.</li></ul>
+<h2>Built</h2>
+
+<h2>Feedback</h2>
+
+<h2>Conclusion → next</h2>
+
+
+</div>
+  </details>
+</article>
 <article class="entry s-building" id="p10">
   <header><span class="pid">p10</span><h2>Rails (v8)</h2><span class="status">building</span><time>2026-09-27</time><span class="budget" data-start="2026-09-27" data-budget="1">budget 1 days</span><a class="from" href="#p9">grew out of p9 · Lattice (v7)</a></header>
   
