@@ -17,6 +17,10 @@ const fresh = () => {
 }
 const open = (/** @type {{ x: number, y: number }} */ c) => isOpen(MAP.world.tiles[c.y * MAP.world.w + c.x])
 
+test('the world has no loot: only lizards make it (b4.17)', () => {
+  assert.equal(MAP.world.tiles.filter((t) => t === Tile.Loot).length, 0)
+})
+
 test('no node on a rail is in rock (the candidate filter)', () => {
   const used = new Set(MAP.edges.flatMap((e) => [e.a, e.b]))
   assert.ok(used.size > 300)
@@ -326,6 +330,13 @@ test('plentiful loot grows a purple lichen patch of 6–8 surface pixels with a 
   g.cfg.lizards.max = 0
   g.cfg.lichen.density = 1
   g.cfg.lichen.near = 20
+  // the world has no loot (b4.17): some in the rock round the bot, as lizards would leave it
+  const { w } = MAP.world
+  for (let dy = -20; dy <= 20; dy += 3)
+    for (let dx = -20; dx <= 20; dx += 3) {
+      const i = (g.ch.y + dy) * w + g.ch.x + dx
+      if (!isOpen(MAP.world.tiles[i])) MAP.world.tiles[i] = Tile.Loot
+    }
   for (let t = 0; t < 60 * 60 && !g.lichen.patches.length; t++) tick(g)
   assert.ok(g.lichen.patches.length > 0, 'a patch')
   const p = g.lichen.patches[0]

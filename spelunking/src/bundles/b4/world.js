@@ -3,7 +3,7 @@
 // top (v6's, solid) down to the ocean. The pod is its interior open space only (user: the dome's walls
 // would delete rock and ore). p10's traverse layer (v8 mode C, D078) is routed over the whole depth, and
 // each rail's cells are filled in pixel by pixel. The rock is b3.7's: its ore layer and loot, and its
-// soft/hard split for the look (user), all at the map's size, wrapping. Then b3's probe, pull, pack and
+// soft/hard split for the look (user), all at the map's size, wrapping; no loot since b4.17 (lizards make it). Then b3's probe, pull, pack and
 // light run on it unchanged. The world wraps in x, like b3's.
 
 import { QCOLS, QROWS, buildGrid } from '../v5/quadcaves.js'
@@ -48,7 +48,7 @@ export const SPACE = 4 // above the sheet's rugged top: out of the map
 /** The world's knobs (the dev panel's, and the URL's). */
 export const WKNOBS = {
   ore: DEFAULT_TERRAIN.ore.density, // b3.7's ore layer's seed density, permille
-  loot: DEFAULT_TERRAIN.loot, // b3.7's loot, permille of rock
+  loot: 0, // permille of rock: none (the user, b4.17: only lizards make loot); b3.7's was DEFAULT_TERRAIN.loot
 }
 
 /** @type {[number, number, number]} */ const SPACE_RGB = [8, 10, 26]
