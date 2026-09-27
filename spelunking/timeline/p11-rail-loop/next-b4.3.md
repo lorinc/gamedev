@@ -104,12 +104,37 @@ Still open:
 - **Open: loot.** "Everything" goes into the node, loot too. The ledger keeps loot as a second count with no
   use yet (b3's rule: no use for loot on purpose), or loot stays in the pack?
 
+## The user's second answers (2026-09-27): an incremental game with simulation aesthetics
+
+These replace the ore economy and the bugs above wherever they differ (the sections above stay as the record).
+- **Nodes never in rock:** the candidate filter, and no fallback: make it work (user).
+- **The ledger:** every collectible (ore, loot, bugs) goes to one central ledger, a column in the top-right
+  corner. Loot stays on it, for tech unlocks later.
+- **Building:** tap the node, drag to select, release: the selected edge flashes green; tap it: it builds. Not
+  enough ore: a red pulse, nothing built. Built: ore particles stream from the ledger's ore icon to the site.
+  The red X, the hammer and the hold preview go.
+- **Bugs are abstract:** a count on the ledger. They spawn anywhere near network nodes, random-walk for n
+  minutes collecting, then send what they got straight to the ledger's icons (not to nodes). No pathfinding,
+  no deep simulation; there will be a lot of them.
+- **Light:** a fixed radius (half of b4.2's: 8 px); it grows later by buying light upgrades, not with the pack.
+
+**[Claude]** defaults for the bugs: a trip lasts 2 minutes (knob); the walk stays in open air (a random step
+into a neighbouring open pixel: no pathfinding, and bugs never enter rock, D056); a bug pulls any ore or loot
+within 2 px of it, seen or not, and the pixel turns to rock; at the trip's end its haul flies to the ledger and
+a new trip starts near another network node. b3's `bugs.js` isn't used for them: a small new b4 module.
+
+Still open:
+- **Open: your own mining.** Straight to the ledger too (particles to the top-right, no pack, no dumping, no ore
+  on the rails)? Or the pack, dumped at the nearest node, riding the rails to the pod, as answered before?
+- **Open: how a bug gets onto the ledger.** Wild bugs in the fog tamed by feeding them 16 ore (b3.7's, D060),
+  now from the ledger when one reaches you? Or bought, or found, or something else?
+
 ## Order of work (once the Opens are answered)
 
-1. Light: half, the 1 px face (points 1, 2): minutes, play-check.
+1. Light: a fixed 8 px, the 1 px face (points 1, 2): minutes, play-check.
 2. Line of sight and the soft edge (point 3), with tests.
 3. Nodes never in rock (the candidate filter).
-4. The ledger: the pack dumps into the nearest network node, ore rides the rails to the pod, builds pay from the ledger.
-5. Tamed bugs fly, mine and deliver on their own, no bar.
+4. The ledger column and the simpler build gesture (red pulse, particles from the ledger).
+5. Abstract bugs: trips from near network nodes, random walk, haul to the ledger.
 6. Play-check each step in headless Chromium, screenshots to `gallery/p11/`; ship as b4.3 (`npm run ship`,
    pushed, so the user can test on the phone).
