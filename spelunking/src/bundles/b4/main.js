@@ -42,7 +42,7 @@ history.replaceState(null, '', urlFor(seed))
 const map = makeMap(seed, tunables.world)
 const game = createGame(map, tunables.sim)
 /** @type {import('./render.js').Ui} */
-const ui = { preview: null, select: null, refusedAt: -9 }
+const ui = { preview: null, select: null, refusedAt: -9, charge: null }
 const canvas = /** @type {HTMLCanvasElement} */ ($('game'))
 const renderer = createRenderer(canvas, game, ui, tunables.view)
 let now = 0 // seconds, the frame's
@@ -66,6 +66,14 @@ const panel = createPanel(
     'sim.light.base': [4, 48, 1],
     'sim.streamTicks': [1, 20, 1],
     'sim.rideSpeed': [10, 400, 5],
+    'sim.bugs.seek': [4, 160, 1],
+    'sim.bugs.moveTicks': [1, 30, 1],
+    'sim.bugs.tame': [1, 64, 1],
+    'sim.bugs.light': [0, 32, 1],
+    'sim.bugs.block': [8, 128, 4],
+    'sim.bugs.den': [0, 64, 1],
+    'sim.bugs.mine.reach': [2, 64, 1],
+    'sim.bugs.mine.ticks': [60, 1800, 30],
     'view.zoom': [-1, ZOOM_PX.length - 1, 1],
   },
   {
@@ -148,8 +156,13 @@ createInput(canvas, {
         best = i
       }
     })
-    return best >= 0 ? { kind: 'node', node: best } : null
+    if (best >= 0) return { kind: 'node', node: best }
+    // near the bot, with a tamed bug to place: the hold (D080)
+    const bot = renderer.botCss()
+    return game.bar.length && Math.hypot(cx - bot.x, cy - bot.y) <= 60 ? { kind: 'bot' } : null
   },
+  charge: (at) => (ui.charge = at && { ...at, s: now }),
+  place: () => command(game, { type: 'place' }),
   preview: (node) => {
     ui.preview = node
     if (node !== null) ui.select = null
@@ -216,6 +229,7 @@ function frame(t) {
         `pos ${game.ch.x},${game.ch.y} · light r ${game.radius} · ${game.ride ? 'in a car' : game.step ? 'walking' : 'still'}`,
         `nodes on the network ${onNet}/${map.nodes.length}, near ${nearby} · edges built ${built}/${map.edges.length} · cars ${game.cars.length}`,
         `scan ${game.tick < game.scanAt ? `in ${((game.scanAt - game.tick) / 60).toFixed(1)} s` : 'ready'}`,
+        `bugs: wild ${game.bugs.filter((b) => b.kind === 'wild').length} (chasing ${game.bugs.filter((b) => b.chasing).length}) · fed ${game.fed}/${game.cfg.bugs.tame} · bar ${game.bar.length} · placed ${game.bugs.filter((b) => b.kind === 'placed').length}`,
         '` or tap the top-left corner: close',
       ].join('\n'),
     )

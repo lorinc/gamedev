@@ -8,16 +8,19 @@
 // into the pack and out into a node, the ore count against an edge's price, and the build buttons in b3's
 // cue style (a disc with its symbol cut out): a red X and a green hammer.
 
-import { cellRgb } from '../../render/palette.js'
+import { cellRgb, TILE_RGB } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
 import { count } from '../../sim/dig/pack.js'
-import { drawPack, failAlpha, packLayout } from '../b3/render.js'
+import { drawBar, drawBugs, drawPack, drawStream, failAlpha, packLayout } from '../b3/render.js'
 import { botAt, shown } from './game.js'
 import { OPEN, ROCK, SHEET, SPACE } from './world.js'
 
 /** @typedef {import('./game.js').Game} Game */
 /** @typedef {import('./world.js').Cell} Cell */
-/** @typedef {{ preview: number | null, select: { node: number, edge: number } | null, refusedAt: number }} Ui */
+/**
+ * @typedef {{ preview: number | null, select: { node: number, edge: number } | null, refusedAt: number,
+ *   charge: { x: number, y: number, s: number } | null }} Ui charge: a hold near the bot (CSS px, since `s` seconds) that places a bug at 1 s
+ */
 
 export const ZOOM_PX = [2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24] // tile sizes in device px
 const AUTO_TILES = 100 // the default zoom: about this many tiles across the short side
@@ -147,6 +150,8 @@ export function createRenderer(canvas, game, ui, view) {
     } else if (e.type === 'fed') {
       flights.push({ from: e.from, to: map.nodes[e.node], s: now, dur: 0.35, color: ORE })
     } else if (e.type === 'ring') rings.push({ x: e.x, y: e.y, r: e.r, s: now })
+    else if (e.type === 'nibble') flights.push({ from: e.from, to: { x: e.x, y: e.y }, s: now, dur: 0.4, color: ORE })
+    else if (e.type === 'handed') flights.push({ from: { x: e.x, y: e.y }, to: e.to, s: now, dur: 0.4, color: ORE })
   }
 
   /** Where the build buttons are, in tiles (centres): the X over the node, the hammer along the edge, a thumb apart on screen. */
@@ -193,9 +198,35 @@ export function createRenderer(canvas, game, ui, view) {
     if (!game.ride) drawBot(bot, now)
     drawRings(now)
     drawStreams(now)
+    // b3.7's bugs (D056–D064): their squares and halos, the placed ones' dust streams, the bug bar
+    drawBugs(ctx, /** @type {any} */ (game), alpha, now, sx, sy, T)
+    for (const b of game.bugs)
+      if (b.target) {
+        const bx = b.x + 0.5 - Math.round((b.x - b.target.x) / w) * w
+        drawStream(ctx, b.target.x + 0.5, b.target.y + 0.5, bx, b.y + 0.5, TILE_RGB[Tile.Ore], b.target.y * w + b.target.x, now, sx, sy, T)
+      }
     drawFlights(now)
     drawButtons(now)
     drawHud(now)
+    drawBar(ctx, /** @type {any} */ (game), W, H, dpr)
+    drawCharge(now)
+  }
+
+  /** The hold that places a bug: a ring filling round the finger over 1 s (b3's). @param {number} now */
+  function drawCharge(now) {
+    const c = ui.charge
+    if (!c || !game.bar.length) return
+    const p = Math.min(1, (now - c.s) / 1)
+    const r = 28 * dpr
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)'
+    ctx.lineWidth = 4 * dpr
+    ctx.beginPath()
+    ctx.arc(c.x * dpr, c.y * dpr, r, 0, Math.PI * 2)
+    ctx.stroke()
+    ctx.strokeStyle = CHAR
+    ctx.beginPath()
+    ctx.arc(c.x * dpr, c.y * dpr, r, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2)
+    ctx.stroke()
   }
 
   /** A path through tile centres. @param {Cell[]} p */
@@ -247,16 +278,18 @@ export function createRenderer(canvas, game, ui, view) {
       if (!shown(game, i)) return
       const [x, y] = at(n)
       const busy = ui.preview === i || ui.select?.node === i
-      const r = Math.max(T * 0.7, 3.5 * dpr) * (busy ? 1.4 : 1) * (1 + 0.12 * Math.sin(now * 4 + i))
-      const halo = ctx.createRadialGradient(x, y, 0, x, y, r * 3)
-      halo.addColorStop(0, `rgba(${NODE},0.55)`)
+      const r = Math.max(T * 1.2, 5 * dpr) * (busy ? 1.4 : 1) * (1 + 0.12 * Math.sin(now * 4 + i))
+      const halo = ctx.createRadialGradient(x, y, 0, x, y, r * 2.5)
+      halo.addColorStop(0, `rgba(${NODE},0.4)`)
       halo.addColorStop(1, `rgba(${NODE},0)`)
       ctx.fillStyle = halo
-      ctx.fillRect(x - r * 3, y - r * 3, r * 6, r * 6)
-      ctx.fillStyle = `rgb(${NODE})`
+      ctx.fillRect(x - r * 2.5, y - r * 2.5, r * 5, r * 5)
+      // a ring, not a dot: at 1 px a tile a tamed bug is a warm dot too (b4.2)
+      ctx.strokeStyle = `rgb(${NODE})`
+      ctx.lineWidth = Math.max(2 * dpr, r * 0.4)
       ctx.beginPath()
       ctx.arc(x, y, r, 0, Math.PI * 2)
-      ctx.fill()
+      ctx.stroke()
     })
   }
 
@@ -417,6 +450,11 @@ export function createRenderer(canvas, game, ui, view) {
     buttons,
     level,
     tilePx: () => T,
+    /** The bot on screen, CSS px. */
+    botCss: () => {
+      const [x, y] = at(botAt(game, 0))
+      return { x: x / dpr, y: y / dpr }
+    },
     dpr: () => dpr,
   }
 }

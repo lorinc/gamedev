@@ -5,8 +5,10 @@
 // On a node of the network near the bot the finger builds instead (D079, D080): holding it shows its edges; dragging from it towards
 // an edge selects that edge (a red X and a green hammer appear); after letting go, tapping the hammer builds
 // and the X cancels. The page decides what's under the finger (`hit`) and draws the rest.
+// A 1 s hold near the bot, without dragging, places a tamed bug (D080); on a keyboard, E held 1 s. Dragging
+// away from there before the second is up is a move, as anywhere.
 
-/** @typedef {{ kind: 'button', id: 'build' | 'cancel' } | { kind: 'node', node: number } | null} Hit */
+/** @typedef {{ kind: 'button', id: 'build' | 'cancel' } | { kind: 'node', node: number } | { kind: 'bot' } | null} Hit */
 
 /**
  * @param {HTMLCanvasElement} canvas
@@ -17,12 +19,27 @@
  * @param {(node: number | null) => void} h.preview holding a node (null: let go)
  * @param {(node: number, dx: number, dy: number) => void} h.aim dragging from a node, CSS px from where it went down
  * @param {(id: 'build' | 'cancel') => void} h.button
+ * @param {(at: { x: number, y: number } | null) => void} h.charge a hold that places a bug began at (CSS px), or ended (null)
+ * @param {() => void} h.place the hold reached 1 s
  * @param {(steps: number) => void} h.zoom
  * @param {() => void} h.togglePanel
  * @param {() => void} h.gesture any first touch or key (for sound, one day)
  */
 export function createInput(canvas, h) {
   const DEAD = 14 // CSS px before a drag has a direction
+  const PLACE_MS = 1000 // b3's long press (D060)
+  /** @type {ReturnType<typeof setTimeout> | undefined} */
+  let placeTimer
+  /** @param {{ x: number, y: number } | null} at */
+  const charge = (at) => {
+    clearTimeout(placeTimer)
+    h.charge(at)
+    if (at)
+      placeTimer = setTimeout(() => {
+        h.charge(null)
+        h.place()
+      }, PLACE_MS)
+  }
 
   // Keys: the direction of the ones held
   const held = new Set()
@@ -60,12 +77,17 @@ export function createInput(canvas, h) {
       if (!e.repeat) h.tap()
       return
     }
+    if (e.code === 'KeyE') {
+      if (!e.repeat) charge({ x: innerWidth / 2, y: innerHeight / 2 })
+      return
+    }
     if (!KEYS[e.code]) return
     e.preventDefault()
     held.add(e.code)
     keysChanged()
   })
   window.addEventListener('keyup', (e) => {
+    if (e.code === 'KeyE') return charge(null)
     if (!held.delete(e.code)) return
     keysChanged()
   })
@@ -86,6 +108,7 @@ export function createInput(canvas, h) {
     const hit = h.hit(e.clientX, e.clientY)
     p = { id: e.pointerId, x: e.clientX, y: e.clientY, hit, dir: '0,0', dragged: false }
     if (hit?.kind === 'node') h.preview(hit.node)
+    if (hit?.kind === 'bot') charge({ x: e.clientX, y: e.clientY })
   })
   canvas.addEventListener('pointermove', (e) => {
     if (!p || e.pointerId !== p.id) return
@@ -93,6 +116,10 @@ export function createInput(canvas, h) {
     const dy = e.clientY - p.y
     if (Math.hypot(dx, dy) < DEAD) return
     p.dragged = true
+    if (p.hit?.kind === 'bot') {
+      charge(null)
+      p.hit = null // a move from here on
+    }
     if (p.hit?.kind === 'node') return h.aim(p.hit.node, dx, dy)
     if (p.hit?.kind === 'button') return
     // 8 ways
@@ -108,6 +135,7 @@ export function createInput(canvas, h) {
     if (!p || e.pointerId !== p.id) return
     const was = p
     p = null
+    if (was.hit?.kind === 'bot') charge(null)
     if (was.hit?.kind === 'node') return h.preview(null)
     if (was.hit?.kind === 'button') {
       if (!was.dragged) h.button(was.hit.id)

@@ -18,11 +18,16 @@
 // that fits it best (within 67.5°); the car runs node to node until no edge fits (it stops at the last
 // node), a tap (it stops at the next node), or a new direction (it turns at the next node). Pointed while
 // stopped where no edge fits, you get out and walk that way, unless the node's tile is rock: then you stay in.
+// Bugs (b4.2, D080): b3.7's (`src/sim/dig/bugs.js`, D056–D064) as they are, with b3.7's numbers: wild ones in
+// the fog nibble ore from the pack, the scan's rings scare them, 16 fed tames one into the bar, `place` (the
+// 1 s hold near the bot) puts the bar's first bug down, and a placed bug mines seen ore round its den and hands
+// it over as you pass (pull.js). Bar and placed bugs light round themselves like the bot does.
 
 import { Tile, isOpen } from '../../sim/gen/world.js'
 import { reveal } from '../../sim/dig/game.js'
 import { ringCells } from '../../sim/dig/probe.js'
-import { nearestValuable, toRock } from '../../sim/dig/pull.js'
+import { nearestValuable, toRock, updateMine } from '../../sim/dig/pull.js'
+import { bugGlows, place, scare, updateBugs } from '../../sim/dig/bugs.js'
 import { add, count, fits, take } from '../../sim/dig/pack.js'
 import { litCells, lightRadius } from '../../sim/dig/light.js'
 import { wrap } from '../../sim/dig/rules.js'
@@ -44,6 +49,25 @@ export const CONFIG = {
   packSlots: 6,
   packReserve: ['ore', 'loot'], // b3.7's pack (D064), ore and loot only (D080: no digging, no rock in the pack)
   nodeReach: 12, // D079's 3 tiles (user) ×4
+  bugs: {
+    block: 32,
+    blocks: 64,
+    chasers: 3,
+    refillTicks: 300,
+    near: 4,
+    moveTicks: 12,
+    seek: 20,
+    nibbleTicks: 40,
+    tame: 16,
+    scareTicks: 240,
+    den: 12,
+    barSlots: 3,
+    light: 2,
+    barMoveTicks: 12,
+    barNear: 2,
+    barFar: 8,
+    mine: { ticks: 900, reach: 12, carry: 8, hand: 4, handTicks: 6 },
+  }, // b3.7's (rules/b3.7.json), to be tuned in play (D081)
   price: 10, // ore per edge (user: 8–12, tuned later)
   streamTicks: 4,
   rideSpeed: 80, // px/s in a car (several px a tick: an integer budget, 60 a straight px, 85 a diagonal)
@@ -51,7 +75,7 @@ export const CONFIG = {
 /** @typedef {typeof CONFIG} Config */
 
 /**
- * @typedef {{ type: 'move', dx: number, dy: number } | { type: 'tap' } | { type: 'build', edge: number, from: number }} Command
+ * @typedef {{ type: 'move', dx: number, dy: number } | { type: 'tap' } | { type: 'build', edge: number, from: number } | { type: 'place' }} Command
  */
 /**
  * @typedef {{ type: 'seen', cells: number[] }
@@ -61,7 +85,10 @@ export const CONFIG = {
  *   | { type: 'fed', node: number, from: Cell }
  *   | { type: 'built', edge: number }
  *   | { type: 'refused', edge: number, reason: 'ore' | 'busy' | 'off' | 'far' | 'built' }
- *   | { type: 'board', car: number } | { type: 'exit', car: number }} GameEvent
+ *   | { type: 'board', car: number } | { type: 'exit', car: number }
+ *   | { type: 'nibble', id: number, x: number, y: number, from: Cell } | { type: 'tamed', id: number, x: number, y: number, slot: number }
+ *   | { type: 'placed', id: number, x: number, y: number } | { type: 'returned', id: number, x: number, y: number, slot: number }
+ *   | { type: 'handed', id: number, x: number, y: number, to: Cell }} GameEvent bugs.js and pull.js add the bugs' (and `by` on pulled)
  */
 
 /** @typedef {{ node: number }} Car a travel pod, waiting at a node or carrying you */
@@ -89,12 +116,19 @@ export const CONFIG = {
  * @property {number[]} lit
  * @property {number} radius
  * @property {number[]} surface
- * @property {{ x: number, y: number, r: number }} litFor
+ * @property {{ x: number, y: number, r: number, glows: string }} litFor
  * @property {{ x: number, y: number, r: number, t: number } | null} probe
  * @property {number} scanAt the tick the scan is ready again
  * @property {number} stillFor
  * @property {Cell | null} pulling
  * @property {Uint8Array} net per node: on the network (D080)
+ * @property {import('../../sim/dig/bugs.js').Bug[]} bugs b3's (D056)
+ * @property {number} nextBug
+ * @property {import('../../sim/dig/bugs.js').Field | null} bugField
+ * @property {number} worldRev b4 never changes where bugs can go: always 0
+ * @property {number} fed
+ * @property {import('../../sim/dig/bugs.js').Bug[]} bar
+ * @property {Record<number, number>} refill
  * @property {Uint8Array} built per edge
  * @property {Car[]} cars
  * @property {{ edge: number, from: number, left: number, t: number } | null} building
@@ -120,12 +154,19 @@ export function createGame(map, cfg) {
     lit: [],
     radius: 0,
     surface: [], // no sky inside the map any more: nothing is always lit (b4.2)
-    litFor: { x: -1, y: -1, r: -1 },
+    litFor: { x: -1, y: -1, r: -1, glows: '' },
     probe: null,
     scanAt: 0,
     stillFor: 0,
     pulling: null,
     net: new Uint8Array(map.nodes.length),
+    bugs: [],
+    nextBug: 1,
+    bugField: null,
+    worldRev: 0,
+    fed: 0,
+    bar: [],
+    refill: {},
     built: new Uint8Array(map.edges.length),
     cars: [],
     building: null,
@@ -154,7 +195,8 @@ export function tick(g) {
       else g.move = dir
     } else if (cmd.type === 'tap') {
       if (g.ride?.run) g.ride.stopNext = true
-    } else build(g, cmd.edge, cmd.from)
+    } else if (cmd.type === 'place') place(/** @type {any} */ (g))
+    else build(g, cmd.edge, cmd.from)
   }
   g.queue.length = 0
 
@@ -163,6 +205,8 @@ export function tick(g) {
   if (g.probe) spread(g, g.probe)
   feed(g)
   pull(g)
+  updateMine(/** @type {any} */ (g))
+  updateBugs(/** @type {any} */ (g))
   updateLight(g)
 }
 
@@ -231,6 +275,7 @@ function spread(g, p) {
 function ring(g, p, r) {
   p.r = r
   reveal(/** @type {any} */ (g), ringCells(g.world, p, r))
+  scare(/** @type {any} */ (g), p, r)
   g.events.push({ type: 'ring', x: p.x, y: p.y, r })
 }
 
@@ -243,7 +288,14 @@ function pull(g) {
     return
   }
   const { packSlots: slots, packReserve: reserve } = g.cfg
-  const c = nearestValuable(/** @type {any} */ (g), g.ch, lightRadius(g.pack, g.cfg.light), (t) => fits(g.pack, slots, [t], reserve))
+  // the first to target a cell keeps it (D064): not the cells placed bugs pull now
+  const claimed = new Set(g.bugs.flatMap((b) => (b.target ? [b.target.y * g.world.w + b.target.x] : [])))
+  const c = nearestValuable(
+    /** @type {any} */ (g),
+    g.ch,
+    lightRadius(g.pack, g.cfg.light),
+    (t, i) => !claimed.has(i) && fits(g.pack, slots, [t], reserve),
+  )
   g.pulling = c
   if (++g.stillFor % Math.max(1, g.cfg.pull.ticks) || !c) return
   const tile = g.world.tiles[c.y * g.world.w + c.x]
@@ -415,10 +467,15 @@ export function botAt(g, alpha) {
 function updateLight(g) {
   const r = lightRadius(g.pack, g.cfg.light)
   const at = g.litFor
-  if (at.x === g.ch.x && at.y === g.ch.y && at.r === r) return
-  g.litFor = { x: g.ch.x, y: g.ch.y, r }
+  const sources = bugGlows(/** @type {any} */ (g))
+  const glows = sources.map((c) => `${c.x},${c.y}`).join(' ')
+  if (at.x === g.ch.x && at.y === g.ch.y && at.r === r && at.glows === glows) return
+  g.litFor = { x: g.ch.x, y: g.ch.y, r, glows }
   g.radius = r
-  const cells = deepen(g.world, litCells(g.world, g.ch, r), g.ch, r, g.cfg.light.face)
+  const { face } = g.cfg.light
+  let cells = deepen(g.world, litCells(g.world, g.ch, r), g.ch, r, face)
+  const br = g.cfg.bugs.light
+  for (const c of sources) cells = union(cells, deepen(g.world, litCells(g.world, c, br), c, br, face))
   g.lit = union(g.surface, cells)
   reveal(/** @type {any} */ (g), cells)
 }
