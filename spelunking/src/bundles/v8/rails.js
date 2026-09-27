@@ -11,10 +11,12 @@ import { K, OPEN, ROCK, SEA, SKY } from '../v6/terrain.js'
 
 /** The rail knobs (the page's sliders). */
 export const RKNOBS = {
-  spacing: 4, // A, C: nodes at least this far apart, in cells (user: 4 is "ideal density for the travel nodes")
+  spacing: 3, // A, C: nodes at least this far apart, in cells (user: 4 "ideal density for the travel nodes", then 3)
   cols: 5, // B: coarse triangles across the map (rails ≈ map width / cols / 2 long)
   rrelax: 20, // B: relaxing rounds (not `relax`: that's the caves' knob, and both ride in the URL)
   dig: 1.5, // C: a tile of rock costs this many of open air (user: digging has a 50% penalty)
+  links: 1, // A, C: edge density, 0 to 1: the lune β-skeleton with β = 2 − links (0: the relative neighbourhood graph, the sparsest; 1: the Gabriel graph); never crossing edges
+  overlap: 1, // C: a step onto a tile an earlier rail uses costs this much more (user: a 100% penalty)
   bend: 3, // C: a 45° bend costs this many tiles, a 90° bend twice that; sharper bends aren't allowed
   steep: 0, // 1 = drop rails steeper than 45° (nothing vertical, D068)
 }
@@ -55,6 +57,7 @@ export function rails(T, G, frame, mode, S, seed) {
       median: lens.length ? lens[lens.length >> 1] / K : 0,
       rockShare: len ? rock / len : 0,
       steep: net.rails.filter((r) => r.steep).length,
+      shared: sharedShare(rails),
       bends: rails.reduce((s, r) => s + (r.bends || 0), 0),
       stretch: rails.length ? rails.reduce((s, r) => s + r.len / Math.max(1, straight(T, net.nodes, r)), 0) / rails.length : 1,
       openNodes: [...used].filter((i) => openAt(T, net.nodes[i].x, net.nodes[i].y)).length,
@@ -131,17 +134,33 @@ function chords(T, G, F, S) {
   /** @type {Node[]} */
   const nodes = []
   for (const v of verts) if (!nodes.some((n) => Math.hypot(dxw(n.x, v.x), n.y - v.y) < gap)) nodes.push({ x: v.x, y: v.y })
-  // the relative neighbourhood graph: a and b are joined unless some c is closer to both
-  const D = (/** @type {number} */ a, /** @type {number} */ b) => Math.hypot(dxw(nodes[a].x, nodes[b].x), nodes[a].y - nodes[b].y)
+  // the lune β-skeleton: a and b are joined unless some c lies in both discs of radius β·ab/2 centred on
+  // the line ab, β/2 of the way from a and from b (β = 2: the relative neighbourhood graph; β = 1: the
+  // Gabriel graph); between them the graph only gains edges, and edges never cross
+  const beta = 2 - Math.min(1, Math.max(0, S.links))
   /** @type {Rail[]} */
   const out = []
   const reach = 3 * gap
   for (let a = 0; a < nodes.length; a++)
     for (let b = a + 1; b < nodes.length; b++) {
-      const ab = D(a, b)
+      const ax = nodes[a].x
+      const ay = nodes[a].y
+      const bx = near(nodes[b].x, ax, w)
+      const by = nodes[b].y
+      const ab = Math.hypot(bx - ax, by - ay)
       if (ab > reach) continue
+      const rad = (beta * ab) / 2
+      const c1x = ax + (bx - ax) * (beta / 2)
+      const c1y = ay + (by - ay) * (beta / 2)
+      const c2x = bx + (ax - bx) * (beta / 2)
+      const c2y = by + (ay - by) * (beta / 2)
       let ok = true
-      for (let c = 0; c < nodes.length && ok; c++) if (c !== a && c !== b && Math.max(D(a, c), D(b, c)) < ab) ok = false
+      for (let c = 0; c < nodes.length && ok; c++) {
+        if (c === a || c === b) continue
+        const cx = near(nodes[c].x, ax, w)
+        const cy = nodes[c].y
+        if (Math.hypot(cx - c1x, cy - c1y) < rad && Math.hypot(cx - c2x, cy - c2y) < rad) ok = false
+      }
       if (ok) out.push(measure(T, nodes, a, b))
     }
   return { nodes, rails: out }
@@ -265,9 +284,18 @@ function route(T, F, nodes, pairs, S) {
   const N = W * H * 8
   const cost = new Float64Array(N)
   const from = new Int32Array(N)
+  // tiles used by the rails laid so far (the nodes' own tiles are free: rails meet there)
+  const used = new Uint8Array(W * H)
+  const nodeT = new Uint8Array(W * H)
+  for (const n of nodes) {
+    const [x, y] = tile(n)
+    nodeT[y * W + x] = 1
+  }
+  // the shortest first, so the short links keep their straight lines
+  const order = pairs.slice().sort((p, q) => p.len - q.len)
   /** @type {Rail[]} */
   const out = []
-  for (const r of pairs) {
+  for (const r of order) {
     const [sx, sy] = tile(nodes[r.a])
     const [tx, ty] = tile(nodes[r.b])
     cost.fill(Infinity)
@@ -328,7 +356,9 @@ function route(T, F, nodes, pairs, S) {
         if (ny < 0 || ny >= H) continue
         if (voidT[ny * W + nx]) continue
         const step = DX[nd] && DY[nd] ? Math.SQRT2 : 1
-        const nc = c + step * (1 + (S.dig - 1) * stepRock[t * 8 + nd]) + Math.abs(turn) * S.bend
+        const nt = ny * W + nx
+        const over = used[nt] && !nodeT[nt] ? 1 + S.overlap : 1
+        const nc = c + step * (1 + (S.dig - 1) * stepRock[t * 8 + nd]) * over + Math.abs(turn) * S.bend
         const ns = (ny * W + nx) * 8 + nd
         if (nc < cost[ns]) {
           cost[ns] = nc
@@ -357,7 +387,26 @@ function route(T, F, nodes, pairs, S) {
       }
     }
     path.reverse()
+    for (const [px, py] of path) used[(Math.floor(py / K) - y0) * W + Math.floor(px / K)] = 1
     out.push({ a: r.a, b: r.b, len, rock, steep: false, path, bends })
   }
   return out
+}
+
+/** C: the share of rail tiles (ends excluded) that another rail uses too. @param {Rail[]} rails */
+function sharedShare(rails) {
+  /** @type {Map<string, number>} */
+  const count = new Map()
+  let steps = 0
+  for (const r of rails) {
+    if (!r.path) return 0
+    for (let i = 1; i < r.path.length - 1; i++) {
+      const k = r.path[i].join()
+      count.set(k, (count.get(k) || 0) + 1)
+      steps++
+    }
+  }
+  let shared = 0
+  for (const n of count.values()) if (n > 1) shared += n
+  return steps ? shared / steps : 0
 }

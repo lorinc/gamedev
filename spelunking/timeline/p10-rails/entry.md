@@ -75,6 +75,18 @@ air drawn red). Now each step's rock is sampled along its line, pixel by pixel, 
 drives the route's cost, the colour and the numbers; every rail (A, B, C) is drawn that way. The totals
 barely moved (the errors roughly cancelled): seed 69866 C 28% bores rock, seed 5512 C 27%.
 
+**Then (user):** "I like this node density" (3 cells apart; rock ×5, bend 15), "but I need more edge
+density, AND I'd like to add a 100% penalty for overlapping edges."
+- **Edge density** (`links`, 0 to 1): the lune β-skeleton, β = 2 − links: 0 is the relative
+  neighbourhood graph as before, 1 the Gabriel graph; edges never cross. Tried first: a scaled RNG test,
+  far too steep (220 → 372 → 928 rails at 1, 1.3, 1.6, 90% of track shared).
+- **Overlap penalty** (`overlap`, +100%): routes are laid shortest first; a step onto a tile an earlier
+  rail uses costs 2× (nodes' tiles are free, rails meet there). A new number: the share of track shared.
+- **Measured, seed 69866, 3 cells apart, rock ×5, bend 15:** 150 nodes; links 0 → 220 rails, 0.5 →
+  283, 1 → 366. At links 1 the penalty takes shared track from 17% to 10%; 28% bores rock either way.
+- **Seen (Claude):** the straight edges never cross, but their 8-direction routes sometimes do.
+- New defaults: nodes 3 cells apart, links 1, overlap 1.
+
 ## Feedback
 
 ## Conclusion → next
