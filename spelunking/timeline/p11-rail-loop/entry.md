@@ -6,6 +6,7 @@ status: building
 budget: 3d
 from: p10
 dev: b4.html
+build b4.1: 2026-09-27 · p11: b4 Rail Loop, step 1: the whole loop without bugs (new bundle, not a copy of b3; D079)
 ---
 
 # p11 · b4 · Rail Loop
