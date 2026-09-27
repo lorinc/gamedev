@@ -11,6 +11,7 @@
 import { cellRgb } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
 import { count } from '../../sim/dig/pack.js'
+import { drawPack, failAlpha, packLayout } from '../b3/render.js'
 import { botAt, shown } from './game.js'
 import { OPEN, ROCK, SHEET, SPACE } from './world.js'
 
@@ -31,6 +32,8 @@ const ORE = 'rgb(236,164,40)'
 const GREEN = '#5ac878'
 const RED = '#ff2828'
 const RING_TRAIL = 4
+const PACK_TP = 44 // the pack is drawn as b3's character's at this many CSS px a tile
+const PACK_FIT = 0.75 // b3's view.packFit
 
 /** @param {HTMLCanvasElement} canvas @param {Game} game @param {Ui} ui @param {{ zoom: number }} view */
 export function createRenderer(canvas, game, ui, view) {
@@ -376,24 +379,34 @@ export function createRenderer(canvas, game, ui, view) {
     ctx.restore()
   }
 
-  /** The ore you carry against an edge's price: a square per unit, filled as it comes. @param {number} now */
+  /**
+   * The pack as b3.7 draws it (b4.2, D080): 2 × 3 slots, each a 4 × 4 grid filling from the bottom, the
+   * reserved ore and loot slots first; the bot is 1 px, so it's at the top of the screen, the size of b3's
+   * character at a middle zoom, not on its back. Under it, the ore against an edge's price: green when
+   * there's enough. A refused build blinks it red, as b3's pack did.
+   * @param {number} now
+   */
   function drawHud(now) {
+    const tp = Math.round(PACK_TP * dpr)
+    const bh = Math.round(tp * 1.3) // b3's BODY_H
+    const rows = Math.ceil(game.cfg.packSlots / 2)
+    const pw = packLayout(tp, bh, rows, PACK_FIT).x.len
+    const cx = Math.round(W / 2 + pw / 2)
+    const top = Math.round(10 * dpr)
+    const f = (now - ui.refusedAt) / 0.7
+    const pack = /** @type {any} */ ({ ...game, ch: { facing: 1 } }) // drawn facing right: slot 1 bottom left
+    ctx.fillStyle = '#000'
+    ctx.fillRect(cx - pw - 2 * dpr, top - dpr, pw + 4 * dpr, Math.round(PACK_FIT * bh) + 2 * dpr)
+    drawPack(ctx, pack, /** @type {any} */ ({ packFit: PACK_FIT }), cx, top + bh - 1, 0, bh, tp, CHAR, f >= 0 && f < 1 ? failAlpha(f) : 0)
     const ore = count(game.pack, Tile.Ore)
     const price = game.cfg.price
-    const s = Math.round(12 * dpr)
-    const gap = Math.round(3 * dpr)
-    const n = Math.max(price, ore)
-    const x0 = Math.round(W / 2 - (n * (s + gap)) / 2)
-    const y0 = Math.round(12 * dpr)
-    const red = now - ui.refusedAt < 0.7
-    for (let i = 0; i < n; i++) {
-      ctx.fillStyle = i < ore ? ORE : red ? 'rgba(255,40,40,0.5)' : 'rgba(255,255,255,0.15)'
-      ctx.fillRect(x0 + i * (s + gap), y0, s, s)
-    }
-    if (ore >= price) {
-      ctx.fillStyle = GREEN
-      ctx.fillRect(x0 - gap, y0 + s + gap, n * (s + gap) + gap, Math.max(2, dpr * 2)) // enough for an edge
-    }
+    const y = top + Math.round(PACK_FIT * bh) + 3 * dpr
+    const bw = Math.round(pw)
+    const bhh = Math.max(3, Math.round(3 * dpr))
+    ctx.fillStyle = 'rgba(255,255,255,0.15)'
+    ctx.fillRect(cx - pw, y, bw, bhh)
+    ctx.fillStyle = ore >= price ? GREEN : ORE
+    ctx.fillRect(cx - pw, y, Math.round((bw * Math.min(ore, price)) / Math.max(1, price)), bhh)
   }
 
   return {

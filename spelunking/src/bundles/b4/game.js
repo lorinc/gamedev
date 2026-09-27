@@ -42,6 +42,7 @@ export const CONFIG = {
   pull: { ticks: 60 }, // b3's pull was 300 (5 s a unit); 1 s here, or an edge is a minute of standing still
   light: { base: 16, orePer: 4, lootPer: 2, face: 4 }, // face: lit rock goes this deep (b3's lit face was a tile: 4 px here)
   packSlots: 6,
+  packReserve: ['ore', 'loot'], // b3.7's pack (D064), ore and loot only (D080: no digging, no rock in the pack)
   nodeReach: 12, // D079's 3 tiles (user) ×4
   price: 10, // ore per edge (user: 8–12, tuned later)
   streamTicks: 4,
@@ -241,12 +242,12 @@ function pull(g) {
     g.stillFor = 0
     return
   }
-  const { packSlots: slots } = g.cfg
-  const c = nearestValuable(/** @type {any} */ (g), g.ch, lightRadius(g.pack, g.cfg.light), (t) => fits(g.pack, slots, [t]))
+  const { packSlots: slots, packReserve: reserve } = g.cfg
+  const c = nearestValuable(/** @type {any} */ (g), g.ch, lightRadius(g.pack, g.cfg.light), (t) => fits(g.pack, slots, [t], reserve))
   g.pulling = c
   if (++g.stillFor % Math.max(1, g.cfg.pull.ticks) || !c) return
   const tile = g.world.tiles[c.y * g.world.w + c.x]
-  add(g.pack, slots, tile)
+  add(g.pack, slots, tile, reserve)
   toRock(/** @type {any} */ (g), c.x, c.y)
   g.pulling = null
   g.litFor.r = -1

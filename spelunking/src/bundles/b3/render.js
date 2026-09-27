@@ -508,7 +508,7 @@ const FADE_S = 0.5 // a flicker fades in and out over this long
  * to you; flickering fast while scared. Tamed: a steady glow.
  * @param {import('../../sim/dig/bugs.js').Bug} b @param {Game} game @param {number} time seconds
  */
-function glow(b, game, time) {
+export function glow(b, game, time) {
   if (b.kind !== 'wild') return 0.8 + 0.2 * Math.sin(time * 2 + b.id)
   if (game.tick < b.scared) return Math.sin(time * 30 + b.id) > 0 ? 0.9 : 0.2
   const dx = wrapDelta(b.x - game.ch.x, game.world.w)
@@ -553,7 +553,7 @@ function drifted(b, game, alpha, time, bob = true) {
  * @param {(x: number) => number} sx tile x → device px, the copy nearest the character
  * @param {(y: number) => number} sy @param {number} tp tile px
  */
-function drawBugs(ctx, game, alpha, time, sx, sy, tp) {
+export function drawBugs(ctx, game, alpha, time, sx, sy, tp) {
   const cfg = game.cfg.bugs
   if (!cfg) return
   const core = Math.max(2, Math.round(tp * 0.3))
@@ -589,7 +589,7 @@ function drawBugs(ctx, game, alpha, time, sx, sy, tp) {
  * @param {import('../../render/palette.js').Rgb} rgb @param {number} seed the stream's cell, so its arc and specks stay put
  * @param {number} time seconds @param {(x: number) => number} sx @param {(y: number) => number} sy @param {number} tp tile px
  */
-function drawStream(ctx, x0, y0, x1, y1, rgb, seed, time, sx, sy, tp) {
+export function drawStream(ctx, x0, y0, x1, y1, rgb, seed, time, sx, sy, tp) {
   const ax = sx(x0)
   const ay = sy(y0)
   const bx = sx(x1)
@@ -628,7 +628,7 @@ function drawStream(ctx, x0, y0, x1, y1, rgb, seed, time, sx, sy, tp) {
 // grey dot. The taming count fills the next free slot as a 4×4 grid of ore, like a pack slot (D064); a
 // slot held for a placed bug on its way back stays empty.
 /** @param {CanvasRenderingContext2D} ctx @param {Game} game @param {number} W @param {number} H @param {number} dpr */
-function drawBar(ctx, game, W, H, dpr) {
+export function drawBar(ctx, game, W, H, dpr) {
   const cfg = /** @type {NonNullable<Game['cfg']['bugs']>} */ (game.cfg.bugs)
   const slots = cfg.barSlots
   const next = barTaken(game)
@@ -715,7 +715,7 @@ let packCache = null
  * @param {string} body the body's colour
  * @param {number} failA alpha of the red "can't do" flash over the pack, 0 = none
  */
-function drawPack(ctx, game, view, cx, cy, cw, chh, tp, body, failA) {
+export function drawPack(ctx, game, view, cx, cy, cw, chh, tp, body, failA) {
   const f = game.ch.facing
   const slotRows = Math.ceil(game.cfg.packSlots / PACK_COLS)
   // sized by the unsquashed body, so a squash moves the pack but never resizes it
@@ -825,7 +825,7 @@ function drawCue(ctx, x, y, r, cue, life) {
 
 /** Alpha of the "can't do" flash at progress f (0..1): two blinks, fading out. */
 /** @param {number} f */
-function failAlpha(f) {
+export function failAlpha(f) {
   return 0.85 * (1 - 0.5 * f) * (Math.sin(f * Math.PI * 4) > 0 ? 1 : 0.25)
 }
 
