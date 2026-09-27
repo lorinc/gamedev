@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>v8 · Rails</title>
+    <link rel="icon" href="favicon.png" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #050508;
+        color: #ccc;
+        font: 12px monospace;
+      }
+      #bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 16px;
+        align-items: center;
+        padding: 8px 12px;
+        border-bottom: 1px solid #262633;
+        background: #0d0d14;
+      }
+      #bar b {
+        color: #e6dc5a;
+      }
+      #bar input[type='number'] {
+        width: 64px;
+      }
+      #bar label {
+        white-space: nowrap;
+      }
+      #bar input[type='range'] {
+        width: 90px;
+        vertical-align: middle;
+      }
+      main {
+        padding: 12px;
+      }
+      #stage {
+        position: relative;
+        width: max-content;
+      }
+      #map {
+        display: block;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+      }
+      #net {
+        position: absolute;
+        left: 0;
+        top: 0;
+        cursor: crosshair;
+      }
+      #cap {
+        color: #999;
+        padding-top: 6px;
+        line-height: 1.6;
+      }
+      #cap b {
+        color: #ccc;
+      }
+      #legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+        padding-top: 4px;
+        color: #999;
+      }
+      #legend i {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 5px;
+        vertical-align: middle;
+      }
+    </style>
+    <script src="src/errors.js"></script>
+  </head>
+  <body>
+    <div id="bar"></div>
+    <main>
+      <div id="stage"><canvas id="map"></canvas><canvas id="net"></canvas></div>
+      <div id="cap"></div>
+      <div id="legend"></div>
+    </main>
+    <script type="module" src="src/bundles/v8/main.js"></script>
+  </body>
+</html>

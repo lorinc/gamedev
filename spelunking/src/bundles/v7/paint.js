@@ -47,7 +47,8 @@ export function frame(T) {
 }
 
 /**
- * @param {import('../v6/terrain.js').Terrain} T @param {import('./lattice.js').Lattice} La
+ * @param {import('../v6/terrain.js').Terrain} T
+ * @param {{floors: number[][], pod: {c: number, base: number} | null}} La the floors and the pod
  * @param {boolean} walkable also shade every walkable floor pixel
  */
 export function paintBase(T, La, walkable) {
