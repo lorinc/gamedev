@@ -1,9 +1,10 @@
 // b4.3's tamed bugs, abstract (the user: "an incremental game with simulation aesthetics"; no pathfinding,
 // "there will be a lot of them"). Every bug on the ledger is a worker on a trip: it appears in open air
 // within `spawn` px of a random network node, random-walks through open air (a step to an open neighbour
-// every `moveTicks`, keeping its heading 3 times in 4; never into rock, D056), pulls one ore or loot unit
-// within `reach` px every `pullTicks` (seen or not; the pixel turns to rock, pull.js's toRock), and after
-// `tripTicks` sends its haul straight to the ledger (event `haul`: the view flies it to the ledger's icons)
+// every `moveTicks`, keeping its heading 3 times in 4; never into rock, D056), pulls ore and loot like you
+// do (b4.7, the user): the nearest unit within `reach` px (seen or not) is its target, and after `pullTicks`
+// of having one it comes out (the pixel turns to rock, pull.js's toRock); the view draws your dust stream
+// and your flight for it. After `tripTicks` it sends its haul straight to the ledger (event `haul`: the view flies it to the ledger's icons)
 // and starts a new trip near another node. Randomness from the tick, like b3's bugs, so runs repeat.
 
 import { isOpen, Tile } from '../../sim/gen/world.js'
@@ -20,14 +21,15 @@ import { hashSeed, mulberry32 } from '../../sim/rng.js'
  * @property {number} movedAt
  * @property {number} dir its heading, an index into STEPS
  * @property {number} until the tick its trip ends
- * @property {number} pulledAt
+ * @property {Cell | null} target the unit it pulls now, for the dust stream
+ * @property {number} pullFor ticks it has had a target since its last unit
  * @property {number} ore
  * @property {number} loot its haul so far
  */
 
 /** The swarm's numbers (the dev panel's). */
 export const SWARM = {
-  tripTicks: 7200, // 2 minutes (Claude's default)
+  tripTicks: 1800, // 30 s (the user, b4.7; was 2 min)
   moveTicks: 12, // b3.7's bugs: 5 px/s
   reach: 2,
   pullTicks: 60, // a unit a second at most, like your pull
@@ -77,7 +79,8 @@ function startTrip(g, b, at, rng) {
   b.movedAt = g.tick
   b.dir = rng() % 8
   b.until = g.tick + Math.max(1, g.cfg.swarm.tripTicks)
-  b.pulledAt = g.tick
+  b.target = null
+  b.pullFor = 0
   b.ore = 0
   b.loot = 0
 }
@@ -90,21 +93,21 @@ export function updateSwarm(g) {
     const at = spawnAt(g, s, rng)
     if (!at) break
     /** @type {Worker} */
-    const b = { x: 0, y: 0, from: at, movedAt: 0, dir: 0, until: 0, pulledAt: 0, ore: 0, loot: 0 }
+    const b = { x: 0, y: 0, from: at, movedAt: 0, dir: 0, until: 0, target: null, pullFor: 0, ore: 0, loot: 0 }
     startTrip(g, b, at, rng)
     g.swarm.push(b)
   }
-  for (const b of g.swarm) {
+  g.swarm.forEach((b, k) => {
     if (g.tick >= b.until) {
       g.ledger.ore += b.ore
       g.ledger.loot += b.loot
       if (b.ore || b.loot) g.events.push({ type: 'haul', x: b.x, y: b.y, ore: b.ore, loot: b.loot })
       startTrip(g, b, spawnAt(g, s, rng) ?? b, rng)
-      continue
+      return
     }
     if (g.tick - b.movedAt >= Math.max(1, s.moveTicks)) step(g, b, rng)
-    if (g.tick - b.pulledAt >= Math.max(1, s.pullTicks)) pull(g, s, b)
-  }
+    pull(g, s, b, k)
+  })
 }
 
 /** A random-walk step: on its heading 3 times in 4 if open, else a random open neighbour. @param {import('./game.js').Game} g @param {Worker} b @param {() => number} rng */
@@ -122,8 +125,9 @@ function step(g, b, rng) {
   b.y += STEPS[dir][1]
 }
 
-/** One ore or loot unit within reach, the nearest (then the first in reading order), to its haul. @param {import('./game.js').Game} g @param {Swarm} s @param {Worker} b */
-function pull(g, s, b) {
+/** Like your pull: the nearest ore or loot within reach (then the first in reading order) is the target; after
+ * pullTicks of having one, it comes out, to the haul. @param {import('./game.js').Game} g @param {Swarm} s @param {Worker} b @param {number} k its index */
+function pull(g, s, b, k) {
   const { w, h, tiles } = g.world
   const r = Math.max(0, s.reach)
   let best = -1
@@ -138,13 +142,20 @@ function pull(g, s, b) {
       best = i
       bestD = d
     }
-  if (best < 0) return
-  b.pulledAt = g.tick
+  if (best < 0) {
+    b.target = null
+    b.pullFor = 0
+    return
+  }
+  const x = best % w
+  const y = (best - x) / w
+  b.target = { x, y }
+  if (++b.pullFor < Math.max(1, s.pullTicks)) return
+  b.pullFor = 0
+  b.target = null
   const tile = tiles[best]
   if (tile === Tile.Ore) b.ore++
   else b.loot++
-  const x = best % w
-  const y = (best - x) / w
   toRock(/** @type {any} */ (g), x, y)
-  g.events.push({ type: 'dug', x, y, tile, to: { x: b.x, y: b.y } })
+  g.events.push({ type: 'dug', x, y, tile, by: k })
 }

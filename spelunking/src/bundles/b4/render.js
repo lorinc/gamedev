@@ -161,9 +161,11 @@ export function createRenderer(canvas, game, ui, view) {
     else if (e.type === 'pulled' || e.type === 'dug') {
       paintTile(e.y * w + e.x)
       tctx.putImageData(timg, 0, 0, e.x, e.y, 1, 1)
-      // yours flies to you (and counts on the ledger: no stream to it, the user); a bug's to the bug
-      const to = e.type === 'pulled' ? () => /** @type {[number, number]} */ (at(botAt(game, 0))) : cell(e.to) // yours follows you as you walk
-      fly(cell(e), to, now, e.type === 'pulled' ? 0.45 : 0.3, e.tile === Tile.Ore ? ORE : LOOT, e.type === 'pulled' ? 1 : 0.2)
+      // yours flies to you (and counts on the ledger: no stream to it, the user), a bug's to the bug, the same
+      // flight (b4.7); each follows its puller as it moves
+      const who = e.type === 'dug' ? game.swarm[e.by] : null
+      const to = () => /** @type {[number, number]} */ (at(who ? workerAt(who, 0) : botAt(game, 0)))
+      fly(cell(e), to, now, 0.45, e.tile === Tile.Ore ? ORE : LOOT)
     } else if (e.type === 'ring') rings.push({ x: e.x, y: e.y, r: e.r, s: now })
     else if (e.type === 'nibble') fly(icon('ore'), cell(e), now, 0.5, ORE, 0)
     else if (e.type === 'tamed') fly(cell(e), icon('bugs'), now, 0.9, `rgb(${BUG})`, 0)
@@ -213,16 +215,23 @@ export function createRenderer(canvas, game, ui, view) {
     }
   }
 
-  /** Tamed bugs at work (b4.3): warm dots with a small halo, drawn over the fog (they're yours). @param {number} alpha */
-  function drawSwarm(alpha) {
+  /** A worker between its last pixel and this one. @param {import('./swarm.js').Worker} b @param {number} alpha */
+  function workerAt(b, alpha) {
+    const f = Math.min(1, (game.tick - b.movedAt + alpha) / Math.max(1, game.cfg.swarm.moveTicks))
+    let dx = b.x - b.from.x
+    if (Math.abs(dx) > 1) dx = -Math.sign(dx)
+    return { x: b.from.x + dx * f, y: b.from.y + (b.y - b.from.y) * f }
+  }
+
+  /** Tamed bugs at work (b4.3): warm dots with a small halo, drawn over the fog (they're yours). @param {number} alpha @param {number} now */
+  function drawSwarm(alpha, now) {
     const s = Math.max(T, 2 * dpr)
     const hr = Math.max(T * 2, 6 * dpr)
     for (const b of game.swarm) {
-      const f = Math.min(1, (game.tick - b.movedAt + alpha) / Math.max(1, game.cfg.swarm.moveTicks))
-      let dx = b.x - b.from.x
-      if (Math.abs(dx) > 1) dx = -Math.sign(dx)
-      const [x, y] = at({ x: b.from.x + dx * f, y: b.from.y + (b.y - b.from.y) * f })
+      const p = workerAt(b, alpha)
+      const [x, y] = at(p)
       if (x < -hr || y < -hr || x > W + hr || y > H + hr) continue
+      if (b.target && b.pullFor > 20) specks(b.target, p, now, game.world.tiles[b.target.y * w + b.target.x] === Tile.Loot ? LOOT : ORE) // your dust stream (b4.7)
       const halo = ctx.createRadialGradient(x, y, 0, x, y, hr)
       halo.addColorStop(0, `rgba(${BUG},0.5)`)
       halo.addColorStop(1, `rgba(${BUG},0)`)
@@ -267,7 +276,7 @@ export function createRenderer(canvas, game, ui, view) {
     drawRings(now)
     drawStreams(now)
     drawBugs(ctx, /** @type {any} */ (game), alpha, now, sx, sy, T) // b3.7's wild bugs (D056–D061)
-    drawSwarm(alpha)
+    drawSwarm(alpha, now)
     drawFlights(now)
     drawPrice()
     drawLedger(now)

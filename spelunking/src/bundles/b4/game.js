@@ -82,7 +82,7 @@ export const CONFIG = {
  *   | { type: 'pulled', x: number, y: number, tile: number, to: Cell }
  *   | { type: 'built', edge: number, from: number, price: number }
  *   | { type: 'refused', edge: number, reason: 'ore' | 'off' | 'far' | 'built' }
- *   | { type: 'dug', x: number, y: number, tile: number, to: Cell } | { type: 'haul', x: number, y: number, ore: number, loot: number }
+ *   | { type: 'dug', x: number, y: number, tile: number, by: number } | { type: 'haul', x: number, y: number, ore: number, loot: number }
  *   | { type: 'board', car: number } | { type: 'exit', car: number }
  *   | { type: 'nibble', id: number, x: number, y: number, from: Cell } | { type: 'tamed', id: number, x: number, y: number, slot: number }
  *  } GameEvent bugs.js adds the wild bugs'; tamed has slot -1 (to the ledger)
