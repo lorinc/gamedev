@@ -18,6 +18,7 @@ build b4.9: 2026-09-28 · p11: b4.9, after the first edge only built edges' ends
 build b4.10: 2026-09-28 · p11: b4.10, the garden: bugs green the back wall, vines grow, glowing red fruit on the ledger (D089)
 build b4.11: 2026-09-28 · p11: b4.11, bugs mine within 4 px (D090)
 build b4.12: 2026-09-28 · p11: b4.12, worms turn fruit into ore deposits, fruit stops glowing, your pull favours the scarcest resource (D091–D093)
+build b4.13: 2026-09-28 · p11: b4.13, fruit buys the bugs' reach (16, 32, 64…), wild bugs drawn like tamed in blue, no taming particles (D094)
 ---
 
 # p11 · b4 · Rail Loop
