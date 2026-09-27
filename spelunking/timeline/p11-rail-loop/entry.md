@@ -110,6 +110,31 @@ the ore stream and the build, boarding the car, a swipe ride to the far node. Cl
 - Edges are short (3–7 tiles on seed 1): D078's spacing of 3 cells.
 Not yet: the bugs (step 8). Not pushed: a new bundle needs the build check and a freeze (R13, R16).
 
+**b4.2, the user's notes on b4.1 (2026-09-27, D080, D081, D082; plan: `next-b4.2.md`).** Built in the plan's order,
+each step play-checked in headless Chromium (screenshots `gallery/p11/b4.2_*`):
+1. The world: a tile is one v5 pixel, all of v5's map (240 × ~528 px) under v6's sheet (solid, drawn with no
+   fog, stars above), the sea at the bottom solid; network C routed over the whole depth (rails 120–320 ms,
+   the whole map 0.4–0.7 s); b3.7's ore layer (≈10% of rock, as b3.7), loot 50‰ and hard/soft split
+   (≈42% hard) at the map's size, wrapping. The pod's interior starts seen; nothing is always lit.
+2. Nodes: the network's show for good, the rest only within 12 px; edges build only from a network node
+   within 12 px of the bot.
+3. Speeds: walk 12 px/s, ride 80 px/s (knobs `sim.walkSpeed`, `sim.rideSpeed`, in px/s now).
+4. The pack: b3.7's, ore and loot slots reserved, drawn at the top of the screen (the bot is 1 px), with the
+   ore-against-price bar under it; a refused build blinks it red, as b3's did.
+5. Bugs: b3.7's as they are, with b3.7's numbers. A 1 s hold within 60 CSS px of the bot places one (E held
+   1 s on a keyboard), with b3's filling ring.
+Claude's calls while building (D082):
+- Lit rock goes 4 px deep (knob `sim.light.face`): at 1 px, b3's one-tile face was a hairline.
+- The light grows +1 px per 4 ore or 2 loot (b3's per 16 / 8 tiles ×4); the scan runs a ring a tick (0.4 s to
+  radius 24, about b4.1's 0.5 s). An edge's heading is read 12 px out (b4.1's 3 tiles).
+- Nodes are drawn as rings: at 1 px a tamed bug is a warm dot too.
+- The fog and the world textures change pixel by pixel (a whole repaint each step was too slow to play).
+- Zoom levels 2–24 device px a tile, default about 100 px across the short side.
+- b3's wild-bug glow through the fog is left out (2 px at this scale).
+Seen in the check: the start cave is small and all lit, so no wild bug can appear in it (b3's rule: dark cells
+only); in a big cave a chaser came at once and one was tamed within 5 s. b3.7's `seek` of 20 steps is 20 px now:
+`sim.bugs.seek` is on the panel, with the other bug numbers, for tuning in play.
+
 ## Feedback
 
 - **b4.1 (user, 2026-09-27, `feedback/2026-09-27_lorinc_b4.1.md`):** wants v5's terrain gen and scale, p10's
