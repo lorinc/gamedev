@@ -112,4 +112,9 @@ Not yet: the bugs (step 8). Not pushed: a new bundle needs the build check and a
 
 ## Feedback
 
+- **b4.1 (user, 2026-09-27, `feedback/2026-09-27_lorinc_b4.1.md`):** wants v5's terrain gen and scale, p10's
+  network C, v6's ice sheet, and b3.7's bugs, ore, hard/soft rock and inventory; problems: travel nodes should
+  show only within 3 tiles, building only extends the existing network, the spider is too fast (the rails
+  have no purpose), not enough ore on the map. The plan for b4.2: `next-b4.2.md` (build next session).
+
 ## Conclusion → next
