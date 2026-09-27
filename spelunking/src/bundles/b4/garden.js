@@ -3,7 +3,7 @@
 // turning green starts a vine there, and every `growTicks` each vine's tip grows a pixel into a green
 // neighbour, keeping its heading if it can, else any; a tip with no green round it stops. Every
 // `perFruit` px of vine makes a red fruit every `fruitTicks` (on average: an accumulator, then a random vine
-// pixel with no fruit gets one). Fruit glows; it's a resource: if it exists, it can be harvested (the user),
+// pixel with no fruit gets one). Fruit doesn't glow (b4.12); it's a resource: if it exists, it can be harvested (the user),
 // seen or not, by you (your pull, within the light) and by bugs (within reach, up to swarm.fruitCarry each).
 // Randomness from the tick (rng.js), like the bugs.
 

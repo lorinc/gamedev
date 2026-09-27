@@ -169,6 +169,8 @@ then only the ends of built edges show, as quiet rings (b4.9 fixed b4.8, which k
 Then (D089, the user): the garden (`garden.js`): bugs green the back wall, vines grow on green, 12 px of vine
 make a red fruit a minute; fruit glows, is harvested by you and bugs (8 a bug) and sits on the ledger's 4th row.
 Then (D090, the user): bugs mine within 4 px.
+Then (D091–D093, the user): worms (`worms.js`) spawn where fruit is dense, eat 8, burrow and curl up into
+12 px of ore inside the rock; fruit no longer glows; your pull goes for the kind the ledger holds least of.
 
 ## Feedback
 

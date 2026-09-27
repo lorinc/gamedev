@@ -9,7 +9,9 @@
 // the ledger, a column in the top-right corner (ore, loot, bugs); the selected edge flashes green, a refused
 // build pulses it red, a build streams ore from the ledger's ore icon to the site; tamed bugs at work (warm
 // dots) and their hauls flying to the ledger's icons. b4.10: the green back wall and vines in the texture, the
-// red fruit glowing over the fog, fruit on the ledger.
+// red fruit as a plain red pixel under the fog (it glowed in b4.10; the user: "fruits should not glow"), fruit
+// on the ledger. b4.12: worms, dark red and striped, drawn over the fog (so you see them burrow), and their
+// deposits turning to ore in the texture.
 
 import { cellRgb } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
@@ -41,7 +43,7 @@ const RING_TRAIL = 4
 const EDGE = 3 // px over which the light fades out
 const FRUIT_C = [235, 40, 50]
 /** @type {Record<number, number[]>} */
-const WALL_RGB = { [MOSS]: [22, 58, 30], [VINE]: [60, 140, 55], [FRUIT]: [60, 140, 55] }
+const WALL_RGB = { [MOSS]: [22, 58, 30], [VINE]: [60, 140, 55], [FRUIT]: FRUIT_C }
 
 /** @param {HTMLCanvasElement} canvas @param {Game} game @param {Ui} ui @param {{ zoom: number }} view */
 export function createRenderer(canvas, game, ui, view) {
@@ -173,7 +175,12 @@ export function createRenderer(canvas, game, ui, view) {
       const who = e.type === 'dug' ? game.swarm[e.by] : null
       const to = () => /** @type {[number, number]} */ (at(who ? workerAt(who, 0) : botAt(game, 0)))
       fly(cell(e), to, now, 0.45, e.tile === FRUIT_TILE ? `rgb(${FRUIT_C})` : e.tile === Tile.Ore ? ORE : LOOT)
-    } else if (e.type === 'ring') rings.push({ x: e.x, y: e.y, r: e.r, s: now })
+    } else if (e.type === 'deposit')
+      for (const i of e.cells) {
+        paintTile(i)
+        tctx.putImageData(timg, 0, 0, i % w, Math.floor(i / w), 1, 1)
+      }
+    else if (e.type === 'ring') rings.push({ x: e.x, y: e.y, r: e.r, s: now })
     else if (e.type === 'nibble') fly(icon('ore'), cell(e), now, 0.5, ORE, 0)
     else if (e.type === 'tamed') fly(cell(e), icon('bugs'), now, 0.9, `rgb(${BUG})`, 0)
     else if (e.type === 'haul') {
@@ -238,7 +245,7 @@ export function createRenderer(canvas, game, ui, view) {
     return game.garden.wall[i] === FRUIT ? `rgb(${FRUIT_C})` : world.tiles[i] === Tile.Loot ? LOOT : ORE
   }
 
-  /** The garden's changed pixels into the texture, and the fruit glowing over the fog (b4.10). */
+  /** The garden's changed pixels into the texture (b4.10; fruit is a red pixel there, b4.12). */
   function drawGarden() {
     const G = game.garden
     for (const i of G.changed) {
@@ -246,18 +253,18 @@ export function createRenderer(canvas, game, ui, view) {
       tctx.putImageData(timg, 0, 0, i % w, Math.floor(i / w), 1, 1)
     }
     G.changed.length = 0
+  }
+
+  /** Worms (b4.12): 12 px of dark red, striped every other px; the head a little brighter. */
+  function drawWorms() {
     const s = Math.max(T, 2 * dpr)
-    const hr = Math.max(T * 2.5, 6 * dpr)
-    for (const i of G.fruit) {
-      const [x, y] = at({ x: i % w, y: Math.floor(i / w) })
-      if (x < -hr || y < -hr || x > W + hr || y > H + hr) continue
-      const halo = ctx.createRadialGradient(x, y, 0, x, y, hr)
-      halo.addColorStop(0, `rgba(${FRUIT_C},0.45)`)
-      halo.addColorStop(1, `rgba(${FRUIT_C},0)`)
-      ctx.fillStyle = halo
-      ctx.fillRect(x - hr, y - hr, hr * 2, hr * 2)
-      ctx.fillStyle = `rgb(${FRUIT_C})`
-      ctx.fillRect(Math.round(x - s / 2), Math.round(y - s / 2), Math.round(s), Math.round(s))
+    for (const m of game.worms) {
+      for (let k = m.body.length - 1; k >= 0; k--) {
+        const [x, y] = at(m.body[k])
+        if (x < -s || y < -s || x > W + s || y > H + s) continue
+        ctx.fillStyle = k === 0 ? 'rgb(170,40,45)' : k % 2 ? 'rgb(70,8,14)' : 'rgb(125,22,30)'
+        ctx.fillRect(Math.round(x - s / 2), Math.round(y - s / 2), Math.round(s), Math.round(s))
+      }
     }
   }
 
@@ -324,6 +331,7 @@ export function createRenderer(canvas, game, ui, view) {
     drawStreams(now)
     drawBugs(ctx, /** @type {any} */ (game), alpha, now, sx, sy, T) // b3.7's wild bugs (D056–D061)
     drawSwarm(alpha, now)
+    drawWorms()
     drawFlights(now)
     drawPrice()
     drawLedger(now)

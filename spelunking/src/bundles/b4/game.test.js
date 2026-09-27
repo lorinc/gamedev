@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { addBug } from '../../sim/dig/bugs.js'
-import { isOpen } from '../../sim/gen/world.js'
+import { isOpen, Tile } from '../../sim/gen/world.js'
 import { buildable, command, CONFIG, createGame, heading, shown, tick } from './game.js'
 import { makeMap } from './world.js'
 
@@ -140,8 +140,9 @@ test('bugs green the back wall, vines grow on green, and 12 px of vine make a fr
   assert.ok(wall.filter((v) => v === VINE || v === FRUIT).length > 5, 'vines')
   for (let i = 0; i < wall.length; i++) if (wall[i]) assert.ok(isOpen(MAP.world.tiles[i]), 'only the back wall (open pixels)')
 
-  // the rate alone: 120 px of vine, no bugs, 5 minutes: about 50 fruit
+  // the rate alone: 120 px of vine, no bugs, no worms, 5 minutes: about 50 fruit
   const h = fresh()
+  h.cfg.worms.max = 0
   let n = 0
   for (let i = 0; i < h.garden.wall.length && n < 120; i++)
     if (isOpen(MAP.world.tiles[i])) {
@@ -174,4 +175,86 @@ test('your pull takes a fruit in the light even unseen, to the ledger (b4.10)', 
   for (let t = 0; t < CONFIG.pull.ticks + 2; t++) tick(g)
   assert.equal(g.ledger.fruit, 1)
   assert.equal(g.garden.fruit.size, 0)
+})
+
+test('dense fruit spawns a worm; it eats 8, burrows, and curls up into 12 px of ore inside the rock (b4.12)', async () => {
+  const { FRUIT } = await import('./garden.js')
+  const g = fresh()
+  const { w, h } = MAP.world
+  // 40 fruit on the open pixels nearest the start (a breadth-first walk through open air)
+  const start = g.ch.y * w + g.ch.x
+  const q = [start]
+  const got = new Set(q)
+  for (let k = 0; k < q.length && q.length < 400; k++) {
+    const x = q[k] % w
+    const y = (q[k] - x) / w
+    for (const [dx, dy] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ]) {
+      const ny = y + dy
+      const n = ny * w + ((x + dx + w) % w)
+      if (ny < 0 || ny >= h || got.has(n) || !isOpen(MAP.world.tiles[n])) continue
+      got.add(n)
+      q.push(n)
+    }
+  }
+  for (const i of q.slice(0, 40)) {
+    g.garden.wall[i] = FRUIT
+    g.garden.fruit.add(i)
+    g.garden.vines.push(i)
+  }
+  /** @type {number[] | null} */
+  let deposit = null
+  let spawned = 0
+  for (let t = 0; t < 60 * 60 * 10 && !deposit; t++) {
+    tick(g)
+    for (const e of g.events) {
+      if (e.type === 'worm') spawned++
+      if (e.type === 'deposit') deposit = e.cells
+    }
+    g.events.length = 0
+  }
+  assert.ok(spawned > 0, 'a worm spawned')
+  assert.ok(deposit, 'a worm curled up')
+  assert.equal(deposit.length, 12)
+  for (const i of deposit) {
+    assert.equal(MAP.world.tiles[i], Tile.Ore)
+    const x = i % w
+    const y = (i - x) / w
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) assert.ok(!isOpen(MAP.world.tiles[(y + dy) * w + ((x + dx + w) % w)]), 'never at the surface')
+  }
+})
+
+test('your pull goes for the kind the ledger holds least of, even when another is nearer (b4.12)', () => {
+  const g = createGame(MAP, JSON.parse(JSON.stringify(CONFIG)))
+  g.cfg.worms.max = 0
+  const { w } = MAP.world
+  // rock pixels near the bot: the nearest becomes loot, one farther ore (both seen)
+  /** @type {{ i: number, d: number }[]} */
+  const rock = []
+  for (let dy = -6; dy <= 6; dy++)
+    for (let dx = -6; dx <= 6; dx++) {
+      const i = (g.ch.y + dy) * w + g.ch.x + dx
+      if (!isOpen(MAP.world.tiles[i]) && dx * dx + dy * dy <= 36) rock.push({ i, d: dx * dx + dy * dy })
+    }
+  rock.sort((p, q) => p.d - q.d)
+  const loot = rock[0].i
+  const ore = rock[rock.length - 1].i
+  MAP.world.tiles[loot] = Tile.Loot
+  MAP.world.tiles[ore] = Tile.Ore
+  g.seen[loot] = g.seen[ore] = 1
+  g.ledger.loot = 50
+  /** @type {number | null} */
+  let first = null
+  for (let t = 0; t < CONFIG.pull.ticks * 2 && first === null; t++) {
+    tick(g)
+    const e = g.events.find((e) => e.type === 'pulled')
+    if (e && e.type === 'pulled') first = e.tile
+    g.events.length = 0
+  }
+  assert.equal(first, Tile.Ore)
 })
