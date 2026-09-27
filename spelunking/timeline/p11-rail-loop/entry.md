@@ -167,6 +167,7 @@ dust stream and flight. Then (D088, the user): only network nodes show; the pod'
 then only the ends of built edges show, as quiet rings (b4.9 fixed b4.8, which kept the pod's showing).
 Then (D089, the user): the garden (`garden.js`): bugs green the back wall, vines grow on green, 12 px of vine
 make a red fruit a minute; fruit glows, is harvested by you and bugs (8 a bug) and sits on the ledger's 4th row.
+Then (D090, the user): bugs mine within 4 px.
 
 ## Feedback
 

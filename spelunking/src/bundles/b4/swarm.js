@@ -34,7 +34,7 @@ import { fruitNear, greenAround, pick } from './garden.js'
 export const SWARM = {
   tripTicks: 1800, // 30 s (the user, b4.7; was 2 min)
   moveTicks: 12, // b3.7's bugs: 5 px/s
-  reach: 2,
+  reach: 4, // px a bug mines and picks within (the user, b4.11; was 2)
   pullTicks: 60, // a unit a second at most, like your pull
   spawn: 12, // px round a network node (nodeReach)
   fruitCarry: 8, // fruit a bug holds at most (the user, b4.10)
