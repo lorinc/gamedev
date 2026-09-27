@@ -136,11 +136,30 @@ Seen in the check: the start cave is small and all lit, so no wild bug can appea
 only); in a big cave a chaser came at once and one was tamed within 5 s. b3.7's `seek` of 20 steps is 20 px now:
 `sim.bugs.seek` is on the panel, with the other bug numbers, for tuning in play.
 
+**b4.3, the user's notes on b4.2 (2026-09-27, D083; plan: `next-b4.3.md`).** The game turns incremental.
+Built in the plan's order; tests (`src/bundles/b4/game.test.js`, the new sight tests in light.test.js) and a
+headless Chromium check (screenshots `gallery/p11/b4.3*`):
+1. The light: a fixed 8 px, line of sight (`sightCells` in `src/sim/dig/light.js`, b3 keeps its flood), rock lit
+   1 px deep; its last 3 px fade out. The pull reaches 8 px too.
+2. Nodes never in rock: v8 mode C skips a vertex whose tile centre is rock (v8's page gets it too). Seeds 1–5:
+   0 nodes in rock (was 24–37), ~380 nodes on rails as before.
+3. The ledger, top right: ore, loot, bugs. Pulls count there; the build gesture is tap node, drag, release,
+   tap the green-flashing edge; the price shows on it; red pulse and a red ore count when short.
+4. Wild bugs nibble the ledger; 16 fed is +1 bug (bugs.js's `ledger` switch; b3 unchanged). Tamed bugs:
+   `swarm.js`, knobs `sim.swarm.*` on the panel (trip 2 min, 5 px/s, a unit a second within 2 px).
+5. The user, mid-build: walking at any angle (a drag's angle; keys stay 8-way), the scan's cooldown 1 s.
+Gone: the pack, the bug bar, placing bugs (the 1 s hold, E), placed bugs mining, the X and hammer, the ore
+streaming into the node.
+Seen in the check: the start cave has loot but little ore within 8 px, so the first edge takes some walking.
+
 ## Feedback
 
 - **b4.1 (user, 2026-09-27, `feedback/2026-09-27_lorinc_b4.1.md`):** wants v5's terrain gen and scale, p10's
   network C, v6's ice sheet, and b3.7's bugs, ore, hard/soft rock and inventory; problems: travel nodes should
   show only within 3 tiles, building only extends the existing network, the spider is too fast (the rails
   have no purpose), not enough ore on the map. The plan for b4.2: `next-b4.2.md` (build next session).
+- **b4.2 (user, 2026-09-27, `feedback/2026-09-27_lorinc_b4.2.md`):** the light far too big and lighting 4 px into
+  rock; wants line of sight; then the incremental turn: one ledger, abstract tamed bugs, a simpler build, a
+  fixed light. The plan: `next-b4.3.md`; built as b4.3 (D083).
 
 ## Conclusion → next

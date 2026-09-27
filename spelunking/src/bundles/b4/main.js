@@ -42,7 +42,7 @@ history.replaceState(null, '', urlFor(seed))
 const map = makeMap(seed, tunables.world)
 const game = createGame(map, tunables.sim)
 /** @type {import('./render.js').Ui} */
-const ui = { preview: null, select: null, refusedAt: -9, charge: null }
+const ui = { preview: null, select: null, refusedAt: -9 }
 const canvas = /** @type {HTMLCanvasElement} */ ($('game'))
 const renderer = createRenderer(canvas, game, ui, tunables.view)
 let now = 0 // seconds, the frame's
@@ -63,17 +63,18 @@ const panel = createPanel(
     'sim.pull.ticks': [1, 300, 1],
     'sim.price': [1, 40, 1],
     'sim.nodeReach': [2, 40, 1],
-    'sim.light.base': [4, 48, 1],
-    'sim.streamTicks': [1, 20, 1],
+    'sim.light.base': [2, 48, 1],
     'sim.rideSpeed': [10, 400, 5],
     'sim.bugs.seek': [4, 160, 1],
     'sim.bugs.moveTicks': [1, 30, 1],
     'sim.bugs.tame': [1, 64, 1],
-    'sim.bugs.light': [0, 32, 1],
     'sim.bugs.block': [8, 128, 4],
-    'sim.bugs.den': [0, 64, 1],
-    'sim.bugs.mine.reach': [2, 64, 1],
-    'sim.bugs.mine.ticks': [60, 1800, 30],
+    'sim.bugs.chasers': [0, 12, 1],
+    'sim.swarm.tripTicks': [600, 36000, 600],
+    'sim.swarm.moveTicks': [1, 60, 1],
+    'sim.swarm.pullTicks': [1, 600, 5],
+    'sim.swarm.reach': [1, 8, 1],
+    'sim.swarm.spawn': [0, 64, 1],
     'view.zoom': [-1, ZOOM_PX.length - 1, 1],
   },
   {
@@ -130,39 +131,28 @@ createInput(canvas, {
   hit: (cx, cy) => {
     const dpr = renderer.dpr()
     const T = renderer.tilePx()
-    const b = renderer.buttons()
-    if (b) {
-      const r = Math.max(T * 0.6, 20 * dpr) / T + 0.2 // tiles
-      for (const id of /** @type {const} */ (['build', 'cancel'])) {
-        const c = b[id]
-        const p = renderer.toWorld(cx, cy)
-        let dx = Math.abs(p.x - c.x)
-        dx = Math.min(dx, map.world.w - dx)
-        if (Math.hypot(dx, p.y - c.y) <= r) return { kind: 'button', id }
-      }
-    }
-    if (game.ride) return null // in a car a drag is a swipe, also on the node it stands on
     const p = renderer.toWorld(cx, cy)
-    const reach = Math.max(0.9, (24 * dpr) / T)
+    const reach = Math.max(0.9, (24 * dpr) / T) // px of the world a finger covers
+    /** @param {{ x: number, y: number }} c */
+    const d = (c) => {
+      let dx = Math.abs(p.x - (c.x + 0.5))
+      dx = Math.min(dx, map.world.w - dx)
+      return Math.hypot(dx, p.y - (c.y + 0.5))
+    }
+    // the selected edge: a tap on it builds (b4.3)
+    if (ui.select && map.edges[ui.select.edge].path.some((c) => d(c) <= reach)) return { kind: 'edge' }
+    if (game.ride) return null // in a car a drag is a swipe, also on the node it stands on
     let best = -1
     let bestD = reach
     map.nodes.forEach((n, i) => {
       if (!game.net[i] || !near(game, i)) return // only the network grows, from where you are (D080)
-      let dx = Math.abs(p.x - (n.x + 0.5))
-      dx = Math.min(dx, map.world.w - dx)
-      const d = Math.hypot(dx, p.y - (n.y + 0.5))
-      if (d < bestD) {
-        bestD = d
+      if (d(n) < bestD) {
+        bestD = d(n)
         best = i
       }
     })
-    if (best >= 0) return { kind: 'node', node: best }
-    // near the bot, with a tamed bug to place: the hold (D080)
-    const bot = renderer.botCss()
-    return game.bar.length && Math.hypot(cx - bot.x, cy - bot.y) <= 60 ? { kind: 'bot' } : null
+    return best >= 0 ? { kind: 'node', node: best } : null
   },
-  charge: (at) => (ui.charge = at && { ...at, s: now }),
-  place: () => command(game, { type: 'place' }),
   preview: (node) => {
     ui.preview = node
     if (node !== null) ui.select = null
@@ -172,19 +162,11 @@ createInput(canvas, {
     const edge = aimEdge(node, dx, dy)
     ui.select = edge >= 0 ? { node, edge } : null
   },
-  button: (id) => {
+  build: () => {
     const s = ui.select
     if (!s) return
-    if (id === 'cancel') {
-      ui.select = null
-      return
-    }
-    if (buildable(game, s.edge, s.node)) {
-      ui.refusedAt = now // not enough ore (or a build under way): the hammer blinks red
-      return
-    }
-    command(game, { type: 'build', edge: s.edge, from: s.node })
-    ui.select = null
+    if (buildable(game, s.edge, s.node)) ui.refusedAt = now // short of ore: the red pulse, nothing built
+    else command(game, { type: 'build', edge: s.edge, from: s.node })
   },
   zoom: (steps) => {
     const next = Math.min(Math.max(renderer.level() + steps, 0), ZOOM_PX.length - 1)
@@ -215,6 +197,7 @@ function frame(t) {
   for (const e of game.events) {
     renderer.onEvent(e, now)
     if (e.type === 'refused') ui.refusedAt = now
+    if (e.type === 'built') ui.select = null
   }
   game.events.length = 0
   renderer.draw(acc / TICK_MS, Math.min(ms, 100) / 1000, now)
@@ -229,7 +212,8 @@ function frame(t) {
         `pos ${game.ch.x},${game.ch.y} · light r ${game.radius} · ${game.ride ? 'in a car' : game.step ? 'walking' : 'still'}`,
         `nodes on the network ${onNet}/${map.nodes.length}, near ${nearby} · edges built ${built}/${map.edges.length} · cars ${game.cars.length}`,
         `scan ${game.tick < game.scanAt ? `in ${((game.scanAt - game.tick) / 60).toFixed(1)} s` : 'ready'}`,
-        `bugs: wild ${game.bugs.filter((b) => b.kind === 'wild').length} (chasing ${game.bugs.filter((b) => b.chasing).length}) · fed ${game.fed}/${game.cfg.bugs.tame} · bar ${game.bar.length} · placed ${game.bugs.filter((b) => b.kind === 'placed').length}`,
+        `ledger: ore ${game.ledger.ore} · loot ${game.ledger.loot} · bugs ${game.ledger.bugs} (at work ${game.swarm.length}, carrying ${game.swarm.reduce((a, b) => a + b.ore + b.loot, 0)})`,
+        `wild bugs ${game.bugs.length} (chasing ${game.bugs.filter((b) => b.chasing).length}) · fed ${game.fed}/${game.cfg.bugs.tame}`,
         '` or tap the top-left corner: close',
       ].join('\n'),
     )

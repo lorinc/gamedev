@@ -37,7 +37,7 @@ export const RKNOBS = {
  * @param {'A' | 'B' | 'C'} mode @param {RKnobs} S @param {number} seed
  */
 export function rails(T, G, frame, mode, S, seed) {
-  const net = mode === 'B' ? coarse(T, frame, S, seed) : chords(T, G, frame, S)
+  const net = mode === 'B' ? coarse(T, frame, S, seed) : chords(T, G, frame, S, mode === 'C')
   let rails = net.rails
   if (mode === 'C') {
     rails = route(T, frame, net.nodes, rails, S)
@@ -99,8 +99,13 @@ function inMap(T, F, x, y) {
   return c !== SKY && c !== SEA
 }
 
-/** A: open vertices of the caves' grid, the most open first, `spacing` apart; chords between them. @param {import('../v6/terrain.js').Terrain} T @param {import('../v5/quadcaves.js').Grid} G @param {{top: number, rows: number}} F @param {RKnobs} S */
-function chords(T, G, F, S) {
+/**
+ * A: open vertices of the caves' grid, the most open first, `spacing` apart; chords between them. `centred`
+ * (C): C moves each node to its tile's centre, so a vertex whose tile centre isn't open is no candidate and
+ * the next most open takes its place: no node ends in rock (b4.3, the user's call).
+ * @param {import('../v6/terrain.js').Terrain} T @param {import('../v5/quadcaves.js').Grid} G @param {{top: number, rows: number}} F @param {RKnobs} S @param {boolean} [centred]
+ */
+function chords(T, G, F, S, centred = false) {
   const { w, h, cls } = T
   // how far each open pixel is from rock (4-way steps)
   const dist = new Int32Array(w * h).fill(-1)
@@ -128,6 +133,7 @@ function chords(T, G, F, S) {
     const x = ((m.x[v] * 10) / Math.sqrt(3)) * K
     const y = (m.y[v] * 6 + 6) * K
     if (!inMap(T, F, x, y) || !openAt(T, x, y)) continue
+    if (centred && !openAt(T, (Math.floor(x / K) + 0.5) * K, (Math.floor(y / K) + 0.5) * K)) continue
     verts.push({ x, y, d: dist[Math.floor(y) * w + (Math.floor(x) % w)] })
   }
   verts.sort((p, q) => q.d - p.d || p.y - q.y || p.x - q.x)

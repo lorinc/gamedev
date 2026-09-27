@@ -4,23 +4,22 @@
 // as v6 draws them, the sheet and space with no fog (scenery); the bot is its pixel with a halo, so it's
 // seen; the zoom levels go down to 2 device px a tile; the textures change pixel by pixel, never whole
 // (123k tiles: a whole repaint each step was too slow to play, not tuning).
-// New: nodes glow (the network's, and the rest near the bot), built rails, the travel pods (cars), the spider bot, ore flying
-// into the pack and out into a node, the ore count against an edge's price, and the build buttons in b3's
-// cue style (a disc with its symbol cut out): a red X and a green hammer.
+// New: nodes glow (the network's, and the rest near the bot), built rails, the travel pods (cars), the spider
+// bot, ore flying to the bot as it's pulled. b4.3: the light fades out over its last EDGE px (drawing only);
+// the ledger, a column in the top-right corner (ore, loot, bugs); the selected edge flashes green, a refused
+// build pulses it red, a build streams ore from the ledger's ore icon to the site; tamed bugs at work (warm
+// dots) and their hauls flying to the ledger's icons.
 
-import { cellRgb, TILE_RGB } from '../../render/palette.js'
+import { cellRgb } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
-import { count } from '../../sim/dig/pack.js'
-import { drawBar, drawBugs, drawPack, drawStream, failAlpha, packLayout } from '../b3/render.js'
+import { drawBugs } from '../b3/render.js'
 import { botAt, shown } from './game.js'
 import { OPEN, ROCK, SHEET, SPACE } from './world.js'
+import { ledgerKinds } from './ledger.js'
 
 /** @typedef {import('./game.js').Game} Game */
 /** @typedef {import('./world.js').Cell} Cell */
-/**
- * @typedef {{ preview: number | null, select: { node: number, edge: number } | null, refusedAt: number,
- *   charge: { x: number, y: number, s: number } | null }} Ui charge: a hold near the bot (CSS px, since `s` seconds) that places a bug at 1 s
- */
+/** @typedef {{ preview: number | null, select: { node: number, edge: number } | null, refusedAt: number }} Ui */
 
 export const ZOOM_PX = [2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24] // tile sizes in device px
 const AUTO_TILES = 100 // the default zoom: about this many tiles across the short side
@@ -34,9 +33,10 @@ const CAR = '#e6a03c'
 const ORE = 'rgb(236,164,40)'
 const GREEN = '#5ac878'
 const RED = '#ff2828'
+const LOOT = 'rgb(64,232,214)'
+const BUG = [255, 190, 90] // tamed: amber (D059)
 const RING_TRAIL = 4
-const PACK_TP = 44 // the pack is drawn as b3's character's at this many CSS px a tile
-const PACK_FIT = 0.75 // b3's view.packFit
+const EDGE = 3 // px over which the light fades out
 
 /** @param {HTMLCanvasElement} canvas @param {Game} game @param {Ui} ui @param {{ zoom: number }} view */
 export function createRenderer(canvas, game, ui, view) {
@@ -65,7 +65,16 @@ export function createRenderer(canvas, game, ui, view) {
   const DIM = Math.round(DIM_A * 255)
   /** @param {number} i */
   const paintFogAt = (i) => {
-    fimg.data[i * 4 + 3] = lit[i] || unfogged(i) ? 0 : game.seen[i] ? DIM : 255
+    let a = unfogged(i) ? 0 : game.seen[i] ? DIM : 255
+    if (lit[i] && a) {
+      // the soft edge: clear inside, fading to the seen dim over the last EDGE px
+      const x = i % w
+      let dx = Math.abs(x - game.ch.x)
+      dx = Math.min(dx, w - dx)
+      const d = Math.hypot(dx, (i - x) / w - game.ch.y)
+      a = Math.round(DIM * Math.min(1, Math.max(0, (d - (game.radius - EDGE)) / EDGE)))
+    }
+    fimg.data[i * 4 + 3] = a
   }
   for (let i = 0; i < w * h; i++) {
     paintTile(i)
@@ -136,33 +145,91 @@ export function createRenderer(canvas, game, ui, view) {
 
   /** @type {{ x: number, y: number, r: number, s: number }[]} */
   const rings = []
-  /** @type {{ from: Cell, to: Cell, s: number, dur: number, color: string }[]} */
+  /** @typedef {() => [number, number]} End a point on screen, device px, read each frame (the camera moves) */
+  /** @type {{ from: End, to: End, s: number, dur: number, color: string, arc: number }[]} */
   const flights = []
+  /** @param {Cell} c @returns {End} */
+  const cell = (c) => () => /** @type {[number, number]} */ (at(c))
+  /** @param {string} kind @returns {End} */
+  const icon = (kind) => () => ledgerIcon(kind)
+  /** @param {End} from @param {End} to @param {number} s @param {number} dur @param {string} color @param {number} [arc] */
+  const fly = (from, to, s, dur, color, arc = 1) => flights.push({ from, to, s, dur, color, arc })
 
   /** @param {import('./game.js').GameEvent} e @param {number} now seconds */
   function onEvent(e, now) {
     if (e.type === 'seen') e.cells.forEach(fogChanged)
-    else if (e.type === 'pulled') {
-      const i = e.y * w + e.x
-      paintTile(i)
+    else if (e.type === 'pulled' || e.type === 'dug') {
+      paintTile(e.y * w + e.x)
       tctx.putImageData(timg, 0, 0, e.x, e.y, 1, 1)
-      flights.push({ from: { x: e.x, y: e.y }, to: e.to, s: now, dur: 0.45, color: e.tile === Tile.Ore ? ORE : 'rgb(64,232,214)' })
-    } else if (e.type === 'fed') {
-      flights.push({ from: e.from, to: map.nodes[e.node], s: now, dur: 0.35, color: ORE })
+      // yours flies to you (and counts on the ledger: no stream to it, the user); a bug's to the bug
+      fly(cell(e), cell(e.to), now, e.type === 'pulled' ? 0.45 : 0.3, e.tile === Tile.Ore ? ORE : LOOT, e.type === 'pulled' ? 1 : 0.2)
     } else if (e.type === 'ring') rings.push({ x: e.x, y: e.y, r: e.r, s: now })
-    else if (e.type === 'nibble') flights.push({ from: e.from, to: { x: e.x, y: e.y }, s: now, dur: 0.4, color: ORE })
-    else if (e.type === 'handed') flights.push({ from: { x: e.x, y: e.y }, to: e.to, s: now, dur: 0.4, color: ORE })
+    else if (e.type === 'nibble') fly(icon('ore'), cell(e), now, 0.5, ORE, 0)
+    else if (e.type === 'tamed') fly(cell(e), icon('bugs'), now, 0.9, `rgb(${BUG})`, 0)
+    else if (e.type === 'haul') {
+      for (let k = 0; k < Math.min(e.ore, 12); k++) fly(cell(e), icon('ore'), now + k * 0.06, 0.9, ORE, 0)
+      for (let k = 0; k < Math.min(e.loot, 6); k++) fly(cell(e), icon('loot'), now + k * 0.08, 0.9, LOOT, 0)
+    } else if (e.type === 'built') {
+      const site = cell(map.nodes[e.from])
+      for (let k = 0; k < e.price; k++) fly(icon('ore'), site, now + k * 0.05, 0.7, ORE, 0)
+    }
   }
 
-  /** Where the build buttons are, in tiles (centres): the X over the node, the hammer along the edge, a thumb apart on screen. */
-  function buttons() {
-    const s = ui.select
-    if (!s) return null
-    const e = map.edges[s.edge]
-    const p = e.a === s.node ? e.path : [...e.path].reverse()
-    const k = Math.min(p.length - 1, Math.round((56 * dpr) / T))
-    const n = map.nodes[s.node]
-    return { cancel: { x: n.x + 0.5, y: n.y + 0.5 - (48 * dpr) / T }, build: { x: p[k].x + 0.5, y: p[k].y + 0.5 } }
+  // The ledger (b4.3): a column in the top-right corner, an icon and its count a row
+  const ROW = 30
+  /** An icon's centre, device px. @param {string} kind @returns {[number, number]} */
+  function ledgerIcon(kind) {
+    const k = Math.max(0, ledgerKinds.indexOf(kind))
+    return [W - 22 * dpr, (22 + k * ROW) * dpr]
+  }
+  /** @param {number} now */
+  function drawLedger(now) {
+    const refused = now - ui.refusedAt < 0.7 && Math.sin((now - ui.refusedAt) * Math.PI * 8) > 0
+    const L = game.ledger
+    const counts = { ore: L.ore, loot: L.loot, bugs: L.bugs }
+    ctx.font = `bold ${Math.round(16 * dpr)}px monospace`
+    ctx.textAlign = 'right'
+    ctx.textBaseline = 'middle'
+    for (const kind of ledgerKinds) {
+      const [x, y] = ledgerIcon(kind)
+      const r = 7 * dpr
+      ctx.fillStyle = 'rgba(0,0,0,0.55)'
+      ctx.fillRect(x - 90 * dpr, y - 13 * dpr, 104 * dpr, 26 * dpr)
+      if (kind === 'bugs') {
+        const halo = ctx.createRadialGradient(x, y, 0, x, y, r * 1.8)
+        halo.addColorStop(0, `rgba(${BUG},0.8)`)
+        halo.addColorStop(1, `rgba(${BUG},0)`)
+        ctx.fillStyle = halo
+        ctx.fillRect(x - r * 2, y - r * 2, r * 4, r * 4)
+        ctx.fillStyle = `rgb(${BUG})`
+        ctx.fillRect(x - r / 2, y - r / 2, r, r)
+      } else {
+        ctx.fillStyle = kind === 'ore' ? ORE : LOOT
+        ctx.fillRect(x - r, y - r, 2 * r, 2 * r)
+      }
+      ctx.fillStyle = kind === 'ore' && refused ? RED : CHAR
+      ctx.fillText(String(counts[/** @type {'ore' | 'loot' | 'bugs'} */ (kind)]), x - 14 * dpr, y + dpr)
+    }
+  }
+
+  /** Tamed bugs at work (b4.3): warm dots with a small halo, drawn over the fog (they're yours). @param {number} alpha */
+  function drawSwarm(alpha) {
+    const s = Math.max(T, 2 * dpr)
+    const hr = Math.max(T * 2, 6 * dpr)
+    for (const b of game.swarm) {
+      const f = Math.min(1, (game.tick - b.movedAt + alpha) / Math.max(1, game.cfg.swarm.moveTicks))
+      let dx = b.x - b.from.x
+      if (Math.abs(dx) > 1) dx = -Math.sign(dx)
+      const [x, y] = at({ x: b.from.x + dx * f, y: b.from.y + (b.y - b.from.y) * f })
+      if (x < -hr || y < -hr || x > W + hr || y > H + hr) continue
+      const halo = ctx.createRadialGradient(x, y, 0, x, y, hr)
+      halo.addColorStop(0, `rgba(${BUG},0.5)`)
+      halo.addColorStop(1, `rgba(${BUG},0)`)
+      ctx.fillStyle = halo
+      ctx.fillRect(x - hr, y - hr, hr * 2, hr * 2)
+      ctx.fillStyle = `rgb(${BUG})`
+      ctx.fillRect(Math.round(x - s / 2), Math.round(y - s / 2), Math.round(s), Math.round(s))
+    }
   }
 
   /** CSS px → tiles (fractional, x wrapped). @param {number} cx @param {number} cy */
@@ -198,35 +265,32 @@ export function createRenderer(canvas, game, ui, view) {
     if (!game.ride) drawBot(bot, now)
     drawRings(now)
     drawStreams(now)
-    // b3.7's bugs (D056–D064): their squares and halos, the placed ones' dust streams, the bug bar
-    drawBugs(ctx, /** @type {any} */ (game), alpha, now, sx, sy, T)
-    for (const b of game.bugs)
-      if (b.target) {
-        const bx = b.x + 0.5 - Math.round((b.x - b.target.x) / w) * w
-        drawStream(ctx, b.target.x + 0.5, b.target.y + 0.5, bx, b.y + 0.5, TILE_RGB[Tile.Ore], b.target.y * w + b.target.x, now, sx, sy, T)
-      }
+    drawBugs(ctx, /** @type {any} */ (game), alpha, now, sx, sy, T) // b3.7's wild bugs (D056–D061)
+    drawSwarm(alpha)
     drawFlights(now)
-    drawButtons(now)
-    drawHud(now)
-    drawBar(ctx, /** @type {any} */ (game), W, H, dpr)
-    drawCharge(now)
+    drawPrice()
+    drawLedger(now)
   }
 
-  /** The hold that places a bug: a ring filling round the finger over 1 s (b3's). @param {number} now */
-  function drawCharge(now) {
-    const c = ui.charge
-    if (!c || !game.bar.length) return
-    const p = Math.min(1, (now - c.s) / 1)
-    const r = 28 * dpr
-    ctx.strokeStyle = 'rgba(255,255,255,0.25)'
-    ctx.lineWidth = 4 * dpr
-    ctx.beginPath()
-    ctx.arc(c.x * dpr, c.y * dpr, r, 0, Math.PI * 2)
-    ctx.stroke()
-    ctx.strokeStyle = CHAR
-    ctx.beginPath()
-    ctx.arc(c.x * dpr, c.y * dpr, r, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2)
-    ctx.stroke()
+  /** The selected edge's price, along it: green when the ledger has it, else red. */
+  function drawPrice() {
+    const s = ui.select
+    if (!s) return
+    const e = map.edges[s.edge]
+    const p = e.path[e.a === s.node ? Math.floor(e.path.length * 0.6) : Math.floor(e.path.length * 0.4)]
+    const [x, y] = at(p)
+    const ok = game.ledger.ore >= game.cfg.price
+    ctx.font = `bold ${Math.round(14 * dpr)}px monospace`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    const label = `${game.cfg.price}`
+    const bw = (label.length * 9 + 22) * dpr
+    ctx.fillStyle = 'rgba(0,0,0,0.7)'
+    ctx.fillRect(x - bw / 2, y - 26 * dpr, bw, 20 * dpr)
+    ctx.fillStyle = ORE
+    ctx.fillRect(x - bw / 2 + 5 * dpr, y - 20 * dpr, 8 * dpr, 8 * dpr)
+    ctx.fillStyle = ok ? GREEN : RED
+    ctx.fillText(label, x + 6 * dpr, y - 15 * dpr)
   }
 
   /** A path through tile centres. @param {Cell[]} p */
@@ -268,8 +332,15 @@ export function createRenderer(canvas, game, ui, view) {
     const pulse = 0.55 + 0.25 * Math.sin(now * 6)
     if (ui.preview !== null)
       map.edges.forEach((e, i) => !game.built[i] && (e.a === ui.preview || e.b === ui.preview) && glow(i, pulse, 0.3))
-    if (game.building) glow(game.building.edge, 0.9, 0.35)
-    if (ui.select) glow(ui.select.edge, 0.95, 0.4)
+    // the selected edge flashes green; refused, it pulses red (b4.3)
+    if (ui.select) {
+      const refused = now - ui.refusedAt < 0.7
+      pathLine(map.edges[ui.select.edge].path)
+      const a = refused ? 0.5 + 0.5 * Math.sin((now - ui.refusedAt) * Math.PI * 8) : 0.45 + 0.45 * Math.sin(now * 10)
+      ctx.strokeStyle = refused ? `rgba(255,40,40,${a})` : `rgba(90,200,120,${a})`
+      ctx.lineWidth = Math.max(T, 4 * dpr) * 0.9
+      ctx.stroke()
+    }
   }
 
   /** @param {number} now */
@@ -339,11 +410,9 @@ export function createRenderer(canvas, game, ui, view) {
     }
   }
 
-  /** Dust from the tile being pulled to the bot, and from the bot into the node being fed. @param {number} now */
+  /** Dust from the pixel being pulled to the bot. @param {number} now */
   function drawStreams(now) {
-    const bot = { x: game.ch.x, y: game.ch.y }
-    if (game.pulling && game.stillFor > 20) specks(game.pulling, bot, now, ORE)
-    if (game.building) specks(bot, map.nodes[game.building.from], now, ORE)
+    if (game.pulling && game.stillFor > 20) specks(game.pulling, { x: game.ch.x, y: game.ch.y }, now, ORE)
   }
   /** @param {Cell} from @param {Cell} to @param {number} now @param {string} color */
   function specks(from, to, now, color) {
@@ -363,83 +432,18 @@ export function createRenderer(canvas, game, ui, view) {
     for (let i = flights.length - 1; i >= 0; i--) {
       const f = flights[i]
       const t = (now - f.s) / f.dur
+      if (t < 0) continue // staggered: not yet
       if (t >= 1) {
         flights.splice(i, 1)
         continue
       }
-      const [x0, y0] = at(f.from)
-      const [x1, y1] = at(f.to)
+      const [x0, y0] = f.from()
+      const [x1, y1] = f.to()
+      const e = t * t * (3 - 2 * t)
       const s = Math.max(T * 1.2, 4 * dpr) * (1 - t * 0.5)
       ctx.fillStyle = f.color
-      ctx.fillRect(x0 + (x1 - x0) * t - s / 2, y0 + (y1 - y0) * t - Math.max(T * 4, 16 * dpr) * Math.sin(t * Math.PI) - s / 2, s, s)
+      ctx.fillRect(x0 + (x1 - x0) * e - s / 2, y0 + (y1 - y0) * e - Math.max(T * 4, 16 * dpr) * f.arc * Math.sin(t * Math.PI) - s / 2, s, s)
     }
-  }
-
-  /** b3's cue style: a disc with the symbol cut out of it. @param {number} now */
-  function drawButtons(now) {
-    const b = buttons()
-    if (!b) return
-    const r = Math.max(T * 0.6, 20 * dpr)
-    const refused = now - ui.refusedAt < 0.7 && Math.sin((now - ui.refusedAt) * Math.PI * 8) > 0
-    disc(b.cancel, r, RED, (u) => {
-      ctx.lineWidth = u * 0.32
-      ctx.beginPath()
-      ctx.moveTo(-u * 0.6, -u * 0.6)
-      ctx.lineTo(u * 0.6, u * 0.6)
-      ctx.moveTo(u * 0.6, -u * 0.6)
-      ctx.lineTo(-u * 0.6, u * 0.6)
-      ctx.stroke()
-    })
-    disc(b.build, r, refused ? RED : GREEN, (u) => {
-      // a hammer: the handle up to the right, the head across its top
-      ctx.rotate(-Math.PI / 4)
-      ctx.fillRect(-u * 0.14, -u * 0.2, u * 0.28, u * 1.1)
-      ctx.fillRect(-u * 0.7, -u * 0.75, u * 1.4, u * 0.5)
-    })
-  }
-  /** @param {{ x: number, y: number }} c @param {number} r @param {string} color @param {(u: number) => void} symbol */
-  function disc(c, r, color, symbol) {
-    ctx.save()
-    ctx.translate(sx(c.x), sy(c.y))
-    ctx.fillStyle = color
-    ctx.beginPath()
-    ctx.arc(0, 0, r, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.fillStyle = `rgb(${BG_RGB})`
-    ctx.strokeStyle = `rgb(${BG_RGB})`
-    ctx.lineCap = 'round'
-    symbol(r * 0.62)
-    ctx.restore()
-  }
-
-  /**
-   * The pack as b3.7 draws it (b4.2, D080): 2 × 3 slots, each a 4 × 4 grid filling from the bottom, the
-   * reserved ore and loot slots first; the bot is 1 px, so it's at the top of the screen, the size of b3's
-   * character at a middle zoom, not on its back. Under it, the ore against an edge's price: green when
-   * there's enough. A refused build blinks it red, as b3's pack did.
-   * @param {number} now
-   */
-  function drawHud(now) {
-    const tp = Math.round(PACK_TP * dpr)
-    const bh = Math.round(tp * 1.3) // b3's BODY_H
-    const rows = Math.ceil(game.cfg.packSlots / 2)
-    const pw = packLayout(tp, bh, rows, PACK_FIT).x.len
-    const cx = Math.round(W / 2 + pw / 2)
-    const top = Math.round(10 * dpr)
-    const f = (now - ui.refusedAt) / 0.7
-    const pack = /** @type {any} */ ({ ...game, ch: { facing: 1 } }) // drawn facing right: slot 1 bottom left
-    ctx.fillStyle = '#000'
-    ctx.fillRect(cx - pw - 2 * dpr, top - dpr, pw + 4 * dpr, Math.round(PACK_FIT * bh) + 2 * dpr)
-    drawPack(ctx, pack, /** @type {any} */ ({ packFit: PACK_FIT }), cx, top + bh - 1, 0, bh, tp, CHAR, f >= 0 && f < 1 ? failAlpha(f) : 0)
-    const ore = count(game.pack, Tile.Ore)
-    const price = game.cfg.price
-    const y = top + Math.round(PACK_FIT * bh) + 3 * dpr
-    const bw = Math.round(pw)
-    const bhh = Math.max(3, Math.round(3 * dpr))
-    ctx.fillStyle = 'rgba(255,255,255,0.15)'
-    ctx.fillRect(cx - pw, y, bw, bhh)
-    ctx.fillStyle = ore >= price ? GREEN : ORE
-    ctx.fillRect(cx - pw, y, Math.round((bw * Math.min(ore, price)) / Math.max(1, price)), bhh)
   }
 
   return {
@@ -447,7 +451,6 @@ export function createRenderer(canvas, game, ui, view) {
     resize,
     onEvent,
     toWorld,
-    buttons,
     level,
     tilePx: () => T,
     /** The bot on screen, CSS px. */

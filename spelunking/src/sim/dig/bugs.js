@@ -59,6 +59,8 @@ import { wrap } from './rules.js'
  * @property {number} barNear a bar bug keeps at least this many steps from you
  * @property {number} barFar a bar bug heads back to you past this many steps
  * @property {Mine} [mine] placed bugs mine (D063); they only hover without it
+ * @property {boolean} [ledger] b4.3: nibbles take ore from `g.ledger.ore`, not the pack, and a tamed bug
+ *   leaves the world as +1 on `g.ledger.bugs` (no bar); b3 has no such switch
  */
 
 /**
@@ -491,13 +493,22 @@ function drift(g, b, field, bug, rng) {
 /** @param {Game} g @param {Bugs} b @param {Bug} bug */
 function nibble(g, b, bug) {
   if (g.tick < bug.scared || g.tick < bug.nibbleAt || dist2(g, bug, g.ch) > 2 || denAt(g, bug, b.den)) return
-  if (!take(g.pack, Tile.Ore)) return
+  /** @type {{ ore: number, bugs: number } | null} */
+  const led = b.ledger ? /** @type {any} */ (g).ledger : null
+  if (led ? led.ore <= 0 : !take(g.pack, Tile.Ore)) return
+  if (led) led.ore--
   g.fed = Math.min(b.tame, g.fed + 1)
   bug.nibbleAt = g.tick + b.nibbleTicks
   g.events.push({ type: 'nibble', id: bug.id, x: bug.x, y: bug.y, from: { x: g.ch.x, y: g.ch.y } })
-  if (g.fed < b.tame || barTaken(g) >= b.barSlots) return // with the bar full, the count waits at tame
+  if (g.fed < b.tame || (!led && barTaken(g) >= b.barSlots)) return // with the bar full, the count waits at tame
   g.fed = 0
   gone(g, b, bug)
+  if (led) {
+    led.bugs++
+    g.bugs = g.bugs.filter((other) => other !== bug)
+    g.events.push({ type: 'tamed', id: bug.id, x: bug.x, y: bug.y, slot: -1 })
+    return
+  }
   bug.kind = 'bar'
   bug.block = -1
   bug.chasing = false

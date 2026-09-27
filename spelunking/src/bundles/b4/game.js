@@ -3,34 +3,37 @@
 // same map and commands give the same game. b3's probe rings, pull targeting, pack and light are reused as
 // they are (src/sim/dig/); the rest is new, because b4 has no swipe table: the bot goes where it's pointed.
 //
-// Moving: `move` points the bot (8 ways) or stops it (0, 0). It steps tile to tile through any open tile
-// (it climbs the back wall, D077; no gravity). A diagonal into rock slides along the open side.
-// Scan: pointing into rock fires b3's probe at the rock tile, rings out to `scan.radius`, then it cools down
-// for `scan.cooldown` ticks. Pull: b3's (D062): standing still, the nearest seen ore or loot in the light
-// comes to the pack, one unit every `pull.ticks`, and the tile turns to rock.
+// Moving (b4.3): `move` points the bot any way (the user: "all directions, not just 8") or stops it (0, 0).
+// It steps pixel to pixel through open pixels along that line (Bresenham: the main axis steps every step,
+// the other when its error reaches half a pixel); it climbs the back wall, D077; no gravity. A step into rock
+// slides along the open side.
+// Scan: pointing into rock fires b3's probe at the rock pixel, rings out to `scan.radius`, then it cools down
+// for `scan.cooldown` ticks (1 s, the user, b4.3). Pull: b3's (D062): standing still, the nearest seen ore or
+// loot in the light is pulled, one unit every `pull.ticks`, and the pixel turns to rock; it goes straight to
+// the ledger (b4.3).
+// The ledger (b4.3, the user): every collectible, one count each: ore, loot, bugs. No pack.
+// Light (b4.3): a fixed radius (`light.base`, 8 px; upgrades later), line of sight (light.js sightCells).
 // Nodes (b4.2, D080): a node on the network (the pod's, and the ends of built edges) shows for good; any
-// other shows only while the bot is within `nodeReach` tiles.
-// Building: `build` an unbuilt edge from a node on the network, the bot within `nodeReach` of it (D080: only
-// the existing network grows, so the frontier is where you go), with at least `price` ore: the ore streams
-// from the pack into the node, one unit every `streamTicks`; then the edge is built, its far node joins the network,
-// and a travel pod (a car) waits at the near node.
+// other shows only while the bot is within `nodeReach` px.
+// Building (b4.3): `build` an unbuilt edge from a node on the network, the bot within `nodeReach` of it (D080),
+// with `price` ore on the ledger: the price is taken and the edge is built at once, its far node joins the
+// network, and a travel pod (a car) waits at the near node. Short of ore: refused.
 // Riding: stepping onto a waiting car gets you in. A pointed direction picks, at each node, the built edge
 // that fits it best (within 67.5°); the car runs node to node until no edge fits (it stops at the last
 // node), a tap (it stops at the next node), or a new direction (it turns at the next node). Pointed while
-// stopped where no edge fits, you get out and walk that way, unless the node's tile is rock: then you stay in.
-// Bugs (b4.2, D080): b3.7's (`src/sim/dig/bugs.js`, D056–D064) as they are, with b3.7's numbers: wild ones in
-// the fog nibble ore from the pack, the scan's rings scare them, 16 fed tames one into the bar, `place` (the
-// 1 s hold near the bot) puts the bar's first bug down, and a placed bug mines seen ore round its den and hands
-// it over as you pass (pull.js). Bar and placed bugs light round themselves like the bot does.
+// stopped where no edge fits, you get out and walk that way.
+// Bugs (b4.3): b3.7's wild ones (`src/sim/dig/bugs.js`, D056–D061) with the `ledger` switch: they nibble ore
+// from the ledger; at 16 fed (D060) the last biter is +1 bug on the ledger. Tamed bugs are abstract workers
+// (swarm.js).
 
 import { Tile, isOpen } from '../../sim/gen/world.js'
 import { reveal } from '../../sim/dig/game.js'
 import { ringCells } from '../../sim/dig/probe.js'
-import { nearestValuable, toRock, updateMine } from '../../sim/dig/pull.js'
-import { bugGlows, place, scare, updateBugs } from '../../sim/dig/bugs.js'
-import { add, count, fits, take } from '../../sim/dig/pack.js'
-import { litCells, lightRadius } from '../../sim/dig/light.js'
+import { nearestValuable, toRock } from '../../sim/dig/pull.js'
+import { scare, updateBugs } from '../../sim/dig/bugs.js'
+import { sightCells } from '../../sim/dig/light.js'
 import { wrap } from '../../sim/dig/rules.js'
+import { SWARM, updateSwarm } from './swarm.js'
 import { ROCK } from './world.js'
 
 /** @typedef {import('./world.js').Map} Map */
@@ -40,14 +43,11 @@ import { ROCK } from './world.js'
 export const CONFIG = {
   // D081: the intent is a rail about 7× faster than walking; start at 12 and 80 px/s (a b4.1 tile was 4 px)
   walkSpeed: 12, // px/s (a step takes whole ticks: 60 / speed, rounded; a diagonal √2 times that)
-  // at 1 px a tile (D080) the light, the scan and the node detection grow ×4 with the scale (D081: "otherwise
-  // the player will not find them"): b4.1's radius 6 → 24, light 4 → 16 (+1 per 4 ore or 2 loot, b3's
-  // +1 per 16 ore or 8 loot ×4), nodes within 3 → 12; a ring a tick keeps the scan's time about b4.1's 0.5 s
-  scan: { radius: 24, cooldown: 180, ringTicks: 1 }, // 3 s cooldown (user, D079)
+  // at 1 px a tile (D080) the scan and the node detection grew ×4 with the scale (D081); the light is b4.2's
+  // 16 halved (b4.3, the user: "torchlight is waaay too big"), fixed, and the pull's reach with it
+  scan: { radius: 24, cooldown: 60, ringTicks: 1 }, // 1 s cooldown (the user, b4.3; was 3 s, D079)
   pull: { ticks: 60 }, // b3's pull was 300 (5 s a unit); 1 s here, or an edge is a minute of standing still
-  light: { base: 16, orePer: 4, lootPer: 2, face: 4 }, // face: lit rock goes this deep (b3's lit face was a tile: 4 px here)
-  packSlots: 6,
-  packReserve: ['ore', 'loot'], // b3.7's pack (D064), ore and loot only (D080: no digging, no rock in the pack)
+  light: { base: 8 },
   nodeReach: 12, // D079's 3 tiles (user) ×4
   bugs: {
     block: 32,
@@ -61,34 +61,30 @@ export const CONFIG = {
     tame: 16,
     scareTicks: 240,
     den: 12,
-    barSlots: 3,
-    light: 2,
-    barMoveTicks: 12,
-    barNear: 2,
-    barFar: 8,
-    mine: { ticks: 900, reach: 12, carry: 8, hand: 4, handTicks: 6 },
-  }, // b3.7's (rules/b3.7.json), to be tuned in play (D081)
+    barSlots: 0,
+    ledger: true,
+  }, // b3.7's wild bugs (rules/b3.7.json); no bar, no placed bugs (b4.3)
+  swarm: { ...SWARM },
   price: 10, // ore per edge (user: 8–12, tuned later)
-  streamTicks: 4,
   rideSpeed: 80, // px/s in a car (several px a tick: an integer budget, 60 a straight px, 85 a diagonal)
 }
 /** @typedef {typeof CONFIG} Config */
 
 /**
- * @typedef {{ type: 'move', dx: number, dy: number } | { type: 'tap' } | { type: 'build', edge: number, from: number } | { type: 'place' }} Command
+ * @typedef {{ type: 'move', dx: number, dy: number } | { type: 'tap' } | { type: 'build', edge: number, from: number }} Command
+ *   move: any direction, dx and dy any numbers (0, 0 = stop)
  */
 /**
  * @typedef {{ type: 'seen', cells: number[] }
  *   | { type: 'ring', x: number, y: number, r: number }
  *   | { type: 'scan', x: number, y: number }
  *   | { type: 'pulled', x: number, y: number, tile: number, to: Cell }
- *   | { type: 'fed', node: number, from: Cell }
- *   | { type: 'built', edge: number }
- *   | { type: 'refused', edge: number, reason: 'ore' | 'busy' | 'off' | 'far' | 'built' }
+ *   | { type: 'built', edge: number, from: number, price: number }
+ *   | { type: 'refused', edge: number, reason: 'ore' | 'off' | 'far' | 'built' }
+ *   | { type: 'dug', x: number, y: number, tile: number, to: Cell } | { type: 'haul', x: number, y: number, ore: number, loot: number }
  *   | { type: 'board', car: number } | { type: 'exit', car: number }
  *   | { type: 'nibble', id: number, x: number, y: number, from: Cell } | { type: 'tamed', id: number, x: number, y: number, slot: number }
- *   | { type: 'placed', id: number, x: number, y: number } | { type: 'returned', id: number, x: number, y: number, slot: number }
- *   | { type: 'handed', id: number, x: number, y: number, to: Cell }} GameEvent bugs.js and pull.js add the bugs' (and `by` on pulled)
+ *  } GameEvent bugs.js adds the wild bugs'; tamed has slot -1 (to the ledger)
  */
 
 /** @typedef {{ node: number }} Car a travel pod, waiting at a node or carrying you */
@@ -110,8 +106,10 @@ export const CONFIG = {
  * @property {number} tick
  * @property {{ x: number, y: number, facing: number }} ch the bot's tile (b3's pull and light read `ch`)
  * @property {{ from: Cell, t: number, dur: number } | null} step a step under way, to ch
- * @property {{ dx: number, dy: number } | null} move
- * @property {import('../../sim/dig/pack.js').Pack} pack
+ * @property {{ dx: number, dy: number, ex: number, ey: number } | null} move the direction as steps per 1000 (the main
+ *   axis ±1000), and the other axis' error so far (Bresenham)
+ * @property {{ ore: number, loot: number, bugs: number }} ledger b4.3
+ * @property {import('./swarm.js').Worker[]} swarm the ledger's bugs at work
  * @property {Uint8Array} seen
  * @property {number[]} lit
  * @property {number} radius
@@ -127,11 +125,10 @@ export const CONFIG = {
  * @property {import('../../sim/dig/bugs.js').Field | null} bugField
  * @property {number} worldRev b4 never changes where bugs can go: always 0
  * @property {number} fed
- * @property {import('../../sim/dig/bugs.js').Bug[]} bar
+ * @property {import('../../sim/dig/bugs.js').Bug[]} bar always empty (bugs.js reads it)
  * @property {Record<number, number>} refill
  * @property {Uint8Array} built per edge
  * @property {Car[]} cars
- * @property {{ edge: number, from: number, left: number, t: number } | null} building
  * @property {Ride | null} ride
  * @property {Command[]} queue
  * @property {GameEvent[]} events
@@ -149,7 +146,8 @@ export function createGame(map, cfg) {
     ch: { x: map.start.x, y: map.start.y, facing: 1 },
     step: null,
     move: null,
-    pack: [], // D079: empty at the start (user)
+    ledger: { ore: 0, loot: 0, bugs: 0 },
+    swarm: [],
     seen: new Uint8Array(world.w * world.h),
     lit: [],
     radius: 0,
@@ -169,7 +167,6 @@ export function createGame(map, cfg) {
     refill: {},
     built: new Uint8Array(map.edges.length),
     cars: [],
-    building: null,
     ride: null,
     queue: [],
     events: [],
@@ -190,23 +187,21 @@ export function tick(g) {
   g.tick++
   for (const cmd of g.queue) {
     if (cmd.type === 'move') {
-      const dir = cmd.dx || cmd.dy ? { dx: Math.sign(cmd.dx), dy: Math.sign(cmd.dy) } : null
+      const dir = heading(cmd.dx, cmd.dy)
       if (g.ride) point(g, g.ride, dir)
-      else g.move = dir
+      else if (!dir || !g.move || g.move.dx !== dir.dx || g.move.dy !== dir.dy) g.move = dir && { ...dir, ex: 0, ey: 0 }
     } else if (cmd.type === 'tap') {
       if (g.ride?.run) g.ride.stopNext = true
-    } else if (cmd.type === 'place') place(/** @type {any} */ (g))
-    else build(g, cmd.edge, cmd.from)
+    } else build(g, cmd.edge, cmd.from)
   }
   g.queue.length = 0
 
   if (g.ride) rideTick(g, g.ride)
   else walk(g)
   if (g.probe) spread(g, g.probe)
-  feed(g)
   pull(g)
-  updateMine(/** @type {any} */ (g))
   updateBugs(/** @type {any} */ (g))
+  updateSwarm(g)
   updateLight(g)
 }
 
@@ -224,9 +219,14 @@ function walk(g) {
       return
     }
   }
-  if (!g.move) return
-  const { dx, dy } = g.move
-  if (dx) g.ch.facing = dx
+  const m = g.move
+  if (!m) return
+  if (m.dx) g.ch.facing = Math.sign(m.dx)
+  // Bresenham: this step's errors, kept only if the bot steps
+  const ex = m.ex + m.dx
+  const ey = m.ey + m.dy
+  const dx = Math.abs(ex) >= 500 ? Math.sign(ex) : 0
+  const dy = Math.abs(ey) >= 500 ? Math.sign(ey) : 0
   const tries =
     dx && dy
       ? [
@@ -235,16 +235,19 @@ function walk(g) {
           [0, dy],
         ]
       : [[dx, dy]]
-  for (const [ex, ey] of tries) {
-    if (!open(g, g.ch.x + ex, g.ch.y + ey)) continue
-    if (ex && ey && !open(g, g.ch.x + ex, g.ch.y) && !open(g, g.ch.x, g.ch.y + ey)) continue // no squeezing between two rock corners
-    const dur = Math.max(1, Math.round(((ex && ey ? Math.SQRT2 : 1) * 60) / Math.max(1, g.cfg.walkSpeed)))
+  for (const [sx, sy] of tries) {
+    if (!open(g, g.ch.x + sx, g.ch.y + sy)) continue
+    if (sx && sy && !open(g, g.ch.x + sx, g.ch.y) && !open(g, g.ch.x, g.ch.y + sy)) continue // no squeezing between two rock corners
+    // an axis wanted but blocked (sliding along a wall) keeps its error, short of a whole pixel
+    m.ex = sx ? ex - sx * 1000 : Math.max(-999, Math.min(999, ex))
+    m.ey = sy ? ey - sy * 1000 : Math.max(-999, Math.min(999, ey))
+    const dur = Math.max(1, Math.round(((sx && sy ? Math.SQRT2 : 1) * 60) / Math.max(1, g.cfg.walkSpeed)))
     g.step = { from: { x: g.ch.x, y: g.ch.y }, t: 0, dur }
-    g.ch.x = wrap(g.ch.x + ex, g.world.w)
-    g.ch.y += ey
+    g.ch.x = wrap(g.ch.x + sx, g.world.w)
+    g.ch.y += sy
     return
   }
-  // pointed into rock: the scan (D079), if it's ready; the rock tile pointed at is its centre. The sheet,
+  // pointed into rock: the scan (D079), if it's ready; the rock pixel pointed at is its centre. The sheet,
   // the sea and space aren't rock: nothing to scan
   const y = g.ch.y + dy
   if (g.probe || g.tick < g.scanAt || y < 0 || y >= g.world.h) return
@@ -253,6 +256,13 @@ function walk(g) {
   g.scanAt = g.tick + g.cfg.scan.cooldown
   g.events.push({ type: 'scan', x: g.probe.x, y })
   ring(g, g.probe, 1)
+}
+
+/** A direction as steps per 1000, the main axis ±1000 (integers from here on), or null for none. @param {number} dx @param {number} dy */
+export function heading(dx, dy) {
+  const len = Math.max(Math.abs(dx), Math.abs(dy))
+  if (!(len > 0)) return null
+  return { dx: Math.round((dx * 1000) / len), dy: Math.round((dy * 1000) / len) }
 }
 
 /** @param {Game} g @param {number} x @param {number} y */
@@ -287,19 +297,12 @@ function pull(g) {
     g.stillFor = 0
     return
   }
-  const { packSlots: slots, packReserve: reserve } = g.cfg
-  // the first to target a cell keeps it (D064): not the cells placed bugs pull now
-  const claimed = new Set(g.bugs.flatMap((b) => (b.target ? [b.target.y * g.world.w + b.target.x] : [])))
-  const c = nearestValuable(
-    /** @type {any} */ (g),
-    g.ch,
-    lightRadius(g.pack, g.cfg.light),
-    (t, i) => !claimed.has(i) && fits(g.pack, slots, [t], reserve),
-  )
+  const c = nearestValuable(/** @type {any} */ (g), g.ch, g.cfg.light.base, () => true)
   g.pulling = c
   if (++g.stillFor % Math.max(1, g.cfg.pull.ticks) || !c) return
   const tile = g.world.tiles[c.y * g.world.w + c.x]
-  add(g.pack, slots, tile, reserve)
+  if (tile === Tile.Ore) g.ledger.ore++
+  else g.ledger.loot++
   toRock(/** @type {any} */ (g), c.x, c.y)
   g.pulling = null
   g.litFor.r = -1
@@ -325,8 +328,7 @@ export function buildable(g, edge, from) {
   if (!e || (e.a !== from && e.b !== from) || !g.net[from]) return 'off'
   if (!near(g, from)) return 'far'
   if (g.built[edge]) return 'built'
-  if (g.building) return 'busy'
-  if (count(g.pack, Tile.Ore) < g.cfg.price) return 'ore'
+  if (g.ledger.ore < g.cfg.price) return 'ore'
   return null
 }
 
@@ -334,27 +336,12 @@ export function buildable(g, edge, from) {
 function build(g, edge, from) {
   const why = buildable(g, edge, from)
   if (why) return g.events.push({ type: 'refused', edge, reason: why })
-  g.building = { edge, from, left: g.cfg.price, t: 0 }
-}
-
-// The ore streams into the node, then the edge is built (D079)
-/** @param {Game} g */
-function feed(g) {
-  const b = g.building
-  if (!b || ++b.t % Math.max(1, g.cfg.streamTicks)) return
-  if (b.left > 0) {
-    if (!take(g.pack, Tile.Ore)) return // the wild bugs could take it one day; wait for more
-    b.left--
-    g.litFor.r = -1
-    g.events.push({ type: 'fed', node: b.from, from: { x: g.ch.x, y: g.ch.y } })
-    return
-  }
-  const e = g.map.edges[b.edge]
-  g.built[b.edge] = 1
-  g.building = null
-  g.cars.push({ node: b.from })
-  g.events.push({ type: 'built', edge: b.edge })
-  g.net[e.a === b.from ? e.b : e.a] = 1
+  const e = g.map.edges[edge]
+  g.ledger.ore -= g.cfg.price
+  g.built[edge] = 1
+  g.cars.push({ node: from })
+  g.net[e.a === from ? e.b : e.a] = 1
+  g.events.push({ type: 'built', edge, from, price: g.cfg.price })
 }
 
 // Riding --------------------------------------------------------------------------------------------
@@ -394,13 +381,10 @@ function point(g, r, dir) {
   r.stopNext = false
   r.run = pick(g, r.node, dir)
   if (r.run) return
-  // nothing that way: out, and walk that way; but only onto open ground, or the bot is shut in the rock
-  // with its car out of reach (a node's tile can be rock: the rails router rounds nodes to tiles)
-  const n = g.map.nodes[r.node]
-  if (!open(g, n.x, n.y)) return
+  // nothing that way: out, and walk that way (nodes are never in rock, b4.3)
   g.events.push({ type: 'exit', car: r.car })
   g.ride = null
-  g.move = dir
+  g.move = { ...dir, ex: 0, ey: 0 }
 }
 
 // A car's budget per px: 60 a straight step, 85 a diagonal (60√2); it gains rideSpeed a tick
@@ -462,66 +446,14 @@ export function botAt(g, alpha) {
   return { x: g.ch.x, y: g.ch.y }
 }
 
-// b3's light (D051), from the bot
+// The light (b4.3): a fixed radius, line of sight from the bot; recomputed when the bot or the rock changed
 /** @param {Game} g */
 function updateLight(g) {
-  const r = lightRadius(g.pack, g.cfg.light)
+  const r = Math.max(0, g.cfg.light.base)
   const at = g.litFor
-  const sources = bugGlows(/** @type {any} */ (g))
-  const glows = sources.map((c) => `${c.x},${c.y}`).join(' ')
-  if (at.x === g.ch.x && at.y === g.ch.y && at.r === r && at.glows === glows) return
-  g.litFor = { x: g.ch.x, y: g.ch.y, r, glows }
+  if (at.x === g.ch.x && at.y === g.ch.y && at.r === r) return
+  g.litFor = { x: g.ch.x, y: g.ch.y, r, glows: '' }
   g.radius = r
-  const { face } = g.cfg.light
-  let cells = deepen(g.world, litCells(g.world, g.ch, r), g.ch, r, face)
-  const br = g.cfg.bugs.light
-  for (const c of sources) cells = union(cells, deepen(g.world, litCells(g.world, c, br), c, br, face))
-  g.lit = union(g.surface, cells)
-  reveal(/** @type {any} */ (g), cells)
-}
-
-/**
- * b3's lit rock faces, `face` px deep (b4.2): the rock cells light.js lit, then rock 8-bordering them, face − 1
- * times, within the radius. At 1 px a tile, b3's one-tile face was a hairline. Sorted.
- * @param {import('../../sim/gen/world.js').World} world @param {number[]} cells @param {Cell} at @param {number} r @param {number} face
- */
-function deepen(world, cells, at, r, face) {
-  const { w, h, tiles } = world
-  const set = new Set(cells)
-  let front = cells.filter((i) => !isOpen(tiles[i]))
-  for (let d = 1; d < face; d++) {
-    /** @type {number[]} */
-    const next = []
-    for (const i of front) {
-      const x = i % w
-      const y = (i - x) / w
-      for (let dy = -1; dy <= 1; dy++)
-        for (let dx = -1; dx <= 1; dx++) {
-          const ny = y + dy
-          if (ny < 0 || ny >= h) continue
-          const n = ny * w + wrap(x + dx, w)
-          if (set.has(n) || isOpen(tiles[n])) continue
-          let ex = Math.abs(wrap(x + dx, w) - at.x)
-          ex = Math.min(ex, w - ex)
-          if (ex * ex + (ny - at.y) ** 2 > r * r) continue
-          set.add(n)
-          next.push(n)
-        }
-    }
-    front = next
-  }
-  return [...set].sort((a, b) => a - b)
-}
-
-/** Two sorted lists as one, sorted, no repeats. @param {number[]} a @param {number[]} b */
-function union(a, b) {
-  /** @type {number[]} */
-  const out = []
-  let i = 0
-  let j = 0
-  while (i < a.length || j < b.length) {
-    const v = j >= b.length || (i < a.length && a[i] <= b[j]) ? a[i++] : b[j++]
-    if (out[out.length - 1] !== v) out.push(v)
-  }
-  return out
+  g.lit = sightCells(g.world, g.ch, r)
+  reveal(/** @type {any} */ (g), g.lit)
 }

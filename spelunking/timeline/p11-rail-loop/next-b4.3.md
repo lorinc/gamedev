@@ -1,4 +1,4 @@
-# p11 · b4.3 · the plan (written 2026-09-27, not built)
+# p11 · b4.3 · the plan (written 2026-09-27; built as b4.3, D083)
 
 The user's notes after playing b4.2 are in `feedback/2026-09-27_lorinc_b4.2.md`. **[user]** marks what the
 user asked for, **[Claude]** a proposal the user hasn't confirmed, **Open** a question for the user.
@@ -129,7 +129,16 @@ Still open:
 - **Open: how a bug gets onto the ledger.** Wild bugs in the fog tamed by feeding them 16 ore (b3.7's, D060),
   now from the ledger when one reaches you? Or bought, or found, or something else?
 
-## Order of work (once the Opens are answered)
+## The user's last answers (2026-09-27, 17th session)
+
+- **Your own mining** goes straight to the ledger, with no particle stream from the bot to the ledger. No pack,
+  no dumping, no ore on the rails. **[Claude]** The pull's stream from the wall to the bot stays (it shows what
+  you're mining); a unit counts on the ledger when it reaches you. The rails are for riding.
+- **Bugs on the ledger:** wild bugs in the fog are tamed by feeding them 16 ore (b3.7's rule, D060), taken
+  from the ledger when they nibble. **[Claude]** A nibble takes one ore from the ledger (it was the pack); the
+  16th bite puts +1 on the ledger's bug count and the wild bug is gone (it's abstract now).
+
+## Order of work
 
 1. Light: a fixed 8 px, the 1 px face (points 1, 2): minutes, play-check.
 2. Line of sight and the soft edge (point 3), with tests.

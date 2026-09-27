@@ -7,7 +7,7 @@ import { describe, test } from 'node:test'
 import { Tile } from '../gen/world.js'
 import { mapRows, parseMap, runExample } from './examples.js'
 import { command, createGame, reveal, tick, withSurface } from './game.js'
-import { litCells, lightRadius } from './light.js'
+import { litCells, lightRadius, sightCells } from './light.js'
 import { parsePack } from './pack.js'
 import { compile, migrate, simConfig } from './ruleset.js'
 
@@ -261,5 +261,52 @@ describe('without light (every b1 ruleset)', () => {
       // b2.1 is b1.7 + light + the probe (D053): only where b1.7 refused ↓ on a floor does it differ
       if (!without.swipes.some((s) => s.stop === 'down')) assert.deepEqual(runExample(ex, TABLE, CFG), without, ex.id)
     }
+  })
+})
+
+describe('line of sight (b4.3)', () => {
+  /** What sightCells lights, drawn like `picture`. @param {string[]} rows @param {number} r */
+  const sight = (rows, r) => {
+    const { world, at } = parseMap(rows)
+    const show = new Set(sightCells(world, at, r))
+    return rows.map((row, y) => [...row].map((c, x) => (show.has(y * world.w + x) ? c : ' ')).join(''))
+  }
+
+  test('a room: every cell within the radius, and the walls bordering it (the face), 1 deep', () => {
+    assert.deepEqual(sight(['#########', '#.......#', '#...@...#', '#.......#', '#########'], 9), [
+      '#########',
+      '#.......#',
+      '#...@...#',
+      '#.......#',
+      '#########',
+    ])
+    // the face only: the second rock row stays dark
+    assert.deepEqual(sight(['#######', '#######', '#..@..#', '#######', '#######'], 9), [
+      '       ',
+      '#######',
+      '#..@..#',
+      '#######',
+      '       ',
+    ])
+  })
+
+  test('no light round a corner, and a long flat wall stays lit along its face', () => {
+    assert.deepEqual(sight(['##########', '#@.#.....#', '##########'], 9), ['####      ', '#@.#      ', '####      '])
+    const wall = '#'.repeat(40)
+    const hall = '#@' + '.'.repeat(20) + '#'.repeat(18)
+    assert.deepEqual(sight([wall, hall, wall], 16), ['#'.repeat(17) + ' '.repeat(23), hall.slice(0, 18) + ' '.repeat(22), '#'.repeat(17) + ' '.repeat(23)])
+  })
+
+  test('a closet: its cell and the 8 walls round it', () => {
+    const { world, at } = parseMap(['###', '#@#', '###'])
+    assert.equal(sightCells(world, at, 3).length, 9)
+  })
+
+  test('the radius holds, and it wraps in x', () => {
+    const { world, at } = parseMap(['...@....'])
+    const cells = sightCells(world, at, 2)
+    assert.deepEqual(cells, [1, 2, 3, 4, 5])
+    const edge = parseMap(['@......'])
+    assert.deepEqual(sightCells(edge.world, edge.at, 1), [0, 1, 6])
   })
 })

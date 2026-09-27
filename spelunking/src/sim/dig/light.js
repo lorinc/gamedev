@@ -90,3 +90,65 @@ export function surfaceCells(world) {
     }
   return out
 }
+
+/**
+ * Line-of-sight light (b4.3): what's in sight from `at` within the radius (dx² + dy² ≤ r², dx the short way
+ * round the ring). A cell is in sight when a straight line (Bresenham's, from `at` to it or from it back to
+ * `at`, whichever is clear) passes only open cells in between. Lit: the open cells in sight, and the rock
+ * cells within the radius that 8-border one (the face, 1 deep; a line alone misses a flat wall at a grazing
+ * angle), and nothing behind. Unlike litCells, no light round corners. About r² cells × r steps: at r 8,
+ * under 2,000 steps. Sorted ascending.
+ * @param {World} world @param {Cell} at @param {number} r
+ * @returns {number[]}
+ */
+export function sightCells(world, at, r) {
+  const { w, h, tiles } = world
+  const ax = wrap(at.x, w)
+  /** @param {number} dx @param {number} dy relative to `at` */
+  const openRel = (dx, dy) => {
+    const y = at.y + dy
+    return y >= 0 && y < h && isOpen(tiles[y * w + wrap(ax + dx, w)])
+  }
+  /** Only open cells strictly between (x0, y0) and (x1, y1) on Bresenham's line. @param {number} x0 @param {number} y0 @param {number} x1 @param {number} y1 */
+  const clear = (x0, y0, x1, y1) => {
+    const sx = Math.sign(x1 - x0)
+    const sy = Math.sign(y1 - y0)
+    const ex = Math.abs(x1 - x0)
+    const ey = Math.abs(y1 - y0)
+    let err = ex - ey
+    let x = x0
+    let y = y0
+    for (;;) {
+      const e2 = 2 * err
+      if (e2 > -ey) {
+        err -= ey
+        x += sx
+      }
+      if (e2 < ex) {
+        err += ex
+        y += sy
+      }
+      if (x === x1 && y === y1) return true
+      if (!openRel(x, y)) return false
+    }
+  }
+  const rx = Math.min(r, w >> 1)
+  /** @type {Set<number>} */
+  const out = new Set()
+  for (let dy = -r; dy <= r; dy++) {
+    const y = at.y + dy
+    if (y < 0 || y >= h) continue
+    for (let dx = -rx; dx <= rx; dx++) {
+      if (dx * dx + dy * dy > r * r || !openRel(dx, dy)) continue
+      if ((dx || dy) && !clear(0, 0, dx, dy) && !clear(dx, dy, 0, 0)) continue
+      out.add(y * w + wrap(ax + dx, w))
+      for (let k = 0; k < AROUND.length; k += 2) {
+        const ex = dx + AROUND[k]
+        const ey = dy + AROUND[k + 1]
+        if (ex * ex + ey * ey > r * r || at.y + ey < 0 || at.y + ey >= h || openRel(ex, ey)) continue
+        out.add((at.y + ey) * w + wrap(ax + ex, w))
+      }
+    }
+  }
+  return [...out].sort((a, b) => a - b)
+}
