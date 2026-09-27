@@ -564,7 +564,7 @@ export function placePod(T) {
  * Carves the pod into the raster: the dome's inside open, a flat slab under it, the shell rock with a
  * door in each side wall. @param {import('./terrain.js').Terrain} T @param {{c: number, base: number}} pod
  */
-function carvePod(T, pod) {
+export function carvePod(T, pod) {
   const { w, h, cls } = T
   const ro = (POD_W / 2) * K // outer half-width
   const ri = ro - K

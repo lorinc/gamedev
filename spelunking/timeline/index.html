@@ -75,9 +75,40 @@ footer { color:var(--dim); font-size:12px; }
 <header class="top">
   <h1>Spelunking <span>· prototype timeline</span></h1>
   <p>Every prototype: what we believed, what we built, how it played, what we decided. Newest first. Each ▶ plays the build exactly as it was tested.</p>
-  <p class="legend"><span class="a held">✓ 10 held</span> <span class="a broken">✗ 6 broken</span> <span class="a open">? 29 open</span> · 14 constraints · 8 prototypes · 18 builds · <a href="#ledger">66 decisions</a></p>
+  <p class="legend"><span class="a held">✓ 10 held</span> <span class="a broken">✗ 6 broken</span> <span class="a open">? 33 open</span> · 14 constraints · 9 prototypes · 18 builds · <a href="#ledger">67 decisions</a></p>
 </header>
 <main class="line">
+<article class="entry s-building" id="p9">
+  <header><span class="pid">p9</span><h2>Lattice (v7)</h2><span class="status">building</span><time>2026-09-27</time><span class="budget" data-start="2026-09-27" data-budget="1">budget 1 days</span><a class="from" href="#p8">grew out of p8 · Storeys (v6)</a></header>
+  
+  <p class="q">Is the candidate lattice dense enough to offer real choices everywhere, while each build clears its neighbourhood enough that what's left stays readable?</p>
+  <ul class="chips"><li class="a open">p8's candidate links (cheapest per pair of floors, direction and 4-cell stretch) are the right</li><li class="a open">p8's clash rule (D073: a crossing, or running parallel within a storey for over 30% of the middle)</li><li class="a open">Walls at waists (locally narrowest rock-to-rock crossings of open air, 4 directions) are the</li><li class="a open">Airlocks placed automatically where walls cross paths, kept apart by a minimum gap, don't need</li></ul>
+  <ul class="limits"><li class="l cut "><span class="k">cut</span>No character, no walking: builds are clicks on the map. Later.</li><li class="l cut "><span class="k">cut</span>Only the ice layer, as in p8.</li><li class="l cut "><span class="k">cut</span>Walls don't change the terrain or the floors: they're drawn over it, and they don't create new</li><li class="l cut "><span class="k">cut</span>A desktop tool page, not a phone layout.</li></ul>
+  <div class="builds"><a class="play dev" href="../v7.html">▶ live v7</a><span class="bt">latest, unfrozen</span></div>
+  <p class="next"><b>→</b> <i>open</i></p>
+  <ul class="decided"><li class=""><a href="#D074">D074</a> The lattice is shown as candidates, not as a chosen network (user: &quot;a dense network of potential pathways (and walls), that the user can choose from&quot;; p8 drew what good choices would build). Candidates: p8's links, plus walls at waists. A build collapses what clashes with it: p8's D073 rule for links (natural floors count from the start), no wall within a cell of a wall, no airlock within a gap of another. Airlocks are plank-behaviour blocks (pass through, stand on), placed automatically where walls cross paths, and discouraged in close proximity (user).</li></ul>
+  
+  <details><summary>Full entry</summary>
+<div class="doc">
+<h2>Question</h2>
+<p>Is the candidate lattice dense enough to offer real choices everywhere, while each build clears its neighbourhood enough that what's left stays readable?</p>
+<p><strong>Pass:</strong> clicking through a few builds on a seed, the user can always find a link or a wall where they want one, and after each build the candidates left around it still make sense (no parallels, no X crossings, no airlock clusters).</p>
+<p><strong>Kill:</strong> the lattice is either a blur (too many candidates to read) or collapses to nothing after a few builds. Then the candidate set needs a coarser skeleton (fewer, pre-merged candidates) first.</p>
+<h2>Assumptions</h2>
+<ol><li>[?] p8's candidate links (cheapest per pair of floors, direction and 4-cell stretch) are the right density for choosing from.</li><li>[?] p8's clash rule (D073: a crossing, or running parallel within a storey for over 30% of the middle) works as the collapse rule: a candidate dies when it clashes with the floors or a build.</li><li>[?] Walls at waists (locally narrowest rock-to-rock crossings of open air, 4 directions) are the useful wall candidates.</li><li>[?] Airlocks placed automatically where walls cross paths, kept apart by a minimum gap, don't need their own candidates.</li></ol>
+<h2>Limitations</h2>
+<ul><li>[cut] No character, no walking: builds are clicks on the map. Later.</li><li>[cut] Only the ice layer, as in p8.</li><li>[cut] Walls don't change the terrain or the floors: they're drawn over it, and they don't create new floor.</li><li>[cut] A desktop tool page, not a phone layout.</li></ul>
+<h2>Built</h2>
+<p>Built in one session (D074). <code>v7.html</code> shows p8's ice layer (p7's settled caves, p8's pod and floors) with every candidate drawn thin over it; builds are thick. Click a candidate to build it, click a build to revert it; hovering shows in cyan what the click would collapse (or bring back). The URL carries the seed, every knob and the builds (<code>b=</code>), so a state can be shared. New in <code>src/bundles/v7/</code>: <code>lattice.js</code> (candidates and collapse), <code>paint.js</code>, <code>main.js</code>; p8's pod code is imported (<code>carvePod</code> is now exported from v6).</p>
+<ul><li><strong>The user on the page (before building):</strong> no v6 toggle (&quot;I can see what a good layout looks like&quot;); &quot;airlocks are just plank-behaviour blocks (can pass through, can stand on it), automatically placed where walls and paths intersect. Just like parallel paths, airlocks are also discouraged to be in close proximity&quot;; the map size is right, but bigger pixels and more contrast: rock keeps its colours, open air is darker.</li><li><strong>Picture:</strong> the map fits the window's width (zoom − / + buttons), cropped to the crust and the ice. Open air is near black (4, 4, 7, was 21, 21, 24) with no outlines; the drawn ice sheet is gone (only a strip of sky). The lattice is drawn as lines at screen resolution on a second canvas.</li><li><strong>Candidate links</strong> are p8's, unchanged: cutoffs (short, end to end), sideways links from a floor's end, 45° ramps from every half cell of floor (carrying on sideways), the cheapest per pair of floors, direction and 4-cell stretch.</li><li><strong>Candidate walls:</strong> straight rock-to-rock crossings of open air (level, upright, both 45°), up to 6 cells (knob), at waists (open a cell away on both sides, nothing narrower the same way within 2 cells), the shortest first, 3 cells apart (knob); none lying along a floor, none in the pod.</li><li><strong>Airlocks</strong> (user): wherever a built wall crosses a path (a floor or a built link), one per crossing, a cell-sized block.</li><li><strong>Collapse</strong> (all recomputed from the build list, so a revert is exact): a link dies if it crosses a built link or runs within a storey of a path going the same way for over 30% of its middle (knob) (p8's D073 rule, with the natural floors counting as paths from the start); a link or wall dies if it would place an airlock within 5 cells (knob) of another; a wall dies within a cell of a built wall.</li><li><strong>Measured, seed 5512:</strong> 50 cutoffs, 68 sideways links, 391 ramps and 77 walls; the floors alone collapse 32 sideways links and 219 ramps, leaving 50 / 36 / 172 / 77. A build near the pod collapses 0 to 13 candidates. The lattice takes ~150 ms, a collapse ~10 ms.</li><li><strong>Seen (Claude):</strong> where rock is thick, the ramps that carry on sideways stack up as bundles of near-parallel tunnels a pixel or two apart (the cheapest per 4-cell stretch keeps one per stretch, and neighbouring stretches give near-copies). Clicking one collapses the bundle, but before that it reads as a blur. Screenshots: <code>gallery/p9/v7_seed5512*.png</code>.</li></ul>
+<h2>Feedback</h2>
+
+<h2>Conclusion → next</h2>
+
+
+</div>
+  </details>
+</article>
 <article class="entry s-building" id="p8">
   <header><span class="pid">p8</span><h2>Storeys (v6)</h2><span class="status">building</span><time>2026-09-27</time><span class="budget" data-start="2026-09-27" data-budget="1">budget 1 days</span><a class="from" href="#p7">grew out of p7 · Hex Caves (v5)</a></header>
   
@@ -127,8 +158,10 @@ footer { color:var(--dim); font-size:12px; }
 <blockquote><p>Why branch, then run in parallel? Wasteful and loses on simplicity. Branch only when needed to, not before. … Pathways crossing each other in X-shape? What's the benefit of that? Pathways running in parallel 2 and 3 blocks from each other? Apart from these two kinds of problems - this is the best yet.</p></blockquote>
 <p>On the result:</p>
 <blockquote><p>I find these paths fairly good. Sometimes a round tour means more resources collected... keep this for now.</p></blockquote>
+<p>On the goal of the exercise:</p>
+<blockquote><p>So, we have been iterating on v6.html, it looks promising… but I'm not sure about the goal of this exercise. What we want to build is a dense network of potential pathways (and walls), that the user can choose from. What I see in these simulations is the network + what making good choices would build for the player.</p></blockquote>
 <h2>What changed because of it</h2>
-<ul><li>Decisions: D070 (storeys up from the pod; dead ends were a bug), D071 (floors first, links second, with cutoffs), D072 (floor = natural one-run stretch, 1-cell headroom, removal preferred), D073 (branch only when needed).</li><li>Kept as it is (user): walks about 2× the straight line are fine; a round tour can collect more.</li></ul></section>
+<ul><li>Decisions: D070 (storeys up from the pod; dead ends were a bug), D071 (floors first, links second, with cutoffs), D072 (floor = natural one-run stretch, 1-cell headroom, removal preferred), D073 (branch only when needed).</li><li>The next prototype, p9 (v7), draws the candidate lattice and its collapse instead (D074).</li><li>Kept as it is (user): walks about 2× the straight line are fine; a round tour can collect more.</li></ul></section>
 </div>
   </details>
 </article>
@@ -578,7 +611,7 @@ gen  d012 b345   ×1</code></pre>
   </details>
 </article>
 </main>
-<section class="ledger-wrap" id="ledger"><details class="ledger"><summary>Decision ledger · 66 active · 7 superseded</summary>
+<section class="ledger-wrap" id="ledger"><details class="ledger"><summary>Decision ledger · 67 active · 7 superseded</summary>
 <table><thead><tr><th>ID</th><th>Date</th><th>From</th><th>Status</th><th>Decision</th></tr></thead><tbody>
 <tr id="D001" class=""><td>D001</td><td>2026-09-24</td><td><a href="#p1">p1</a></td><td>active</td><td>Terrain is designed on one binary grid, step by step. Stacking many CA layers is dropped as the design method.</td></tr>
 <tr id="D002" class=""><td>D002</td><td>2026-09-24</td><td><a href="#p1">p1</a></td><td>active</td><td>The map is homogeneous for now: no top / bottom differentiation. Depth tiers come later.</td></tr>
@@ -653,6 +686,7 @@ gen  d012 b345   ×1</code></pre>
 <tr id="D071" class=""><td>D071</td><td>2026-09-27</td><td><a href="#p8">p8</a></td><td>active</td><td>The lattice pass is floors first, links second (user's four notes on seed 5512; OK'd): cavern floors are the nodes; tiny cutoffs (up to 3 cells, end to end) first join floor pieces into longer floors (user's tip); then a spanning tree of the cheapest links (sideways within ½ storey, 45° ramps that may carry on sideways) from the pod; then links are added while the walk from the pod to a floor is over 1.5× the straight line; divergence points only at forks and ends. Storeys no longer span the map: they're as long as the floors they chain (amends D068). Supersedes the storey lines of D069 and D070.</td></tr>
 <tr id="D072" class=""><td>D072</td><td>2026-09-27</td><td><a href="#p8">p8</a></td><td>active</td><td>A floor is any natural stretch the character crosses in one run (user), with 1 cell of headroom (user: the character fits). Cutoffs prefer removing rock to building walkway (user: &quot;removal is preferred&quot;). A floor piece running within ½ storey of a longer one for most of its length is left out (user: &quot;only one path is needed&quot;). Divergence points only at forks.</td></tr>
 <tr id="D073" class=""><td>D073</td><td>2026-09-27</td><td><a href="#p8">p8</a></td><td>active</td><td>Built links branch only when needed (user: &quot;branch only when needed to, not before&quot;; no X crossings; no paths &quot;running in parallel 2 and 3 blocks from each other&quot;): a link that crosses a chosen link, or runs within a storey of floor or a link going the same way for over 30% of its middle, is refused, unless nothing else reaches a floor. Walks got longer: detour median 1.63× → 2.09×.</td></tr>
+<tr id="D074" class=""><td>D074</td><td>2026-09-27</td><td><a href="#p9">p9</a></td><td>active</td><td>The lattice is shown as candidates, not as a chosen network (user: &quot;a dense network of potential pathways (and walls), that the user can choose from&quot;; p8 drew what good choices would build). Candidates: p8's links, plus walls at waists. A build collapses what clashes with it: p8's D073 rule for links (natural floors count from the start), no wall within a cell of a wall, no airlock within a gap of another. Airlocks are plank-behaviour blocks (pass through, stand on), placed automatically where walls cross paths, and discouraged in close proximity (user).</td></tr>
 </tbody></table></details></section>
 <footer>Generated by <code>npm run timeline</code> from <code>timeline/*/entry.md</code>.</footer>
 <script>
