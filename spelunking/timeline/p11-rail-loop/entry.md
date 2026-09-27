@@ -156,7 +156,8 @@ streaming into the node.
 Seen in the check: the start cave has loot but little ore within 8 px, so the first edge takes some walking.
 Then (D084, the user): walking glides at the drag's exact angle (a sub-pixel position; b4.3 still stepped in
 8 ways on screen), and explored, unlit areas are 50% darker (17.5% bright). Then (D085, the user): the
-pull goes on while walking (not in a moving car).
+pull goes on while walking (not in a moving car). Then (D086, the user): the scan fires only when some pixel
+within its radius is still unseen.
 
 ## Feedback
 

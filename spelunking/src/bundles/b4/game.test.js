@@ -51,6 +51,19 @@ test('the pull goes on while walking (b4.5)', () => {
   assert.ok(walking > 0, 'pulled while walking')
 })
 
+test('the scan fires only when something within its radius is unseen (b4.6)', () => {
+  const g = fresh()
+  // walk down until the bot stands on rock, then point into it
+  command(g, { type: 'move', dx: 0, dy: 1 })
+  let scans = 0
+  for (let i = 0; i < 300; i++) {
+    tick(g)
+    scans += g.events.filter((e) => e.type === 'scan').length
+    g.events.length = 0
+  }
+  assert.equal(scans, 1, 'the first scan reveals everything round it; pushing on, nothing is left to find')
+})
+
 test('building takes the price from the ledger at once; short of it, refused', () => {
   const g = fresh()
   const from = MAP.podNodes.find((n) => MAP.edges.some((e) => e.a === n || e.b === n))

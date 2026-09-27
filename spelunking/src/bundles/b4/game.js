@@ -8,7 +8,8 @@
 // `walkSpeed`; its pixel (`ch`) is where that position is, and it may only be an open one; it climbs the back
 // wall, D077; no gravity. Into rock, it slides along the open side (the move's x or y part alone).
 // Scan: pointing into rock fires b3's probe at the rock pixel, rings out to `scan.radius`, then it cools down
-// for `scan.cooldown` ticks (1 s, the user, b4.3). Pull: b3's (D062): the nearest seen ore or
+// for `scan.cooldown` ticks (1 s, the user, b4.3). It fires only if some pixel within its radius is still
+// unseen (b4.6). Pull: b3's (D062): the nearest seen ore or
 // loot in the light is pulled, one unit every `pull.ticks`, and the pixel turns to rock; it goes straight to
 // the ledger (b4.3). Walking doesn't stop it (b4.5), a moving car does.
 // The ledger (b4.3, the user): every collectible, one count each: ore, loot, bugs. No pack.
@@ -34,7 +35,7 @@ import { scare, updateBugs } from '../../sim/dig/bugs.js'
 import { sightCells } from '../../sim/dig/light.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { SWARM, updateSwarm } from './swarm.js'
-import { ROCK } from './world.js'
+import { OPEN, ROCK } from './world.js'
 
 /** @typedef {import('./world.js').Map} Map */
 /** @typedef {import('./world.js').Cell} Cell */
@@ -258,10 +259,27 @@ function walk(g) {
   const y = g.ch.y + dy
   if (g.probe || g.tick < g.scanAt || y < 0 || y >= g.world.h) return
   if (g.map.kind[y * g.world.w + wrap(g.ch.x + dx, g.world.w)] !== ROCK) return
+  if (!hidden(g, wrap(g.ch.x + dx, g.world.w), y, g.cfg.scan.radius)) return // nothing left to find there (the user, b4.6)
   g.probe = { x: wrap(g.ch.x + dx, g.world.w), y, r: 0, t: 0 }
   g.scanAt = g.tick + g.cfg.scan.cooldown
   g.events.push({ type: 'scan', x: g.probe.x, y })
   ring(g, g.probe, 1)
+}
+
+/** Some rock or cave pixel within r of (x, y) is still unseen (the sheet, the sea and space don't count). @param {Game} g @param {number} x @param {number} y @param {number} r */
+function hidden(g, x, y, r) {
+  const { w, h } = g.world
+  for (let dy = -r; dy <= r; dy++) {
+    const yy = y + dy
+    if (yy < 0 || yy >= h) continue
+    for (let dx = -r; dx <= r; dx++) {
+      if (dx * dx + dy * dy > r * r) continue
+      const i = yy * w + wrap(x + dx, w)
+      const k = g.map.kind[i]
+      if (!g.seen[i] && (k === ROCK || k === OPEN)) return true
+    }
+  }
+  return false
 }
 
 /** A direction as steps per 1000, the main axis ±1000 (integers from here on), or null for none. @param {number} dx @param {number} dy */
