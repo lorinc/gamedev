@@ -1,19 +1,24 @@
-// The storey pass (D068): walkable floors from the raster, the pod on natural floor near the centre, and
-// the storeys grown from it. A storey follows floors within ½ storey of its current Y and holds its Y
-// (a bridge in air, a tunnel in rock) where there's none; a 45° pass keeps every change walkable. Each
-// next storey, up or down from the pod's, starts at the foot of a 45° ramp near where the last one
-// started. A storey closer than ½ storey to the one it came from merges into it, meeting it at 45°. Everything is in raster px (K per cell).
+// The lattice pass (D068, reworked in D071 after the user's notes on seed 5512): floors first, links
+// second. The nodes are the caverns' walkable floors. Candidate links join them: sideways links from a
+// floor's end (a bridge in air, a tunnel in rock) to floor within ½ storey, and 45° ramps down from any
+// floor onto another. A spanning tree of the cheapest links connects every floor it can reach from the
+// pod; then ramps and links are added while the walk from the pod to some floor is more than `detour` ×
+// the straight line. Divergence points sit only where there's a choice: forks and ends, merged within
+// 2 cells. Everything is in raster px (K per cell).
 
 import { ICE, SURFACE } from '../v5/wfc.js'
-import { K, OPEN, ROCK, SKY } from './terrain.js'
+import { K, OPEN, ROCK, SEA, SKY } from './terrain.js'
 
-/** The storey knobs (the page's sliders); the cave knobs are p7's QKNOBS. */
+/** The lattice knobs (the page's sliders); the cave knobs are p7's QKNOBS. */
 export const SKNOBS = {
-  storey: 3, // storey height, in cells (user: 3 is enough)
-  tol: 0.5, // a storey follows floor within this share of a storey (user: ½)
+  storey: 3, // storey height, in cells (user: 3 is enough); floor within ½ storey links sideways
   head: 2, // headroom a floor needs to be walkable, in cells
-  minFloor: 2, // the shortest floor worth following, in cells
-  reach: 15, // how far from the storey's start its ramp down may go, in cells
+  cutoff: 3, // links this short or shorter join floor pieces into one floor first (user's tip), in cells
+  minFloor: 3, // the shortest floor (with its cutoffs) the network must reach, in cells
+  span: 12, // the longest sideways link (bridge or tunnel), in cells
+  drop: 2, // the longest ramp, in storeys
+  detour: 1.5, // the walk from the pod to any floor: at most this × the straight line
+  rockCost: 2, // a cell of tunnel costs this many cells of bridge
 }
 /** @typedef {typeof SKNOBS} SKnobs */
 
@@ -23,24 +28,33 @@ export const POD_H = 5
 const DOOR = 2 // door height in the side walls, in cells
 const SINK = 2 // how far the pod may sink into a floor that rises under it, in cells (user: floors aren't that level)
 
-export const FLOOR = 0
-export const BRIDGE = 1
-export const TUNNEL = 2
-export const MERGED = 3
-export const KINDS = ['floor', 'bridge', 'tunnel', 'merged']
+/**
+ * @typedef {{xs: number[], ys: number[], cum: number[], ring: boolean, net: boolean}} Run a floor, its
+ *   columns in walking order (wrapping), and the walking length up to each
+ * @typedef {{a: number, ai: number, b: number, bi: number, px: [number, number][], rock: number, ramp: boolean, len: number, cost: number, cut?: boolean}} Link
+ *   from run a at index ai to run b at index bi; px: its pixels, both ends included
+ */
 
 /**
  * @param {import('./terrain.js').Terrain} T (its cls is changed: the pod is carved in)
  * @param {SKnobs} S
  */
 export function storeys(T, S) {
-  const { w, h, cls, band, crust } = T
-  const at = (/** @type {number} */ x, /** @type {number} */ y) => (y < 0 ? SKY : y >= h ? ROCK : cls[y * w + (((x % w) + w) % w)])
+  const { w, h, cls, band } = T
   const wrap = (/** @type {number} */ x) => ((x % w) + w) % w
-  const L = Math.round(S.storey * K) // a storey, in px
-  const tol = S.tol * L
+  const at = (/** @type {number} */ x, /** @type {number} */ y) => (y < 0 ? SKY : y >= h ? ROCK : cls[y * w + wrap(x)])
+  const dxw = (/** @type {number} */ a, /** @type {number} */ b) => {
+    const d = Math.abs(wrap(a) - wrap(b))
+    return Math.min(d, w - d)
+  }
+  const L = Math.round(S.storey * K)
+  const tol = L / 2
   const pod = placePod(T)
   if (pod) carvePod(T, pod)
+  const podHalf = (POD_W / 2) * K
+  // the pod's inside (its doors and walls excepted): links don't start in it or cross it
+  const inPod = (/** @type {number} */ x, /** @type {number} */ y) =>
+    !!pod && dxw(x, pod.c) < podHalf - K && y <= pod.base + K && y >= pod.base - POD_H * K
 
   // walkable floor: open, rock below, headroom above
   const headPx = Math.round(S.head * K)
@@ -49,11 +63,12 @@ export function storeys(T, S) {
   for (let x = 0; x < w; x++)
     for (let y = 0; y < h - 1; y++) {
       if (cls[y * w + x] !== OPEN || cls[(y + 1) * w + x] !== ROCK) continue
+      if (pod && dxw(x, pod.c) <= podHalf && y < pod.base - 1 && y >= pod.base - POD_H * K - 2) continue // the pod's roof
       let ok = true
       for (let d = 1; d < headPx && ok; d++) ok = at(x, y - d) === OPEN
       if (ok) floors[x].push(y)
     }
-  // floor runs: floor pixels in neighbouring columns at most 1 px apart (45°), across the wrap
+  // runs: floor pixels in neighbouring columns at most 1 px apart (45°), across the wrap
   const id = (/** @type {number} */ x, /** @type {number} */ y) => y * w + x
   /** @type {Map<number, number>} */
   const parent = new Map()
@@ -71,182 +86,357 @@ export function storeys(T, S) {
   for (let x = 0; x < w; x++)
     for (const y of floors[x])
       for (const y2 of floors[wrap(x + 1)]) if (Math.abs(y2 - y) <= 1) parent.set(find(id(x, y)), find(id(wrap(x + 1), y2)))
-  /** @type {Map<number, Set<number>>} */
-  const cols = new Map()
+  /** @type {Map<number, Map<number, number>>} root → column → y (the highest floor pixel of it there) */
+  const groups = new Map()
   for (let x = 0; x < w; x++)
     for (const y of floors[x]) {
       const r = find(id(x, y))
-      let set = cols.get(r)
-      if (!set) cols.set(r, (set = new Set()))
-      set.add(x)
+      let g = groups.get(r)
+      if (!g) groups.set(r, (g = new Map()))
+      if (!g.has(x)) g.set(x, y)
     }
-  const runLen = (/** @type {number} */ x, /** @type {number} */ y) => /** @type {Set<number>} */ (cols.get(find(id(x, y)))).size
+  /** @type {Run[]} */
+  const runs = []
+  /** @type {Map<number, number>} floor pixel → run index (nodes only) */
+  const runOf = new Map()
+  /** @type {Map<number, number>} floor pixel → its index in its run */
+  const idxOf = new Map()
   const minPx = S.minFloor * K
-  const good = (/** @type {number} */ x, /** @type {number} */ y) => runLen(x, y) >= minPx
-
-  /** Grows a storey from (sx, sy) both ways round the wrap; returns its Y per column, 45° at most. @param {number} sx @param {number} sy */
-  const grow = (sx, sy) => {
-    const t = new Float64Array(w)
-    t[sx] = sy
-    const half = w >> 1
-    for (const dir of [1, -1]) {
-      let cur = sy
-      const steps = dir === 1 ? half : w - half - 1
-      for (let i = 1; i <= steps; i++) {
-        const x = wrap(sx + dir * i)
-        const fs = floors[x].filter((y) => good(x, y))
-        // the same floor carries on; else the nearest within ½ storey; else hold the Y
-        let next = fs.find((y) => Math.abs(y - cur) <= 1)
-        if (next === undefined) {
-          let best = Infinity
-          for (const y of fs) if (Math.abs(y - cur) <= tol && Math.abs(y - cur) < best) (best = Math.abs(y - cur)), (next = y)
-        }
-        if (next !== undefined) cur = next
-        t[x] = cur
-      }
+  for (const g of groups.values()) {
+    if (g.size < K) continue // crumbs under a cell aren't floor
+    // only the ice layer's floors (p8 zooms in on it)
+    let inIce = 0
+    for (const [x, y] of g) if (band[y * w + x] === ICE || band[y * w + x] === SURFACE) inIce++
+    if (inIce * 2 < g.size) continue
+    let start = -1
+    for (const x of g.keys()) if (!g.has(wrap(x - 1))) start = start < 0 ? x : Math.min(start, x)
+    const ring = start < 0
+    if (ring) start = 0
+    /** @type {number[]} */ const xs = []
+    /** @type {number[]} */ const ys = []
+    for (let x = start, n = 0; g.has(wrap(x)) && n < w; x++, n++) {
+      xs.push(wrap(x))
+      ys.push(/** @type {number} */ (g.get(wrap(x))))
     }
-    // 45°: no column may be more than 1 px (per column) below a higher one near it; the lower side
-    // becomes a slope (a ramp over the floor, or through rock)
-    const y = Float64Array.from(t)
-    for (let pass = 0; pass < 2; pass++) {
-      for (let i = 0; i < 2 * w; i++) y[i % w] = Math.min(y[i % w], y[(i - 1 + w) % w] + 1)
-      for (let i = 2 * w; i > 0; i--) y[i % w] = Math.min(y[i % w], y[(i + 1) % w] + 1)
-    }
-    return Int32Array.from(y)
+    const cum = [0]
+    for (let i = 1; i < xs.length; i++) cum.push(cum[i - 1] + Math.hypot(1, ys[i] - ys[i - 1]))
+    const r = runs.length
+    runs.push({ xs, ys, cum, ring, net: false })
+    xs.forEach((x, i) => {
+      runOf.set(id(x, ys[i]), r)
+      idxOf.set(id(x, ys[i]), i)
+    })
   }
-  /** What a storey runs on at column x. @param {number} x @param {number} y */
-  const kindAt = (x, y) => {
-    const c = at(x, y)
-    if (c === ROCK) return TUNNEL
-    if (c === OPEN && at(x, y + 1) === ROCK) {
-      for (let d = 1; d < headPx; d++) if (at(x, y - d) !== OPEN) return TUNNEL // a squeeze: the ceiling must go
-      return FLOOR
-    }
-    return BRIDGE
-  }
+  const runAt = (/** @type {number} */ x, /** @type {number} */ y) => runOf.get(id(wrap(x), y)) ?? -1
 
-  /** @type {{y: Int32Array, kind: Uint8Array, sx: number}[]} */
-  const list = []
-  /** @type {{x: number, y: number, dir: number, len: number, up: boolean}[]} */
-  const ramps = []
-  /** @type {{x: number, y: number}[]} */
-  const joins = [] // where a storey merges into the one it came from
-  /**
-   * A chain of storeys from the pod's, up (user: "extend the network above the pod as well") or down.
-   * Each next storey starts at the foot of a 45° ramp near where the last one started.
-   * @param {{y: Int32Array, kind: Uint8Array, sx: number}} first @param {boolean} up
-   */
-  const chain = (first, up) => {
-    let from = first
-    const sign = up ? -1 : 1
-    for (let n = 0; n < 16; n++) {
-      // the ramp: near this storey's start, where its foot lands best on real floor
-      let best = { score: Infinity, x: 0, dir: 1, len: L }
-      for (let r = -S.reach * K; r <= S.reach * K; r++) {
-        const x = wrap(from.sx + r)
-        if (from.kind[x] === MERGED) continue
-        for (const dir of [1, -1])
-          for (let len = Math.ceil(L - tol); len <= L + tol; len++) {
-            const fx = wrap(x + dir * len)
-            const fy = from.y[x] + sign * len
-            const onFloor = floors[fx].some((v) => v === fy && good(fx, v))
-            let rock = 0
-            for (let i = 1; i < len; i++) if (at(x + dir * i, from.y[x] + sign * i) === ROCK) rock++
-            const score = (onFloor ? 0 : 50) + Math.abs(len - L) + rock * 0.25 + Math.abs(r) * 0.02
-            if (score < best.score) best = { score, x, dir, len }
+  // candidate links, the cheapest per pair of floors, direction and 4-cell stretch
+  /** @type {Map<string, Link>} */
+  const cands = new Map()
+  /** @param {string} key @param {number} a @param {number} ai @param {[number, number][]} px @param {boolean} ramp */
+  const offer = (key, a, ai, px, ramp) => {
+    const [ex, ey] = px[px.length - 1]
+    const b = runAt(ex, ey)
+    let rock = 0
+    let len = 0
+    for (let i = 1; i < px.length; i++) {
+      len += Math.hypot(1, px[i][1] - px[i - 1][1])
+      if (i < px.length - 1 && at(px[i][0], px[i][1]) === ROCK) rock++
+    }
+    const cost = len + rock * (S.rockCost - 1)
+    const old = cands.get(key)
+    if (!old || cost < old.cost) cands.set(key, { a, ai, b, bi: /** @type {number} */ (idxOf.get(id(wrap(ex), ey))), px, rock, ramp, len, cost })
+  }
+  const spanPx = S.span * K
+  const dropPx = S.drop * L
+  runs.forEach((run, r) => {
+    const n = run.xs.length
+    // sideways, from each end: the first floor within ½ storey; the Y holds, then meets it at 45°
+    if (!run.ring)
+      for (const [i, d] of /** @type {[number, number][]} */ ([
+        [0, -1],
+        [n - 1, 1],
+      ])) {
+        const xe = run.xs[i]
+        const ye = run.ys[i]
+        for (let s = 1; s <= spanPx; s++) {
+          const x = xe + d * s
+          const c = at(x, ye)
+          if (c === SKY || c === SEA) break
+          let fy = -1
+          for (const y of floors[wrap(x)]) {
+            const b = runAt(x, y)
+            if (b < 0 || Math.abs(y - ye) > Math.min(tol, s)) continue
+            if (b === r) {
+              fy = -2
+              break
+            }
+            if (fy < 0 || Math.abs(y - ye) < Math.abs(fy - ye)) fy = y
           }
-      }
-      const fx = wrap(best.x + best.dir * best.len)
-      const fy = from.y[best.x] + sign * best.len
-      if (up) {
-        if (fy - headPx < crust[fx] + K) break // no room under the crust
-      } else {
-        const b = band[Math.min(h - 1, fy) * w + fx]
-        if (fy >= h || (b !== ICE && b !== SURFACE)) break // the ice layer ends
-      }
-      ramps.push({ x: best.x, y: from.y[best.x], dir: best.dir, len: best.len, up })
-      const next = storey(fx, fy, from, up)
-      list.push(next)
-      from = next
-    }
-  }
-  /**
-   * A storey from (sx, sy); closer than ½ storey to the one it came from (or past it), it merges: it
-   * takes that storey's line there, and climbs or drops into it at 45° (no dead ends).
-   * @param {number} sx @param {number} sy @param {{y: Int32Array} | null} from @param {boolean} up
-   */
-  const storey = (sx, sy, from, up) => {
-    const y = grow(sx, sy)
-    if (up) {
-      // it stays under the crust with its headroom: where it would break through, it dips (at 45°)
-      for (let x = 0; x < w; x++) y[x] = Math.max(y[x], crust[x] + K + headPx)
-      for (let pass = 0; pass < 2; pass++) {
-        for (let i = 0; i < 2 * w; i++) y[i % w] = Math.max(y[i % w], y[(i - 1 + w) % w] - 1)
-        for (let i = 2 * w; i > 0; i--) y[i % w] = Math.max(y[i % w], y[(i + 1) % w] - 1)
-      }
-    }
-    if (from) {
-      const f = from.y
-      const merged = Uint8Array.from(y, (v, x) => ((up ? f[x] - v : v - f[x]) < tol ? 1 : 0))
-      const v = Float64Array.from(y, (yy, x) => (merged[x] ? f[x] : yy))
-      // down chains merge upwards (lift the neighbours), up chains downwards (lower them)
-      for (let pass = 0; pass < 2; pass++) {
-        for (let i = 0; i < 2 * w; i++) {
-          const a = i % w
-          const b = (i - 1 + w) % w
-          v[a] = up ? Math.max(v[a], v[b] - 1) : Math.min(v[a], v[b] + 1)
-        }
-        for (let i = 2 * w; i > 0; i--) {
-          const a = i % w
-          const b = (i + 1) % w
-          v[a] = up ? Math.max(v[a], v[b] - 1) : Math.min(v[a], v[b] + 1)
+          if (fy === -2) break
+          if (fy < 0) continue
+          /** @type {[number, number][]} */
+          const px = [[xe, ye]]
+          const dy = fy - ye
+          for (let t = 1; t <= s; t++) px.push([wrap(xe + d * t), Math.abs(dy) > s - t ? fy - Math.sign(dy) * (s - t) : ye])
+          offer(`s${r}|${runAt(x, fy)}|${d}`, r, i, px, false)
+          break
         }
       }
-      for (let x = 0; x < w; x++) y[x] = v[x]
-      const kind = Uint8Array.from(y, (yy, x) => (yy === f[x] ? MERGED : kindAt(x, yy)))
-      for (let x = 0; x < w; x++)
-        if ((kind[x] === MERGED) !== (kind[wrap(x + 1)] === MERGED)) joins.push(kind[x] === MERGED ? { x, y: y[x] } : { x: wrap(x + 1), y: y[wrap(x + 1)] })
-      return { y, kind, sx }
+    // ramps: 45° up or down from a point of the floor (every half cell, and the ends), then, if it
+    // lands on no floor, on sideways to the first floor within the span
+    for (let i = 0; i < n; i++) {
+      if (i % (K >> 1) && i !== n - 1) continue
+      const x0 = run.xs[i]
+      const y0 = run.ys[i]
+      if (inPod(x0, y0)) continue
+      for (const d of [1, -1])
+        for (const v of [1, -1])
+          ramp: for (let s = 1; s <= dropPx; s++) {
+            const xs = x0 + d * s
+            const ys = y0 + v * s
+            const c = at(xs, ys)
+            if (ys <= 0 || ys >= h - 1 || c === SKY || c === SEA || inPod(xs, ys)) break
+            const b = runAt(xs, ys)
+            if (b === r) break
+            /** @type {[number, number][]} */
+            const diag = []
+            for (let t = 0; t <= s; t++) diag.push([wrap(x0 + d * t), y0 + v * t])
+            if (b >= 0) {
+              if (s >= 2) offer(`r${r}|${b}|${d}|${Math.floor(x0 / (4 * K))}`, r, i, diag, true)
+              break
+            }
+            if (s < 2) continue
+            for (let t = 1; t <= spanPx - s; t++) {
+              const x = xs + d * t
+              const c2 = at(x, ys)
+              if (c2 === SKY || c2 === SEA || inPod(x, ys)) break
+              for (const dy of [0, 1, -1]) {
+                const b2 = runAt(x, ys + dy)
+                if (b2 < 0) continue
+                if (b2 === r) break ramp
+                /** @type {[number, number][]} */
+                const px = diag.slice()
+                for (let u = 1; u < t; u++) px.push([wrap(xs + d * u), ys])
+                px.push([wrap(x), ys + dy])
+                offer(`r${r}|${b2}|${d}|${Math.floor(x0 / (4 * K))}`, r, i, px, true)
+                break ramp
+              }
+            }
+          }
     }
-    return { y, kind: Uint8Array.from(y, (yy, x) => kindAt(x, yy)), sx }
+  })
+
+  // first the cutoffs (user's tip): the shortest links join pieces of floor into longer floors; then the
+  // spanning tree: the cheapest links first, each joining two floors long enough to count
+  const all = [...cands.values()].sort((p, q) => p.cost - q.cost)
+  const comp = runs.map((_, i) => i)
+  const size = runs.map((r) => r.xs.length)
+  const cf = (/** @type {number} */ a) => {
+    while (comp[a] !== a) a = comp[a] = comp[comp[a]]
+    return a
   }
-  if (pod) {
-    const first = storey(pod.c, pod.base, null, false)
-    list.push(first)
-    chain(first, false)
-    chain(first, true)
+  /** @type {Set<Link>} */
+  const chosen = new Set()
+  const cutPx = S.cutoff * K
+  // a cutoff extends a floor: from one piece's end to within a cell of another's
+  const atEnd = (/** @type {number} */ r, /** @type {number} */ i) => !runs[r].ring && (i <= K || i >= runs[r].xs.length - 1 - K)
+  for (const l of all) {
+    const p = cf(l.a)
+    const q = cf(l.b)
+    if (p === q || l.len > cutPx || !atEnd(l.a, l.ai) || !atEnd(l.b, l.bi)) continue
+    comp[p] = q
+    size[q] += size[p] + l.px.length - 2
+    l.cut = true
+    chosen.add(l)
+  }
+  for (const l of all) {
+    const p = cf(l.a)
+    const q = cf(l.b)
+    if (p === q || size[p] < minPx || size[q] < minPx) continue
+    comp[p] = q
+    size[q] += size[p]
+    chosen.add(l)
+  }
+  const podRun = pod ? runAt(pod.c, pod.base) : -1
+  if (podRun >= 0) for (let r = 0; r < runs.length; r++) runs[r].net = cf(r) === cf(podRun)
+  for (const l of [...chosen]) if (!runs[l.a].net) chosen.delete(l)
+
+  // walking distances from the pod: along floors, and over links
+  const podI = podRun >= 0 ? /** @type {number} */ (idxOf.get(id(pod ? pod.c : 0, pod ? pod.base : 0))) : 0
+  const along = (/** @type {Run} */ run, /** @type {number} */ i, /** @type {number} */ j) => {
+    const d = Math.abs(run.cum[i] - run.cum[j])
+    return run.ring ? Math.min(d, run.cum[run.cum.length - 1] + 1 - d) : d
+  }
+  /** Distance to every run's attachment points, from the pod. @returns {Map<number, Map<number, number>>} run → index → distance */
+  const walk = () => {
+    /** @type {Map<number, Set<number>>} */
+    const verts = new Map()
+    const addV = (/** @type {number} */ r, /** @type {number} */ i) => {
+      let s = verts.get(r)
+      if (!s) verts.set(r, (s = new Set([0, runs[r].xs.length - 1])))
+      s.add(i)
+    }
+    addV(podRun, podI)
+    for (const l of chosen) addV(l.a, l.ai), addV(l.b, l.bi)
+    /** @type {Map<number, Map<number, number>>} */
+    const dist = new Map()
+    for (const [r, s] of verts) dist.set(r, new Map([...s].map((i) => [i, Infinity])))
+    /** @type {[number, number, number][]} */
+    const open = [[0, podRun, podI]]
+    const podDist = /** @type {Map<number, number>} */ (dist.get(podRun))
+    podDist.set(podI, 0)
+    /** @type {Map<number, [number, number, number][]>} run * 100000 + index → [run, index, length] over a link */
+    const byEnd = new Map()
+    for (const l of chosen) {
+      for (const [r, i, r2, i2] of [
+        [l.a, l.ai, l.b, l.bi],
+        [l.b, l.bi, l.a, l.ai],
+      ]) {
+        const k = r * 100000 + i
+        let e = byEnd.get(k)
+        if (!e) byEnd.set(k, (e = []))
+        e.push([r2, i2, l.len])
+      }
+    }
+    while (open.length) {
+      let m = 0
+      for (let j = 1; j < open.length; j++) if (open[j][0] < open[m][0]) m = j
+      const [d, r, i] = open[m]
+      open[m] = open[open.length - 1]
+      open.pop()
+      const dr = /** @type {Map<number, number>} */ (dist.get(r))
+      if (d > /** @type {number} */ (dr.get(i))) continue
+      const relax = (/** @type {number} */ r2, /** @type {number} */ i2, /** @type {number} */ nd) => {
+        const m2 = /** @type {Map<number, number>} */ (dist.get(r2))
+        if (nd < /** @type {number} */ (m2.get(i2))) {
+          m2.set(i2, nd)
+          open.push([nd, r2, i2])
+        }
+      }
+      for (const j of dr.keys()) if (j !== i) relax(r, j, d + along(runs[r], i, j))
+      for (const [r2, i2, len] of byEnd.get(r * 100000 + i) || []) relax(r2, i2, d + len)
+    }
+    return dist
+  }
+  const distAt = (/** @type {Map<number, Map<number, number>>} */ dist, /** @type {number} */ r, /** @type {number} */ i) => {
+    const m = dist.get(r)
+    if (!m) return Infinity
+    let best = Infinity
+    for (const [j, d] of m) best = Math.min(best, d + along(runs[r], i, j))
+    return best
+  }
+  const C = 5 * K // damping, so floors right next to the pod don't count as huge detours
+  const mid = (/** @type {number} */ r) => runs[r].xs.length >> 1
+  const straight = (/** @type {number} */ r) => {
+    const i = mid(r)
+    return Math.hypot(dxw(runs[r].xs[i], pod ? pod.c : 0), runs[r].ys[i] - (pod ? pod.base : 0))
+  }
+  const ratio = (/** @type {number} */ d, /** @type {number} */ r) => (d + C) / (straight(r) + C)
+
+  // detours: while the walk to some floor is too long, add the link into it that shortens it most
+  /** @type {Set<number>} */
+  const stuck = new Set()
+  let dist = podRun >= 0 ? walk() : new Map()
+  for (let iter = 0; iter < 60 && podRun >= 0; iter++) {
+    let worst = -1
+    let wr = S.detour
+    for (let r = 0; r < runs.length; r++) {
+      if (!runs[r].net || stuck.has(r) || runs[r].xs.length < 2 * K) continue
+      const q = ratio(distAt(dist, r, mid(r)), r)
+      if (q > wr) (wr = q), (worst = r)
+    }
+    if (worst < 0) break
+    const now = distAt(dist, worst, mid(worst))
+    /** @type {Link | null} */
+    let pick = null
+    let pickD = now * 0.9
+    for (const l of all) {
+      if (chosen.has(l)) continue
+      for (const [r, i, r2, i2] of [
+        [l.a, l.ai, l.b, l.bi],
+        [l.b, l.bi, l.a, l.ai],
+      ]) {
+        if (r2 !== worst || !runs[r].net) continue
+        const nd = distAt(dist, r, i) + l.len + along(runs[worst], i2, mid(worst))
+        if (nd < pickD) (pickD = nd), (pick = l)
+      }
+    }
+    if (!pick) {
+      stuck.add(worst)
+      continue
+    }
+    chosen.add(pick)
+    dist = walk()
   }
 
-  // divergence points: ramp heads and feet, and where a storey goes from floor to bridge or tunnel
-  // and back (runs under a cell don't count)
+  // divergence points: where a floor forks (3+ ways) or ends, merged within 2 cells
+  /** @type {Map<number, number>} run * 100000 + index → links attached */
+  const attach = new Map()
+  for (const l of chosen)
+    for (const [r, i] of [
+      [l.a, l.ai],
+      [l.b, l.bi],
+    ])
+      attach.set(r * 100000 + i, (attach.get(r * 100000 + i) || 0) + 1)
+  /** @type {{x: number, y: number}[]} */
+  const raw = []
+  runs.forEach((run, r) => {
+    if (!run.net) return
+    const n = run.xs.length
+    const at2 = new Set([0, n - 1])
+    for (const k of attach.keys()) if (Math.floor(k / 100000) === r) at2.add(k % 100000)
+    for (const i of at2) {
+      const ways = (run.ring || i > 0 ? 1 : 0) + (run.ring || i < n - 1 ? 1 : 0) + (attach.get(r * 100000 + i) || 0)
+      if (ways >= 3 || ways === 1) raw.push({ x: run.xs[i], y: run.ys[i] })
+    }
+  })
   /** @type {{x: number, y: number}[]} */
   const points = []
-  for (const r of ramps) points.push({ x: r.x, y: r.y }, { x: wrap(r.x + r.dir * r.len), y: r.y + (r.up ? -r.len : r.len) })
-  points.push(...joins)
-  for (const s of list) {
-    const k = Array.from(s.kind, (v) => (v === FLOOR ? 0 : v === MERGED ? 2 : 1))
-    for (let pass = 0; pass < 2; pass++)
-      for (let x = 0; x < w; x++) {
-        if (k[x] === k[wrap(x - 1)]) continue
-        let len = 0
-        while (len < w && k[wrap(x + len)] === k[x]) len++
-        if (len < K) for (let i = 0; i < len; i++) k[wrap(x + i)] = k[wrap(x - 1)]
-      }
-    for (let x = 0; x < w; x++) if (k[x] !== k[wrap(x - 1)] && k[x] !== 2 && k[wrap(x - 1)] !== 2) points.push({ x, y: s.y[x] })
-  }
+  for (const p of raw) if (!points.some((q) => Math.hypot(dxw(p.x, q.x), p.y - q.y) < 2 * K)) points.push(p)
 
-  // shares of the storeys' length (merged stretches counted once, with the storey above)
-  const count = [0, 0, 0]
-  for (const s of list) for (const v of s.kind) if (v !== MERGED) count[v]++
-  const total = count[0] + count[1] + count[2] || 1
+  // the numbers
+  const links = [...chosen]
+  // floors = pieces joined by cutoffs, long enough to count; reached = those in the pod's network
+  /** @type {Map<number, number>} */
+  const floorLen = new Map()
+  const cc = runs.map((_, i) => i)
+  const ccf = (/** @type {number} */ a) => {
+    while (cc[a] !== a) a = cc[a] = cc[cc[a]]
+    return a
+  }
+  for (const l of cands.values()) if (l.cut && chosen.has(l)) cc[ccf(l.a)] = ccf(l.b)
+  for (const l of all) if (l.cut && !chosen.has(l)) cc[ccf(l.a)] = ccf(l.b) // cutoffs of floors off the network
+  runs.forEach((r, i) => floorLen.set(ccf(i), (floorLen.get(ccf(i)) || 0) + r.xs.length))
+  const bigFloors = [...floorLen].filter(([, n]) => n >= minPx).map(([k]) => k)
+  const netRuns = bigFloors.filter((k) => runs.some((r, i) => r.net && ccf(i) === k)).length
+  const ratios = runs.flatMap((run, r) => (run.net && run.xs.length >= 2 * K ? [ratio(distAt(dist, r, mid(r)), r)] : [])).sort((a, b) => a - b)
+  let floorPx = 0
+  for (const run of runs) if (run.net) floorPx += run.xs.length
+  let bridgePx = 0
+  let tunnelPx = 0
+  let cutPxs = 0
+  for (const l of links)
+    for (let i = 1; i < l.px.length - 1; i++) l.cut ? cutPxs++ : at(l.px[i][0], l.px[i][1]) === ROCK ? tunnelPx++ : bridgePx++
   return {
     pod,
     floors,
-    list,
-    ramps,
+    runs,
+    links,
     points,
-    share: { floor: count[0] / total, bridge: count[1] / total, tunnel: count[2] / total },
-    crust,
+    stats: {
+      floors: bigFloors.length,
+      reached: netRuns,
+      cutoffs: links.filter((l) => l.cut).length,
+      ramps: links.filter((l) => l.ramp && !l.cut).length,
+      sideways: links.filter((l) => !l.ramp && !l.cut).length,
+      cutPx: cutPxs,
+      floorPx,
+      bridgePx,
+      tunnelPx,
+      detourMedian: ratios.length ? ratios[ratios.length >> 1] : 0,
+      detourWorst: ratios.length ? ratios[ratios.length - 1] : 0,
+      stuck: stuck.size,
+    },
   }
 }
 /** @typedef {ReturnType<typeof storeys>} Storeys */

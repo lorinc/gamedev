@@ -99,6 +99,33 @@ storey dips under the crust at 45° where it would break through (D070).
   fragments too, until it became a dip. `tools/storeys.js` checks for dead ends: none on 300 seeds.
 - Measured, 300 seeds: 11.2 storeys a map; 23% floor, 37% bridge, 40% tunnel; 16 ms median, 45 ms p90.
 
+**Then the rework: floors first, links second (D071).** The user on seed 5512: "1. there's no way to
+path towards SW from the pod without unreasonable detour; 2. the div point immediately left from the
+pod should have a SE ramp, leading to the walkable cave floor right after the gap; 3. that massive
+accumulation of 7 + additional 9 connected div points … is a mess. That whole area could be 4-5 points
+in total; 4. there's a large cavern touching the pod from NW, no path goes there, those resources are
+gone." All four came from drawing map-wide lines first. Now (`storeys.js`, same file):
+- **Nodes are cavern floors** (walkable floor pieces). **Candidate links:** sideways from a piece's end
+  to floor within ½ storey (up to 12 cells, knob), and 45° ramps up or down from any point (every half
+  cell), landing on floor or carrying on sideways to the first floor within the span (up to 2 storeys,
+  knob). Cost: length, with rock at 2× (knob).
+- **Cutoffs first** (user's tip, mid-build: "if you consider what tiny cutoffs ramps could connect cave
+  walkable floor parts, and prioritized extending the walkable cavern floors this way, it would increase
+  the ratio by a lot"): links up to 3 cells (knob) join one piece's end to near another's end, so a
+  floor broken by a bump or a step is one floor. Drawn as floor (light green where carved).
+- **Then a spanning tree** of the cheapest links between floors of 3+ cells (with their cutoffs), from
+  the pod. **Then detours:** while the walk from the pod to some floor is more than 1.5× the straight line
+  (knob; damped by 5 cells so the pod's neighbours don't count as huge), the link into it that shortens
+  it most is added; a floor no single link fixes is left.
+- **Divergence points** only at forks (3+ ways) and ends, merged within 2 cells.
+- **No more full-width storeys:** a storey is as long as the floors it chains (the user OK'd this).
+- Measured, 300 seeds: **98% of floors reached**, 41.8 links (of them ~20 cutoffs) and 38 divergence
+  points a map; detour from the pod median 1.59×, the worst floor per map median 2.82× (p90 4.39×): the
+  detour pass often finds no single link that helps. 58 ms median, 86 ms p90. Seed 5512: all 19
+  floors, 20 cutoffs, 20 ramps, 4 sideways links, 51 points, worst detour 2.0×.
+- Fixed on the way: the pod's own floor couldn't start a link (ramps were blocked in the whole pod area,
+  doors included), and its dome roof counted as floor.
+
 ## Feedback
 
 ## Conclusion → next

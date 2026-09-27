@@ -4,7 +4,7 @@
 
 import { QCOLS, QROWS, buildGrid } from '../v5/quadcaves.js'
 import { QKNOBS, generateQuads } from '../v5/quadwfc.js'
-import { KIND_RGB, RAMP_RGB, paintStoreys } from './paint.js'
+import { CUT_RGB, KIND_RGB, RAMP_RGB, paintStoreys } from './paint.js'
 import { SKNOBS, storeys } from './storeys.js'
 import { rasterize } from './terrain.js'
 
@@ -28,10 +28,13 @@ const view = { floors: false, storeys: true, points: true }
 /** @type {Slider[]} */
 const SLIDERS = [
   ['storey', 'storey height (cells)', 2, 8, 0.25],
-  ['tol', 'follow floor within (× storey)', 0, 1, 0.05],
   ['head', 'headroom (cells)', 1, 4, 0.25],
-  ['minFloor', 'shortest floor (cells)', 0, 10, 0.25],
-  ['reach', 'ramp reach (cells)', 0, 30, 1],
+  ['cutoff', 'cutoffs up to (cells)', 0, 8, 0.25],
+  ['minFloor', 'shortest floor to reach (cells)', 1, 10, 0.25],
+  ['span', 'longest sideways link (cells)', 2, 30, 1],
+  ['drop', 'longest ramp (storeys)', 0.5, 4, 0.25],
+  ['detour', 'detour allowed (× straight line)', 1.05, 4, 0.05],
+  ['rockCost', 'tunnel cost (× bridge)', 1, 10, 0.25],
 ]
 
 const bar = /** @type {HTMLElement} */ (document.getElementById('bar'))
@@ -66,7 +69,7 @@ for (const key of /** @type {const} */ (['storeys', 'points', 'floors'])) {
     view[key] = c.checked
     draw()
   })
-  l.append(c, ' ' + (key === 'points' ? 'divergence points' : key === 'floors' ? 'walkable floor' : key))
+  l.append(c, ' ' + (key === 'points' ? 'divergence points' : key === 'floors' ? 'walkable floor' : 'network'))
   bar.append(l)
 }
 /** @type {(() => void)[]} */
@@ -112,10 +115,11 @@ const legend = /** @type {HTMLElement} */ (document.getElementById('legend'))
 const swatch = (/** @type {number[]} */ c, /** @type {string} */ text) =>
   `<span><i style="background:rgb(${c.join(',')})"></i>${text}</span>`
 legend.innerHTML =
-  swatch(KIND_RGB[0], 'storey on natural floor') +
-  swatch(KIND_RGB[1], 'bridge (through air)') +
-  swatch(KIND_RGB[2], 'tunnel (through rock, or a ceiling too low)') +
-  swatch(RAMP_RGB, '45° ramp down') +
+  swatch(KIND_RGB[0], 'natural floor in the network') +
+  swatch(CUT_RGB, 'cutoff carved through rock (joins floor pieces)') +
+  swatch(KIND_RGB[1], 'sideways link through air (bridge)') +
+  swatch(KIND_RGB[2], 'through rock (tunnel)') +
+  swatch(RAMP_RGB, '45° ramp through air') +
   swatch([255, 255, 255], 'divergence point') +
   swatch([70, 120, 70], 'walkable floor') +
   swatch([240, 138, 36], 'pod')
@@ -134,14 +138,16 @@ function build() {
   const t3 = performance.now()
   now = { T, S }
   const pct = (/** @type {number} */ v) => (v * 100).toFixed(0) + '%'
-  const merged = S.list.reduce((a, s) => a + (s.kind.some((k) => k === 3) ? 1 : 0), 0)
+  const st = S.stats
+  const cells = (/** @type {number} */ px) => (px / 4).toFixed(0)
   cap.innerHTML =
-    `<b>seed ${seed}</b> · caves ${(t1 - t0).toFixed(0)} ms, raster ${(t2 - t1).toFixed(0)} ms, storeys ${(t3 - t2).toFixed(0)} ms<br>` +
+    `<b>seed ${seed}</b> · caves ${(t1 - t0).toFixed(0)} ms, raster ${(t2 - t1).toFixed(0)} ms, lattice ${(t3 - t2).toFixed(0)} ms<br>` +
     (S.pod
       ? `pod at ${(S.pod.c / 4).toFixed(0)} of ${T.w / 4} cells across, ${S.pod.support < 1 ? `${pct(S.pod.support)} of its width on floor` : 'fully on floor'} · `
       : '<b style="color:#f05">no pod</b> · ') +
-    `${S.list.length} storeys (${merged} merge into the one above somewhere), ${S.ramps.length} ramps · ` +
-    `storey length: <b>${pct(S.share.floor)} on floor</b>, ${pct(S.share.bridge)} bridge, ${pct(S.share.tunnel)} tunnel`
+    `<b>${st.reached} of ${st.floors} floors reached</b> · ${st.cutoffs} cutoffs join floor pieces · ${st.ramps} ramps, ${st.sideways} sideways links · ${S.points.length} divergence points<br>` +
+    `walking: ${cells(st.floorPx)} cells of floor + ${cells(st.cutPx)} of cutoffs, ${cells(st.bridgePx)} of bridge and ramp, ${cells(st.tunnelPx)} of tunnel · ` +
+    `detour from the pod: median ${st.detourMedian.toFixed(2)}×, worst ${st.detourWorst.toFixed(2)}×${st.stuck ? ` (${st.stuck} floors no single link could fix)` : ''}`
   draw()
 }
 

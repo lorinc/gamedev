@@ -3,7 +3,7 @@
 // meets rock. On top, a drawn sheet of ice stands for the 90 m over the pod (user): scenery only.
 
 import { hash11 } from '../v5/wfc.js'
-import { BRIDGE, FLOOR, MERGED, TUNNEL, podPart } from './storeys.js'
+import { podPart } from './storeys.js'
 import { K, OPEN, ROCK, SEA, SKY } from './terrain.js'
 
 /** @typedef {[number, number, number]} RGB */
@@ -22,13 +22,14 @@ const ROCKC = [
 /** @type {RGB} */ const FLOORC = [70, 120, 70]
 /** @type {RGB} */ const SHELL = [240, 138, 36]
 /** @type {RGB} */ const INSIDE = [70, 46, 24]
-/** @type {RGB[]} storey line by kind: floor, bridge, tunnel */
+/** @type {RGB[]} the network: floor, bridge, tunnel */
 export const KIND_RGB = [
   [80, 235, 110],
   [245, 205, 60],
   [235, 70, 60],
 ]
 /** @type {RGB} */ export const RAMP_RGB = [225, 90, 235]
+/** @type {RGB} */ export const CUT_RGB = [190, 255, 150]
 
 export const SHEET_PX = 10 * K // the drawn ice sheet's rows above the map
 /** @typedef {{floors: boolean, points: boolean, storeys: boolean}} View */
@@ -104,12 +105,14 @@ export function paintStoreys(T, S, view, seed) {
   }
   if (view.floors) for (let x = 0; x < w; x++) for (const y of S.floors[x]) if (y < rows) set(x, SHEET_PX + y, FLOORC)
   if (view.storeys) {
-    for (const r of S.ramps) for (let i = 0; i <= r.len; i++) set(r.x + r.dir * i, SHEET_PX + r.y + (r.up ? -i : i), RAMP_RGB)
-    for (const s of S.list)
-      for (let x = 0; x < w; x++) {
-        const k = s.kind[x]
-        if (k === MERGED || s.y[x] >= rows) continue
-        set(x, SHEET_PX + s.y[x], KIND_RGB[k === FLOOR ? 0 : k === BRIDGE ? 1 : k === TUNNEL ? 2 : 0])
+    // the floors in the network, then the links: 45° parts magenta, level parts yellow, through rock red
+    for (const run of S.runs) if (run.net) run.xs.forEach((x, i) => run.ys[i] < rows && set(x, SHEET_PX + run.ys[i], KIND_RGB[0]))
+    for (const l of S.links)
+      for (let i = 1; i < l.px.length - 1; i++) {
+        const [x, y] = l.px[i]
+        const slope = l.px[i][1] !== l.px[i - 1][1] || l.px[i][1] !== l.px[i + 1][1]
+        // a cutoff is floor now: light green in rock (carved), green in air
+        if (y < rows) set(x, SHEET_PX + y, l.cut ? (at(x, y) === ROCK ? CUT_RGB : KIND_RGB[0]) : at(x, y) === ROCK ? KIND_RGB[2] : slope ? RAMP_RGB : KIND_RGB[1])
       }
   }
   if (view.points)
