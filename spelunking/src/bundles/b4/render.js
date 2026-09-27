@@ -355,24 +355,31 @@ export function createRenderer(canvas, game, ui, view) {
 
   /** @param {number} now */
   function drawNodes(now) {
+    // before the first edge the pod's nodes glow, pulsing, so the start is found; after it, the network's are
+    // quiet rings: easy to find, not outshining the world (b4.8, the user)
+    const first = !game.built.some((b) => b)
     map.nodes.forEach((n, i) => {
       if (!shown(game, i)) return
       const [x, y] = at(n)
       const busy = ui.preview === i || ui.select?.node === i
-      const r = Math.max(T * 1.2, 5 * dpr) * (busy ? 1.4 : 1) * (1 + 0.12 * Math.sin(now * 4 + i))
-      const halo = ctx.createRadialGradient(x, y, 0, x, y, r * 2.5)
-      halo.addColorStop(0, `rgba(${NODE},0.4)`)
-      halo.addColorStop(1, `rgba(${NODE},0)`)
-      ctx.fillStyle = halo
-      ctx.fillRect(x - r * 2.5, y - r * 2.5, r * 5, r * 5)
+      const glow = first || busy
+      const r = Math.max(T, 4 * dpr) * (busy ? 1.3 : 1) * (first ? 1 + 0.12 * Math.sin(now * 4 + i) : 1)
+      if (glow) {
+        const halo = ctx.createRadialGradient(x, y, 0, x, y, r * 2.2)
+        halo.addColorStop(0, `rgba(${NODE},${first ? 0.3 : 0.2})`)
+        halo.addColorStop(1, `rgba(${NODE},0)`)
+        ctx.fillStyle = halo
+        ctx.fillRect(x - r * 2.2, y - r * 2.2, r * 4.4, r * 4.4)
+      }
       // a ring, not a dot: at 1 px a tile a tamed bug is a warm dot too (b4.2)
-      ctx.strokeStyle = `rgb(${NODE})`
-      ctx.lineWidth = Math.max(2 * dpr, r * 0.4)
+      ctx.strokeStyle = `rgba(${NODE},${glow ? 0.85 : 0.5})`
+      ctx.lineWidth = Math.max(1.5 * dpr, r * 0.22)
       ctx.beginPath()
       ctx.arc(x, y, r, 0, Math.PI * 2)
       ctx.stroke()
     })
   }
+
 
   /** @param {{ x: number, y: number }} bot */
   function drawCars(bot) {

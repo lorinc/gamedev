@@ -14,8 +14,8 @@
 // the ledger (b4.3). Walking doesn't stop it (b4.5), a moving car does.
 // The ledger (b4.3, the user): every collectible, one count each: ore, loot, bugs. No pack.
 // Light (b4.3): a fixed radius (`light.base`, 8 px; upgrades later), line of sight (light.js sightCells).
-// Nodes (b4.2, D080): a node on the network (the pod's, and the ends of built edges) shows for good; any
-// other shows only while the bot is within `nodeReach` px.
+// Nodes (b4.8, the user): only the network's show (the pod's, and the ends of built edges); the pod's glow
+// until the first edge is built.
 // Building (b4.3): `build` an unbuilt edge from a node on the network, the bot within `nodeReach` of it (D080),
 // with `price` ore on the ledger: the price is taken and the edge is built at once, its far node joins the
 // network, and a travel pod (a car) waits at the near node. Short of ore: refused.
@@ -345,8 +345,8 @@ export function dist2(g, a, b) {
 /** The bot is within `nodeReach` of node i. @param {Game} g @param {number} i */
 export const near = (g, i) => dist2(g, g.map.nodes[i], g.ch) <= g.cfg.nodeReach * g.cfg.nodeReach
 
-/** Node i shows (D080): on the network, or the bot is near it. @param {Game} g @param {number} i */
-export const shown = (g, i) => !!g.net[i] || near(g, i)
+/** Node i shows (b4.8): on the network. @param {Game} g @param {number} i */
+export const shown = (g, i) => !!g.net[i]
 
 /** Can the edge be built from node `from` now? The reason it can't, or null. @param {Game} g @param {number} edge @param {number} from */
 export function buildable(g, edge, from) {

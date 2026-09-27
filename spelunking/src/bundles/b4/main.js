@@ -2,7 +2,7 @@
 // interpolates. The URL carries the seed and every knob tuned away from its default (`?seed=1&k=price:12`).
 
 import { createPanel } from '../b3/panel.js'
-import { buildable, command, CONFIG, createGame, HEADING, near, shown, tick } from './game.js'
+import { buildable, command, CONFIG, createGame, HEADING, near, tick } from './game.js'
 import { createInput } from './input.js'
 import { createRenderer, ZOOM_PX } from './render.js'
 import { makeMap, WKNOBS } from './world.js'
@@ -205,12 +205,11 @@ function frame(t) {
     lastReadout = t
     const built = game.built.reduce((a, b) => a + b, 0)
     const onNet = game.net.reduce((a, b) => a + b, 0)
-    const nearby = map.nodes.filter((_, i) => shown(game, i) && !game.net[i]).length
     panel.setReadout(
       [
         `${BUILD} · seed ${seed} · map ${map.world.w}×${map.world.h}`,
         `pos ${game.ch.x},${game.ch.y} · light r ${game.radius} · ${game.ride ? 'in a car' : game.move ? 'walking' : 'still'}`,
-        `nodes on the network ${onNet}/${map.nodes.length}, near ${nearby} · edges built ${built}/${map.edges.length} · cars ${game.cars.length}`,
+        `nodes on the network ${onNet}/${map.nodes.length} · edges built ${built}/${map.edges.length} · cars ${game.cars.length}`,
         `scan ${game.tick < game.scanAt ? `in ${((game.scanAt - game.tick) / 60).toFixed(1)} s` : 'ready'}`,
         `ledger: ore ${game.ledger.ore} · loot ${game.ledger.loot} · bugs ${game.ledger.bugs} (at work ${game.swarm.length}, carrying ${game.swarm.reduce((a, b) => a + b.ore + b.loot, 0)})`,
         `wild bugs ${game.bugs.length} (chasing ${game.bugs.filter((b) => b.chasing).length}) · fed ${game.fed}/${game.cfg.bugs.tame}`,

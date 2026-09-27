@@ -160,7 +160,8 @@ Then (D084, the user): walking glides at the drag's exact angle (a sub-pixel pos
 8 ways on screen), and explored, unlit areas are 50% darker (17.5% bright). Then (D085, the user): the
 pull goes on while walking (not in a moving car). Then (D086, the user): the scan fires only when some pixel
 within its radius is still unseen. Then (D087, the user): tamed bugs' trips last 30 s, and they pull with your
-dust stream and flight.
+dust stream and flight. Then (D088, the user): only network nodes show; the pod's glow until the first edge,
+then all are quiet rings.
 
 ## Feedback
 
