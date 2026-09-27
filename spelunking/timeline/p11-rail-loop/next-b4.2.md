@@ -88,17 +88,17 @@ share of rock is about the same.
    map height / 2 (240 px → 20), wrapping natively with no seam. Network nodes stay shown: yes. Walk
    3 / ride 20 tiles/s: "sure, test it".
 
-## Still open (ask first thing next session)
+## Settled after (2026-09-27, D081)
 
-1. **Depth:** only the ice layer, as v6–v8 frame it (240 × ~160 px, with the sheet on top, the pod, and the
-   network C lying there), or the whole of v5's map (240 × 516 px: pudding, brine, ocean)? **[Claude]** The
-   ice layer: the pod, the network and the sheet are all defined over it.
-2. **Numbers at the new scale.** Every number in D079 was said in tiles when a tile was a cell (scan radius 6,
-   nodes within 3, walk 3 / ride 20 tiles/s), and b3.7's (light 4, bug blocks 32, bug reach 12) were said
-   in tiles when the character was 1 tile, so they already fit a 1 px character. Nodes are 12 px apart
-   now. **[Claude]** b3.7's numbers as they are (they're relative to the character). D079's numbers ×4 in px
-   (scan 24, nodes within 12, walk 12 / ride 80 px/s), so the spacing between nodes and the reach still
-   match. Otherwise nodes 12 px apart could never be seen from within 3 px.
+1. **Depth: all of v5's map (user).** About 240 × 516 px: the sheet on top, then ice, pudding, brine and ocean.
+   The network C is routed over the whole depth (`rails()` gets the whole map as its frame, not v7's
+   ice-only `frame()`), and so are the ore and the hard/soft split. The pod stays where `placePod` puts it
+   (in the ice, under the crust).
+2. **Numbers: the intent, not D079's figures (user: "careful, you just modified walk and ride speed, but
+   intent is okay").** The rails are much faster than walking (about 7×). Start at walk 12 / ride 80 px/s
+   and test them as knobs. The light and the node detection radius grow with the scale ("otherwise the
+   player will not find them"). **[Claude]** Start from ×4 (light base 16, nodes within 12 px, scan 24 px),
+   all knobs. b3.7's bug numbers (blocks 32, reach 12, den 12) start as they are and get tuned in play.
 
 ## Order of work (once answered)
 
