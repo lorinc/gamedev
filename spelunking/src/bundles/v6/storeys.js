@@ -3,8 +3,7 @@
 // floor's end (a bridge in air, a tunnel in rock) to floor within ½ storey, and 45° ramps down from any
 // floor onto another. A spanning tree of the cheapest links connects every floor it can reach from the
 // pod; then ramps and links are added while the walk from the pod to some floor is more than `detour` ×
-// the straight line. Divergence points sit only where there's a choice: forks and ends, merged within
-// 2 cells. Everything is in raster px (K per cell).
+// the straight line. Divergence points sit only where there's a choice (forks), merged within 2 cells. Everything is in raster px (K per cell).
 
 import { ICE, SURFACE } from '../v5/wfc.js'
 import { K, OPEN, ROCK, SEA, SKY } from './terrain.js'
@@ -12,7 +11,7 @@ import { K, OPEN, ROCK, SEA, SKY } from './terrain.js'
 /** The lattice knobs (the page's sliders); the cave knobs are p7's QKNOBS. */
 export const SKNOBS = {
   storey: 3, // storey height, in cells (user: 3 is enough); floor within ½ storey links sideways
-  head: 2, // headroom a floor needs to be walkable, in cells
+  head: 1, // headroom a floor needs to be walkable, in cells (user: the character fits a 1-cell passage)
   cutoff: 3, // links this short or shorter join floor pieces into one floor first (user's tip), in cells
   minFloor: 3, // the shortest floor (with its cutoffs) the network must reach, in cells
   span: 12, // the longest sideways link (bridge or tunnel), in cells
@@ -26,6 +25,7 @@ export const SKNOBS = {
 export const POD_W = 10
 export const POD_H = 5
 const DOOR = 2 // door height in the side walls, in cells
+const AIR_CUT = 2 // in a cutoff, a pixel of walkway costs this many of removed rock (user: removal is preferred)
 const SINK = 2 // how far the pod may sink into a floor that rises under it, in cells (user: floors aren't that level)
 
 /**
@@ -102,6 +102,8 @@ export function storeys(T, S) {
   /** @type {Map<number, number>} floor pixel → its index in its run */
   const idxOf = new Map()
   const minPx = S.minFloor * K
+  /** @type {{xs: number[], ys: number[], ring: boolean}[]} */
+  const pieces = []
   for (const g of groups.values()) {
     if (g.size < K) continue // crumbs under a cell aren't floor
     // only the ice layer's floors (p8 zooms in on it)
@@ -118,20 +120,43 @@ export function storeys(T, S) {
       xs.push(wrap(x))
       ys.push(/** @type {number} */ (g.get(wrap(x))))
     }
-    const cum = [0]
-    for (let i = 1; i < xs.length; i++) cum.push(cum[i - 1] + Math.hypot(1, ys[i] - ys[i - 1]))
-    const r = runs.length
-    runs.push({ xs, ys, cum, ring, net: false })
-    xs.forEach((x, i) => {
-      runOf.set(id(x, ys[i]), r)
-      idxOf.set(id(x, ys[i]), i)
-    })
+    pieces.push({ xs, ys, ring })
   }
+  // close parallel floors (user: "if they run very close to each other, then only one path is
+  // needed"): a piece within ½ storey of a longer one for most of its length is left out
+  const colY = pieces.map((p) => new Map(p.xs.map((x, i) => [x, p.ys[i]])))
+  const shadowed = pieces.map((p, b) =>
+    pieces.some((q, a) => {
+      if (a === b || q.xs.length < p.xs.length || (q.xs.length === p.xs.length && a > b)) return false
+      let near = 0
+      p.xs.forEach((x, i) => {
+        const y = colY[a].get(x)
+        if (y !== undefined && Math.abs(y - p.ys[i]) <= tol) near++
+      })
+      return near >= 0.7 * p.xs.length
+    }),
+  )
+  pieces.forEach((p, k) => {
+    if (shadowed[k]) return
+    const cum = [0]
+    for (let i = 1; i < p.xs.length; i++) cum.push(cum[i - 1] + Math.hypot(1, p.ys[i] - p.ys[i - 1]))
+    const r = runs.length
+    runs.push({ xs: p.xs, ys: p.ys, cum, ring: p.ring, net: false })
+    p.xs.forEach((x, i) => {
+      runOf.set(id(x, p.ys[i]), r)
+      idxOf.set(id(x, p.ys[i]), i)
+    })
+  })
   const runAt = (/** @type {number} */ x, /** @type {number} */ y) => runOf.get(id(wrap(x), y)) ?? -1
 
   // candidate links, the cheapest per pair of floors, direction and 4-cell stretch
   /** @type {Map<string, Link>} */
   const cands = new Map()
+  /** @type {Map<string, Link>} the best cutoff per pair of pieces */
+  const cuts = new Map()
+  const cutPx = S.cutoff * K
+  // a cutoff extends a floor: from one piece's end to within a cell of another's
+  const atEnd = (/** @type {number} */ r, /** @type {number} */ i) => !runs[r].ring && (i <= K || i >= runs[r].xs.length - 1 - K)
   /** @param {string} key @param {number} a @param {number} ai @param {[number, number][]} px @param {boolean} ramp */
   const offer = (key, a, ai, px, ramp) => {
     const [ex, ey] = px[px.length - 1]
@@ -143,8 +168,16 @@ export function storeys(T, S) {
       if (i < px.length - 1 && at(px[i][0], px[i][1]) === ROCK) rock++
     }
     const cost = len + rock * (S.rockCost - 1)
+    const bi = /** @type {number} */ (idxOf.get(id(wrap(ex), ey)))
     const old = cands.get(key)
-    if (!old || cost < old.cost) cands.set(key, { a, ai, b, bi: /** @type {number} */ (idxOf.get(id(wrap(ex), ey))), px, rock, ramp, len, cost })
+    if (!old || cost < old.cost) cands.set(key, { a, ai, b, bi, px, rock, ramp, len, cost })
+    // a cutoff candidate: short, end to end; removing rock is preferred to walkway (user)
+    if (len <= cutPx && atEnd(a, ai) && atEnd(b, bi)) {
+      const cutCost = len + (px.length - 2 - rock) * AIR_CUT
+      const k = a < b ? `${a}|${b}` : `${b}|${a}`
+      const o = cuts.get(k)
+      if (!o || cutCost < o.cost) cuts.set(k, { a, ai, b, bi, px, rock, ramp, len, cost: cutCost, cut: true })
+    }
   }
   const spanPx = S.span * K
   const dropPx = S.drop * L
@@ -237,17 +270,16 @@ export function storeys(T, S) {
   }
   /** @type {Set<Link>} */
   const chosen = new Set()
-  const cutPx = S.cutoff * K
-  // a cutoff extends a floor: from one piece's end to within a cell of another's
-  const atEnd = (/** @type {number} */ r, /** @type {number} */ i) => !runs[r].ring && (i <= K || i >= runs[r].xs.length - 1 - K)
-  for (const l of all) {
+  /** @type {Link[]} */
+  const cutsChosen = []
+  for (const l of [...cuts.values()].sort((p, q) => p.cost - q.cost)) {
     const p = cf(l.a)
     const q = cf(l.b)
-    if (p === q || l.len > cutPx || !atEnd(l.a, l.ai) || !atEnd(l.b, l.bi)) continue
+    if (p === q) continue
     comp[p] = q
     size[q] += size[p] + l.px.length - 2
-    l.cut = true
     chosen.add(l)
+    cutsChosen.push(l)
   }
   for (const l of all) {
     const p = cf(l.a)
@@ -369,7 +401,8 @@ export function storeys(T, S) {
     dist = walk()
   }
 
-  // divergence points: where a floor forks (3+ ways) or ends, merged within 2 cells
+  // divergence points: where the way forks (3+ ways; a floor's end is a stop, not a choice), merged
+  // within 2 cells
   /** @type {Map<number, number>} run * 100000 + index → links attached */
   const attach = new Map()
   for (const l of chosen)
@@ -386,8 +419,9 @@ export function storeys(T, S) {
     const at2 = new Set([0, n - 1])
     for (const k of attach.keys()) if (Math.floor(k / 100000) === r) at2.add(k % 100000)
     for (const i of at2) {
-      const ways = (run.ring || i > 0 ? 1 : 0) + (run.ring || i < n - 1 ? 1 : 0) + (attach.get(r * 100000 + i) || 0)
-      if (ways >= 3 || ways === 1) raw.push({ x: run.xs[i], y: run.ys[i] })
+      // a way along the floor counts if more than a cell of floor is left that way (no stubs)
+      const ways = (run.ring || run.cum[i] > K ? 1 : 0) + (run.ring || run.cum[n - 1] - run.cum[i] > K ? 1 : 0) + (attach.get(r * 100000 + i) || 0)
+      if (ways >= 3) raw.push({ x: run.xs[i], y: run.ys[i] })
     }
   })
   /** @type {{x: number, y: number}[]} */
@@ -404,8 +438,7 @@ export function storeys(T, S) {
     while (cc[a] !== a) a = cc[a] = cc[cc[a]]
     return a
   }
-  for (const l of cands.values()) if (l.cut && chosen.has(l)) cc[ccf(l.a)] = ccf(l.b)
-  for (const l of all) if (l.cut && !chosen.has(l)) cc[ccf(l.a)] = ccf(l.b) // cutoffs of floors off the network
+  for (const l of cutsChosen) cc[ccf(l.a)] = ccf(l.b) // cutoffs of floors on and off the network
   runs.forEach((r, i) => floorLen.set(ccf(i), (floorLen.get(ccf(i)) || 0) + r.xs.length))
   const bigFloors = [...floorLen].filter(([, n]) => n >= minPx).map(([k]) => k)
   const netRuns = bigFloors.filter((k) => runs.some((r, i) => r.net && ccf(i) === k)).length

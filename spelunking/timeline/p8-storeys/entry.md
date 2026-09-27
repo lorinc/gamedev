@@ -126,6 +126,23 @@ gone." All four came from drawing map-wide lines first. Now (`storeys.js`, same 
 - Fixed on the way: the pod's own floor couldn't start a link (ramps were blocked in the whole pod area,
   doors included), and its dome roof counted as floor.
 
+**Then the user's meaning of "floor" (D072):** "For me, cave floor means 'naturally generated area that
+can be traversed in one run'… first, connect these, then try to build continuous paths from them."
+And: "I have no problem with passages that are only 1 cell high"; "often walkable floors are cut by a
+small drop that can be bridged with very little walkway or removal of a few blocks. In this case,
+removal is preferred"; "connecting natural walkable paths, so that one swipe covers long distances.
+Path follows the natural floor, wherever. The only exception is if they run very close to each other -
+then only one path is needed."
+- Headroom 1 cell. Cutoffs are chosen by their own cost, where a pixel of walkway costs 2 of removed
+  rock, so a drop gets cut through its lip rather than bridged. A floor piece within ½ storey of a longer
+  one for 70% of its length is left out.
+- Divergence points only at forks now (a floor's end is a stop, not a choice), with stubs under a cell
+  not counted as a way.
+- Tried and reverted: turning down detour links that run alongside the network. Parallel links went
+  down a little, but the worst detour rose (seed 5512: 2.2× → 4.8×) and the pass took twice as long.
+- Measured, 300 seeds: 100% of floors reached; 81.6 links a map (about half of them cutoffs) and 28
+  divergence points; detour median 1.63×, worst per map median 2.76× (p90 3.81×); 58 ms median.
+
 ## Feedback
 
 ## Conclusion → next
