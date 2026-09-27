@@ -152,6 +152,8 @@ headless Chromium check (screenshots `gallery/p11/b4.3*`):
 Gone: the pack, the bug bar, placing bugs (the 1 s hold, E), placed bugs mining, the X and hammer, the ore
 streaming into the node.
 Seen in the check: the start cave has loot but little ore within 8 px, so the first edge takes some walking.
+Then (D084, the user): walking glides at the drag's exact angle (a sub-pixel position; b4.3 still stepped in
+8 ways on screen), and explored, unlit areas are 50% darker (17.5% bright).
 
 ## Feedback
 

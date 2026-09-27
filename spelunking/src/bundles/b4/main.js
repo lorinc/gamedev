@@ -209,7 +209,7 @@ function frame(t) {
     panel.setReadout(
       [
         `${BUILD} · seed ${seed} · map ${map.world.w}×${map.world.h}`,
-        `pos ${game.ch.x},${game.ch.y} · light r ${game.radius} · ${game.ride ? 'in a car' : game.step ? 'walking' : 'still'}`,
+        `pos ${game.ch.x},${game.ch.y} · light r ${game.radius} · ${game.ride ? 'in a car' : game.move ? 'walking' : 'still'}`,
         `nodes on the network ${onNet}/${map.nodes.length}, near ${nearby} · edges built ${built}/${map.edges.length} · cars ${game.cars.length}`,
         `scan ${game.tick < game.scanAt ? `in ${((game.scanAt - game.tick) / 60).toFixed(1)} s` : 'ready'}`,
         `ledger: ore ${game.ledger.ore} · loot ${game.ledger.loot} · bugs ${game.ledger.bugs} (at work ${game.swarm.length}, carrying ${game.swarm.reduce((a, b) => a + b.ore + b.loot, 0)})`,

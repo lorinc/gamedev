@@ -3,10 +3,10 @@
 // same map and commands give the same game. b3's probe rings, pull targeting, pack and light are reused as
 // they are (src/sim/dig/); the rest is new, because b4 has no swipe table: the bot goes where it's pointed.
 //
-// Moving (b4.3): `move` points the bot any way (the user: "all directions, not just 8") or stops it (0, 0).
-// It steps pixel to pixel through open pixels along that line (Bresenham: the main axis steps every step,
-// the other when its error reaches half a pixel); it climbs the back wall, D077; no gravity. A step into rock
-// slides along the open side.
+// Moving (b4.3): `move` points the bot any way (the user: "every angle, not just 8") or stops it (0, 0).
+// The bot has a sub-pixel position (`pos`, in thousandths of a pixel) that glides along the exact angle at
+// `walkSpeed`; its pixel (`ch`) is where that position is, and it may only be an open one; it climbs the back
+// wall, D077; no gravity. Into rock, it slides along the open side (the move's x or y part alone).
 // Scan: pointing into rock fires b3's probe at the rock pixel, rings out to `scan.radius`, then it cools down
 // for `scan.cooldown` ticks (1 s, the user, b4.3). Pull: b3's (D062): standing still, the nearest seen ore or
 // loot in the light is pulled, one unit every `pull.ticks`, and the pixel turns to rock; it goes straight to
@@ -105,9 +105,9 @@ export const CONFIG = {
  * @property {Config} cfg
  * @property {number} tick
  * @property {{ x: number, y: number, facing: number }} ch the bot's tile (b3's pull and light read `ch`)
- * @property {{ from: Cell, t: number, dur: number } | null} step a step under way, to ch
- * @property {{ dx: number, dy: number, ex: number, ey: number } | null} move the direction as steps per 1000 (the main
- *   axis ±1000), and the other axis' error so far (Bresenham)
+ * @property {{ x: number, y: number, px: number, py: number }} pos the bot's position in thousandths of a px (x
+ *   wraps at w × 1000), this tick's and the last's (for drawing); always inside ch
+ * @property {{ dx: number, dy: number } | null} move the direction pointed, as heading() gives it
  * @property {{ ore: number, loot: number, bugs: number }} ledger b4.3
  * @property {import('./swarm.js').Worker[]} swarm the ledger's bugs at work
  * @property {Uint8Array} seen
@@ -144,7 +144,7 @@ export function createGame(map, cfg) {
     cfg,
     tick: 0,
     ch: { x: map.start.x, y: map.start.y, facing: 1 },
-    step: null,
+    pos: { x: map.start.x * 1000 + 500, y: map.start.y * 1000 + 500, px: map.start.x * 1000 + 500, py: map.start.y * 1000 + 500 },
     move: null,
     ledger: { ore: 0, loot: 0, bugs: 0 },
     swarm: [],
@@ -189,7 +189,7 @@ export function tick(g) {
     if (cmd.type === 'move') {
       const dir = heading(cmd.dx, cmd.dy)
       if (g.ride) point(g, g.ride, dir)
-      else if (!dir || !g.move || g.move.dx !== dir.dx || g.move.dy !== dir.dy) g.move = dir && { ...dir, ex: 0, ey: 0 }
+      else g.move = dir
     } else if (cmd.type === 'tap') {
       if (g.ride?.run) g.ride.stopNext = true
     } else build(g, cmd.edge, cmd.from)
@@ -207,48 +207,54 @@ export function tick(g) {
 
 /** @param {Game} g */
 function walk(g) {
-  const s = g.step
-  if (s) {
-    if (++s.t < s.dur) return
-    g.step = null
+  const W = g.world.w * 1000
+  const p = g.pos
+  p.px = p.x
+  p.py = p.y
+  // a ride (or a test) put the bot on another pixel: its position follows, to that pixel's centre
+  if (Math.floor(p.x / 1000) !== g.ch.x || Math.floor(p.y / 1000) !== g.ch.y) {
+    p.x = p.px = g.ch.x * 1000 + 500
+    p.y = p.py = g.ch.y * 1000 + 500
+  }
+  const m = g.move
+  if (!m) return
+  if (m.dx) g.ch.facing = Math.sign(m.dx)
+  const len = Math.hypot(m.dx, m.dy)
+  const v = (Math.max(0, g.cfg.walkSpeed) * 1000) / 60 // thousandths of a px a tick
+  const vx = Math.round((m.dx * v) / len)
+  const vy = Math.round((m.dy * v) / len)
+  // the whole move, else its x part alone, else its y part alone (sliding along a wall)
+  for (const [ex, ey] of [
+    [vx, vy],
+    [vx, 0],
+    [0, vy],
+  ]) {
+    if (!ex && !ey) continue
+    const nx = (((p.x + ex) % W) + W) % W
+    const ny = p.y + ey
+    const cx = Math.floor(nx / 1000)
+    const cy = Math.floor(ny / 1000)
+    const sx = cx === g.ch.x ? 0 : Math.abs(cx - g.ch.x) > 1 ? -Math.sign(cx - g.ch.x) : Math.sign(cx - g.ch.x) // across the wrap
+    const sy = cy - g.ch.y
+    if ((sx || sy) && !open(g, cx, cy)) continue
+    if (sx && sy && !open(g, g.ch.x + sx, g.ch.y) && !open(g, g.ch.x, g.ch.y + sy)) continue // no squeezing between two rock corners
+    p.x = nx
+    p.y = ny
+    if (!sx && !sy) return
+    g.ch.x = cx
+    g.ch.y = cy
     const car = g.cars.findIndex((c) => same(g.map.nodes[c.node], g.ch))
     if (car >= 0) {
       g.ride = { car, node: g.cars[car].node, run: null, want: null, stopNext: false }
       g.move = null
       g.events.push({ type: 'board', car })
-      return
     }
-  }
-  const m = g.move
-  if (!m) return
-  if (m.dx) g.ch.facing = Math.sign(m.dx)
-  // Bresenham: this step's errors, kept only if the bot steps
-  const ex = m.ex + m.dx
-  const ey = m.ey + m.dy
-  const dx = Math.abs(ex) >= 500 ? Math.sign(ex) : 0
-  const dy = Math.abs(ey) >= 500 ? Math.sign(ey) : 0
-  const tries =
-    dx && dy
-      ? [
-          [dx, dy],
-          [dx, 0],
-          [0, dy],
-        ]
-      : [[dx, dy]]
-  for (const [sx, sy] of tries) {
-    if (!open(g, g.ch.x + sx, g.ch.y + sy)) continue
-    if (sx && sy && !open(g, g.ch.x + sx, g.ch.y) && !open(g, g.ch.x, g.ch.y + sy)) continue // no squeezing between two rock corners
-    // an axis wanted but blocked (sliding along a wall) keeps its error, short of a whole pixel
-    m.ex = sx ? ex - sx * 1000 : Math.max(-999, Math.min(999, ex))
-    m.ey = sy ? ey - sy * 1000 : Math.max(-999, Math.min(999, ey))
-    const dur = Math.max(1, Math.round(((sx && sy ? Math.SQRT2 : 1) * 60) / Math.max(1, g.cfg.walkSpeed)))
-    g.step = { from: { x: g.ch.x, y: g.ch.y }, t: 0, dur }
-    g.ch.x = wrap(g.ch.x + sx, g.world.w)
-    g.ch.y += sy
     return
   }
-  // pointed into rock: the scan (D079), if it's ready; the rock pixel pointed at is its centre. The sheet,
-  // the sea and space aren't rock: nothing to scan
+  // pointed into rock: the scan (D079), if it's ready; its centre is the rock pixel the direction points at
+  // (the nearest of the 8). The sheet, the sea and space aren't rock: nothing to scan
+  const dx = Math.round(m.dx / len)
+  const dy = Math.round(m.dy / len)
   const y = g.ch.y + dy
   if (g.probe || g.tick < g.scanAt || y < 0 || y >= g.world.h) return
   if (g.map.kind[y * g.world.w + wrap(g.ch.x + dx, g.world.w)] !== ROCK) return
@@ -293,7 +299,7 @@ function ring(g, p, r) {
 /** @param {Game} g */
 function pull(g) {
   g.pulling = null
-  if (g.step || g.move || g.ride?.run) {
+  if (g.move || g.ride?.run) {
     g.stillFor = 0
     return
   }
@@ -384,7 +390,7 @@ function point(g, r, dir) {
   // nothing that way: out, and walk that way (nodes are never in rock, b4.3)
   g.events.push({ type: 'exit', car: r.car })
   g.ride = null
-  g.move = { ...dir, ex: 0, ey: 0 }
+  g.move = dir
 }
 
 // A car's budget per px: 60 a straight step, 85 a diagonal (60√2); it gains rideSpeed a tick
@@ -423,15 +429,8 @@ function rideTick(g, r) {
   }
 }
 
-/** Where the bot is drawn between ticks: its tile, or partway along a step or a ride. @param {Game} g @param {number} alpha 0..1 of the next tick */
+/** Where the bot is drawn between ticks: its sub-pixel position, or partway along a ride. @param {Game} g @param {number} alpha 0..1 of the next tick */
 export function botAt(g, alpha) {
-  const s = g.step
-  if (s) {
-    const f = Math.min(1, (s.t + alpha) / s.dur)
-    let dx = g.ch.x - s.from.x
-    if (Math.abs(dx) > 1) dx = -Math.sign(dx) // across the wrap
-    return { x: s.from.x + dx * f, y: s.from.y + (g.ch.y - s.from.y) * f }
-  }
   const run = g.ride?.run
   if (run) {
     const p = g.map.edges[run.edge].path
@@ -443,7 +442,13 @@ export function botAt(g, alpha) {
       return { x: g.ch.x + dx * f, y: g.ch.y + (n.y - g.ch.y) * f }
     }
   }
-  return { x: g.ch.x, y: g.ch.y }
+  if (g.ride) return { x: g.ch.x, y: g.ch.y }
+  // walking: between last tick's position and this one's, as a pixel's top-left (the view adds 0.5)
+  const p = g.pos
+  let dx = p.x - p.px
+  const W = g.world.w * 1000
+  if (Math.abs(dx) > W / 2) dx -= Math.sign(dx) * W
+  return { x: (p.px + dx * alpha) / 1000 - 0.5, y: (p.py + (p.y - p.py) * alpha) / 1000 - 0.5 }
 }
 
 // The light (b4.3): a fixed radius, line of sight from the bot; recomputed when the bot or the rock changed

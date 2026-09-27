@@ -23,17 +23,19 @@ test('no node on a rail is in rock (the candidate filter)', () => {
   for (const n of used) assert.ok(open(MAP.nodes[n]), `node ${n}`)
 })
 
-test('walking any angle: a drag at about 23° keeps that slope', () => {
+test('walking any angle: a drag at 23° glides along 23°, sub-pixel, at walkSpeed', () => {
   assert.deepEqual(heading(2, -1), { dx: 1000, dy: -500 })
   assert.equal(heading(0, 0), null)
   const g = fresh()
-  const s = { ...g.ch }
-  command(g, { type: 'move', dx: Math.cos(0.4), dy: -Math.sin(0.4) })
-  for (let i = 0; i < 300; i++) tick(g)
-  const dx = g.ch.x - s.x
-  const dy = s.y - g.ch.y
-  assert.ok(dx > 10, `moved ${dx}`)
-  assert.ok(Math.abs(dy / dx - Math.tan(0.4)) < 0.1, `slope ${dy / dx}`)
+  const s = { x: g.pos.x, y: g.pos.y }
+  const d = heading(Math.cos(0.4), -Math.sin(0.4))
+  command(g, { type: 'move', dx: /** @type {any} */ (d).dx, dy: /** @type {any} */ (d).dy })
+  for (let i = 0; i < 80; i++) tick(g) // 16 px at 12 px/s, before the first wall
+  const dx = (g.pos.x - s.x) / 1000
+  const dy = (s.y - g.pos.y) / 1000
+  assert.ok(Math.abs(Math.hypot(dx, dy) - (80 * CONFIG.walkSpeed) / 60) < 0.1, `moved ${Math.hypot(dx, dy)}`)
+  assert.ok(Math.abs(dy / dx - Math.tan(0.4)) < 0.01, `slope ${dy / dx}`)
+  assert.equal(g.ch.x, Math.floor(g.pos.x / 1000))
 })
 
 test('building takes the price from the ledger at once; short of it, refused', () => {

@@ -25,7 +25,7 @@ export const ZOOM_PX = [2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24] // tile sizes 
 const AUTO_TILES = 100 // the default zoom: about this many tiles across the short side
 
 const BG_RGB = [5, 5, 8]
-const DIM_A = 0.65
+const DIM_A = 0.825 // seen, not lit: 17.5% bright (b4.2's 35%, 50% darker: the user, b4.3)
 const CHAR = '#f4f1de'
 const NODE = [255, 200, 40]
 const RAIL = '#d8d8e0'
