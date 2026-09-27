@@ -4,14 +4,14 @@
 // as v6 draws them, the sheet and space with no fog (scenery); the bot is its pixel with a halo, so it's
 // seen; the zoom levels go down to 2 device px a tile; the textures change pixel by pixel, never whole
 // (123k tiles: a whole repaint each step was too slow to play, not tuning).
-// New: revealed nodes glow, built rails, the travel pods (cars), the spider bot, ore flying
+// New: nodes glow (the network's, and the rest near the bot), built rails, the travel pods (cars), the spider bot, ore flying
 // into the pack and out into a node, the ore count against an edge's price, and the build buttons in b3's
 // cue style (a disc with its symbol cut out): a red X and a green hammer.
 
 import { cellRgb } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
 import { count } from '../../sim/dig/pack.js'
-import { botAt } from './game.js'
+import { botAt, shown } from './game.js'
 import { OPEN, ROCK, SHEET, SPACE } from './world.js'
 
 /** @typedef {import('./game.js').Game} Game */
@@ -241,7 +241,7 @@ export function createRenderer(canvas, game, ui, view) {
   /** @param {number} now */
   function drawNodes(now) {
     map.nodes.forEach((n, i) => {
-      if (!game.revealed[i]) return
+      if (!shown(game, i)) return
       const [x, y] = at(n)
       const busy = ui.preview === i || ui.select?.node === i
       const r = Math.max(T * 0.7, 3.5 * dpr) * (busy ? 1.4 : 1) * (1 + 0.12 * Math.sin(now * 4 + i))

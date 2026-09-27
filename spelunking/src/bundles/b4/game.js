@@ -8,9 +8,11 @@
 // Scan: pointing into rock fires b3's probe at the rock tile, rings out to `scan.radius`, then it cools down
 // for `scan.cooldown` ticks. Pull: b3's (D062): standing still, the nearest seen ore or loot in the light
 // comes to the pack, one unit every `pull.ticks`, and the tile turns to rock.
-// Nodes: hidden until the bot comes within `nodeReach` tiles; the pod's are revealed from the start.
-// Building: `build` an unbuilt edge from a revealed end, with at least `price` ore: the ore streams from
-// the pack into the node, one unit every `streamTicks`; then the edge is built, its far node revealed,
+// Nodes (b4.2, D080): a node on the network (the pod's, and the ends of built edges) shows for good; any
+// other shows only while the bot is within `nodeReach` tiles.
+// Building: `build` an unbuilt edge from a node on the network, the bot within `nodeReach` of it (D080: only
+// the existing network grows, so the frontier is where you go), with at least `price` ore: the ore streams
+// from the pack into the node, one unit every `streamTicks`; then the edge is built, its far node joins the network,
 // and a travel pod (a car) waits at the near node.
 // Riding: stepping onto a waiting car gets you in. A pointed direction picks, at each node, the built edge
 // that fits it best (within 67.5°); the car runs node to node until no edge fits (it stops at the last
@@ -56,8 +58,7 @@ export const CONFIG = {
  *   | { type: 'pulled', x: number, y: number, tile: number, to: Cell }
  *   | { type: 'fed', node: number, from: Cell }
  *   | { type: 'built', edge: number }
- *   | { type: 'refused', edge: number, reason: 'ore' | 'busy' | 'hidden' | 'built' }
- *   | { type: 'revealed', node: number }
+ *   | { type: 'refused', edge: number, reason: 'ore' | 'busy' | 'off' | 'far' | 'built' }
  *   | { type: 'board', car: number } | { type: 'exit', car: number }} GameEvent
  */
 
@@ -90,7 +91,7 @@ export const CONFIG = {
  * @property {number} scanAt the tick the scan is ready again
  * @property {number} stillFor
  * @property {Cell | null} pulling
- * @property {Uint8Array} revealed per node
+ * @property {Uint8Array} net per node: on the network (D080)
  * @property {Uint8Array} built per edge
  * @property {Car[]} cars
  * @property {{ edge: number, from: number, left: number, t: number } | null} building
@@ -121,7 +122,7 @@ export function createGame(map, cfg) {
     scanAt: 0,
     stillFor: 0,
     pulling: null,
-    revealed: new Uint8Array(map.nodes.length),
+    net: new Uint8Array(map.nodes.length),
     built: new Uint8Array(map.edges.length),
     cars: [],
     building: null,
@@ -129,7 +130,7 @@ export function createGame(map, cfg) {
     queue: [],
     events: [],
   }
-  for (const n of map.podNodes) g.revealed[n] = 1
+  for (const n of map.podNodes) g.net[n] = 1
   reveal(/** @type {any} */ (g), map.podCells) // the pod's interior starts seen
   updateLight(g)
   return g
@@ -159,7 +160,6 @@ export function tick(g) {
   if (g.probe) spread(g, g.probe)
   feed(g)
   pull(g)
-  revealNodes(g)
   updateLight(g)
 }
 
@@ -257,20 +257,17 @@ export function dist2(g, a, b) {
   return dx * dx + (a.y - b.y) ** 2
 }
 
-/** @param {Game} g */
-function revealNodes(g) {
-  const r2 = g.cfg.nodeReach * g.cfg.nodeReach
-  g.map.nodes.forEach((n, i) => {
-    if (g.revealed[i] || dist2(g, n, g.ch) > r2) return
-    g.revealed[i] = 1
-    g.events.push({ type: 'revealed', node: i })
-  })
-}
+/** The bot is within `nodeReach` of node i. @param {Game} g @param {number} i */
+export const near = (g, i) => dist2(g, g.map.nodes[i], g.ch) <= g.cfg.nodeReach * g.cfg.nodeReach
+
+/** Node i shows (D080): on the network, or the bot is near it. @param {Game} g @param {number} i */
+export const shown = (g, i) => !!g.net[i] || near(g, i)
 
 /** Can the edge be built from node `from` now? The reason it can't, or null. @param {Game} g @param {number} edge @param {number} from */
 export function buildable(g, edge, from) {
   const e = g.map.edges[edge]
-  if (!e || (e.a !== from && e.b !== from) || !g.revealed[from]) return 'hidden'
+  if (!e || (e.a !== from && e.b !== from) || !g.net[from]) return 'off'
+  if (!near(g, from)) return 'far'
   if (g.built[edge]) return 'built'
   if (g.building) return 'busy'
   if (count(g.pack, Tile.Ore) < g.cfg.price) return 'ore'
@@ -301,11 +298,7 @@ function feed(g) {
   g.building = null
   g.cars.push({ node: b.from })
   g.events.push({ type: 'built', edge: b.edge })
-  const far = e.a === b.from ? e.b : e.a
-  if (!g.revealed[far]) {
-    g.revealed[far] = 1
-    g.events.push({ type: 'revealed', node: far })
-  }
+  g.net[e.a === b.from ? e.b : e.a] = 1
 }
 
 // Riding --------------------------------------------------------------------------------------------

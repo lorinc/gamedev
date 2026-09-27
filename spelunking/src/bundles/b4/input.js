@@ -2,7 +2,7 @@
 // stops. A drag is a joystick: its direction from where the finger went down, in 8 ways, past a dead zone.
 // In a car the same direction is the swipe that picks the rail. A short touch that didn't drag is a tap
 // (Space on a keyboard): in a moving car it stops at the next node.
-// On a revealed node the finger builds instead (D079): holding it shows its edges; dragging from it towards
+// On a node of the network near the bot the finger builds instead (D079, D080): holding it shows its edges; dragging from it towards
 // an edge selects that edge (a red X and a green hammer appear); after letting go, tapping the hammer builds
 // and the X cancels. The page decides what's under the finger (`hit`) and draws the rest.
 

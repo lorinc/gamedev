@@ -2,7 +2,7 @@
 // interpolates. The URL carries the seed and every knob tuned away from its default (`?seed=1&k=price:12`).
 
 import { createPanel } from '../b3/panel.js'
-import { buildable, command, CONFIG, createGame, tick } from './game.js'
+import { buildable, command, CONFIG, createGame, near, shown, tick } from './game.js'
 import { createInput } from './input.js'
 import { createRenderer, ZOOM_PX } from './render.js'
 import { makeMap, WKNOBS } from './world.js'
@@ -139,7 +139,7 @@ createInput(canvas, {
     let best = -1
     let bestD = reach
     map.nodes.forEach((n, i) => {
-      if (!game.revealed[i]) return
+      if (!game.net[i] || !near(game, i)) return // only the network grows, from where you are (D080)
       let dx = Math.abs(p.x - (n.x + 0.5))
       dx = Math.min(dx, map.world.w - dx)
       const d = Math.hypot(dx, p.y - (n.y + 0.5))
@@ -208,12 +208,13 @@ function frame(t) {
   if (panel.isOpen() && t - lastReadout > 250) {
     lastReadout = t
     const built = game.built.reduce((a, b) => a + b, 0)
-    const shown = game.revealed.reduce((a, b) => a + b, 0)
+    const onNet = game.net.reduce((a, b) => a + b, 0)
+    const nearby = map.nodes.filter((_, i) => shown(game, i) && !game.net[i]).length
     panel.setReadout(
       [
         `${BUILD} · seed ${seed} · map ${map.world.w}×${map.world.h}`,
         `pos ${game.ch.x},${game.ch.y} · light r ${game.radius} · ${game.ride ? 'in a car' : game.step ? 'walking' : 'still'}`,
-        `nodes revealed ${shown}/${map.nodes.length} · edges built ${built}/${map.edges.length} · cars ${game.cars.length}`,
+        `nodes on the network ${onNet}/${map.nodes.length}, near ${nearby} · edges built ${built}/${map.edges.length} · cars ${game.cars.length}`,
         `scan ${game.tick < game.scanAt ? `in ${((game.scanAt - game.tick) / 60).toFixed(1)} s` : 'ready'}`,
         '` or tap the top-left corner: close',
       ].join('\n'),
