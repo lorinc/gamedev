@@ -14,11 +14,11 @@ export const RKNOBS = {
   spacing: 3, // A, C: nodes at least this far apart, in cells (user: 4 "ideal density for the travel nodes", then 3)
   cols: 5, // B: coarse triangles across the map (rails ≈ map width / cols / 2 long)
   rrelax: 20, // B: relaxing rounds (not `relax`: that's the caves' knob, and both ride in the URL)
-  dig: 1.5, // C: a tile of rock costs this many of open air (user: digging has a 50% penalty)
+  dig: 5, // C: a tile of rock costs this many of open air (user: first "a 50% penalty", then 5 in the chosen layer)
   links: 1, // A, C: edge density, 0 to 1: the lune β-skeleton with β = 2 − links (0: the relative neighbourhood graph, the sparsest; 1: the Gabriel graph); never crossing edges
   overlap: 1, // C: a step along an earlier rail costs this much more (user: a 100% penalty)
   cross: 100, // C: crossing an earlier rail costs this many tiles (user: "a MASSIVE penalty, so that one single cross overweights paths running on the same path for a while")
-  bend: 3, // C: a 45° bend costs this many tiles, a 90° bend twice that; sharper bends aren't allowed
+  bend: 15, // C: a 45° bend costs this many tiles (the user's setting), a 90° bend twice that; sharper bends aren't allowed
   steep: 0, // 1 = drop rails steeper than 45° (nothing vertical, D068)
 }
 /** @typedef {typeof RKNOBS} RKnobs */

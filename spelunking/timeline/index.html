@@ -75,7 +75,7 @@ footer { color:var(--dim); font-size:12px; }
 <header class="top">
   <h1>Spelunking <span>· prototype timeline</span></h1>
   <p>Every prototype: what we believed, what we built, how it played, what we decided. Newest first. Each ▶ plays the build exactly as it was tested.</p>
-  <p class="legend"><span class="a held">✓ 10 held</span> <span class="a broken">✗ 6 broken</span> <span class="a open">? 35 open</span> · 14 constraints · 10 prototypes · 18 builds · <a href="#ledger">69 decisions</a></p>
+  <p class="legend"><span class="a held">✓ 10 held</span> <span class="a broken">✗ 6 broken</span> <span class="a open">? 35 open</span> · 14 constraints · 10 prototypes · 18 builds · <a href="#ledger">70 decisions</a></p>
 </header>
 <main class="line">
 <article class="entry s-building" id="p10">
@@ -86,7 +86,7 @@ footer { color:var(--dim); font-size:12px; }
   <ul class="limits"><li class="l cut "><span class="k">cut</span>No buildables, no routing, no choosing: only the candidate rails and their nodes.</li><li class="l cut "><span class="k">cut</span>How the rail hangs (ceiling, pylons, free) isn't decided; rails are drawn as lines.</li><li class="l cut "><span class="k">cut</span>Only the ice layer.</li></ul>
   <div class="builds"><a class="play dev" href="../v8.html">▶ live v8</a><span class="bt">latest, unfrozen</span></div>
   <p class="next"><b>→</b> <i>open</i></p>
-  
+  <ul class="decided"><li class=""><a href="#D078">D078</a> The traverse node layer is v8 mode C (user: &quot;this will be the traverse node layer&quot;): nodes on the caves' relaxed-grid vertices in open air, the most open first, 3 cells apart; edges by the lune β-skeleton at links 1 (the Gabriel graph); each edge a monorail routed in the 8 directions on the tile grid, rock costing ×1.5 by default (the user's setting: ×5), bends 3 tiles per 45° (user: 15), +100% for running along an earlier rail, a flat 100 tiles for crossing one.</li></ul>
   
   <details><summary>Full entry</summary>
 <div class="doc">
@@ -649,7 +649,7 @@ gen  d012 b345   ×1</code></pre>
   </details>
 </article>
 </main>
-<section class="ledger-wrap" id="ledger"><details class="ledger"><summary>Decision ledger · 69 active · 8 superseded</summary>
+<section class="ledger-wrap" id="ledger"><details class="ledger"><summary>Decision ledger · 70 active · 8 superseded</summary>
 <table><thead><tr><th>ID</th><th>Date</th><th>From</th><th>Status</th><th>Decision</th></tr></thead><tbody>
 <tr id="D001" class=""><td>D001</td><td>2026-09-24</td><td><a href="#p1">p1</a></td><td>active</td><td>Terrain is designed on one binary grid, step by step. Stacking many CA layers is dropped as the design method.</td></tr>
 <tr id="D002" class=""><td>D002</td><td>2026-09-24</td><td><a href="#p1">p1</a></td><td>active</td><td>The map is homogeneous for now: no top / bottom differentiation. Depth tiers come later.</td></tr>
@@ -728,6 +728,7 @@ gen  d012 b345   ×1</code></pre>
 <tr id="D075" class=""><td>D075</td><td>2026-09-27</td><td><a href="#p9">p9</a></td><td>active</td><td>The lattice restarts from a blank slate of tile definitions (user; <code>concepts/callisto_lattice.md</code>): space, solid, semi-solid (bridge, gate), void; the path (tiles the character moves through) is kept apart from the floor (the solid it walks on), and we map the path. The character is 2 tiles high, and so are dig tunnels and the path (user: &quot;I accept the side effects, I want to lock in the 2 tile high char&quot;); 1-tile passages are no longer path until dug (supersedes the 1-cell headroom of D072). A gate is an upright 2 × 1 semi-solid block in the path, solid directly above and below, open on both sides; it closes level and 45° paths alike. Walls are built solid straight lines, both ends on solid, at most 24 tiles (config).</td></tr>
 <tr id="D076" class=""><td>D076</td><td>2026-09-27</td><td><a href="#p9">p9</a></td><td>active</td><td>Walls are 2 tiles thick, like the path (user: &quot;for consistency&quot;), and run in the 8 directions only (level, upright, 45°); where that is restrictive, a wall is built of 2 segments (user).</td></tr>
 <tr id="D077" class=""><td>D077</td><td>2026-09-27</td><td><a href="#p9">p9</a></td><td>active</td><td>Travel and interact (user): a vehicle travels the path with fast swipes; a spider-bot detaches, crawls everywhere (back wall, walls, ceilings) and builds (walls, gates, bridges); interacting is getting close, at worst a tap. Its shield drains from the environment and from moving; when empty, a visual warning and it returns to the chassis by itself (still casual). Free digging is out (phone-control UX). &quot;Nothing vertical&quot; (D068) applies to the vehicle path only. The back wall is visuals only.</td></tr>
+<tr id="D078" class=""><td>D078</td><td>2026-09-27</td><td><a href="#p10">p10</a></td><td>active</td><td>The traverse node layer is v8 mode C (user: &quot;this will be the traverse node layer&quot;): nodes on the caves' relaxed-grid vertices in open air, the most open first, 3 cells apart; edges by the lune β-skeleton at links 1 (the Gabriel graph); each edge a monorail routed in the 8 directions on the tile grid, rock costing ×1.5 by default (the user's setting: ×5), bends 3 tiles per 45° (user: 15), +100% for running along an earlier rail, a flat 100 tiles for crossing one.</td></tr>
 </tbody></table></details></section>
 <footer>Generated by <code>npm run timeline</code> from <code>timeline/*/entry.md</code>.</footer>
 <script>
