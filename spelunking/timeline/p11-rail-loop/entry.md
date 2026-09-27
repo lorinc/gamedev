@@ -16,9 +16,10 @@ itself), so your ore pack should gradually fill. And when you get close to a hid
 the outgoing edges start to glow. Each edge costs ores to build […] get in, swipe, travel. You find
 yourself in a new cavern, everything works the same way, except there are bugs here that you can tame."
 
-**Continue the b-thread, don't reinvent (user):** b4 starts as a copy of b3 (p6). Prospecting, mining,
-the pack, light and bugs are b3's code as it is (`src/sim/dig/`); what changes is the terrain (p7's quad
-caves with p10's lattice) and the mechanics below.
+**Continue the b-thread, don't reinvent (user):** prospecting, mining, the pack, light and bugs are b3's
+code as it is (`src/sim/dig/`). But b4 is **not a copy of b3** (user, 2026-09-27: "completely different
+generation algo"): its world is p7's quad caves with p10's lattice, and the mechanics below replace b3's
+swipes.
 
 ## Question
 
@@ -33,23 +34,36 @@ rather than a place. Then the costs or the node spacing change before anything i
 
 ## The loop (user, 2026-09-27)
 
-1. **Start:** you wake up in the pod as the spider bot. The pod's nodes come out of the lattice for free
-   (user: every map seen has 2 or 3 nodes inside the pod).
+1. **Start:** you wake up in the pod as the spider bot, with an empty ore pack (user). The pod's nodes
+   come out of the lattice for free (user: every map seen has 2 or 3 nodes inside the pod). The pod is
+   only its interior open space, with no dome walls (user: the walls delete rock and ore).
 2. **Move:** drag the screen or hold A/W/S/D and the bot moves that way; release, it stops. It moves
    through any open tile (it climbs the back wall, D077); rock blocks it. This replaces b3's swipes.
-3. **Seismic scan:** b3's probe (`probe.js`, D053) with a new trigger: walking into a rock face for 0.5 s;
-   a 3 s cooldown; its radius doesn't depend on the light radius.
-4. **Mining:** b3's pull as it is (`pull.js`, D062): revealed ore in range comes into the ore pack, like
-   the bugs mine it (the wall stays).
-5. **Nodes:** hidden until you come close; then the node and its outgoing edges glow. Building an edge
-   reveals the node at its far end (user: yes).
-6. **Building an edge:** it costs ore, which you may already carry. Press the build icon: the outgoing
-   edges glow more; release: less. Drag the icon towards one of the edges: that edge is selected, the
-   icon turns into a red X (cancel) and the selected edge shows a green hammer. Tap the hammer: ore
-   streams into the node (b3's dust stream), and the travel pod and the monorail edge get built.
-7. **Travel:** get in, swipe, travel along built edges.
-8. **The next cavern:** everything works the same, and there are bugs to tame: b3's bugs as they are
-   (D056–D064).
+3. **Seismic scan:** b3's probe (`probe.js`, D053) with a new trigger: walking into a rock face triggers
+   it at once (user; no 0.5 s wait); the 3 s cooldown stays, so leaning on a wall doesn't scan every frame
+   (user); its radius is 6 tiles (user), not the light radius.
+4. **Mining:** b3's pull as it is (`pull.js`, D062): revealed ore in range comes into the ore pack by
+   itself, with the same particle effect as the bugs' mining (the wall stays).
+5. **Nodes:** hidden until you come within 3 tiles (user); then the node glows. A revealed node is close
+   enough to build from (user). Building an edge reveals the node at its far end (user: yes).
+6. **Building an edge (user, 2026-09-27):** it costs ore; 8–12 is a reasonable price, tuned later with the
+   rest of the economy (user). The gesture, on the node itself (no separate build icon):
+   1. press and hold the node: its outgoing edges glow; release: they stop glowing (a preview you can
+      skip, user);
+   2. press the node and drag towards an edge: that edge is selected and two options appear, a red X
+      (cancel) and a green hammer (build);
+   3. release, then tap the hammer: ore streams into the node (b3's dust stream), and the travel pod and
+      the monorail edge get built.
+   The icons' style comes from b3's build cues (`render.js`, `drawCue`).
+7. **Travel:** walk right onto the travel pod to get in. A swipe gives a rough direction, and the pod keeps
+   going that way, node after node, until (user):
+   - it can't go further that way: it stops at the last node;
+   - you tap: it stops at the next node;
+   - you swipe a new direction: from the next node it goes that way.
+   At a fork, the edge is the one that best fits the swipe's direction (Claude's reading).
+8. **The next cavern:** an edge doesn't have to end in a new cavern; the far side only needs room to mine
+   enough ore for the next edge (user). Everything works the same, and there are bugs to tame: b3's bugs
+   as they are (D056–D064).
 
 ## Assumptions
 
@@ -67,12 +81,9 @@ rather than a place. Then the costs or the node spacing change before anything i
 
 ## Open (to settle while building, with the user)
 
-- Where ore and loot come from on the quad caves. User: "earlier versions have solved this already";
-  b3's generator has an ore layer (`sim/gen/world.js`, the CA `ore` layer, and loot by chance). Claude's
-  reading: lay that ore layer over the quad caves' rock. Confirm.
-- An edge's price. Claude's proposal: ore in proportion to the route's cost (length, rock ×5), so tunnels
-  cost more than rails across open caverns. Not confirmed.
-- The scan's radius (no longer the light's).
+- Ore and loot on the quad caves: b3's generator's ore layer (`sim/gen/world.js`, the CA `ore` layer,
+  and loot by chance) over the quad caves' rock (user: yes).
+- An edge's price: 8–12 ore for now (user); the formula is a balancing act, tuned later.
 
 ## Built
 
