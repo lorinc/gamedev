@@ -10,6 +10,7 @@ build b4.1: 2026-09-27 · p11: b4 Rail Loop, step 1: the whole loop without bugs
 build b4.2: 2026-09-27 · p11: b4.2 built per next-b4.2.md, the world at 1 px of v5 with b3.7's rock, pack and bugs (D082)
 build b4.3: 2026-09-27 · p11: b4.3, the incremental turn: one ledger, abstract tamed bugs, tap-drag-tap build, 8 px line-of-sight light, nodes never in rock, any-angle walk, 1 s scan (D083)
 build b4.4: 2026-09-27 · p11: b4.4, the bot glides at every angle (sub-pixel), explored unlit areas 50% darker (D084)
+build b4.5: 2026-09-27 · p11: b4.5, the bot mines while walking (D085)
 ---
 
 # p11 · b4 · Rail Loop
