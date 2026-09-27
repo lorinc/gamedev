@@ -12,6 +12,7 @@ build b4.3: 2026-09-27 · p11: b4.3, the incremental turn: one ledger, abstract 
 build b4.4: 2026-09-27 · p11: b4.4, the bot glides at every angle (sub-pixel), explored unlit areas 50% darker (D084)
 build b4.5: 2026-09-27 · p11: b4.5, the bot mines while walking (D085)
 build b4.6: 2026-09-27 · p11: b4.6, the scan fires only when something within its radius is unseen (D086)
+build b4.7: 2026-09-27 · p11: b4.7, tamed bugs' trips 30 s, pulling with the player's stream and flight (D087)
 ---
 
 # p11 · b4 · Rail Loop
