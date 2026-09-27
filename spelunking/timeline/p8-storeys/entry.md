@@ -160,4 +160,6 @@ other? Apart from these two kinds of problems - this is the best yet."** (D073)
 
 ## Feedback
 
+- [2026-09-27 · v6](feedback/2026-09-27_lorinc_v6.md): "I find these paths fairly good. Sometimes a round tour means more resources collected... keep this for now."
+
 ## Conclusion → next
