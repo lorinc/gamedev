@@ -21,6 +21,7 @@ build b4.12: 2026-09-28 · p11: b4.12, worms turn fruit into ore deposits, fruit
 build b4.13: 2026-09-28 · p11: b4.13, fruit buys the bugs' reach (16, 32, 64…), wild bugs drawn like tamed in blue, no taming particles (D094)
 build b4.14: 2026-09-28 · p11: b4.14, taming hearts, ore-eating lizards that burrow into loot, ore and loot as specks in the rock (D095)
 build b4.15: 2026-09-28 · p11: b4.15, loot upgrades the bot, +20% radius and speed per upgrade, the bot on the ledger, purple lichen (D096)
+build b4.16: 2026-09-28 · p11: b4.16, the cave's back wall dark grey-blue, apart from the unexplored black (D097)
 ---
 
 # p11 · b4 · Rail Loop
