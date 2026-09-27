@@ -182,6 +182,7 @@ round the surfaces mining ore, burrowing after 16 into one loot inside the rock;
 in the rock. Not seen on screen in the check: the hearts (the start cave is all lit, so no wild bug came).
 Then (D096, the user): loot buys the bot's upgrades (16, 32, 64…), every upgrade +20% mining radius and
 speed, the bot on the ledger; purple lichen (`lichen.js`) with a curly leaf where loot is plentiful.
+Then (D097, the user): the cave's back wall is dark grey-blue, apart from the unexplored black.
 
 ## Feedback
 

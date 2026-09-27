@@ -42,6 +42,7 @@ const LOOT = 'rgb(64,232,214)'
 const BUG = [255, 190, 90] // tamed: amber (D059)
 const WILD = [90, 170, 255] // wild: blue (D059)
 const LICHEN_RGB = [96, 44, 128]
+const OPEN_RGB = [36, 44, 62] // the cave's back wall: dark grey-blue, not the unexplored black (the user, b4.16)
 const LEAF = 'rgb(176,104,220)'
 const RING_TRAIL = 4
 const EDGE = 3 // px over which the light fades out
@@ -74,6 +75,7 @@ export function createRenderer(canvas, game, ui, view) {
     else if (scenic(i)) timg.data.set(map.scenery.subarray(i * 4, i * 4 + 4), i * 4)
     else if (wall && world.tiles[i] === Tile.Open) timg.data.set([.../** @type {number[]} */ (WALL_RGB[wall]), 255], i * 4)
     else if (world.tiles[i] === Tile.Ore || world.tiles[i] === Tile.Loot) timg.data.set([...cellRgb(/** @type {any} */ (rockUnder(i))), 255], i * 4)
+    else if (world.tiles[i] === Tile.Open) timg.data.set([...OPEN_RGB, 255], i * 4)
     else timg.data.set([...cellRgb(/** @type {any} */ (world.tiles[i])), 255], i * 4)
   }
   /** The rock an ore or loot pixel sits in: its 8 neighbours' majority, soft on a tie (pull.js's toRock). @param {number} i */
