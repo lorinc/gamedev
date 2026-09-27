@@ -13,6 +13,7 @@ import { toRock } from '../../sim/dig/pull.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
 import { fruitNear, greenAround, pick } from './garden.js'
+import { gain } from './game.js'
 
 /** @typedef {import('./world.js').Cell} Cell */
 /**
@@ -38,8 +39,7 @@ export const SWARM = {
   pullTicks: 60, // a unit a second at most, like your pull
   spawn: 12, // px round a network node (nodeReach)
   fruitCarry: 8, // fruit a bug holds at most (the user, b4.10)
-  upgradeCost: 16, // fruit for the first reach upgrade, doubling each time: 16, 32, 64… (the user, b4.13)
-  upgradeReach: 1, // px of reach an upgrade adds (Claude's call)
+  upgradeCost: 16, // fruit for the first upgrade, doubling each time: 16, 32, 64… (the user, b4.13)
 }
 /** @typedef {typeof SWARM} Swarm */
 
@@ -139,7 +139,8 @@ function step(g, b, rng) {
  * pullTicks of having one, it comes out, to the haul. @param {import('./game.js').Game} g @param {Swarm} s @param {Worker} b @param {number} k its index */
 function pull(g, s, b, k) {
   const { w, h, tiles } = g.world
-  const r = Math.max(0, s.reach + g.level * s.upgradeReach)
+  const up = gain(g, g.level) // each fruit upgrade: reach and speed +20% (b4.15)
+  const r = Math.max(0, Math.round(s.reach * up))
   let best = -1
   let bestD = Infinity
   for (let dy = -r; dy <= r; dy++)
@@ -164,7 +165,7 @@ function pull(g, s, b, k) {
   const x = best % w
   const y = (best - x) / w
   b.target = { x, y }
-  if (++b.pullFor < Math.max(1, s.pullTicks)) return
+  if (++b.pullFor < Math.max(1, Math.round(s.pullTicks / up))) return
   b.pullFor = 0
   b.target = null
   if (isFruit) {

@@ -12,11 +12,12 @@
 // red fruit as a plain red pixel under the fog (it glowed in b4.10; the user: "fruits should not glow"), fruit
 // on the ledger. b4.12: worms, dark red and striped, drawn over the fog (so you see them burrow), and their
 // deposits turning to ore in the texture. b4.14: ore and loot in the wall are rock-coloured pixels with a speck
-// in them (drawn under the fog, so seen and lit apply), hearts when a bug is tamed, lizards.
+// in them (drawn under the fog, so seen and lit apply), hearts when a bug is tamed, lizards. b4.15: purple
+// lichen in the texture, its curly leaf under the fog; the bot's row on the ledger, loot as count/target.
 
 import { cellRgb } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
-import { botAt, FRUIT_TILE, nextCost, shown } from './game.js'
+import { botAt, botCost, FRUIT_TILE, nextCost, shown } from './game.js'
 import { FRUIT, GREEN as MOSS, VINE } from './garden.js'
 import { OPEN, ROCK, SHEET, SPACE } from './world.js'
 import { ledgerKinds } from './ledger.js'
@@ -40,6 +41,8 @@ const RED = '#ff2828'
 const LOOT = 'rgb(64,232,214)'
 const BUG = [255, 190, 90] // tamed: amber (D059)
 const WILD = [90, 170, 255] // wild: blue (D059)
+const LICHEN_RGB = [96, 44, 128]
+const LEAF = 'rgb(176,104,220)'
 const RING_TRAIL = 4
 const EDGE = 3 // px over which the light fades out
 const FRUIT_C = [235, 40, 50]
@@ -67,7 +70,8 @@ export function createRenderer(canvas, game, ui, view) {
   /** @param {number} i */
   const paintTile = (i) => {
     const wall = game.garden.wall[i]
-    if (scenic(i)) timg.data.set(map.scenery.subarray(i * 4, i * 4 + 4), i * 4)
+    if (game.lichen.on[i] && world.tiles[i] === Tile.Open) timg.data.set([...LICHEN_RGB, 255], i * 4)
+    else if (scenic(i)) timg.data.set(map.scenery.subarray(i * 4, i * 4 + 4), i * 4)
     else if (wall && world.tiles[i] === Tile.Open) timg.data.set([.../** @type {number[]} */ (WALL_RGB[wall]), 255], i * 4)
     else if (world.tiles[i] === Tile.Ore || world.tiles[i] === Tile.Loot) timg.data.set([...cellRgb(/** @type {any} */ (rockUnder(i))), 255], i * 4)
     else timg.data.set([...cellRgb(/** @type {any} */ (world.tiles[i])), 255], i * 4)
@@ -200,6 +204,8 @@ export function createRenderer(canvas, game, ui, view) {
         tctx.putImageData(timg, 0, 0, i % w, Math.floor(i / w), 1, 1)
       }
     else if (e.type === 'ring') rings.push({ x: e.x, y: e.y, r: e.r, s: now })
+    else if (e.type === 'botUpgrade')
+      for (let k = 0; k < 8; k++) fly(icon('loot'), icon('bot'), now + k * 0.05, 0.6, LOOT, 0)
     else if (e.type === 'upgrade')
       for (let k = 0; k < 8; k++) fly(icon('fruit'), icon('bugs'), now + k * 0.05, 0.6, `rgb(${FRUIT_C})`, 0) // no particles for a nibble (b4.13)
     else if (e.type === 'tamed') {
@@ -231,16 +237,16 @@ export function createRenderer(canvas, game, ui, view) {
     const refused = now - ui.refusedAt < 0.7 && Math.sin((now - ui.refusedAt) * Math.PI * 8) > 0
     const L = game.ledger
     // fruit shows the next upgrade's target; bugs a bug icon per upgrade, next to the first (b4.13)
-    const text = { ore: `${L.ore}`, loot: `${L.loot}`, bugs: `${L.bugs}`, fruit: `${L.fruit}/${nextCost(game)}` }
+    const text = { ore: `${L.ore}`, loot: `${L.loot}/${botCost(game)}`, bot: '', bugs: `${L.bugs}`, fruit: `${L.fruit}/${nextCost(game)}` }
     ctx.font = `bold ${Math.round(16 * dpr)}px monospace`
     ctx.textAlign = 'right'
     ctx.textBaseline = 'middle'
     for (const kind of ledgerKinds) {
       const [x, y] = ledgerIcon(kind)
       const r = 7 * dpr
-      const icons = kind === 'bugs' ? 1 + game.level : 1
+      const icons = kind === 'bugs' ? 1 + game.level : kind === 'bot' ? 1 + game.botLevel : 1
       const gap = 16 * dpr
-      const label = text[/** @type {'ore' | 'loot' | 'bugs' | 'fruit'} */ (kind)]
+      const label = text[/** @type {'ore' | 'loot' | 'bot' | 'bugs' | 'fruit'} */ (kind)]
       const tx = x - 14 * dpr - (icons - 1) * gap
       const bw = ctx.measureText(label).width + (tx - x) * -1 + 26 * dpr
       ctx.fillStyle = 'rgba(0,0,0,0.55)'
@@ -253,6 +259,7 @@ export function createRenderer(canvas, game, ui, view) {
           ctx.arc(ix, y, r * 0.8, 0, Math.PI * 2)
           ctx.fill()
         } else if (kind === 'bugs') dot(ix, y, r, r * 1.8, BUG)
+        else if (kind === 'bot') dot(ix, y, r, r * 1.8, [244, 241, 222])
         else {
           ctx.fillStyle = kind === 'ore' ? ORE : LOOT
           ctx.fillRect(ix - r, y - r, 2 * r, 2 * r)
@@ -300,6 +307,38 @@ export function createRenderer(canvas, game, ui, view) {
         ctx.fillStyle = t === Tile.Ore ? ORE : LOOT
         ctx.fillRect(Math.round(sx(tx0 + k)) + ox, Math.round(sy(ty)) + oy, s, s)
       }
+  }
+
+  /** Lichen (b4.15): the texture's changed pixels, and each patch's leaf, a short curl out of the wall, under the fog. */
+  function drawLichen() {
+    const Lc = game.lichen
+    for (const i of Lc.changed) {
+      paintTile(i)
+      tctx.putImageData(timg, 0, 0, i % w, Math.floor(i / w), 1, 1)
+    }
+    Lc.changed.length = 0
+    ctx.strokeStyle = LEAF
+    ctx.lineWidth = Math.max(1, T * 0.35)
+    ctx.lineCap = 'round'
+    for (const p of Lc.patches) {
+      const f = p.leaf
+      const [x, y] = at(f)
+      if (x < -4 * T || y < -4 * T || x > W + 4 * T || y > H + 4 * T) continue
+      // 2 px out, then a curl of about 1 px radius to one side
+      const ex = x + f.dx * 2 * T
+      const ey = y + f.dy * 2 * T
+      const nx = -f.dy * f.turn
+      const ny = f.dx * f.turn
+      const rr = T * 0.9
+      const cx = ex + nx * rr
+      const cy = ey + ny * rr
+      const a0 = Math.atan2(ey - cy, ex - cx)
+      ctx.beginPath()
+      ctx.moveTo(x, y)
+      ctx.lineTo(ex, ey)
+      ctx.arc(cx, cy, rr, a0, a0 + Math.PI * 1.4 * f.turn, f.turn < 0)
+      ctx.stroke()
+    }
   }
 
   /** Hearts rising from a bug being tamed (b4.14). @param {number} now */
@@ -429,6 +468,7 @@ export function createRenderer(canvas, game, ui, view) {
       ctx.drawImage(tex, 0, 0, w, h, x, sy(0), w * T, h * T)
     }
     drawSpecks()
+    drawLichen()
     for (let x = x0; x < W; x += w * T) ctx.drawImage(fog, 0, 0, w, h, x, sy(0), w * T, h * T)
     drawGarden()
     drawRails(now) // over the fog: you built them, and a glowing edge shows where it would go

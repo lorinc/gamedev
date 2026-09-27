@@ -179,6 +179,8 @@ reach by itself (16, 32, 64…, +1 px each), the ledger shows the next target an
 Then (D095, the user): hearts when a bug is tamed; lizards (`lizards.js`) where ore is plentiful, zipping
 round the surfaces mining ore, burrowing after 16 into one loot inside the rock; ore and loot drawn as specks
 in the rock. Not seen on screen in the check: the hearts (the start cave is all lit, so no wild bug came).
+Then (D096, the user): loot buys the bot's upgrades (16, 32, 64…), every upgrade +20% mining radius and
+speed, the bot on the ledger; purple lichen (`lichen.js`) with a curly leaf where loot is plentiful.
 
 ## Feedback
 

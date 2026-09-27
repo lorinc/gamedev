@@ -90,6 +90,9 @@ const panel = createPanel(
     'sim.lizards.max': [0, 40, 1],
     'sim.lizards.zipTicks': [1, 20, 1],
     'sim.lizards.eat': [1, 64, 1],
+    'sim.lichen.density': [1, 60, 1],
+    'sim.botUpgradeCost': [1, 256, 1],
+    'sim.upgradeGain': [0, 1, 0.05],
     'view.zoom': [-1, ZOOM_PX.length - 1, 1],
   },
   {

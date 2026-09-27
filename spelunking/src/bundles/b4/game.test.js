@@ -260,7 +260,7 @@ test('your pull goes for the kind the ledger holds least of, even when another i
   assert.equal(first, Tile.Ore)
 })
 
-test('fruit buys the bugs reach by itself: 16, 32, 64… each +1 px (b4.13)', async () => {
+test('fruit buys the bugs upgrades by itself: 16, 32, 64… (b4.13)', async () => {
   const { nextCost } = await import('./game.js')
   const g = fresh()
   g.cfg.worms.max = 0
@@ -306,4 +306,30 @@ test('plentiful ore spawns a lizard; it mines on the surface, burrows, and makes
   for (let dy = -1; dy <= 1; dy++)
     for (let dx = -1; dx <= 1; dx++) assert.ok(!isOpen(tiles[(y + dy) * w + ((x + dx + w) % w)]), 'inside the rock')
   assert.equal(tiles.filter((t) => t === Tile.Loot).length, before + 1)
+})
+
+test('loot buys the bot upgrades by itself: 16, 32, 64…, each mining radius and speed +20% (b4.15)', async () => {
+  const { botCost, gain } = await import('./game.js')
+  const g = fresh()
+  g.ledger.loot = 16 + 32 + 3
+  tick(g)
+  assert.equal(g.botLevel, 2)
+  assert.equal(g.ledger.loot, 3)
+  assert.equal(botCost(g), 64)
+  assert.ok(Math.abs(gain(g, 2) - 1.44) < 1e-9)
+  assert.equal(Math.round(CONFIG.light.base * gain(g, 2)), 12) // 8 px → 12
+})
+
+test('plentiful loot grows a purple lichen patch of 6–8 surface pixels with a leaf (b4.15)', () => {
+  const g = fresh()
+  g.cfg.worms.max = 0
+  g.cfg.lizards.max = 0
+  g.cfg.lichen.density = 1
+  g.cfg.lichen.near = 20
+  for (let t = 0; t < 60 * 60 && !g.lichen.patches.length; t++) tick(g)
+  assert.ok(g.lichen.patches.length > 0, 'a patch')
+  const p = g.lichen.patches[0]
+  assert.ok(p.cells.length >= 6 && p.cells.length <= 8, `${p.cells.length} px`)
+  for (const i of p.cells) assert.ok(isOpen(MAP.world.tiles[i]), 'on the cave wall (open pixels)')
+  assert.ok(Math.abs(Math.hypot(p.leaf.dx, p.leaf.dy) - 1) < 1e-9)
 })
