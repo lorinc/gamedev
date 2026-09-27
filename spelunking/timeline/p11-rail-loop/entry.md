@@ -5,6 +5,7 @@ started: 2026-09-27
 status: building
 budget: 3d
 from: p10
+dev: b4.html
 ---
 
 # p11 · b4 · Rail Loop
@@ -86,6 +87,27 @@ rather than a place. Then the costs or the node spacing change before anything i
 - An edge's price: 8–12 ore for now (user); the formula is a balancing act, tuned later.
 
 ## Built
+
+**b4 step 1, the whole loop without bugs (2026-09-27, `b4.html`, `src/bundles/b4/`).** A new bundle, not a
+copy of b3 (D079). `world.js` makes the tile world: p7's quad caves, the pod's interior carved open (no
+dome walls), p10's rails (mode C, D078's defaults) in tiles, and b3's CA ore layer over the rock, with loot
+by chance. `game.js` is b4's own sim, reusing b3's probe rings, pull targeting, pack and light
+(`src/sim/dig/`); `input.js`, `render.js` and `main.js` are new; the dev panel is b3's. Checked in headless
+Chromium: walking and the scan, the hold preview, the drag selection with the red X and the green hammer,
+the ore stream and the build, boarding the car, a swipe ride to the far node. Claude's calls while building:
+- Ore: b3's ore layer seeds at 380‰ (knob `world.ore`), because b3's 280 leaves 20–60 ore tiles on this
+  60 × 40 map; 380 gives 75–206 across five seeds.
+- The pull: 1 s a unit (knob `sim.pull.ticks`), not b3's 5 s, or an edge is nearly a minute of standing still.
+- The scan fires on the rock tile pointed at; a diagonal into rock slides along the open side first.
+- A revealed node can be built from anywhere (user: "if the node is revealed, I'm standing close enough").
+- Rails cross rock without carving it; cars are the only way through.
+- In a car, drags are always swipes (the car stands on a node); pointing where no built edge fits, while
+  stopped, gets you out and walking that way; Space is the keyboard's tap.
+- You only get out of a car onto an open tile: a node's tile can be rock (the router rounds nodes to tiles),
+  and getting out there shut the bot in the rock with its car out of reach (the build check's finding).
+- Rails at the frame's bottom edge, where the router clamps a node, are dropped.
+- Edges are short (3–7 tiles on seed 1): D078's spacing of 3 cells.
+Not yet: the bugs (step 8). Not pushed: a new bundle needs the build check and a freeze (R13, R16).
 
 ## Feedback
 
