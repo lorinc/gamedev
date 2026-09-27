@@ -87,6 +87,14 @@ density, AND I'd like to add a 100% penalty for overlapping edges."
 - **Seen (Claude):** the straight edges never cross, but their 8-direction routes sometimes do.
 - New defaults: nodes 3 cells apart, links 1, overlap 1.
 
+**Then (user):** "There's a difference between overlap and paths crossing. Crossing paths should have a
+MASSIVE penalty, so that one single cross overweights paths running on the same path for a while."
+- Overlap is now a step *along* an earlier rail's step (+100%). A **crossing** is a step into an earlier
+  rail's tile off its line (which also covers a junction that isn't a node), or a diagonal step cutting
+  an earlier diagonal between the same four tiles: a flat `cross` penalty, 100 tiles by default.
+- **Measured (3 cells apart, links 1, rock ×5, bend 15):** crossings at penalty 0 / 40 / 100: seed 69866
+  18 / 4 / 0, seed 5512 14 / 3 / 0; shared track ~9–10%, routes 1.05–1.06× the straight line.
+
 ## Feedback
 
 ## Conclusion → next

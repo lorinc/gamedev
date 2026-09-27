@@ -16,7 +16,8 @@ export const RKNOBS = {
   rrelax: 20, // B: relaxing rounds (not `relax`: that's the caves' knob, and both ride in the URL)
   dig: 1.5, // C: a tile of rock costs this many of open air (user: digging has a 50% penalty)
   links: 1, // A, C: edge density, 0 to 1: the lune β-skeleton with β = 2 − links (0: the relative neighbourhood graph, the sparsest; 1: the Gabriel graph); never crossing edges
-  overlap: 1, // C: a step onto a tile an earlier rail uses costs this much more (user: a 100% penalty)
+  overlap: 1, // C: a step along an earlier rail costs this much more (user: a 100% penalty)
+  cross: 100, // C: crossing an earlier rail costs this many tiles (user: "a MASSIVE penalty, so that one single cross overweights paths running on the same path for a while")
   bend: 3, // C: a 45° bend costs this many tiles, a 90° bend twice that; sharper bends aren't allowed
   steep: 0, // 1 = drop rails steeper than 45° (nothing vertical, D068)
 }
@@ -24,7 +25,7 @@ export const RKNOBS = {
 
 /**
  * @typedef {{x: number, y: number}} Node in raster px
- * @typedef {{a: number, b: number, len: number, rock: number, steep: boolean, path?: [number, number][], bends?: number}} Rail
+ * @typedef {{a: number, b: number, len: number, rock: number, steep: boolean, path?: [number, number][], bends?: number, crosses?: number}} Rail
  *   nodes a → b; len and rock in px; a routed rail (C) has its tiles (px of their centres) and its bends
  * @typedef {{nodes: Node[], rails: Rail[]}} Net
  */
@@ -58,6 +59,7 @@ export function rails(T, G, frame, mode, S, seed) {
       rockShare: len ? rock / len : 0,
       steep: net.rails.filter((r) => r.steep).length,
       shared: sharedShare(rails),
+      crosses: rails.reduce((s, r) => s + (r.crosses || 0), 0),
       bends: rails.reduce((s, r) => s + (r.bends || 0), 0),
       stretch: rails.length ? rails.reduce((s, r) => s + r.len / Math.max(1, straight(T, net.nodes, r)), 0) / rails.length : 1,
       openNodes: [...used].filter((i) => openAt(T, net.nodes[i].x, net.nodes[i].y)).length,
@@ -284,8 +286,27 @@ function route(T, F, nodes, pairs, S) {
   const N = W * H * 8
   const cost = new Float64Array(N)
   const from = new Int32Array(N)
-  // tiles used by the rails laid so far (the nodes' own tiles are free: rails meet there)
+  // the rails laid so far: their tiles, and their steps (tile × heading, both ways); the nodes' own tiles
+  // are free: rails meet there
   const used = new Uint8Array(W * H)
+  const usedStep = new Uint8Array(W * H * 8)
+  /** Along an earlier rail (1), across one (2), or clear (0): the step from tile t heading d. @param {number} t @param {number} d */
+  const clash = (t, d) => {
+    if (usedStep[t * 8 + d]) return 1
+    const x = t % W
+    const y = (t - x) / W
+    const nx = (x + DX[d] + W) % W
+    const ny = y + DY[d]
+    const nt = ny * W + nx
+    if (used[nt] && !nodeT[nt]) return 2 // into a rail's tile, off its line: a crossing (or a junction that isn't a node)
+    // a diagonal step cutting another diagonal between the same four tiles
+    if (DX[d] && DY[d]) {
+      const side = ny * W + x
+      const od = DX.findIndex((v, j) => v === DX[d] && DY[j] === -DY[d]) // the other diagonal: (x, ny) → (nx, y)
+      if (usedStep[side * 8 + od]) return 2
+    }
+    return 0
+  }
   const nodeT = new Uint8Array(W * H)
   for (const n of nodes) {
     const [x, y] = tile(n)
@@ -356,9 +377,8 @@ function route(T, F, nodes, pairs, S) {
         if (ny < 0 || ny >= H) continue
         if (voidT[ny * W + nx]) continue
         const step = DX[nd] && DY[nd] ? Math.SQRT2 : 1
-        const nt = ny * W + nx
-        const over = used[nt] && !nodeT[nt] ? 1 + S.overlap : 1
-        const nc = c + step * (1 + (S.dig - 1) * stepRock[t * 8 + nd]) * over + Math.abs(turn) * S.bend
+        const k = clash(t, nd)
+        const nc = c + step * (1 + (S.dig - 1) * stepRock[t * 8 + nd]) * (k === 1 ? 1 + S.overlap : 1) + (k === 2 ? S.cross : 0) + Math.abs(turn) * S.bend
         const ns = (ny * W + nx) * 8 + nd
         if (nc < cost[ns]) {
           cost[ns] = nc
@@ -371,6 +391,7 @@ function route(T, F, nodes, pairs, S) {
     /** @type {[number, number][]} */
     const path = []
     let bends = 0
+    let crosses = 0
     let rock = 0
     let len = 0
     for (let st = end; st >= 0; st = from[st]) {
@@ -384,11 +405,23 @@ function route(T, F, nodes, pairs, S) {
         len += step * K
         rock += step * K * stepRock[(p >> 3) * 8 + (st & 7)]
         if ((p & 7) !== (st & 7) && from[p] >= 0) bends++
+        if (clash(p >> 3, st & 7) === 2) crosses++
       }
     }
     path.reverse()
-    for (const [px, py] of path) used[(Math.floor(py / K) - y0) * W + Math.floor(px / K)] = 1
-    out.push({ a: r.a, b: r.b, len, rock, steep: false, path, bends })
+    for (let i = 0; i < path.length; i++) {
+      const t = (Math.floor(path[i][1] / K) - y0) * W + Math.floor(path[i][0] / K)
+      used[t] = 1
+      if (i) {
+        const u = (Math.floor(path[i - 1][1] / K) - y0) * W + Math.floor(path[i - 1][0] / K)
+        const dx = ((t % W) - (u % W) + W + 1) % W - 1
+        const dy = Math.floor(t / W) - Math.floor(u / W)
+        const d = DX.findIndex((v, j) => v === dx && DY[j] === dy)
+        usedStep[u * 8 + d] = 1
+        usedStep[t * 8 + ((d + 4) & 7)] = 1
+      }
+    }
+    out.push({ a: r.a, b: r.b, len, rock, steep: false, path, bends, crosses })
   }
   return out
 }

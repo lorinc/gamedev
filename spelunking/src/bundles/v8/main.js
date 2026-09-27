@@ -36,6 +36,7 @@ const SLIDERS = [
   ['dig', 'C: rock cost (× open)', 1, 5, 0.1],
   ['bend', 'C: bend cost (tiles)', 0, 15, 0.5],
   ['overlap', 'C: overlap penalty (+×)', 0, 5, 0.1],
+  ['cross', 'C: crossing penalty (tiles)', 0, 200, 5],
 ]
 
 const bar = /** @type {HTMLElement} */ (document.getElementById('bar'))
@@ -156,7 +157,7 @@ function build() {
     `<b>${st.nodes} nodes</b> (${st.openNodes} in open air), <b>${st.rails} rails</b>, median ${st.median.toFixed(1)} cells long · ` +
     `<b>${(st.rockShare * 100).toFixed(0)}% of rail length bores rock</b> · ` +
     (mode === 'C'
-      ? `${(st.shared * 100).toFixed(0)}% of track shared with another rail · ${st.bends} bends (${(st.bends / Math.max(1, st.rails)).toFixed(1)} a rail) · routes ${st.stretch.toFixed(2)}× the straight line on average`
+      ? `<b>${st.crosses} crossings</b> · ${(st.shared * 100).toFixed(0)}% of track shared with another rail · ${st.bends} bends (${(st.bends / Math.max(1, st.rails)).toFixed(1)} a rail) · routes ${st.stretch.toFixed(2)}× the straight line on average`
       : `${st.steep} rails steeper than 45°${rknobs.steep ? ' (dropped)' : ''}`)
   draw()
 }
