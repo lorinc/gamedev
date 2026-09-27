@@ -68,6 +68,13 @@ penalty."
 - **Fixed:** B's `relax` knob was renamed `rrelax`; it shared its name with the caves' `relax` in the URL,
   so a shared link rebuilt the caves with B's 20 rounds instead of 150.
 
+**Then (user): "The map misrepresents the tunnelling needs"** (screenshot of seed 69866 in C). Each
+tile was classed by its centre pixel alone, and each step coloured by the tile it entered: 100 of 553
+steps showed the wrong colour for the rock actually under the line (52 bored rock drawn white, 48 open
+air drawn red). Now each step's rock is sampled along its line, pixel by pixel, and that one measure
+drives the route's cost, the colour and the numbers; every rail (A, B, C) is drawn that way. The totals
+barely moved (the errors roughly cancelled): seed 69866 C 28% bores rock, seed 5512 C 27%.
+
 ## Feedback
 
 ## Conclusion → next

@@ -179,47 +179,29 @@ function draw() {
   ctx.lineWidth = Math.max(2, 0.8 * z)
   const sx = (/** @type {number} */ x) => x * z
   const sy = (/** @type {number} */ y) => (y - top) * z
-  for (const r of R.rails) {
-    if (r.path) {
-      // a routed rail: step by step, coloured by the tile it enters
-      for (let i = 1; i < r.path.length; i++) {
-        const [x0, y0] = r.path[i - 1]
-        const [x1, y1] = r.path[i]
-        const yy = Math.floor(y1)
-        const rock = yy < T.h && T.cls[yy * w + Math.floor(x1)] === ROCK
-        ctx.strokeStyle = rock ? BORE : RAIL
-        const a = near(x0, x1, w)
-        for (const off of [0, -w, w]) {
-          ctx.beginPath()
-          ctx.moveTo(sx(a + off), sy(y0))
-          ctx.lineTo(sx(x1 + off), sy(y1))
-          ctx.stroke()
-        }
-      }
-      continue
-    }
-    const p = R.nodes[r.a]
-    const q = R.nodes[r.b]
-    const dx = near(q.x, p.x, w) - p.x
-    const dy = q.y - p.y
+  /** A straight piece of rail, drawn in runs: white over open air, red over rock, pixel by pixel (the
+   * same sampling the router's costs and the numbers use). @param {number} x0 @param {number} y0 @param {number} x1 @param {number} y1 */
+  const piece = (x0, y0, x1, y1) => {
+    const a = near(x0, x1, w)
+    const dx = x1 - a
+    const dy = y1 - y0
     const n = Math.max(1, Math.ceil(Math.hypot(dx, dy) * 2))
-    // runs of open and rock along the rail, each drawn in its colour; drawn again across the wrap
     let t0 = 0
     let cur = -1
     const flush = (/** @type {number} */ t1) => {
       if (cur < 0) return
-      ctx.strokeStyle = cur === ROCK ? BORE : RAIL
+      ctx.strokeStyle = cur ? BORE : RAIL
       for (const off of [0, -w, w]) {
         ctx.beginPath()
-        ctx.moveTo(sx(p.x + dx * t0 + off), sy(p.y + dy * t0))
-        ctx.lineTo(sx(p.x + dx * t1 + off), sy(p.y + dy * t1))
+        ctx.moveTo(sx(a + dx * t0 + off), sy(y0 + dy * t0))
+        ctx.lineTo(sx(a + dx * t1 + off), sy(y0 + dy * t1))
         ctx.stroke()
       }
     }
     for (let i = 0; i < n; i++) {
       const t = (i + 0.5) / n
-      const yy = Math.floor(p.y + dy * t)
-      const c = yy >= 0 && yy < T.h && T.cls[yy * w + ((Math.floor(p.x + dx * t) % w) + w) % w] === ROCK ? ROCK : 1
+      const yy = Math.floor(y0 + dy * t)
+      const c = yy >= T.h || (yy >= 0 && T.cls[yy * w + ((Math.floor(a + dx * t) % w) + w) % w] === ROCK) ? 1 : 0
       if (c !== cur) {
         flush(i / n)
         t0 = i / n
@@ -227,6 +209,10 @@ function draw() {
       }
     }
     flush(1)
+  }
+  for (const r of R.rails) {
+    if (r.path) for (let i = 1; i < r.path.length; i++) piece(r.path[i - 1][0], r.path[i - 1][1], r.path[i][0], r.path[i][1])
+    else piece(R.nodes[r.a].x, R.nodes[r.a].y, R.nodes[r.b].x, R.nodes[r.b].y)
   }
   ctx.fillStyle = NODE
   const used = new Set(R.rails.flatMap((r) => [r.a, r.b]))

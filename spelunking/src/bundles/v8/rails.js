@@ -233,14 +233,34 @@ function route(T, F, nodes, pairs, S) {
   const W = T.w / K
   const y0 = Math.floor(F.top / K)
   const H = Math.ceil(F.rows / K)
-  // each tile by its centre pixel: 0 open, 1 rock, 2 void
-  const kind = new Uint8Array(W * H)
+  // each tile: void (sky or sea at its centre) or not; each step from a tile's centre to a neighbour's:
+  // the share of its line through rock, sampled pixel by pixel (the cost, the colour and the numbers
+  // all read the rock actually under the rail)
+  const voidT = new Uint8Array(W * H)
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
       const py = (y0 + y) * K + (K >> 1)
       const c = py >= T.h ? ROCK : T.cls[py * T.w + x * K + (K >> 1)]
-      kind[y * W + x] = c === OPEN ? 0 : c === ROCK ? 1 : 2
+      voidT[y * W + x] = c === SKY || c === SEA ? 1 : 0
     }
+  const rockPx = (/** @type {number} */ x, /** @type {number} */ y) => {
+    const yy = Math.floor(y)
+    return yy >= T.h || (yy >= 0 && T.cls[yy * T.w + ((Math.floor(x) % T.w) + T.w) % T.w] === ROCK)
+  }
+  const SAMPLES = 2 * K
+  const stepRock = new Float32Array(W * H * 8)
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++)
+      for (let d = 0; d < 8; d++) {
+        const cx = (x + 0.5) * K
+        const cy = (y0 + y + 0.5) * K
+        let n = 0
+        for (let i = 0; i < SAMPLES; i++) {
+          const t = (i + 0.5) / SAMPLES
+          if (rockPx(cx + DX[d] * K * t, cy + DY[d] * K * t)) n++
+        }
+        stepRock[(y * W + x) * 8 + d] = n / SAMPLES
+      }
   const tile = (/** @type {Node} */ n) => [Math.floor(n.x / K) % W, Math.min(H - 1, Math.max(0, Math.floor(n.y / K) - y0))]
   const N = W * H * 8
   const cost = new Float64Array(N)
@@ -306,10 +326,9 @@ function route(T, F, nodes, pairs, S) {
         const nx = (x + DX[nd] + W) % W
         const ny = y + DY[nd]
         if (ny < 0 || ny >= H) continue
-        const k = kind[ny * W + nx]
-        if (k === 2) continue
+        if (voidT[ny * W + nx]) continue
         const step = DX[nd] && DY[nd] ? Math.SQRT2 : 1
-        const nc = c + step * (k ? S.dig : 1) + Math.abs(turn) * S.bend
+        const nc = c + step * (1 + (S.dig - 1) * stepRock[t * 8 + nd]) + Math.abs(turn) * S.bend
         const ns = (ny * W + nx) * 8 + nd
         if (nc < cost[ns]) {
           cost[ns] = nc
@@ -333,7 +352,7 @@ function route(T, F, nodes, pairs, S) {
       if (p >= 0) {
         const step = DX[st & 7] && DY[st & 7] ? Math.SQRT2 : 1
         len += step * K
-        if (kind[t]) rock += step * K
+        rock += step * K * stepRock[(p >> 3) * 8 + (st & 7)]
         if ((p & 7) !== (st & 7) && from[p] >= 0) bends++
       }
     }
