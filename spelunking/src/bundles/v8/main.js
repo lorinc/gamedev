@@ -12,8 +12,8 @@ import { near } from '../v5/quads.js'
 
 const params = new URLSearchParams(location.search)
 let seed = Number(params.get('seed')) || 1
-/** @type {'A' | 'B'} */
-let mode = params.get('mode') === 'B' ? 'B' : 'A'
+/** @type {'A' | 'B' | 'C'} */
+let mode = params.get('mode') === 'B' ? 'B' : params.get('mode') === 'C' ? 'C' : 'A'
 /** @type {Record<string, number>} */
 const qknobs = { ...QKNOBS }
 /** @type {Record<string, number>} */
@@ -31,7 +31,9 @@ let zoom = 0 // 0 = fit the window's width
 const SLIDERS = [
   ['spacing', 'A: nodes apart (cells)', 3, 20, 0.5],
   ['cols', 'B: coarse triangles across', 3, 16, 1],
-  ['relax', 'B: relaxing rounds', 0, 60, 1],
+  ['rrelax', 'B: relaxing rounds', 0, 60, 1],
+  ['dig', 'C: rock cost (× open)', 1, 5, 0.1],
+  ['bend', 'C: bend cost (tiles)', 0, 15, 0.5],
 ]
 
 const bar = /** @type {HTMLElement} */ (document.getElementById('bar'))
@@ -64,7 +66,8 @@ next.addEventListener('click', () => setSeed(seed + 1))
 reroll.addEventListener('click', () => setSeed(1 + Math.floor(Math.random() * 99999)))
 zoomOut.addEventListener('click', () => ((zoom = Math.max(1, scale() - 1)), draw()))
 zoomIn.addEventListener('click', () => ((zoom = scale() + 1), draw()))
-for (const m of /** @type {const} */ (['A', 'B'])) {
+const NAMES = { A: 'A: chords between cave-grid vertices', B: 'B: coarse relaxed grid', C: 'C: A routed in 8 directions' }
+for (const m of /** @type {const} */ (['A', 'B', 'C'])) {
   const l = el('label')
   const r = /** @type {HTMLInputElement} */ (el('input', { type: 'radio', name: 'mode' }))
   r.checked = mode === m
@@ -72,7 +75,7 @@ for (const m of /** @type {const} */ (['A', 'B'])) {
     mode = m
     schedule()
   })
-  l.append(r, m === 'A' ? ' A: chords between cave-grid vertices' : ' B: coarse relaxed grid')
+  l.append(r, ' ' + NAMES[m])
   bar.append(l)
 }
 const steepL = el('label')
@@ -82,7 +85,7 @@ steep.addEventListener('change', () => {
   rknobs.steep = steep.checked ? 1 : 0
   schedule()
 })
-steepL.append(steep, ' drop rails steeper than 45°')
+steepL.append(steep, ' no rails steeper than 45° (C: no upright steps)')
 bar.append(steepL)
 for (const [key, label, min, max, step] of SLIDERS) {
   const l = el('label', {}, ' ' + label + ' ')
@@ -147,9 +150,12 @@ function build() {
   const t2 = performance.now()
   const st = R.stats
   cap.innerHTML =
-    `<b>seed ${seed} · ${mode === 'A' ? 'A: chords between cave-grid vertices' : 'B: coarse relaxed grid'}</b> · caves ${(t1 - t0).toFixed(0)} ms, rails ${(t2 - t1).toFixed(0)} ms<br>` +
+    `<b>seed ${seed} · ${NAMES[mode]}</b> · caves ${(t1 - t0).toFixed(0)} ms, rails ${(t2 - t1).toFixed(0)} ms<br>` +
     `<b>${st.nodes} nodes</b> (${st.openNodes} in open air), <b>${st.rails} rails</b>, median ${st.median.toFixed(1)} cells long · ` +
-    `<b>${(st.rockShare * 100).toFixed(0)}% of rail length bores rock</b> · ${st.steep} rails steeper than 45°${rknobs.steep ? ' (dropped)' : ''}`
+    `<b>${(st.rockShare * 100).toFixed(0)}% of rail length bores rock</b> · ` +
+    (mode === 'C'
+      ? `${st.bends} bends (${(st.bends / Math.max(1, st.rails)).toFixed(1)} a rail) · routes ${st.stretch.toFixed(2)}× the straight line on average`
+      : `${st.steep} rails steeper than 45°${rknobs.steep ? ' (dropped)' : ''}`)
   draw()
 }
 
@@ -174,6 +180,24 @@ function draw() {
   const sx = (/** @type {number} */ x) => x * z
   const sy = (/** @type {number} */ y) => (y - top) * z
   for (const r of R.rails) {
+    if (r.path) {
+      // a routed rail: step by step, coloured by the tile it enters
+      for (let i = 1; i < r.path.length; i++) {
+        const [x0, y0] = r.path[i - 1]
+        const [x1, y1] = r.path[i]
+        const yy = Math.floor(y1)
+        const rock = yy < T.h && T.cls[yy * w + Math.floor(x1)] === ROCK
+        ctx.strokeStyle = rock ? BORE : RAIL
+        const a = near(x0, x1, w)
+        for (const off of [0, -w, w]) {
+          ctx.beginPath()
+          ctx.moveTo(sx(a + off), sy(y0))
+          ctx.lineTo(sx(x1 + off), sy(y1))
+          ctx.stroke()
+        }
+      }
+      continue
+    }
     const p = R.nodes[r.a]
     const q = R.nodes[r.b]
     const dx = near(q.x, p.x, w) - p.x

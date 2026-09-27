@@ -54,6 +54,20 @@ corridors move into the WFC (the caves grow around the rails).
   steeper than 45°. B: 78 nodes (34 in open air), 142 rails, median 5.5 cells, 49% bores rock, 83
   steeper than 45°. Screenshots: `gallery/p9/v8_A.png`, `v8_B.png`.
 
+**Then (user, on A):** "This is ideal density for the travel nodes, and I also like the cavern-central
+placements" (at 4 cells apart). "Can you connect nodes with similar density and placement … with these
+constraints? Rails use only the 8 angles, can be made of multiple segments, and digging has a 50%
+penalty."
+- **C · A routed in 8 directions:** A's nodes (snapped to tiles) and A's pairs, each routed on the tile
+  grid by Dijkstra over (tile, heading): a step costs its length (√2 diagonal), ×1.5 in rock (knob); a
+  45° bend costs 3 tiles, a 90° bend 6 (knob); sharper bends aren't allowed; sky and sea can't be
+  crossed. The 45° toggle forbids upright steps.
+- **Measured, 4 cells apart:** seed 69866: 90 nodes, 126 rails, 28% of rail length bores rock (A: 30%),
+  87 bends (0.7 a rail), routes 1.05× the straight line. Seed 5512: 89 nodes, 134 rails, 28% bores rock,
+  96 bends. Rails often share stretches where routes run together.
+- **Fixed:** B's `relax` knob was renamed `rrelax`; it shared its name with the caves' `relax` in the URL,
+  so a shared link rebuilt the caves with B's 20 rounds instead of 150.
+
 ## Feedback
 
 ## Conclusion → next
