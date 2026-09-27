@@ -11,7 +11,7 @@ import { K, OPEN, ROCK, SEA, SKY } from '../v6/terrain.js'
 
 /** The rail knobs (the page's sliders). */
 export const RKNOBS = {
-  spacing: 8, // A: nodes at least this far apart, in cells
+  spacing: 4, // A, C: nodes at least this far apart, in cells (user: 4 is "ideal density for the travel nodes")
   cols: 5, // B: coarse triangles across the map (rails ≈ map width / cols / 2 long)
   rrelax: 20, // B: relaxing rounds (not `relax`: that's the caves' knob, and both ride in the URL)
   dig: 1.5, // C: a tile of rock costs this many of open air (user: digging has a 50% penalty)
