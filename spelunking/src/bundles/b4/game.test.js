@@ -274,3 +274,36 @@ test('fruit buys the bugs reach by itself: 16, 32, 64… each +1 px (b4.13)', as
   assert.equal(g.ledger.fruit, 5)
   assert.equal(nextCost(g), 64)
 })
+
+test('plentiful ore spawns a lizard; it mines on the surface, burrows, and makes one loot inside the rock (b4.14)', () => {
+  const g = fresh()
+  g.cfg.worms.max = 0
+  g.cfg.lizards.density = 3 // seed 1's start has little ore: a low bar, the rest as it plays
+  g.cfg.lizards.eat = 4
+  g.cfg.lizards.near = 40
+  const { w } = MAP.world
+  const tiles = MAP.world.tiles
+  let spawned = 0
+  let licked = 0
+  /** @type {number[] | null} */
+  let loot = null
+  const before = tiles.filter((t) => t === Tile.Loot).length
+  for (let t = 0; t < 60 * 60 * 10 && !loot; t++) {
+    tick(g)
+    for (const e of g.events) {
+      if (e.type === 'lizard') spawned++
+      if (e.type === 'licked') licked++
+      if (e.type === 'deposit' && tiles[e.cells[0]] === Tile.Loot) loot = e.cells
+    }
+    g.events.length = 0
+    for (const z of g.lizards) if (z.eaten < 4) assert.ok(isOpen(tiles[z.body[0].y * w + z.body[0].x]), 'on the surface')
+  }
+  assert.ok(spawned > 0 && licked >= 4, `spawned ${spawned}, licked ${licked}`)
+  assert.ok(loot, 'burrowed')
+  assert.equal(loot.length, 1)
+  const x = loot[0] % w
+  const y = (loot[0] - x) / w
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) assert.ok(!isOpen(tiles[(y + dy) * w + ((x + dx + w) % w)]), 'inside the rock')
+  assert.equal(tiles.filter((t) => t === Tile.Loot).length, before + 1)
+})

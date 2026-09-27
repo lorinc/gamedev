@@ -28,6 +28,8 @@
 // of (b4.12), the nearest of it.
 // Upgrades (b4.13, the user): fruit on the ledger is spent by itself on the bugs' reach: the first costs
 // swarm.upgradeCost (16), each next twice the last; each adds swarm.upgradeReach px.
+// Lizards (b4.14, lizards.js): plentiful ore spawns lizards; they zip round the cave surfaces mining ore, and
+// after 16 burrow and make one loot in the wall.
 // Worms (b4.12, worms.js): dense fruit spawns worms; they eat 8 fruit, burrow and curl up into an ore deposit.
 // Bugs (b4.3): b3.7's wild ones (`src/sim/dig/bugs.js`, D056–D061) with the `ledger` switch: they nibble ore
 // from the ledger; at 16 fed (D060) the last biter is +1 bug on the ledger. Tamed bugs are abstract workers
@@ -43,6 +45,7 @@ import { wrap } from '../../sim/dig/rules.js'
 import { SWARM, updateSwarm } from './swarm.js'
 import { createGarden, fruitNear, GARDEN, pick as pickFruit, updateGarden } from './garden.js'
 import { updateWorms, WORMS } from './worms.js'
+import { LIZARDS, updateLizards } from './lizards.js'
 import { OPEN, ROCK } from './world.js'
 
 /** @typedef {import('./world.js').Map} Map */
@@ -76,6 +79,7 @@ export const CONFIG = {
   swarm: { ...SWARM },
   garden: { ...GARDEN },
   worms: { ...WORMS },
+  lizards: { ...LIZARDS },
   price: 10, // ore per edge (user: 8–12, tuned later)
   rideSpeed: 80, // px/s in a car (several px a tick: an integer budget, 60 a straight px, 85 a diagonal)
 }
@@ -95,6 +99,7 @@ export const CONFIG = {
  *   | { type: 'dug', x: number, y: number, tile: number, by: number } | { type: 'haul', x: number, y: number, ore: number, loot: number, fruit: number }
  *   | { type: 'worm', x: number, y: number } | { type: 'eaten', x: number, y: number } | { type: 'deposit', cells: number[] }
  *   | { type: 'upgrade', level: number }
+ *   | { type: 'lizard', x: number, y: number } | { type: 'licked', x: number, y: number, by: number }
  *   | { type: 'board', car: number } | { type: 'exit', car: number }
  *   | { type: 'nibble', id: number, x: number, y: number, from: Cell } | { type: 'tamed', id: number, x: number, y: number, slot: number }
  *  } GameEvent bugs.js adds the wild bugs'; tamed has slot -1 (to the ledger); tile FRUIT_TILE is a fruit (b4.10)
@@ -125,6 +130,7 @@ export const CONFIG = {
  * @property {import('./garden.js').GardenState} garden b4.10
  * @property {import('./worms.js').Worm[]} worms b4.12
  * @property {number} level bug reach upgrades bought (b4.13)
+ * @property {import('./lizards.js').Lizard[]} lizards b4.14
  * @property {import('./swarm.js').Worker[]} swarm the ledger's bugs at work
  * @property {Uint8Array} seen
  * @property {number[]} lit
@@ -168,6 +174,7 @@ export function createGame(map, cfg) {
     garden: createGarden(world.w * world.h),
     worms: [],
     level: 0,
+    lizards: [],
     swarm: [],
     seen: new Uint8Array(world.w * world.h),
     lit: [],
@@ -227,6 +234,7 @@ export function tick(g) {
   updateSwarm(g)
   updateGarden(g)
   updateWorms(g)
+  updateLizards(g)
   while (g.ledger.fruit >= nextCost(g)) {
     g.ledger.fruit -= nextCost(g)
     g.level++

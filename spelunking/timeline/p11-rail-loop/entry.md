@@ -175,6 +175,9 @@ Then (D091–D093, the user): worms (`worms.js`) spawn where fruit is dense, eat
 12 px of ore inside the rock; fruit no longer glows; your pull goes for the kind the ledger holds least of.
 Then (D094, the user): no taming particles; wild bugs drawn like tamed ones in blue; fruit buys the bugs'
 reach by itself (16, 32, 64…, +1 px each), the ledger shows the next target and a bug icon per upgrade.
+Then (D095, the user): hearts when a bug is tamed; lizards (`lizards.js`) where ore is plentiful, zipping
+round the surfaces mining ore, burrowing after 16 into one loot inside the rock; ore and loot drawn as specks
+in the rock. Not seen on screen in the check: the hearts (the start cave is all lit, so no wild bug came).
 
 ## Feedback
 

@@ -11,7 +11,8 @@
 // dots) and their hauls flying to the ledger's icons. b4.10: the green back wall and vines in the texture, the
 // red fruit as a plain red pixel under the fog (it glowed in b4.10; the user: "fruits should not glow"), fruit
 // on the ledger. b4.12: worms, dark red and striped, drawn over the fog (so you see them burrow), and their
-// deposits turning to ore in the texture.
+// deposits turning to ore in the texture. b4.14: ore and loot in the wall are rock-coloured pixels with a speck
+// in them (drawn under the fog, so seen and lit apply), hearts when a bug is tamed, lizards.
 
 import { cellRgb } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
@@ -68,7 +69,23 @@ export function createRenderer(canvas, game, ui, view) {
     const wall = game.garden.wall[i]
     if (scenic(i)) timg.data.set(map.scenery.subarray(i * 4, i * 4 + 4), i * 4)
     else if (wall && world.tiles[i] === Tile.Open) timg.data.set([.../** @type {number[]} */ (WALL_RGB[wall]), 255], i * 4)
+    else if (world.tiles[i] === Tile.Ore || world.tiles[i] === Tile.Loot) timg.data.set([...cellRgb(/** @type {any} */ (rockUnder(i))), 255], i * 4)
     else timg.data.set([...cellRgb(/** @type {any} */ (world.tiles[i])), 255], i * 4)
+  }
+  /** The rock an ore or loot pixel sits in: its 8 neighbours' majority, soft on a tie (pull.js's toRock). @param {number} i */
+  function rockUnder(i) {
+    const x = i % w
+    const y = (i - x) / w
+    let soft = 0
+    let hard = 0
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        if ((!dx && !dy) || y + dy < 0 || y + dy >= h) continue
+        const t = world.tiles[(y + dy) * w + ((x + dx + w) % w)]
+        if (t === Tile.Soft) soft++
+        else if (t === Tile.Hard) hard++
+      }
+    return hard > soft ? Tile.Hard : Tile.Soft
   }
   const lit = new Uint8Array(w * h)
   const DIM = Math.round(DIM_A * 255)
@@ -157,6 +174,8 @@ export function createRenderer(canvas, game, ui, view) {
   /** @typedef {() => [number, number]} End a point on screen, device px, read each frame (the camera moves) */
   /** @type {{ from: End, to: End, s: number, dur: number, color: string, arc: number }[]} */
   const flights = []
+  /** @type {{ x: number, y: number, s: number, k: number }[]} hearts from a tamed bug (b4.14) */
+  const hearts = []
   /** @param {Cell} c @returns {End} */
   const cell = (c) => () => /** @type {[number, number]} */ (at(c))
   /** @param {string} kind @returns {End} */
@@ -183,7 +202,13 @@ export function createRenderer(canvas, game, ui, view) {
     else if (e.type === 'ring') rings.push({ x: e.x, y: e.y, r: e.r, s: now })
     else if (e.type === 'upgrade')
       for (let k = 0; k < 8; k++) fly(icon('fruit'), icon('bugs'), now + k * 0.05, 0.6, `rgb(${FRUIT_C})`, 0) // no particles for a nibble (b4.13)
-    else if (e.type === 'tamed') fly(cell(e), icon('bugs'), now, 0.9, `rgb(${BUG})`, 0)
+    else if (e.type === 'tamed') {
+      fly(cell(e), icon('bugs'), now, 0.9, `rgb(${BUG})`, 0)
+      for (let k = 0; k < 6; k++) hearts.push({ x: e.x + 0.5, y: e.y + 0.5, s: now + k * 0.07, k }) // b4.14
+    } else if (e.type === 'licked') {
+      const z = game.lizards[e.by]
+      fly(cell(e), () => /** @type {[number, number]} */ (at(z.body[0])), now, 0.3, ORE, 0.3)
+    }
     else if (e.type === 'haul') {
       for (let k = 0; k < Math.min(e.ore, 12); k++) fly(cell(e), icon('ore'), now + k * 0.06, 0.9, ORE, 0)
       for (let k = 0; k < Math.min(e.loot, 6); k++) fly(cell(e), icon('loot'), now + k * 0.08, 0.9, LOOT, 0)
@@ -253,6 +278,63 @@ export function createRenderer(canvas, game, ui, view) {
       tctx.putImageData(timg, 0, 0, i % w, Math.floor(i / w), 1, 1)
     }
     G.changed.length = 0
+  }
+
+  /** Ore and loot in the wall (b4.14): a speck, half a pixel across, at a hashed spot in its pixel. Under the fog. */
+  function drawSpecks() {
+    const s = Math.max(1, Math.round(T * 0.5))
+    const cols = Math.ceil(W / T) + 2
+    const rows = Math.ceil(H / T) + 2
+    const tx0 = Math.floor(cam.x - W / 2 / T) - 1
+    const ty0 = Math.max(0, Math.floor(cam.y - H / 2 / T) - 1)
+    for (let ty = ty0; ty < Math.min(h, ty0 + rows); ty++)
+      for (let k = 0; k < cols; k++) {
+        const x = (((tx0 + k) % w) + w) % w
+        const i = ty * w + x
+        const t = world.tiles[i]
+        if (t !== Tile.Ore && t !== Tile.Loot) continue
+        if (!game.seen[i]) continue
+        const hsh = Math.imul(i, 2654435761) >>> 0
+        const ox = T > s ? hsh % (T - s + 1) : 0
+        const oy = T > s ? (hsh >>> 8) % (T - s + 1) : 0
+        ctx.fillStyle = t === Tile.Ore ? ORE : LOOT
+        ctx.fillRect(Math.round(sx(tx0 + k)) + ox, Math.round(sy(ty)) + oy, s, s)
+      }
+  }
+
+  /** Hearts rising from a bug being tamed (b4.14). @param {number} now */
+  function drawHearts(now) {
+    for (let i = hearts.length - 1; i >= 0; i--) {
+      const p = hearts[i]
+      const t = (now - p.s) / 1.2
+      if (t < 0) continue
+      if (t >= 1) {
+        hearts.splice(i, 1)
+        continue
+      }
+      const u = 3 * dpr * (1 + 0.3 * Math.sin(t * Math.PI))
+      const x = sx(p.x) + Math.sin(p.k * 2.1 + t * 5) * 8 * dpr + (p.k - 2.5) * 3 * dpr
+      const y = sy(p.y) - t * 40 * dpr
+      ctx.fillStyle = `rgba(255,90,140,${1 - t})`
+      ctx.beginPath()
+      ctx.arc(x - u * 0.5, y, u * 0.55, Math.PI, 0)
+      ctx.arc(x + u * 0.5, y, u * 0.55, Math.PI, 0)
+      ctx.lineTo(x, y + u * 1.2)
+      ctx.closePath()
+      ctx.fill()
+    }
+  }
+
+  /** Lizards (b4.14): 3 px of bright green, the head brighter. */
+  function drawLizards() {
+    const s = Math.max(T, 2 * dpr)
+    for (const z of game.lizards)
+      for (let k = z.body.length - 1; k >= 0; k--) {
+        const [x, y] = at(z.body[k])
+        if (x < -s || y < -s || x > W + s || y > H + s) continue
+        ctx.fillStyle = k === 0 ? 'rgb(150,255,120)' : 'rgb(60,215,80)'
+        ctx.fillRect(Math.round(x - s / 2), Math.round(y - s / 2), Math.round(s), Math.round(s))
+      }
   }
 
   /** Worms (b4.12): 12 px of dark red, striped every other px; the head a little brighter. */
@@ -346,6 +428,7 @@ export function createRenderer(canvas, game, ui, view) {
     for (let x = x0; x < W; x += w * T) {
       ctx.drawImage(tex, 0, 0, w, h, x, sy(0), w * T, h * T)
     }
+    drawSpecks()
     for (let x = x0; x < W; x += w * T) ctx.drawImage(fog, 0, 0, w, h, x, sy(0), w * T, h * T)
     drawGarden()
     drawRails(now) // over the fog: you built them, and a glowing edge shows where it would go
@@ -357,6 +440,8 @@ export function createRenderer(canvas, game, ui, view) {
     drawWild(alpha) // b3.7's wild bugs (D056–D061), drawn like the tamed ones, in blue (b4.13)
     drawSwarm(alpha, now)
     drawWorms()
+    drawLizards()
+    drawHearts(now)
     drawFlights(now)
     drawPrice()
     drawLedger(now)

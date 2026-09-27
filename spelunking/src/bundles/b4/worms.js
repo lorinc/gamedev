@@ -155,9 +155,10 @@ function move(g, m, p) {
 /**
  * A deposit site: the nearest soft or hard rock pixel within `site` px with no open pixel within 2, grown
  * (randomly, 8-way) into `length` soft or hard pixels, none 8-bordering an open one. Null if none.
- * @param {import('./game.js').Game} g @param {Worms} c @param {{ x: number, y: number }} at @param {() => number} rng
+ * Lizards use it too, with their own `site` and `length` (1: a single loot pixel).
+ * @param {import('./game.js').Game} g @param {{ site: number, length: number }} c @param {{ x: number, y: number }} at @param {() => number} rng
  */
-function findSite(g, c, at, rng) {
+export function findSite(g, c, at, rng) {
   const { w, h, tiles } = g.world
   const kind = g.map.kind
   const rocky = (/** @type {number} */ i) => kind[i] === ROCK && (tiles[i] === Tile.Soft || tiles[i] === Tile.Hard)
