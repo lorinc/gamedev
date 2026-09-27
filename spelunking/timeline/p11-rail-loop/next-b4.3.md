@@ -62,11 +62,54 @@ Gaps to settle:
   and tests don't change.
 - The pod store in the HUD: **[Claude]** a second, smaller pack-like counter by the pack, or a number.
 
+## The user's answers (2026-09-27)
+
+1. The pull stays tied to the light (user: "I'm mining far too far"): both halve, 16 → 8 px.
+2. A tamed bug flies off to ore it can reach through the caves, "and it keeps doing it".
+3. It flies the ore to the node through the caves (b). "Nodes sitting in rock is not okay": never inside a
+   wall; if that's complex, an open space of radius 3 round each node.
+4. Yes, and more: "the backpack should dump everything into the nearest node, the same way bugs do it, and
+   building costs are deducted from a central ore ledger."
+
+## Nodes in rock (measured 2026-09-27)
+
+Nodes are picked **after** the WFC (v8 `chords()`): grid vertices in open air, the most open first. Mode C then
+moves each to the centre of its 4 px cell, since the rails run cell to cell, and that centre can be rock. Five
+seeds: 24–37 of ~400 nodes (6–9%) end in rock, and ~45% are open but within 3 px of rock.
+**[Claude]** The fix at the source: a vertex whose cell centre isn't open is not a candidate (the next most open
+vertex takes its place), so no node is ever in a wall. Cheap, no carving. Requiring 3 px of clearance
+instead would drop about half the candidates and thin the network: not proposed. (The r3 carve stays the
+fallback if the filter fights the router.)
+
+## The ore economy, as answered
+
+- **[Claude]** You within `nodeReach` (12 px) of a network node: the pack empties into it by itself, unit by
+  unit, as the build's stream did (no gesture). Wild bugs still nibble ore from the pack on the way.
+- Ore at a node travels the rails to the pod (point 4 above); **[Claude]** it's counted in the ledger when it
+  reaches the pod, so the rails carry something you wait for. A dump at a pod node counts at once.
+- Building: still from a network node within reach, the price taken from the ledger (not the pack). The HUD
+  shows the ledger against the price; the pack stays on screen too.
+- A bug (b): flies through open air to the nearest seen ore it can reach, pulls from next to it, up to 8, then
+  flies to the nearest network node it can reach through the air and drops it; again, forever. Ways through the
+  air: one distance field from all network nodes (rebuilt when an edge is built), one from each bug for ore
+  (b3's `seek` field, larger). **[Claude]** It mines only seen ore (b3's rule), so your scans feed the bugs.
+  A bug whose cave holds no network node fills up and waits, dark: bugs are worth taming in caves the network
+  reaches.
+- Bugs fly 5 px/s at b3.7's `moveTicks` 12: slow for long trips; a knob.
+
+Still open:
+- **Open: the light.** It grows with what the pack holds (D051). Dumping at every node drops you to the base
+  light (8 px) each time. Keep it (carrying = brighter, a reason to hold on), or have the light grow with the
+  ledger, or stay at the base?
+- **Open: loot.** "Everything" goes into the node, loot too. The ledger keeps loot as a second count with no
+  use yet (b3's rule: no use for loot on purpose), or loot stays in the pack?
+
 ## Order of work (once the Opens are answered)
 
 1. Light: half, the 1 px face (points 1, 2): minutes, play-check.
 2. Line of sight and the soft edge (point 3), with tests.
-3. Tamed bugs work on their own: taming → working, no bar (point 4).
-4. Ore on the rails to the pod, the pod store, and what it pays (point 4).
-5. Play-check each step in headless Chromium, screenshots to `gallery/p11/`; ship as b4.3 (`npm run ship`,
+3. Nodes never in rock (the candidate filter).
+4. The ledger: the pack dumps into the nearest network node, ore rides the rails to the pod, builds pay from the ledger.
+5. Tamed bugs fly, mine and deliver on their own, no bar.
+6. Play-check each step in headless Chromium, screenshots to `gallery/p11/`; ship as b4.3 (`npm run ship`,
    pushed, so the user can test on the phone).
