@@ -1,0 +1,72 @@
+# p11 · b4.3 · the plan (written 2026-09-27, not built)
+
+The user's notes after playing b4.2 are in `feedback/2026-09-27_lorinc_b4.2.md`. **[user]** marks what the
+user asked for, **[Claude]** a proposal the user hasn't confirmed, **Open** a question for the user.
+
+## 1. The torchlight, half as big [user]
+
+b4.2: radius 16 px + 1 per 4 ore or 2 loot (so up to +24 with a full pack). Halved: **base 8, +1 per 8 ore
+or 4 loot**. Both stay knobs.
+- **Open:** b3's pull takes seen ore **within the light radius**, so halving the light also halves the pull's
+  reach (16 → 8 px). Keep them tied, or give the pull its own reach (16)?
+- Not touched unless asked: the scan (24 px, now 3× the light, was 1.5× in b4.1) and the node radius (12 px).
+
+## 2. No light inside the rock [user]
+
+b4.2's `light.face` 4 (D082) lit rock 4 px deep: that goes back to b3's rule, only the rock face bordering
+the air is lit (1 px). The scan stays the only way to see inside the rock (D053).
+
+## 3. Line-of-sight light [user asked if it's expensive]
+
+**It's cheap.** Today the light floods through open cells within the radius, so it goes round corners and
+lights caves you can't see. Line of sight = shadowcasting from the bot's pixel (the standard roguelike
+algorithm): it touches each cell within the radius about once, so at radius 8 about 200 cells and at the full
+pack's 20 about 1,300, recomputed only when the bot moves a pixel (12 a second) or the pack changes. That's
+well under a millisecond; b4.2's render already redraws only the pixels that change.
+- **[Claude]** What's lit: open cells in sight, and the first rock pixel each line hits (the face). Bugs' lights
+  the same way.
+- **[Claude]** For the atmosphere, a soft edge: the lit area fades out over its last few pixels instead of
+  b3's hard edge (drawing only; the sim keeps lit / not lit). Remembered cells stay dim, as now.
+- It's a new function next to b3's `litCells` in `src/sim/dig/light.js`, with tests; b3 keeps its flood.
+- The wrap in x and the pod need care: the pod starts seen.
+
+## 4. Tamed bugs work on their own [user]
+
+What changes against b3.7 (D060–D064): a tamed bug no longer goes into the bug bar and isn't carried or
+placed. It mines ore out of the walls, and the ore goes to the network and along the rails to the pod.
+Consequences, all gone with the bar: the 1 s hold (D080), the bar HUD, bar bugs lighting round you and keeping
+chasers away (D062), placed bugs seeking you when their area runs out (D064), the hand-over to you (D063).
+Kept: wild bugs in the fog, nibbling ore from your pack, 16 fed tames one (D060).
+
+Gaps to settle:
+- **Open: where a tamed bug works.** (a) Right where it was tamed (next to you: you tame it where you stand).
+  (b) It flies off by itself to the nearest seen ore it can reach through the caves, and works there. (a) is
+  what b3's placed bugs do and needs nothing new.
+- **Open: how ore gets from the bug to the node.** (a) A dust stream straight through the rock, like the pull,
+  only if a network node is within some reach of the bug; out of reach, the bug fills up (8) and waits.
+  (b) The bug flies there through the caves, carrying up to 8, and back. (a) is cheap and painfully obvious;
+  (b) looks alive but needs pathfinding, and a node's pixel can be in rock.
+- "Nearest connected node": every node on the network is connected to the pod (you only build from the
+  network, D080), so it means the nearest network node. **[Claude]** Nearest by straight distance.
+- **[Claude]** Ore on the rails: units travel node to node along built edges, the shortest way (in edges'
+  length) to the nearest pod node, drawn as specks on the rail at ride speed. A new edge can change the way:
+  ore under way finishes its current edge, then takes the new shortest way.
+- **Open: what the ore in the pod is for.** Today an edge is paid from your pack, where you stand. Ore piling
+  up in the pod pays for nothing unless: (a) a build is paid from the pod's store when the pack is short (the
+  network carries the pod's ore to you: the rails and bugs make building easier as they grow); (b) you
+  ride home to fill the pack; (c) nothing yet, a count on screen. **[Claude]** (a): it gives the bugs and the
+  rails a purpose at once, and the more bugs you tame, the faster you build.
+- **[Claude]** A bug whose reach runs out of seen ore stays where it is, dark and idle (no seeking you: there's
+  no bar to go back to). Its light still shows the way, a lamp on your old paths.
+- **[Claude]** The bugs' code: a switch in `cfg.bugs` (b3 keeps its bar; b4 turns it off), so b3's live page
+  and tests don't change.
+- The pod store in the HUD: **[Claude]** a second, smaller pack-like counter by the pack, or a number.
+
+## Order of work (once the Opens are answered)
+
+1. Light: half, the 1 px face (points 1, 2): minutes, play-check.
+2. Line of sight and the soft edge (point 3), with tests.
+3. Tamed bugs work on their own: taming → working, no bar (point 4).
+4. Ore on the rails to the pod, the pod store, and what it pays (point 4).
+5. Play-check each step in headless Chromium, screenshots to `gallery/p11/`; ship as b4.3 (`npm run ship`,
+   pushed, so the user can test on the phone).
