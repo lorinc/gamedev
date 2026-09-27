@@ -7,6 +7,7 @@ budget: 3d
 from: p10
 dev: b4.html
 build b4.1: 2026-09-27 · p11: b4 Rail Loop, step 1: the whole loop without bugs (new bundle, not a copy of b3; D079)
+build b4.2: 2026-09-27 · p11: b4.2 built per next-b4.2.md, the world at 1 px of v5 with b3.7's rock, pack and bugs (D082)
 ---
 
 # p11 · b4 · Rail Loop
