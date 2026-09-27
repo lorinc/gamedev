@@ -8,12 +8,14 @@
 // bot, ore flying to the bot as it's pulled. b4.3: the light fades out over its last EDGE px (drawing only);
 // the ledger, a column in the top-right corner (ore, loot, bugs); the selected edge flashes green, a refused
 // build pulses it red, a build streams ore from the ledger's ore icon to the site; tamed bugs at work (warm
-// dots) and their hauls flying to the ledger's icons.
+// dots) and their hauls flying to the ledger's icons. b4.10: the green back wall and vines in the texture, the
+// red fruit glowing over the fog, fruit on the ledger.
 
 import { cellRgb } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
 import { drawBugs } from '../b3/render.js'
-import { botAt, shown } from './game.js'
+import { botAt, FRUIT_TILE, shown } from './game.js'
+import { FRUIT, GREEN as MOSS, VINE } from './garden.js'
 import { OPEN, ROCK, SHEET, SPACE } from './world.js'
 import { ledgerKinds } from './ledger.js'
 
@@ -37,6 +39,9 @@ const LOOT = 'rgb(64,232,214)'
 const BUG = [255, 190, 90] // tamed: amber (D059)
 const RING_TRAIL = 4
 const EDGE = 3 // px over which the light fades out
+const FRUIT_C = [235, 40, 50]
+/** @type {Record<number, number[]>} */
+const WALL_RGB = { [MOSS]: [22, 58, 30], [VINE]: [60, 140, 55], [FRUIT]: [60, 140, 55] }
 
 /** @param {HTMLCanvasElement} canvas @param {Game} game @param {Ui} ui @param {{ zoom: number }} view */
 export function createRenderer(canvas, game, ui, view) {
@@ -58,7 +63,9 @@ export function createRenderer(canvas, game, ui, view) {
   const fimg = fctx.createImageData(w, h)
   /** @param {number} i */
   const paintTile = (i) => {
+    const wall = game.garden.wall[i]
     if (scenic(i)) timg.data.set(map.scenery.subarray(i * 4, i * 4 + 4), i * 4)
+    else if (wall && world.tiles[i] === Tile.Open) timg.data.set([.../** @type {number[]} */ (WALL_RGB[wall]), 255], i * 4)
     else timg.data.set([...cellRgb(/** @type {any} */ (world.tiles[i])), 255], i * 4)
   }
   const lit = new Uint8Array(w * h)
@@ -165,13 +172,14 @@ export function createRenderer(canvas, game, ui, view) {
       // flight (b4.7); each follows its puller as it moves
       const who = e.type === 'dug' ? game.swarm[e.by] : null
       const to = () => /** @type {[number, number]} */ (at(who ? workerAt(who, 0) : botAt(game, 0)))
-      fly(cell(e), to, now, 0.45, e.tile === Tile.Ore ? ORE : LOOT)
+      fly(cell(e), to, now, 0.45, e.tile === FRUIT_TILE ? `rgb(${FRUIT_C})` : e.tile === Tile.Ore ? ORE : LOOT)
     } else if (e.type === 'ring') rings.push({ x: e.x, y: e.y, r: e.r, s: now })
     else if (e.type === 'nibble') fly(icon('ore'), cell(e), now, 0.5, ORE, 0)
     else if (e.type === 'tamed') fly(cell(e), icon('bugs'), now, 0.9, `rgb(${BUG})`, 0)
     else if (e.type === 'haul') {
       for (let k = 0; k < Math.min(e.ore, 12); k++) fly(cell(e), icon('ore'), now + k * 0.06, 0.9, ORE, 0)
       for (let k = 0; k < Math.min(e.loot, 6); k++) fly(cell(e), icon('loot'), now + k * 0.08, 0.9, LOOT, 0)
+      for (let k = 0; k < e.fruit; k++) fly(cell(e), icon('fruit'), now + k * 0.08, 0.9, `rgb(${FRUIT_C})`, 0)
     } else if (e.type === 'built') {
       const site = cell(map.nodes[e.from])
       for (let k = 0; k < e.price; k++) fly(icon('ore'), site, now + k * 0.05, 0.7, ORE, 0)
@@ -189,7 +197,7 @@ export function createRenderer(canvas, game, ui, view) {
   function drawLedger(now) {
     const refused = now - ui.refusedAt < 0.7 && Math.sin((now - ui.refusedAt) * Math.PI * 8) > 0
     const L = game.ledger
-    const counts = { ore: L.ore, loot: L.loot, bugs: L.bugs }
+    const counts = { ore: L.ore, loot: L.loot, bugs: L.bugs, fruit: L.fruit }
     ctx.font = `bold ${Math.round(16 * dpr)}px monospace`
     ctx.textAlign = 'right'
     ctx.textBaseline = 'middle'
@@ -198,7 +206,16 @@ export function createRenderer(canvas, game, ui, view) {
       const r = 7 * dpr
       ctx.fillStyle = 'rgba(0,0,0,0.55)'
       ctx.fillRect(x - 90 * dpr, y - 13 * dpr, 104 * dpr, 26 * dpr)
-      if (kind === 'bugs') {
+      if (kind === 'fruit') {
+        ctx.fillStyle = `rgba(${FRUIT_C},0.35)`
+        ctx.beginPath()
+        ctx.arc(x, y, r * 1.5, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.fillStyle = `rgb(${FRUIT_C})`
+        ctx.beginPath()
+        ctx.arc(x, y, r * 0.8, 0, Math.PI * 2)
+        ctx.fill()
+      } else if (kind === 'bugs') {
         const halo = ctx.createRadialGradient(x, y, 0, x, y, r * 1.8)
         halo.addColorStop(0, `rgba(${BUG},0.8)`)
         halo.addColorStop(1, `rgba(${BUG},0)`)
@@ -211,7 +228,36 @@ export function createRenderer(canvas, game, ui, view) {
         ctx.fillRect(x - r, y - r, 2 * r, 2 * r)
       }
       ctx.fillStyle = kind === 'ore' && refused ? RED : CHAR
-      ctx.fillText(String(counts[/** @type {'ore' | 'loot' | 'bugs'} */ (kind)]), x - 14 * dpr, y + dpr)
+      ctx.fillText(String(counts[/** @type {'ore' | 'loot' | 'bugs' | 'fruit'} */ (kind)]), x - 14 * dpr, y + dpr)
+    }
+  }
+
+  /** A stream's colour: the unit at c. @param {Cell} c */
+  function unitColor(c) {
+    const i = c.y * w + c.x
+    return game.garden.wall[i] === FRUIT ? `rgb(${FRUIT_C})` : world.tiles[i] === Tile.Loot ? LOOT : ORE
+  }
+
+  /** The garden's changed pixels into the texture, and the fruit glowing over the fog (b4.10). */
+  function drawGarden() {
+    const G = game.garden
+    for (const i of G.changed) {
+      paintTile(i)
+      tctx.putImageData(timg, 0, 0, i % w, Math.floor(i / w), 1, 1)
+    }
+    G.changed.length = 0
+    const s = Math.max(T, 2 * dpr)
+    const hr = Math.max(T * 2.5, 6 * dpr)
+    for (const i of G.fruit) {
+      const [x, y] = at({ x: i % w, y: Math.floor(i / w) })
+      if (x < -hr || y < -hr || x > W + hr || y > H + hr) continue
+      const halo = ctx.createRadialGradient(x, y, 0, x, y, hr)
+      halo.addColorStop(0, `rgba(${FRUIT_C},0.45)`)
+      halo.addColorStop(1, `rgba(${FRUIT_C},0)`)
+      ctx.fillStyle = halo
+      ctx.fillRect(x - hr, y - hr, hr * 2, hr * 2)
+      ctx.fillStyle = `rgb(${FRUIT_C})`
+      ctx.fillRect(Math.round(x - s / 2), Math.round(y - s / 2), Math.round(s), Math.round(s))
     }
   }
 
@@ -231,7 +277,7 @@ export function createRenderer(canvas, game, ui, view) {
       const p = workerAt(b, alpha)
       const [x, y] = at(p)
       if (x < -hr || y < -hr || x > W + hr || y > H + hr) continue
-      if (b.target && b.pullFor > 20) specks(b.target, p, now, game.world.tiles[b.target.y * w + b.target.x] === Tile.Loot ? LOOT : ORE) // your dust stream (b4.7)
+      if (b.target && b.pullFor > 20) specks(b.target, p, now, unitColor(b.target)) // your dust stream (b4.7)
       const halo = ctx.createRadialGradient(x, y, 0, x, y, hr)
       halo.addColorStop(0, `rgba(${BUG},0.5)`)
       halo.addColorStop(1, `rgba(${BUG},0)`)
@@ -269,6 +315,7 @@ export function createRenderer(canvas, game, ui, view) {
       ctx.drawImage(tex, 0, 0, w, h, x, sy(0), w * T, h * T)
     }
     for (let x = x0; x < W; x += w * T) ctx.drawImage(fog, 0, 0, w, h, x, sy(0), w * T, h * T)
+    drawGarden()
     drawRails(now) // over the fog: you built them, and a glowing edge shows where it would go
     drawNodes(now)
     drawCars(bot)
@@ -429,7 +476,7 @@ export function createRenderer(canvas, game, ui, view) {
 
   /** Dust from the pixel being pulled to the bot. @param {number} now */
   function drawStreams(now) {
-    if (game.pulling && game.stillFor > 20) specks(game.pulling, botAt(game, 0), now, ORE)
+    if (game.pulling && game.stillFor > 20) specks(game.pulling, botAt(game, 0), now, unitColor(game.pulling))
   }
   /** @param {Cell} from @param {Cell} to @param {number} now @param {string} color */
   function specks(from, to, now, color) {

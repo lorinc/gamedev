@@ -113,19 +113,65 @@ test('a tamed bug works near the network and sends its haul to the ledger', () =
   tick(g)
   assert.equal(g.swarm.length, 3)
   for (const b of g.swarm) assert.ok(open(b))
-  const before = g.ledger.ore + g.ledger.loot
+  const before = g.ledger.ore + g.ledger.loot + g.ledger.fruit
   let dug = 0
   let hauled = 0
   for (let i = 0; i < 3600; i++) {
     tick(g)
     for (const e of g.events) {
       if (e.type === 'dug') dug++
-      if (e.type === 'haul') hauled += e.ore + e.loot
+      if (e.type === 'haul') hauled += e.ore + e.loot + e.fruit
     }
     g.events.length = 0
     for (const b of g.swarm) assert.ok(open(b), 'never in rock')
   }
   assert.ok(dug > 0, 'they pulled something')
   assert.equal(hauled, dug)
-  assert.equal(g.ledger.ore + g.ledger.loot - before, hauled)
+  assert.equal(g.ledger.ore + g.ledger.loot + g.ledger.fruit - before, hauled)
+})
+
+test('bugs green the back wall, vines grow on green, and 12 px of vine make a fruit a minute (b4.10)', async () => {
+  const { FRUIT, GREEN, VINE } = await import('./garden.js')
+  const g = fresh()
+  g.ledger.bugs = 10
+  for (let i = 0; i < 3600; i++) tick(g)
+  const wall = [...g.garden.wall]
+  assert.ok(wall.filter((v) => v === GREEN).length > 200, 'green')
+  assert.ok(wall.filter((v) => v === VINE || v === FRUIT).length > 5, 'vines')
+  for (let i = 0; i < wall.length; i++) if (wall[i]) assert.ok(isOpen(MAP.world.tiles[i]), 'only the back wall (open pixels)')
+
+  // the rate alone: 120 px of vine, no bugs, 5 minutes: about 50 fruit
+  const h = fresh()
+  let n = 0
+  for (let i = 0; i < h.garden.wall.length && n < 120; i++)
+    if (isOpen(MAP.world.tiles[i])) {
+      h.garden.wall[i] = VINE
+      h.garden.vines.push(i)
+      n++
+    }
+  for (let i = 0; i < 5 * 3600; i++) tick(h)
+  const fruit = h.garden.fruit.size
+  assert.ok(fruit >= 42 && fruit <= 50, `fruit ${fruit}`)
+})
+
+test('your pull takes a fruit in the light even unseen, to the ledger (b4.10)', async () => {
+  const { FRUIT } = await import('./garden.js')
+  const g = createGame(MAP, JSON.parse(JSON.stringify(CONFIG)))
+  const { w } = MAP.world
+  const c = [
+    [1, 0],
+    [-1, 0],
+    [0, -1],
+    [0, 1],
+  ]
+    .map(([dx, dy]) => ({ x: g.ch.x + dx, y: g.ch.y + dy }))
+    .find(open)
+  assert.ok(c)
+  const i = c.y * w + c.x
+  g.garden.wall[i] = FRUIT
+  g.garden.fruit.add(i)
+  g.seen[i] = 0
+  for (let t = 0; t < CONFIG.pull.ticks + 2; t++) tick(g)
+  assert.equal(g.ledger.fruit, 1)
+  assert.equal(g.garden.fruit.size, 0)
 })

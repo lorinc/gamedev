@@ -23,6 +23,8 @@
 // that fits it best (within 67.5°); the car runs node to node until no edge fits (it stops at the last
 // node), a tap (it stops at the next node), or a new direction (it turns at the next node). Pointed while
 // stopped where no edge fits, you get out and walk that way.
+// Garden (b4.10, garden.js): tamed bugs green the back wall, vines grow on green, vines make red fruit, a
+// resource: your pull takes fruit within the light too, seen or not (it glows), whichever is nearest.
 // Bugs (b4.3): b3.7's wild ones (`src/sim/dig/bugs.js`, D056–D061) with the `ledger` switch: they nibble ore
 // from the ledger; at 16 fed (D060) the last biter is +1 bug on the ledger. Tamed bugs are abstract workers
 // (swarm.js).
@@ -35,6 +37,7 @@ import { scare, updateBugs } from '../../sim/dig/bugs.js'
 import { sightCells } from '../../sim/dig/light.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { SWARM, updateSwarm } from './swarm.js'
+import { createGarden, fruitNear, GARDEN, pick as pickFruit, updateGarden } from './garden.js'
 import { OPEN, ROCK } from './world.js'
 
 /** @typedef {import('./world.js').Map} Map */
@@ -66,6 +69,7 @@ export const CONFIG = {
     ledger: true,
   }, // b3.7's wild bugs (rules/b3.7.json); no bar, no placed bugs (b4.3)
   swarm: { ...SWARM },
+  garden: { ...GARDEN },
   price: 10, // ore per edge (user: 8–12, tuned later)
   rideSpeed: 80, // px/s in a car (several px a tick: an integer budget, 60 a straight px, 85 a diagonal)
 }
@@ -82,10 +86,10 @@ export const CONFIG = {
  *   | { type: 'pulled', x: number, y: number, tile: number, to: Cell }
  *   | { type: 'built', edge: number, from: number, price: number }
  *   | { type: 'refused', edge: number, reason: 'ore' | 'off' | 'far' | 'built' }
- *   | { type: 'dug', x: number, y: number, tile: number, by: number } | { type: 'haul', x: number, y: number, ore: number, loot: number }
+ *   | { type: 'dug', x: number, y: number, tile: number, by: number } | { type: 'haul', x: number, y: number, ore: number, loot: number, fruit: number }
  *   | { type: 'board', car: number } | { type: 'exit', car: number }
  *   | { type: 'nibble', id: number, x: number, y: number, from: Cell } | { type: 'tamed', id: number, x: number, y: number, slot: number }
- *  } GameEvent bugs.js adds the wild bugs'; tamed has slot -1 (to the ledger)
+ *  } GameEvent bugs.js adds the wild bugs'; tamed has slot -1 (to the ledger); tile FRUIT_TILE is a fruit (b4.10)
  */
 
 /** @typedef {{ node: number }} Car a travel pod, waiting at a node or carrying you */
@@ -109,7 +113,8 @@ export const CONFIG = {
  * @property {{ x: number, y: number, px: number, py: number }} pos the bot's position in thousandths of a px (x
  *   wraps at w × 1000), this tick's and the last's (for drawing); always inside ch
  * @property {{ dx: number, dy: number } | null} move the direction pointed, as heading() gives it
- * @property {{ ore: number, loot: number, bugs: number }} ledger b4.3
+ * @property {{ ore: number, loot: number, bugs: number, fruit: number }} ledger b4.3; fruit b4.10
+ * @property {import('./garden.js').GardenState} garden b4.10
  * @property {import('./swarm.js').Worker[]} swarm the ledger's bugs at work
  * @property {Uint8Array} seen
  * @property {number[]} lit
@@ -149,7 +154,8 @@ export function createGame(map, cfg) {
     ch: { x: map.start.x, y: map.start.y, facing: 1 },
     pos: { x: map.start.x * 1000 + 500, y: map.start.y * 1000 + 500, px: map.start.x * 1000 + 500, py: map.start.y * 1000 + 500 },
     move: null,
-    ledger: { ore: 0, loot: 0, bugs: 0 },
+    ledger: { ore: 0, loot: 0, bugs: 0, fruit: 0 },
+    garden: createGarden(world.w * world.h),
     swarm: [],
     seen: new Uint8Array(world.w * world.h),
     lit: [],
@@ -207,6 +213,7 @@ export function tick(g) {
   pull(g)
   updateBugs(/** @type {any} */ (g))
   updateSwarm(g)
+  updateGarden(g)
   updateLight(g)
 }
 
@@ -322,7 +329,16 @@ function ring(g, p, r) {
 /** @param {Game} g */
 function pull(g) {
   g.pulling = null
-  const c = g.ride?.run ? null : nearestValuable(/** @type {any} */ (g), g.ch, g.cfg.light.base, () => true)
+  /** @type {Cell | null} */
+  let c = null
+  let fruit = false
+  if (!g.ride?.run) {
+    const r = g.cfg.light.base
+    const v = nearestValuable(/** @type {any} */ (g), g.ch, r, () => true)
+    const f = fruitNear(g, g.ch, r)
+    fruit = !!f && (!v || f.d <= dist2(g, v, g.ch))
+    c = f && fruit ? { x: f.x, y: f.y } : v
+  }
   if (!c) {
     g.stillFor = 0
     return
@@ -330,6 +346,13 @@ function pull(g) {
   g.pulling = c
   if (++g.stillFor < Math.max(1, g.cfg.pull.ticks)) return
   g.stillFor = 0
+  if (fruit) {
+    pickFruit(g, c.x, c.y)
+    g.ledger.fruit++
+    g.pulling = null
+    g.events.push({ type: 'pulled', x: c.x, y: c.y, tile: FRUIT_TILE, to: { x: g.ch.x, y: g.ch.y } })
+    return
+  }
   const tile = g.world.tiles[c.y * g.world.w + c.x]
   if (tile === Tile.Ore) g.ledger.ore++
   else g.ledger.loot++
@@ -338,6 +361,9 @@ function pull(g) {
   g.litFor.r = -1
   g.events.push({ type: 'pulled', x: c.x, y: c.y, tile, to: { x: g.ch.x, y: g.ch.y } })
 }
+
+/** A pulled or dug unit that was a fruit (b4.10), not a tile. */
+export const FRUIT_TILE = -1
 
 /** The squared distance, x the short way round. @param {Game} g @param {Cell} a @param {Cell} b */
 export function dist2(g, a, b) {

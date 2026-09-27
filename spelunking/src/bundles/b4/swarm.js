@@ -5,12 +5,14 @@
 // do (b4.7, the user): the nearest unit within `reach` px (seen or not) is its target, and after `pullTicks`
 // of having one it comes out (the pixel turns to rock, pull.js's toRock); the view draws your dust stream
 // and your flight for it. After `tripTicks` it sends its haul straight to the ledger (event `haul`: the view flies it to the ledger's icons)
-// and starts a new trip near another node. Randomness from the tick, like b3's bugs, so runs repeat.
+// and starts a new trip near another node. b4.10: where it goes it greens the back wall (garden.js), and it
+// picks fruit too, up to `fruitCarry` a trip. Randomness from the tick, like b3's bugs, so runs repeat.
 
 import { isOpen, Tile } from '../../sim/gen/world.js'
 import { toRock } from '../../sim/dig/pull.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
+import { fruitNear, greenAround, pick } from './garden.js'
 
 /** @typedef {import('./world.js').Cell} Cell */
 /**
@@ -24,7 +26,8 @@ import { hashSeed, mulberry32 } from '../../sim/rng.js'
  * @property {Cell | null} target the unit it pulls now, for the dust stream
  * @property {number} pullFor ticks it has had a target since its last unit
  * @property {number} ore
- * @property {number} loot its haul so far
+ * @property {number} loot
+ * @property {number} fruit its haul so far
  */
 
 /** The swarm's numbers (the dev panel's). */
@@ -34,6 +37,7 @@ export const SWARM = {
   reach: 2,
   pullTicks: 60, // a unit a second at most, like your pull
   spawn: 12, // px round a network node (nodeReach)
+  fruitCarry: 8, // fruit a bug holds at most (the user, b4.10)
 }
 /** @typedef {typeof SWARM} Swarm */
 
@@ -83,6 +87,8 @@ function startTrip(g, b, at, rng) {
   b.pullFor = 0
   b.ore = 0
   b.loot = 0
+  b.fruit = 0
+  greenAround(g, b.x, b.y)
 }
 
 /** The swarm's tick. @param {import('./game.js').Game} g */
@@ -93,7 +99,7 @@ export function updateSwarm(g) {
     const at = spawnAt(g, s, rng)
     if (!at) break
     /** @type {Worker} */
-    const b = { x: 0, y: 0, from: at, movedAt: 0, dir: 0, until: 0, target: null, pullFor: 0, ore: 0, loot: 0 }
+    const b = { x: 0, y: 0, from: at, movedAt: 0, dir: 0, until: 0, target: null, pullFor: 0, ore: 0, loot: 0, fruit: 0 }
     startTrip(g, b, at, rng)
     g.swarm.push(b)
   }
@@ -101,7 +107,8 @@ export function updateSwarm(g) {
     if (g.tick >= b.until) {
       g.ledger.ore += b.ore
       g.ledger.loot += b.loot
-      if (b.ore || b.loot) g.events.push({ type: 'haul', x: b.x, y: b.y, ore: b.ore, loot: b.loot })
+      g.ledger.fruit += b.fruit
+      if (b.ore || b.loot || b.fruit) g.events.push({ type: 'haul', x: b.x, y: b.y, ore: b.ore, loot: b.loot, fruit: b.fruit })
       startTrip(g, b, spawnAt(g, s, rng) ?? b, rng)
       return
     }
@@ -123,6 +130,7 @@ function step(g, b, rng) {
   b.dir = dir
   b.x = wrap(b.x + STEPS[dir][0], g.world.w)
   b.y += STEPS[dir][1]
+  greenAround(g, b.x, b.y)
 }
 
 /** Like your pull: the nearest ore or loot within reach (then the first in reading order) is the target; after
@@ -142,6 +150,10 @@ function pull(g, s, b, k) {
       best = i
       bestD = d
     }
+  // a fruit nearer than (or as near as) the nearest tile wins, while it has room for one
+  const f = b.fruit < s.fruitCarry ? fruitNear(g, b, r) : null
+  const isFruit = !!f && (best < 0 || f.d <= bestD)
+  if (f && isFruit) best = f.y * w + f.x
   if (best < 0) {
     b.target = null
     b.pullFor = 0
@@ -153,6 +165,12 @@ function pull(g, s, b, k) {
   if (++b.pullFor < Math.max(1, s.pullTicks)) return
   b.pullFor = 0
   b.target = null
+  if (isFruit) {
+    b.fruit++
+    pick(g, x, y)
+    g.events.push({ type: 'dug', x, y, tile: -1, by: k })
+    return
+  }
   const tile = tiles[best]
   if (tile === Tile.Ore) b.ore++
   else b.loot++
