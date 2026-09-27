@@ -2,7 +2,7 @@
 // interpolates. The URL carries the seed and every knob tuned away from its default (`?seed=1&k=price:12`).
 
 import { createPanel } from '../b3/panel.js'
-import { buildable, command, CONFIG, createGame, HEADING, near, tick } from './game.js'
+import { buildable, command, CONFIG, createGame, HEADING, near, shown, tick } from './game.js'
 import { createInput } from './input.js'
 import { createRenderer, ZOOM_PX } from './render.js'
 import { makeMap, WKNOBS } from './world.js'
@@ -145,7 +145,7 @@ createInput(canvas, {
     let best = -1
     let bestD = reach
     map.nodes.forEach((n, i) => {
-      if (!game.net[i] || !near(game, i)) return // only the network grows, from where you are (D080)
+      if (!shown(game, i) || !near(game, i)) return // only the network grows, from where you are (D080, b4.8)
       if (d(n) < bestD) {
         bestD = d(n)
         best = i

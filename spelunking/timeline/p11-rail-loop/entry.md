@@ -162,7 +162,7 @@ Then (D084, the user): walking glides at the drag's exact angle (a sub-pixel pos
 pull goes on while walking (not in a moving car). Then (D086, the user): the scan fires only when some pixel
 within its radius is still unseen. Then (D087, the user): tamed bugs' trips last 30 s, and they pull with your
 dust stream and flight. Then (D088, the user): only network nodes show; the pod's glow until the first edge,
-then all are quiet rings.
+then only the ends of built edges show, as quiet rings (b4.9 fixed b4.8, which kept the pod's showing).
 
 ## Feedback
 

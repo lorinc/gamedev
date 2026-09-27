@@ -14,8 +14,8 @@
 // the ledger (b4.3). Walking doesn't stop it (b4.5), a moving car does.
 // The ledger (b4.3, the user): every collectible, one count each: ore, loot, bugs. No pack.
 // Light (b4.3): a fixed radius (`light.base`, 8 px; upgrades later), line of sight (light.js sightCells).
-// Nodes (b4.8, the user): only the network's show (the pod's, and the ends of built edges); the pod's glow
-// until the first edge is built.
+// Nodes (b4.8, the user): the pod's show (and glow) until the first edge is built; from then on only the
+// ends of built edges show, and only a shown node can be built from.
 // Building (b4.3): `build` an unbuilt edge from a node on the network, the bot within `nodeReach` of it (D080),
 // with `price` ore on the ledger: the price is taken and the edge is built at once, its far node joins the
 // network, and a travel pod (a car) waits at the near node. Short of ore: refused.
@@ -129,6 +129,8 @@ export const CONFIG = {
  * @property {import('../../sim/dig/bugs.js').Bug[]} bar always empty (bugs.js reads it)
  * @property {Record<number, number>} refill
  * @property {Uint8Array} built per edge
+ * @property {Uint8Array} railed per node: the end of a built edge (b4.8)
+ * @property {boolean} firstBuilt an edge has been built
  * @property {Car[]} cars
  * @property {Ride | null} ride
  * @property {Command[]} queue
@@ -167,6 +169,8 @@ export function createGame(map, cfg) {
     bar: [],
     refill: {},
     built: new Uint8Array(map.edges.length),
+    railed: new Uint8Array(map.nodes.length),
+    firstBuilt: false,
     cars: [],
     ride: null,
     queue: [],
@@ -345,13 +349,13 @@ export function dist2(g, a, b) {
 /** The bot is within `nodeReach` of node i. @param {Game} g @param {number} i */
 export const near = (g, i) => dist2(g, g.map.nodes[i], g.ch) <= g.cfg.nodeReach * g.cfg.nodeReach
 
-/** Node i shows (b4.8): on the network. @param {Game} g @param {number} i */
-export const shown = (g, i) => !!g.net[i]
+/** Node i shows (b4.8): before the first edge, a pod node; after it, the end of a built edge. @param {Game} g @param {number} i */
+export const shown = (g, i) => (g.firstBuilt ? !!g.railed[i] : !!g.net[i])
 
 /** Can the edge be built from node `from` now? The reason it can't, or null. @param {Game} g @param {number} edge @param {number} from */
 export function buildable(g, edge, from) {
   const e = g.map.edges[edge]
-  if (!e || (e.a !== from && e.b !== from) || !g.net[from]) return 'off'
+  if (!e || (e.a !== from && e.b !== from) || !g.net[from] || !shown(g, from)) return 'off'
   if (!near(g, from)) return 'far'
   if (g.built[edge]) return 'built'
   if (g.ledger.ore < g.cfg.price) return 'ore'
@@ -367,6 +371,8 @@ function build(g, edge, from) {
   g.built[edge] = 1
   g.cars.push({ node: from })
   g.net[e.a === from ? e.b : e.a] = 1
+  g.railed[e.a] = g.railed[e.b] = 1
+  g.firstBuilt = true
   g.events.push({ type: 'built', edge, from, price: g.cfg.price })
 }
 

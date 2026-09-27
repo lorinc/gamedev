@@ -357,7 +357,7 @@ export function createRenderer(canvas, game, ui, view) {
   function drawNodes(now) {
     // before the first edge the pod's nodes glow, pulsing, so the start is found; after it, the network's are
     // quiet rings: easy to find, not outshining the world (b4.8, the user)
-    const first = !game.built.some((b) => b)
+    const first = !game.firstBuilt
     map.nodes.forEach((n, i) => {
       if (!shown(game, i)) return
       const [x, y] = at(n)

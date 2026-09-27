@@ -5,7 +5,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { addBug } from '../../sim/dig/bugs.js'
 import { isOpen } from '../../sim/gen/world.js'
-import { buildable, command, CONFIG, createGame, heading, tick } from './game.js'
+import { buildable, command, CONFIG, createGame, heading, shown, tick } from './game.js'
 import { makeMap } from './world.js'
 
 const MAP = makeMap(1)
@@ -81,6 +81,10 @@ test('building takes the price from the ledger at once; short of it, refused', (
   assert.equal(g.built[edge], 1)
   assert.equal(g.ledger.ore, 2)
   assert.equal(g.cars.length, 1)
+  // from now on only the built edge's ends show (b4.8), and a pod node off it can't be built from
+  const e = MAP.edges[edge]
+  for (const n of MAP.podNodes) assert.equal(shown(g, n), n === e.a || n === e.b)
+  assert.ok(shown(g, e.a) && shown(g, e.b))
 })
 
 test('a wild bug fed 16 from the ledger is +1 bug on it, and leaves the world', () => {
