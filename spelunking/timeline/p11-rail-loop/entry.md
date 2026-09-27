@@ -15,6 +15,7 @@ build b4.6: 2026-09-27 · p11: b4.6, the scan fires only when something within i
 build b4.7: 2026-09-27 · p11: b4.7, tamed bugs' trips 30 s, pulling with the player's stream and flight (D087)
 build b4.8: 2026-09-28 · p11: b4.8, only network nodes show, the pod's glow until the first edge, quieter rings (D088)
 build b4.9: 2026-09-28 · p11: b4.9, after the first edge only built edges' ends show; unconnected pod nodes hide (D088 corrected)
+build b4.10: 2026-09-28 · p11: b4.10, the garden: bugs green the back wall, vines grow, glowing red fruit on the ledger (D089)
 ---
 
 # p11 · b4 · Rail Loop
