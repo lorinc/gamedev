@@ -531,7 +531,7 @@ test('pointing along a built root near its node rides it to the far end, no cart
   assert.deepEqual([g.ch.x, g.ch.y], [far.x, far.y], 'at the far end')
 })
 
-test('ash grows a flower per 24 px; after 2 minutes it becomes a bot that clears its ash, builds 3 edges on the network, and pops (b4.25)', async () => {
+test('1 in 4 ash discs grows a flower; after 2 minutes it becomes a bot that clears its ash, builds 3 edges on the network, and pops (b4.25)', async () => {
   const { ASH, GREEN, ignite } = await import('./garden.js')
   const g = fresh()
   g.cfg.worms.max = 0
@@ -549,9 +549,9 @@ test('ash grows a flower per 24 px; after 2 minutes it becomes a bot that clears
   ignite(g, g.ch.y * w + g.ch.x, () => 0)
   for (let k = 0; k < 3600 && (G.burning.length || G.discs.length); k++) tick(g)
   assert.equal(G.discs.length, 0, 'every disc done')
-  const ash = G.wall.filter((v) => v === ASH).length
+  const discs = [...G.centres.values()].flat().length
   const n = g.flowers.length
-  assert.ok(n > 0 && Math.abs(n - ash / 24) <= G.centres.size, `${n} flowers on ${ash} px of ash`)
+  assert.ok(n > 0 && n <= discs / 2, `${n} flowers on ${discs} discs: 1 in 4 (b4.28)`)
   for (const f of g.flowers) assert.equal(G.wall[f.y * w + f.x], ASH, 'on the ash')
   g.ledger.ore = 1000
   const f0 = g.flowers[0]

@@ -1,5 +1,6 @@
-// b4.25's flowers and flower bots (the user): the ash spawns large white flowers, 1 per `per` px of a disc's
-// ash (the user chose 1 per 24 px), once the fire in the disc is out; at least 5 px apart (a flower is 5 px across), on ash. After
+// b4.25's flowers and flower bots (the user): the ash spawns large white flowers, one in 1 of `per` discs
+// (b4.28, the user: "1/4 white flower per ash, this is waaaay too much"; b4.25's was 1 per 24 px of ash), on
+// its ash once the fire in the disc is out; at least 5 px apart (a flower is 5 px across). After
 // `bloomTicks` (2 minutes) a flower becomes a bot, like yours but without light, and the ash touching it
 // (8-connected to its pixel) turns back to bare back wall. The bot zips straight to the nearest node on a built
 // root (the pod's before anything is built), through rock (a cheat, like the lizards'), a px every
@@ -15,7 +16,7 @@ import { dist2, extend } from './game.js'
 
 /** The flowers' numbers (the dev panel's). */
 export const FLOWERS = {
-  per: 24, // px of a disc's ash per flower (the user: 1/24)
+  per: 4, // 1 in this many ash discs grows a flower (the user, b4.28)
   bloomTicks: 7200, // 2 minutes (the user)
   flyTicks: 2, // 30 px/s to the network
   zipTicks: 1, // 60 px/s along a root
@@ -59,7 +60,7 @@ export function updateFlowers(g) {
       const px = disc(g, d)
       if (px.some((i) => G.wall[i] === BURN)) return true
       const ash = px.filter((i) => G.wall[i] === ASH)
-      const n = Math.round(ash.length / Math.max(1, c.per))
+      const n = rng() % Math.max(1, c.per) === 0 ? 1 : 0
       /** @type {number[]} */
       const put = []
       for (let tries = 0; tries < 20 * n && put.length < n && ash.length; tries++) {

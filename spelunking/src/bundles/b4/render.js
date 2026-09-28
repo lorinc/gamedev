@@ -43,7 +43,7 @@ const BULB_DIM = ['rgb(168,110,52)', 'rgb(128,70,26)', 'rgb(94,50,18)']
 const BULB_HELD = ['rgb(255,214,120)', 'rgb(246,150,44)', 'rgb(196,96,24)']
 const ORE = 'rgb(236,164,40)'
 const RED = '#ff2828'
-const LOOT = 'rgb(64,232,214)'
+const LOOT = 'rgb(240,240,240)' // white (the user, b4.28; was b3's teal)
 const BUG = [255, 190, 90] // tamed: amber (D059)
 const WILD = [90, 170, 255] // wild: blue (D059)
 const LICHEN_RGB = [96, 44, 128]
@@ -373,7 +373,7 @@ export function createRenderer(canvas, game, ui, view) {
       for (let k = z.body.length - 1; k >= 0; k--) {
         const [x, y] = at(z.body[k])
         if (x < -s || y < -s || x > W + s || y > H + s) continue
-        ctx.fillStyle = k === 0 ? 'rgb(150,255,120)' : 'rgb(60,215,80)'
+        ctx.fillStyle = k === 0 ? 'rgb(104,168,78)' : 'rgb(58,128,60)' // not glowing (b4.28; was (150,255,120), (60,215,80))
         ctx.fillRect(Math.round(x - s / 2), Math.round(y - s / 2), Math.round(s), Math.round(s))
       }
   }
@@ -471,6 +471,7 @@ export function createRenderer(canvas, game, ui, view) {
     }
     drawSpecks()
     drawLichen()
+    drawLizards() // under the fog: they don't glow (the user, b4.28)
     for (let x = x0; x < W; x += w * T) ctx.drawImage(fog, 0, 0, w, h, x, sy(0), w * T, h * T)
     drawGarden()
     drawFire(now, dt) // over the fog: a fire is seen from afar (b4.25)
@@ -484,7 +485,6 @@ export function createRenderer(canvas, game, ui, view) {
     drawWild(alpha) // b3.7's wild bugs (D056–D061), drawn like the tamed ones, in blue (b4.13)
     drawSwarm(alpha, now)
     drawWorms()
-    drawLizards()
     drawHearts(now)
     drawFlights(now)
     drawEmbers(now, dt)
