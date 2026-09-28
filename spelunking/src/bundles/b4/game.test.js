@@ -5,7 +5,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { addBug } from '../../sim/dig/bugs.js'
 import { isOpen, Tile } from '../../sim/gen/world.js'
-import { buildable, command, CONFIG, createGame, heading, shown, tick } from './game.js'
+import { buildable, command, CONFIG, createGame, HEADING, heading, shown, tick } from './game.js'
 import { makeMap } from './world.js'
 
 const MAP = makeMap(1)
@@ -500,4 +500,33 @@ test('no lizard spawns in a small enclosure: its cave holds at least `room` open
       for (const s of sizes) assert.ok(s >= room, `a cave of ${s} px`)
     }
   }
+})
+
+test('pointing along a built root near its node rides it to the far end, no cart (b4.23)', () => {
+  const g = fresh()
+  const from = MAP.podNodes.find((n) => MAP.edges.some((e) => e.a === n || e.b === n))
+  assert.ok(from !== undefined)
+  const edge = MAP.edges.findIndex((e) => e.a === from || e.b === from)
+  const e = MAP.edges[edge]
+  const node = MAP.nodes[from]
+  g.ch.x = node.x + 1
+  g.ch.y = node.y
+  g.ledger.ore = 10
+  tick(g)
+  assert.equal(g.engulf, from)
+  command(g, { type: 'build', edge, from })
+  tick(g)
+  assert.equal(g.built[edge], 1)
+  // along the root, from where the bot stands (on the node)
+  const p = e.a === from ? e.path : [...e.path].reverse()
+  const q = p[Math.min(HEADING, p.length - 1)]
+  let dx = q.x - p[0].x
+  if (Math.abs(dx) > MAP.world.w / 2) dx -= Math.sign(dx) * MAP.world.w
+  const d = /** @type {{ dx: number, dy: number }} */ (heading(dx, q.y - p[0].y))
+  command(g, { type: 'move', dx: d.dx, dy: d.dy })
+  tick(g)
+  assert.ok(g.ride, 'riding')
+  const far = MAP.nodes[e.a === from ? e.b : e.a]
+  for (let i = 0; i < 600 && g.ride?.run; i++) tick(g)
+  assert.deepEqual([g.ch.x, g.ch.y], [far.x, far.y], 'at the far end')
 })

@@ -503,13 +503,14 @@ export function createRenderer(canvas, game, ui, view) {
     for (const c of map.edges[aim].path) px(c.x, c.y)
   }
 
-  /** Nodes (b4.22, the user): a pulsating orange bulb of pixels; the one holding the bot, bigger. @param {number} now */
+  /** Nodes (b4.22, the user): an orange bulb of pixels, beating while it can be built from (the one holding the
+   * bot, bigger); on a built root, still (b4.23, the user). @param {number} now */
   function drawNodes(now) {
     map.nodes.forEach((n, i) => {
-      if (!shown(game, i)) return
+      const live = shown(game, i)
+      if (!live && !game.railed[i]) return
       const held = game.engulf === i
-      const beat = Math.sin(now * 4 + i)
-      const r = (held ? 3 : 2) + (beat > 0.2 ? 1 : 0)
+      const r = live ? (held ? 3 : 2) + (Math.sin(now * 4 + i) > 0.2 ? 1 : 0) : 2
       for (let dy = -r; dy <= r; dy++)
         for (let dx = -r; dx <= r; dx++) {
           const d = dx * dx + dy * dy

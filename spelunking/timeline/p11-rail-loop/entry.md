@@ -205,6 +205,8 @@ until an edge is built (drag aims, tap builds); no carts, the bot rides the root
 fires the moment the bot touches rock. D105: no lizard spawns in a cave under 400 px. Screenshots
 `gallery/p11/b4.22_*`.
 Then (D106, the user): lichen grows where the bugs' cover is large (150 px within 12), not where loot is.
+Then (D107, the user): pointing along a built root within 2 px of its node rides it; built nodes show a
+still bulb, buildable ones beat. Screenshots `gallery/p11/b4.23_*`.
 
 ## Feedback
 

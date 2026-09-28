@@ -21,8 +21,9 @@
 // node doesn't take it again until it has been out of reach (`freed`).
 // Building (b4.3): `build` an unbuilt edge from the node the bot is engulfed in: the price is taken and the
 // edge is built at once and its far node joins the network.
-// Riding: stepping onto the end of a built root (a node on one) gets you riding it; there are no carts
-// (b4.22, the user), the bot glides along the root itself. A pointed direction picks, at each node, the built edge
+// Riding: pointing along a built root (within 67.5°) within `nodeReach` of one of its nodes gets you riding
+// it, the bot on the node (b4.23, the user: "I still need to travel"; b4.22 needed the node's own pixel);
+// there are no carts (b4.22, the user), the bot glides along the root itself. A pointed direction picks, at each node, the built edge
 // that fits it best (within 67.5°); the bot runs node to node until no edge fits (it stops at the last
 // node), a tap (it stops at the next node), or a new direction (it turns at the next node). Pointed while
 // stopped where no edge fits, you get out and walk that way.
@@ -166,7 +167,6 @@ export const CONFIG = {
  * @property {number | null} engulf the node the bot is held in (b4.22)
  * @property {number | null} freed the node that just let the bot go: it doesn't take it again until it's out of reach
  * @property {number[][]} links per node: its edges
- * @property {globalThis.Map<number, number>} nodeAt pixel index → node
  * @property {Command[]} queue
  * @property {GameEvent[]} events
  */
@@ -215,7 +215,6 @@ export function createGame(map, cfg) {
     engulf: null,
     freed: null,
     links: map.nodes.map(() => []),
-    nodeAt: new globalThis.Map(map.nodes.map((n, i) => [n.y * world.w + n.x, i])),
     queue: [],
     events: [],
   }
@@ -249,6 +248,7 @@ export function tick(g) {
   if (g.ride) rideTick(g, g.ride)
   else if (g.engulf === null) {
     walk(g)
+    board(g)
     if (!g.ride) engulf(g)
   }
   if (g.probe) spread(g, g.probe)
@@ -314,12 +314,6 @@ function walk(g) {
     if (!sx && !sy) return
     g.ch.x = cx
     g.ch.y = cy
-    const node = g.nodeAt.get(g.ch.y * g.world.w + g.ch.x) ?? -1
-    if (node >= 0 && g.railed[node]) {
-      g.ride = { node, run: null, want: null, stopNext: false }
-      g.move = null
-      g.events.push({ type: 'board', node })
-    }
     return
   }
 }
@@ -451,6 +445,22 @@ export const near = (g, i) => dist2(g, g.map.nodes[i], g.ch) <= g.cfg.nodeReach 
  * while the ledger holds the price and it has an unbuilt edge. @param {Game} g @param {number} i */
 export const shown = (g, i) =>
   (g.firstBuilt ? !!g.railed[i] : !!g.net[i]) && g.ledger.ore >= g.cfg.price && g.links[i].some((k) => !g.built[k])
+
+/** Pointed along a built root near one of its nodes: riding it from there (b4.23). @param {Game} g */
+function board(g) {
+  if (!g.move) return
+  for (let i = 0; i < g.map.nodes.length; i++) {
+    if (!g.railed[i] || !near(g, i)) continue
+    const run = pick(g, i, g.move)
+    if (!run) continue
+    g.ride = { node: i, run, want: g.move, stopNext: false }
+    g.move = null
+    g.ch.x = g.map.nodes[i].x
+    g.ch.y = g.map.nodes[i].y
+    g.events.push({ type: 'board', node: i })
+    return
+  }
+}
 
 /** A shown node within reach takes the bot in (b4.22): it sits on the node, pointing nowhere. @param {Game} g */
 function engulf(g) {
