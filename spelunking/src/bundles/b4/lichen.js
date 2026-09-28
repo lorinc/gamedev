@@ -22,7 +22,7 @@ export const LICHEN = {
   min: 6, // px a patch covers (the user: 6–8)
   max: 8,
   gap: 10, // px from any other lichen
-  spark: 6, // 1 in this many checks a lichen with cover near sparks (b4.21)
+  spark: 24, // 1 in this many checks a lichen with cover near sparks (b4.21; the user, b4.31: 4× rarer, was 6)
   touch: 2, // px from the patch the cover must be
 }
 /** @typedef {typeof LICHEN} Lichen */
