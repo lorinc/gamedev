@@ -73,6 +73,7 @@ build b4.64: 2026-09-28 · p11: b4.64, loot is crystals (D146); tamed bugs shiel
 build b4.65: 2026-09-28 · p11: b4.65, worms glide between pixels (D148)
 build b4.66: 2026-09-28 · p11: b4.66, beast pools evaporate into gas at the nodes (D149)
 build b4.67: 2026-09-28 · p11: b4.67, saturated gas stations pass half their surplus on through the cave (D150)
+build b4.68: 2026-09-28 · p11: b4.68, tamed bugs stand still with fire within 6 px (D151)
 ---
 
 # p11 · b4 · Rail Loop
