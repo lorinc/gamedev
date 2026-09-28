@@ -13,6 +13,7 @@ import { isOpen } from '../../sim/gen/world.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
 import { cover, ignite } from './garden.js'
+import { unslime } from './slime.js'
 
 /** The lichen's numbers (the dev panel's). */
 export const LICHEN = {
@@ -56,8 +57,8 @@ const AROUND = [
   [1, -1],
 ]
 
-/** @param {import('./game.js').Game} g @param {number} x @param {number} y */
-function surface(g, x, y) {
+/** Rock surface: open, rock among its 8 neighbours (slime.js's too). @param {import('./game.js').Game} g @param {number} x @param {number} y */
+export function surface(g, x, y) {
   const { w, h, tiles } = g.world
   if (y < 1 || y >= h - 1 || !isOpen(tiles[y * w + wrap(x, w)])) return false
   for (const [sx, sy] of AROUND) if (!isOpen(tiles[(y + sy) * w + wrap(x + sx, w)])) return true
@@ -113,6 +114,7 @@ export function updateLichen(g) {
   }
   for (const i of cells) {
     L.on[i] = LICHEN_PX
+    unslime(g, i) // lichen replaces slime (b4.77)
     L.changed.push(i)
   }
   // the leaf: away from the rock round its pixel (the nearest of 8 ways), 2 px out, then curling to a side

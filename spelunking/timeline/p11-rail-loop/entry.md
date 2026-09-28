@@ -337,6 +337,8 @@ by ore and hatch 3 moths each, and moths hover while they harvest.
 Then (D160, the user): hives look for a site twice as often (every 30 s).
 Then (D161, the user): no hives after all; every 30 s each built node with gas hatches a moth.
 Then (D162, the user): beasts eat a bulb 30–100 px from you with no or very little moss round it, not one by you.
+Then (D163, the user): slime films the rock surface where there's gas, free; tamed bugs tap it for gas, lichen
+replaces it, fire leaves it: a meal's gas now lasts while bugs visit.
 
 ## Feedback
 

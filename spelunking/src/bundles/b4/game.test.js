@@ -1372,6 +1372,7 @@ test('tamed bugs lay moss only where their station has gas, one gas a pixel (b4.
   g.cfg.worms.max = 0
   g.cfg.swarm.tripTicks = 1e9
   g.cfg.gas.spreadTicks = 1e9 // the gas stays where we put it
+  g.cfg.slime.growTicks = 1e9 // no slime: it would add gas (b4.77)
   g.ledger.bugs = 1
   tick(g)
   const green = () => g.garden.wall.reduce((a, v) => a + (v ? 1 : 0), 0)
@@ -1648,4 +1649,50 @@ test('a beast picks a built bulb 30–100 px from you, the one with the least mo
     }
     assert.equal(picked, mid[mid.length - 1], 'the mid-range bulb with no moss')
   }
+})
+
+test('slime grows on the rock surface where its station has gas, takes none, gives 1 a pixel to a tamed bug, yields to lichen, and fire leaves it (b4.77)', async () => {
+  const { stationOf } = await import('./gas.js')
+  const { surface } = await import('./lichen.js')
+  const { unslime } = await import('./slime.js')
+  const g = fresh()
+  g.cfg.lichen.near = 0
+  g.cfg.gas.spreadTicks = 1e9
+  g.cfg.gas.perMoss = 0
+  g.cfg.swarm.mothTicks = 0
+  const k = MAP.podNodes[0]
+  g.gas[k] = 3
+  for (let t = 0; t < 20 * g.cfg.slime.growTicks; t++) tick(g)
+  const on = [...g.slime.on.keys()].filter((i) => g.slime.on[i])
+  assert.ok(on.length >= 10, `${on.length} px of slime`)
+  const { w } = g.world
+  for (const i of on) {
+    assert.ok(surface(g, i % w, Math.floor(i / w)), 'on the rock surface')
+    assert.ok(g.gas[stationOf(g, i)] > 0, 'where there is gas')
+  }
+  assert.equal(g.gas[k], 3, 'it takes no gas')
+  // lichen replaces it
+  unslime(g, on[0])
+  assert.equal(g.slime.on[on[0]], 0)
+  // a tamed bug beside it taps it: 1 gas, the pixel gone
+  const i = on[1]
+  const before = g.gas.reduce((a, b) => a + b, 0)
+  const px = on.filter((j) => g.slime.on[j]).length
+  g.cfg.slime.growTicks = 1e9 // no regrowth now
+  g.ledger.bugs = 1
+  tick(g)
+  const b = g.swarm[0]
+  Object.assign(b, { x: i % w, y: Math.floor(i / w), fly: null, moth: null, lastOre: 1e9 })
+  b.movedAt = 1e9 // it stays
+  g.cfg.bounce.mothSpeed = 0 // as a moth too (its station has gas)
+  for (let t = 0; t < g.cfg.slime.releaseTicks; t++) tick(g)
+  const after = g.gas.reduce((a, b) => a + b, 0)
+  const left = on.filter((j) => g.slime.on[j]).length
+  assert.ok(after > before, 'gas out of it')
+  assert.equal(after - before, px - left, 'a gas per slime pixel')
+  // fire doesn't touch it
+  g.cfg.slime.releaseTicks = 1e9 // no more tapping
+  g.garden.burning = [...on]
+  for (let t = 0; t < 60; t++) tick(g)
+  assert.equal(on.filter((j) => g.slime.on[j]).length, left)
 })

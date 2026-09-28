@@ -51,6 +51,8 @@ const CRYSTAL_C = 'rgb(240,240,240)' // white (the user, b4.28; was b3's teal)
 const BUG = [255, 190, 90] // tamed: amber (D059)
 const JUMPER = [245, 222, 160] // a tamed bug that hasn't met gas: paler, less warm (the user, b4.71)
 const WILD = [90, 170, 255] // wild: blue (D059)
+const SLIME_RGB = [150, 205, 70] // slime: a gooey yellow-green (the user, b4.77)
+const SLIME_A = 0.55 // its film over the pixel
 const PREDATOR = [120, 62, 92] // the predator's string: a dull pink, under the fog, no glow (the user, b4.73)
 const PREDATOR_TIP = [255, 70, 175] // its tip: glowing pink, over the fog (the user, b4.73: "THAT should be pink")
 const LICHEN_RGB = [96, 44, 128]
@@ -105,6 +107,9 @@ export function createRenderer(canvas, game, ui, view) {
     else if (world.tiles[i] === Tile.Ore || world.tiles[i] === CRYSTAL) timg.data.set([...rgb(rockUnder(i)), 255], i * 4)
     else if (world.tiles[i] === Tile.Open) timg.data.set([...OPEN_RGB, 255], i * 4)
     else timg.data.set([...rgb(world.tiles[i]), 255], i * 4)
+    // b4.77: slime, a thin green film over whatever is there (lichen replaces it)
+    if (game.slime.on[i] && !game.lichen.on[i])
+      for (let k = 0; k < 3; k++) timg.data[i * 4 + k] = Math.round(timg.data[i * 4 + k] * (1 - SLIME_A) + SLIME_RGB[k] * SLIME_A)
   }
   /** The rock an ore or crystal pixel sits in: its 8 neighbours' majority, soft on a tie (pull.js's toRock). @param {number} i */
   function rockUnder(i) {
@@ -460,6 +465,11 @@ export function createRenderer(canvas, game, ui, view) {
       tctx.putImageData(timg, 0, 0, i % w, Math.floor(i / w), 1, 1)
     }
     G.changed.length = 0
+    for (const i of game.slime.changed) {
+      paintTile(i)
+      tctx.putImageData(timg, 0, 0, i % w, Math.floor(i / w), 1, 1)
+    }
+    game.slime.changed.length = 0
   }
 
   /** Ore and crystals in the wall (b4.14): a speck, half a pixel across, at a hashed spot in its pixel. Under the fog. */

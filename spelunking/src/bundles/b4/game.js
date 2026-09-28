@@ -65,6 +65,7 @@ import { createGarden, fruitNear, GARDEN, pick as pickFruit, updateGarden } from
 import { updateWorms, WORMS } from './worms.js'
 import { LIZARDS, updateLizards } from './lizards.js'
 import { createLichen, LICHEN, updateLichen } from './lichen.js'
+import { createSlime, SLIME, updateSlime } from './slime.js'
 import { FLOWERS, updateFlowers } from './flowers.js'
 import { ASHWORMS, updateAshworms } from './ashworms.js'
 import { BEASTS, builtNodes, updateBeasts } from './beasts.js'
@@ -114,6 +115,7 @@ export const CONFIG = {
   ashworms: { ...ASHWORMS },
   beasts: { ...BEASTS },
   gas: { ...GAS },
+  slime: { ...SLIME }, // on the rock surface where there's gas; bugs tap it for gas (b4.77)
   predators: { ...PREDATORS }, // pink strings that eat crowded bugs and leave ore (b4.72)
   price: 10, // ore per edge (user: 8–12, tuned later)
   lizardUpgradeCost: 16, // crystals for the lizards' first upgrade, doubling (the bot's b4.15–b4.55; the user, b4.56)
@@ -175,6 +177,7 @@ export const CONFIG = {
  * @property {number} nodeBugs tamed bugs the network has given so far (b4.63): the most built nodes reached / nodesPerBug
  * @property {import('./lizards.js').Lizard[]} lizards b4.14
  * @property {import('./lichen.js').LichenState} lichen b4.15
+ * @property {import('./slime.js').SlimeState} slime b4.77
  * @property {import('./flowers.js').Flower[]} flowers b4.25: on the ash
  * @property {import('./flowers.js').FlowerBot[]} fbots b4.25: bloomed flowers, extending the network
  * @property {import('./ashworms.js').AshWorm[]} ashworms b4.37: lifting the fog
@@ -234,6 +237,7 @@ export function createGame(map, cfg) {
     nodeBugs: 0,
     lizards: [],
     lichen: createLichen(world.w * world.h),
+    slime: createSlime(world.w * world.h, map.nodes.length),
     flowers: [],
     fbots: [],
     ashworms: [],
@@ -319,6 +323,7 @@ export function tick(g) {
   updateAshworms(g)
   updateBeasts(g)
   updateGas(g)
+  updateSlime(g)
   updatePredators(g)
   while (g.ledger.fruit >= nextCost(g)) {
     g.ledger.fruit -= nextCost(g)
