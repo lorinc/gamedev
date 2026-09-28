@@ -1,5 +1,6 @@
 // b4.25's flowers and flower bots (the user): the ash spawns large white flowers, one in 1 of `per` discs
-// (b4.28, the user: "1/4 white flower per ash, this is waaaay too much"; b4.25's was 1 per 24 px of ash), on
+// (b4.28, the user: "1/4 white flower per ash, this is waaaay too much", then b4.29: "halve even that", so 1
+// in 8; b4.25's was 1 per 24 px of ash), on
 // its ash once the fire in the disc is out; at least 5 px apart (a flower is 5 px across). After
 // `bloomTicks` (2 minutes) a flower becomes a bot, like yours but without light, and the ash touching it
 // (8-connected to its pixel) turns back to bare back wall. The bot zips straight to the nearest node on a built
@@ -16,7 +17,7 @@ import { dist2, extend } from './game.js'
 
 /** The flowers' numbers (the dev panel's). */
 export const FLOWERS = {
-  per: 4, // 1 in this many ash discs grows a flower (the user, b4.28)
+  per: 8, // 1 in this many ash discs grows a flower (the user, b4.29; was 4)
   bloomTicks: 7200, // 2 minutes (the user)
   flyTicks: 2, // 30 px/s to the network
   zipTicks: 1, // 60 px/s along a root

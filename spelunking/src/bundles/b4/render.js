@@ -545,9 +545,9 @@ export function createRenderer(canvas, game, ui, view) {
   /** Flowers on the ash, over the fog. */
   function drawFlowers() {
     for (const f of game.flowers) {
-      ctx.fillStyle = '#ffffff'
+      ctx.fillStyle = 'rgb(168,166,160)' // dim (the user, b4.29; was white)
       for (const [dx, dy] of PETALS) px(f.x + dx, f.y + dy)
-      ctx.fillStyle = '#ffe98a'
+      ctx.fillStyle = 'rgb(170,150,84)'
       px(f.x, f.y)
     }
   }
