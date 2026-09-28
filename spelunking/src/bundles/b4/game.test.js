@@ -1615,3 +1615,37 @@ test('every 30 s each built node with gas hatches a moth onto the ledger; an unb
   for (const e of hatched) assert.deepEqual([e.x, e.y], [MAP.nodes[a].x, MAP.nodes[a].y], 'at the built node')
   assert.equal(g.ledger.bugs - bugs0, hatched.length, 'each on the ledger')
 })
+
+test('a beast picks a built bulb 30–100 px from you, the one with the least moss round it (b4.76)', async () => {
+  const { GREEN } = await import('./garden.js')
+  const { w } = MAP.world
+  const d = (/** @type {{x: number, y: number}} */ a, /** @type {{x: number, y: number}} */ b) => {
+    const dx = Math.min(Math.abs(a.x - b.x), w - Math.abs(a.x - b.x))
+    return Math.hypot(dx, a.y - b.y)
+  }
+  for (let run = 0; run < 6; run++) {
+    const g = fresh()
+    g.cfg.lichen.near = 0
+    const pods = new Set(MAP.podNodes)
+    const byD = MAP.nodes.map((n, i) => [d(n, g.ch), i]).filter(([, i]) => !pods.has(i))
+    const close = byD.filter(([k]) => k < 30).map(([, i]) => i).slice(0, 3)
+    const mid = byD.filter(([k]) => k >= 35 && k <= 95).map(([, i]) => i).slice(0, 4)
+    const far = byD.filter(([k]) => k > 110).map(([, i]) => i).slice(0, 3)
+    assert.ok(mid.length >= 2)
+    for (const i of [...close, ...mid, ...far]) g.railed[i] = 1
+    // moss round every mid bulb but the last
+    for (const i of mid.slice(0, -1)) {
+      const n = MAP.nodes[i]
+      for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) g.garden.wall[(n.y + dy) * w + ((n.x + dx + w) % w)] = GREEN
+    }
+    g.beasts.push({ due: g.tick + run + 1, node: null, from: { x: 0, y: 0 } })
+    let picked = null
+    for (let t = 0; t < 600 && picked === null; t++) {
+      tick(g)
+      const e = g.events.find((e) => e.type === 'beastComing')
+      if (e) picked = e.node
+      g.events.length = 0
+    }
+    assert.equal(picked, mid[mid.length - 1], 'the mid-range bulb with no moss')
+  }
+})

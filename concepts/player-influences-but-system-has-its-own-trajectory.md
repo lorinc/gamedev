@@ -110,7 +110,7 @@ Each row is one tunable interaction. **P?** = does the player's position or acti
 | L07 | Ore → Wild bugs → Tamed bugs | + | 3 chasers eat ore; 1 nibble = 1 bug (costs 1 ore; 16 until b4.69) | `bugs.tame`, `bugs.chasers` | yes (near you) | bugs.js `nibble` |
 | L08 | Wild bugs → Ore | − | the nibbles drain the ledger; empty ledger: they ask ("?") | `bugs.nibbleTicks` | yes | bugs.js |
 | L09 | Network → Beasts | + | 16, 32, 64… built nodes: +1 beast, forever | `beasts.first` | no | beasts.js |
-| L10 | Beasts → Network | − | every 5 min each eats a bulb near you: ~1.4 nodes and ~2 roots per meal (≈ 20 ore), may strand pieces | `beasts.everyTicks`, `beasts.near` | yes | beasts.js `eat` |
+| L10 | Beasts → Network | − | every 5 min each eats a built bulb 30–100 px from you with the least moss round it (≤ 8 px within 12): ~1.4 nodes and ~2 roots per meal (≈ 20 ore), may strand pieces | `beasts.everyTicks`, `beasts.nearMin`, `beasts.near`, `beasts.moss*` | yes | beasts.js `eat` |
 | L11 | Beasts → Liquid | + | 24 drops a meal; pools shrink from the top as they evaporate (a 24-drop pool in ~2–4 min) | `beasts.drops` | yes | beasts.js |
 | L42 | Liquid → Gas | + | 8 particles a drop, one per surface pixel every 5 s, to the station in the same cave | `gas.per`, `gas.everyTicks` | yes (clouds round the nodes, wisps from the pools) | gas.js |
 | L43 | Gas → Gas (spread) | ± | a meal's 192 particles fill ~26 stations to 8 in ~5 s; a full cave evens out (111 stations in ~22 s) | `gas.cap`, `gas.spreadTicks` | yes (wisps between nodes) | gas.js `spread` |
@@ -255,3 +255,4 @@ matters). Stranded, still counted as built: 1 node at 16, 7 at 128.
 | 2026-09-28 | b4.73 | Predators haul (D156); no fruit for bugs, gas-first returns (D157, L06); 5× gas (D158, L42); hives, L49 (D159). |
 | 2026-09-28 | b4.74 | Hives twice as often (D160, L49). |
 | 2026-09-28 | b4.75 | Hives gone; L49 is now gas nodes hatching moths (D161). |
+| 2026-09-28 | b4.76 | L10: beasts eat away from you, where there's no moss (D162); moss now shields bulbs. |

@@ -12,18 +12,26 @@
 // The drops settle here, in the sim, one after another (so they stack): down while the pixel below is open and
 // dry, else down-left / down-right, else along the row towards the nearest dry drop within `spread` px, else
 // there. The path each takes rides on the event for the view to animate. Randomness from the tick (rng.js).
+// b4.76 (the user: "megafauna should target areas with no moss at all, 'near user' is not a good target, I got
+// stuck at an enclosure several times. […] attack something 30-100 away from the player in an area with zero or
+// very little moss"): a bulb it can eat is `nearMin`–`near` px from you, with at most `mossMax` px of cover
+// (green, vine, fruit) within `mossR` px; of those, the ones with the least cover, one at random.
 
 import { isOpen } from '../../sim/gen/world.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
 import { dist2 } from './game.js'
+import { FRUIT, GREEN, VINE } from './garden.js'
 
 /** The beasts' numbers (the dev panel's). */
 export const BEASTS = {
   first: 16, // built nodes for the first beast; each next at twice the last
   everyTicks: 18000, // a meal every 5 min, each beast
   warnTicks: 300, // the shadow's 5 s approach
-  near: 50, // px from you the bulb must be ("on screen")
+  nearMin: 30, // px from you the bulb must be at least (the user, b4.76)
+  near: 100, // px from you it must be at most (the user, b4.76; was 50, "on screen")
+  mossR: 12, // px round a bulb its moss is counted within (b4.76)
+  mossMax: 8, // px of moss round it at most: "zero or very little moss"
   from: 48, // px away the shadow starts
   drops: 24,
   spread: 32, // px a drop looks along a row for a way down
@@ -51,7 +59,24 @@ function edible(g, i) {
     const e = g.map.edges[run.edge]
     if (e.a === i || e.b === i) return false
   }
-  return dist2(g, g.map.nodes[i], g.ch) <= g.cfg.beasts.near ** 2
+  const d2 = dist2(g, g.map.nodes[i], g.ch)
+  return d2 <= g.cfg.beasts.near ** 2 && d2 >= g.cfg.beasts.nearMin ** 2 && moss(g, i) <= g.cfg.beasts.mossMax
+}
+
+/** Cover pixels (green, vine, fruit) within mossR px of node i (b4.76). @param {import('./game.js').Game} g @param {number} i */
+function moss(g, i) {
+  const { w, h } = g.world
+  const n = g.map.nodes[i]
+  const r = Math.max(0, g.cfg.beasts.mossR)
+  let k = 0
+  for (let dy = -r; dy <= r; dy++)
+    for (let dx = -r; dx <= r; dx++) {
+      const y = n.y + dy
+      if (y < 0 || y >= h || dx * dx + dy * dy > r * r) continue
+      const v = g.garden.wall[y * w + wrap(n.x + dx, w)]
+      if (v === GREEN || v === VINE || v === FRUIT) k++
+    }
+  return k
 }
 
 /** The beasts' tick. @param {import('./game.js').Game} g */
@@ -67,8 +92,10 @@ export function updateBeasts(g) {
     if (b.node !== null && !edible(g, b.node)) b.node = null // it can't have that one now: it looks again
     if (b.node === null) {
       if (g.tick % 60 !== 0) return
-      const ok = g.map.nodes.map((_, i) => i).filter((i) => edible(g, i))
-      if (!ok.length) return // nothing in view: it waits
+      const all = g.map.nodes.map((_, i) => i).filter((i) => edible(g, i))
+      if (!all.length) return // nothing fits: it waits
+      const least = Math.min(...all.map((i) => moss(g, i)))
+      const ok = all.filter((i) => moss(g, i) === least) // the barest (b4.76)
       b.node = ok[rng() % ok.length]
       b.due = g.tick + c.warnTicks
       const n = g.map.nodes[b.node]
