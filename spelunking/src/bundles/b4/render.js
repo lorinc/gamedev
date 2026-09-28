@@ -289,7 +289,14 @@ export function createRenderer(canvas, game, ui, view) {
   // a shown resource and a shown level.
   const ROW = 30
   /** @param {string} kind the ledger's count for the row: the bot's is you + the flower bots (b4.44) */
-  const count = (kind) => (kind === 'bot' ? 1 + game.fbots.length : /** @type {Record<string, number>} */ (game.ledger)[kind] ?? 0)
+  const count = (kind) =>
+    kind === 'bot'
+      ? 1 + game.fbots.length
+      : kind === 'nodes'
+        ? builtNodes()
+        : /** @type {Record<string, number>} */ (game.ledger)[kind] ?? 0
+  /** Nodes with a built root (b4.50, the user: "add the built nodes as a ledger entry, below the ore counter") */
+  const builtNodes = () => game.railed.reduce((a, b) => a + b, 0)
   /** @type {Set<string>} rows shown */
   const known = new Set(ledgerKinds.filter((k) => k && count(k) > 0)) // no theatrics for what's there at the start
   /** @type {{ s: number }[]} screen shakes (b4.45) */
@@ -310,6 +317,7 @@ export function createRenderer(canvas, game, ui, view) {
   }
   /** @param {string} kind */
   function ledgerColor(kind) {
+    if (kind === 'nodes') return BULB_HELD[1]
     return kind === 'ore' ? ORE : kind === 'fruit' ? `rgb(${FRUIT_C})` : kind === 'pink' ? `rgb(${PINK})` : kind === 'bugs' ? `rgb(${BUG})` : kind === 'bot' ? CHAR : LOOT
   }
   /** The screen's shake now, device px. @param {number} now @returns {[number, number]} */
@@ -348,6 +356,7 @@ export function createRenderer(canvas, game, ui, view) {
       loot: `${L.loot}/${botCost(game)}`,
       bot: `${count('bot')}`,
       bugs: `${L.bugs}`,
+      nodes: `${count('nodes')}`,
       fruit: `${L.fruit}/${nextCost(game)}`,
       pink: `${L.pink}`,
     }
@@ -369,6 +378,7 @@ export function createRenderer(canvas, game, ui, view) {
         const ix = x - k * gap
         if (kind === 'bugs') dot(ix, y, r, r * 1.8, BUG)
         else if (kind === 'bot') dot(ix, y, r, r * 1.8, [244, 241, 222])
+        else if (kind === 'nodes') bulbIcon(ix, y, r)
         else {
           // a pixel, like the resources (fruit too since b4.43, the user)
           ctx.fillStyle = ledgerColor(kind)
@@ -378,6 +388,20 @@ export function createRenderer(canvas, game, ui, view) {
       ctx.fillStyle = kind === 'ore' && refused ? RED : CHAR
       ctx.fillText(label, tx, y + dpr)
     }
+  }
+
+  /** The held bulb's pixels (drawNodes: r 3, core, body, rim), scaled to fit a ledger icon's 2r square (b4.50). @param {number} x @param {number} y @param {number} r */
+  function bulbIcon(x, y, r) {
+    const R = 3
+    const p = (2 * r) / (2 * R + 1)
+    const [core, body, rim] = BULB_HELD
+    for (let dy = -R; dy <= R; dy++)
+      for (let dx = -R; dx <= R; dx++) {
+        const d = dx * dx + dy * dy
+        if (d > R * R + R) continue
+        ctx.fillStyle = d <= 1 ? core : d <= R * R - R ? body : rim
+        ctx.fillRect(Math.round(x + (dx - 0.5) * p), Math.round(y + (dy - 0.5) * p), Math.ceil(p), Math.ceil(p))
+      }
   }
 
   /** A stream's colour: the unit at c. @param {Cell} c */
