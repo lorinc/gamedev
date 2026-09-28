@@ -270,6 +270,7 @@ Then (D129, the user): pinch zoom; zoom levels in CSS px (a phone zooms as far i
 Then (D130, the user): seen loot triple-pings a white halo, a frame on and a frame off, once every 30 s.
 Then (D131, the user): a just-tamed bug starts its first trip near you.
 Then (D132, the user): the ledger counts built nodes below ore, with a small bulb icon.
+Then (D133, the user): tamed bugs head for back wall that isn't green yet, looking 8 px along each way.
 
 ## Feedback
 

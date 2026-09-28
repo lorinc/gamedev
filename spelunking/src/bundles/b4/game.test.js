@@ -195,6 +195,23 @@ test('a tamed bug works near the network and sends its haul to the ledger', () =
   assert.equal(g.ledger.ore + g.ledger.loot + g.ledger.fruit - before, hauled)
 })
 
+test('tamed bugs go for back wall not green yet: more greened than a plain random walk (b4.51)', () => {
+  /** Green pixels after a minute of 6 bugs. @param {number} look */
+  const greened = (look) => {
+    const g = fresh()
+    g.cfg.swarm.look = look
+    g.cfg.worms.max = 0
+    g.cfg.lizards.max = 0
+    g.cfg.lichen.near = 0
+    g.ledger.bugs = 6
+    for (let i = 0; i < 3600; i++) tick(g)
+    return g.garden.wall.reduce((a, v) => a + (v ? 1 : 0), 0)
+  }
+  const plain = greened(0)
+  const drawn = greened(8)
+  assert.ok(drawn > plain * 1.3, `greened ${drawn} vs ${plain} walking at random`)
+})
+
 test('bugs green the back wall, vines grow on green, and 12 px of vine make a fruit a minute (b4.10)', async () => {
   const { FRUIT, GREEN, VINE } = await import('./garden.js')
   const g = fresh()

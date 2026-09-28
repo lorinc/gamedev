@@ -45,6 +45,7 @@ export const SWARM = {
   spawn: 12, // px round a network node (nodeReach)
   crowd: 32, // px round a node its bugs are counted within (b4.34)
   fruitCarry: 8, // fruit a bug holds at most (the user, b4.10)
+  look: 8, // px a bug looks along each way for back wall not green yet (b4.51; 0: a plain random walk)
   upgradeCost: 16, // fruit for the first upgrade, doubling each time: 16, 32, 64… (the user, b4.13)
 }
 /** @typedef {typeof SWARM} Swarm */
@@ -180,12 +181,38 @@ export function updateSwarm(g) {
   })
 }
 
-/** A random-walk step: on its heading 3 times in 4 if open, else a random open neighbour. @param {import('./game.js').Game} g @param {Worker} b @param {() => number} rng */
+/** Back wall not green yet along a way: open pixels with no cover in the next `look` px (b4.51). @param {import('./game.js').Game} g @param {Worker} b @param {number} k @param {number} look */
+function bare(g, b, k, look) {
+  const [sx, sy] = STEPS[k]
+  const w = g.world.w
+  let n = 0
+  for (let d = 1; d <= look; d++) {
+    const x = b.x + sx * d
+    const y = b.y + sy * d
+    if (!open(g, x, y)) break
+    if (!g.garden.wall[y * w + wrap(x, w)]) n++
+  }
+  return n
+}
+
+/** A random-walk step: on its heading 3 times in 4 if open, else a random open neighbour. b4.51 (the user: "tame
+ * bugs should be attracted to cave backwall tiles that are not green yet"): the way with the most bare back wall
+ * within `look` px wins (its heading on a tie); none bare in sight: the random walk. @param {import('./game.js').Game} g @param {Worker} b @param {() => number} rng */
 function step(g, b, rng) {
   b.from = { x: b.x, y: b.y }
   b.movedAt = g.tick
   let dir = b.dir
-  if (rng() % 4 === 0 || !open(g, b.x + STEPS[dir][0], b.y + STEPS[dir][1])) {
+  const look = Math.max(0, g.cfg.swarm.look)
+  /** @type {number[]} */
+  let best = []
+  let most = 0
+  for (let k = 0; k < 8 && look; k++) {
+    const n = bare(g, b, k, look)
+    if (n > most) ((most = n), (best = [k]))
+    else if (n && n === most) best.push(k)
+  }
+  if (best.length) dir = best.includes(dir) ? dir : best[rng() % best.length]
+  else if (rng() % 4 === 0 || !open(g, b.x + STEPS[dir][0], b.y + STEPS[dir][1])) {
     const ok = [0, 1, 2, 3, 4, 5, 6, 7].filter((k) => open(g, b.x + STEPS[k][0], b.y + STEPS[k][1]))
     if (!ok.length) return
     dir = ok[rng() % ok.length]
