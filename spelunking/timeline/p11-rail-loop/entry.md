@@ -56,6 +56,7 @@ build b4.47: 2026-09-28 · p11: b4.47, pinch zoom, zoom in CSS px, brighter on t
 build b4.48: 2026-09-28 · p11: b4.48, loot triple-pings now and then (D130)
 build b4.49: 2026-09-28 · p11: b4.49, a just-tamed bug starts near you (D131)
 build b4.50: 2026-09-28 · p11: b4.50, built nodes on the ledger (D132)
+build b4.51: 2026-09-28 · p11: b4.51, tamed bugs head for back wall not green yet (D133)
 ---
 
 # p11 · b4 · Rail Loop
