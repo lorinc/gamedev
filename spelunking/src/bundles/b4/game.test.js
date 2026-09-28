@@ -573,3 +573,32 @@ test('ash grows a flower per 24 px; after 2 minutes it becomes a bot that clears
   assert.ok(built >= 3, `built ${built}`)
   assert.equal(g.ledger.ore, 1000 - built * g.cfg.price)
 })
+
+test('a bulb lets the bot go after 3 s with nothing built; it takes it again only after it left (b4.26)', () => {
+  const g = fresh()
+  const from = MAP.podNodes.find((n) => MAP.edges.some((e) => e.a === n || e.b === n))
+  assert.ok(from !== undefined)
+  const node = MAP.nodes[from]
+  g.ch.x = node.x + 1
+  g.ch.y = node.y
+  g.ledger.ore = 10
+  tick(g)
+  assert.equal(g.engulf, from)
+  const at = g.tick
+  let eject = -1
+  for (let i = 0; i < 400 && eject < 0; i++) {
+    tick(g)
+    if (g.events.some((e) => e.type === 'eject')) eject = g.tick
+    g.events.length = 0
+  }
+  assert.equal(eject - at, 180, 'after 3 s')
+  assert.equal(g.engulf, null)
+  for (let i = 0; i < 30; i++) tick(g)
+  assert.equal(g.engulf, null, 'not again while still in reach')
+  // out of reach and back: taken again
+  g.ch.x = node.x + 6
+  tick(g)
+  g.ch.x = node.x + 1
+  tick(g)
+  assert.equal(g.engulf, from)
+})

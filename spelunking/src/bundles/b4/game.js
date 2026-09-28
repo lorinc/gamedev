@@ -17,8 +17,9 @@
 // Nodes (b4.8, the user): the pod's are on the network until the first edge is built; from then on only the
 // ends of built edges. b4.22 (the user): a node shows only while the ledger holds the `price` and it has an
 // unbuilt edge. The bot walking within `nodeReach` (2 px) of a shown node is engulfed: it sits on the
-// node and can't walk until it builds one of the node's edges (`engulf`); then it walks free, and the same
-// node doesn't take it again until it has been out of reach (`freed`).
+// node and can't walk until it builds one of the node's edges (`engulf`), or for `ejectTicks` (3 s, b4.26,
+// the user: "it is not possible to leave the bulb"): then it walks free, and the same node doesn't take it
+// again until it has been out of reach (`freed`).
 // Building (b4.3): `build` an unbuilt edge from the node the bot is engulfed in: the price is taken and the
 // edge is built at once and its far node joins the network.
 // Riding: pointing along a built root (within 67.5°) within `nodeReach` of one of its nodes gets you riding
@@ -70,6 +71,7 @@ export const CONFIG = {
   pull: { ticks: 60 }, // b3's pull was 300 (5 s a unit); 1 s here, or an edge is a minute of standing still
   light: { base: 8 },
   nodeReach: 2, // px: a shown node engulfs the bot this close (the user, b4.22; was 12, a build's reach)
+  ejectTicks: 180, // a bulb lets the bot go after 3 s with nothing built (the user, b4.26)
   bugs: {
     block: 32,
     blocks: 64,
@@ -112,7 +114,7 @@ export const CONFIG = {
  *   | { type: 'dug', x: number, y: number, tile: number, by: number } | { type: 'haul', x: number, y: number, ore: number, loot: number, fruit: number }
  *   | { type: 'worm', x: number, y: number } | { type: 'eaten', x: number, y: number } | { type: 'deposit', cells: number[] }
  *   | { type: 'upgrade', level: number } | { type: 'botUpgrade', level: number }
- *   | { type: 'lizard', x: number, y: number } | { type: 'lichen', x: number, y: number } | { type: 'engulf', node: number } | { type: 'flower' | 'bloom' | 'poof', x: number, y: number } | { type: 'spark', x: number, y: number } | { type: 'licked', x: number, y: number, by: number }
+ *   | { type: 'lizard', x: number, y: number } | { type: 'lichen', x: number, y: number } | { type: 'engulf' | 'eject', node: number } | { type: 'flower' | 'bloom' | 'poof', x: number, y: number } | { type: 'spark', x: number, y: number } | { type: 'licked', x: number, y: number, by: number }
  *   | { type: 'board', node: number } | { type: 'exit', node: number }
  *   | { type: 'nibble', id: number, x: number, y: number, from: Cell } | { type: 'tamed', id: number, x: number, y: number, slot: number }
  *  } GameEvent bugs.js adds the wild bugs'; tamed has slot -1 (to the ledger); tile FRUIT_TILE is a fruit (b4.10)
@@ -169,6 +171,7 @@ export const CONFIG = {
  * @property {boolean} firstBuilt an edge has been built
  * @property {Ride | null} ride
  * @property {number | null} engulf the node the bot is held in (b4.22)
+ * @property {number} engulfAt the tick it was taken in
  * @property {number | null} freed the node that just let the bot go: it doesn't take it again until it's out of reach
  * @property {number[][]} links per node: its edges
  * @property {Command[]} queue
@@ -219,6 +222,7 @@ export function createGame(map, cfg) {
     firstBuilt: false,
     ride: null,
     engulf: null,
+    engulfAt: 0,
     freed: null,
     links: map.nodes.map(() => []),
     queue: [],
@@ -251,6 +255,11 @@ export function tick(g) {
   }
   g.queue.length = 0
 
+  if (g.engulf !== null && g.tick - g.engulfAt >= g.cfg.ejectTicks) {
+    g.events.push({ type: 'eject', node: g.engulf })
+    g.freed = g.engulf
+    g.engulf = null
+  }
   if (g.ride) rideTick(g, g.ride)
   else if (g.engulf === null) {
     walk(g)
@@ -475,6 +484,7 @@ function engulf(g) {
   for (let i = 0; i < g.map.nodes.length; i++) {
     if (i === g.freed || !near(g, i) || !shown(g, i)) continue
     g.engulf = i
+    g.engulfAt = g.tick
     g.move = null
     g.ch.x = g.map.nodes[i].x
     g.ch.y = g.map.nodes[i].y

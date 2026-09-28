@@ -63,6 +63,7 @@ const panel = createPanel(
     'sim.pull.ticks': [1, 300, 1],
     'sim.price': [1, 40, 1],
     'sim.nodeReach': [2, 40, 1],
+    'sim.ejectTicks': [30, 1200, 30],
     'sim.light.base': [2, 48, 1],
     'sim.rideSpeed': [10, 400, 5],
     'sim.bugs.seek': [4, 160, 1],
@@ -154,9 +155,14 @@ function aimEdge(node, dx, dy) {
   return best
 }
 
+/** The direction pointed now (0, 0: none), for walking on when a bulb lets go (b4.26). */
+const held = { dx: 0, dy: 0 }
+
 createInput(canvas, {
   // held in a node (b4.22), a direction aims at its edges and a tap builds the one aimed at
   move: (dx, dy) => {
+    held.dx = dx
+    held.dy = dy
     const n = game.engulf
     if (n === null) return command(game, { type: 'move', dx, dy })
     if (!dx && !dy) return // letting go keeps the aim
@@ -199,6 +205,10 @@ function frame(t) {
   for (const e of game.events) {
     renderer.onEvent(e, now)
     if (e.type === 'refused') ui.refusedAt = now
+    if (e.type === 'eject') {
+      ui.select = null
+      if (held.dx || held.dy) command(game, { type: 'move', dx: held.dx, dy: held.dy }) // still pointing: walk on
+    }
     if (e.type === 'built') ui.select = null
   }
   game.events.length = 0
