@@ -37,6 +37,7 @@ build b4.28: 2026-09-28 · p11: b4.28, white loot, lizards don't glow, 1 flower 
 build b4.29: 2026-09-28 · p11: b4.29, half the flowers, dimmer (D112)
 build b4.30: 2026-09-28 · p11: b4.30, fix the crash when a lizard's ore flight outlived the lizard
 build b4.31: 2026-09-28 · p11: b4.31, lichen sparks 4x rarer (D113)
+build b4.32: 2026-09-28 · p11: b4.32, the network under the fog, smaller bulbs (D114)
 ---
 
 # p11 · b4 · Rail Loop
