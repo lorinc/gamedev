@@ -55,7 +55,7 @@ const RING_TRAIL = 4
 const EDGE = 3 // px over which the light fades out
 const FRUIT_C = [235, 40, 50]
 /** @type {Record<number, number[]>} */
-const WALL_RGB = { [MOSS]: [22, 58, 30], [VINE]: [60, 140, 55], [FRUIT]: FRUIT_C, [BURN]: [255, 140, 30], [ASH]: [96, 94, 92] }
+const WALL_RGB = { [MOSS]: [22, 58, 30], [VINE]: [60, 140, 55], [FRUIT]: FRUIT_C, [BURN]: [120, 28, 8], [ASH]: [96, 94, 92] }
 /** @type {Record<number, number[]>} */
 const LICHEN_PX_RGB = { [LEAF_PX]: [176, 104, 220], [WITHERED_PX]: [112, 84, 56] } // b4.21: a sparked lichen's leaf, withered brown
 
@@ -191,6 +191,16 @@ export function createRenderer(canvas, game, ui, view) {
   const flights = []
   /** @type {{ x: number, y: number, s: number, k: number }[]} hearts from a tamed bug (b4.14) */
   const hearts = []
+  /** @type {{ x: number, y: number, vx: number, vy: number, s: number, life: number, color: string, size: number }[]} embers and puffs, world px (b4.25) */
+  const embers = []
+  /** @param {number} x @param {number} y @param {number} now @param {number} n @param {string[]} colors @param {number} speed */
+  const puff = (x, y, now, n, colors, speed) => {
+    for (let k = 0; k < n; k++) {
+      const a = (k / n) * Math.PI * 2 + Math.random()
+      const v = speed * (0.4 + Math.random() * 0.6)
+      embers.push({ x: x + 0.5, y: y + 0.5, vx: Math.cos(a) * v, vy: Math.sin(a) * v, s: now, life: 0.6 + Math.random() * 0.5, color: colors[k % colors.length], size: 0.6 })
+    }
+  }
   /** @param {Cell} c @returns {End} */
   const cell = (c) => () => /** @type {[number, number]} */ (at(c))
   /** @param {string} kind @returns {End} */
@@ -215,6 +225,8 @@ export function createRenderer(canvas, game, ui, view) {
         tctx.putImageData(timg, 0, 0, i % w, Math.floor(i / w), 1, 1)
       }
     else if (e.type === 'ring') rings.push({ x: e.x, y: e.y, r: e.r, s: now })
+    else if (e.type === 'bloom') puff(e.x, e.y, now, 14, ['#ffffff', '#f4f0ff'], 8)
+    else if (e.type === 'poof') puff(e.x, e.y, now, 32, ['#ffffff', '#eef4ff', '#ffffff'], 14)
     else if (e.type === 'botUpgrade')
       for (let k = 0; k < 8; k++) fly(icon('loot'), icon('bot'), now + k * 0.05, 0.6, LOOT, 0)
     else if (e.type === 'upgrade')
@@ -459,8 +471,11 @@ export function createRenderer(canvas, game, ui, view) {
     drawLichen()
     for (let x = x0; x < W; x += w * T) ctx.drawImage(fog, 0, 0, w, h, x, sy(0), w * T, h * T)
     drawGarden()
+    drawFire(now, dt) // over the fog: a fire is seen from afar (b4.25)
+    drawFlowers()
     drawRails(now) // over the fog: you built them, and a glowing edge shows where it would go
     drawNodes(now)
+    drawFbots()
     drawBot(bot, now)
     drawRings(now)
     drawStreams(now)
@@ -470,7 +485,79 @@ export function createRenderer(canvas, game, ui, view) {
     drawLizards()
     drawHearts(now)
     drawFlights(now)
+    drawEmbers(now, dt)
     drawLedger(now)
+  }
+
+  // the flame's colours, hot to cool (b4.25, the user: "brighter, more colorful")
+  const FLAME = ['#fffbe0', '#fff27a', '#ffd23c', '#ff9f1c', '#ff5a1f', '#f0263c', '#c81e8c']
+  /** Burning pixels, flickering from hot (just caught) to cool, and embers rising off them. @param {number} now @param {number} dt */
+  function drawFire(now, dt) {
+    const G = game.garden
+    for (const i of G.burning) {
+      const age = G.step - (G.caught.get(i) ?? G.step)
+      const k = Math.min(FLAME.length - 1, Math.max(0, age * 2 + ((Math.random() * 3) | 0) - 1))
+      ctx.fillStyle = FLAME[k]
+      px(i % w, Math.floor(i / w))
+      if (embers.length < 600 && Math.random() < dt * 3) {
+        embers.push({
+          x: (i % w) + Math.random(),
+          y: Math.floor(i / w) + Math.random(),
+          vx: (Math.random() - 0.5) * 3,
+          vy: -4 - Math.random() * 6,
+          s: now,
+          life: 0.4 + Math.random() * 0.6,
+          color: FLAME[(Math.random() * 5) | 0],
+          size: 0.5,
+        })
+      }
+    }
+  }
+
+  /** Sparks and puffs (b4.25): world px, drifting, shrinking. @param {number} now @param {number} dt */
+  function drawEmbers(now, dt) {
+    for (let i = embers.length - 1; i >= 0; i--) {
+      const p = embers[i]
+      const t = (now - p.s) / p.life
+      if (t >= 1) {
+        embers.splice(i, 1)
+        continue
+      }
+      p.x += p.vx * dt
+      p.y += p.vy * dt
+      p.vx *= 1 - dt * 2
+      p.vy *= 1 - dt * 2
+      const s = Math.max(1, Math.round(T * p.size * (1 - t * 0.6)))
+      ctx.globalAlpha = 1 - t * t
+      ctx.fillStyle = p.color
+      ctx.fillRect(Math.round(sx(p.x) - s / 2), Math.round(sy(p.y) - s / 2), s, s)
+    }
+    ctx.globalAlpha = 1
+  }
+
+  // a flower (b4.25): white petals in a ring round a pale yellow heart, 5 px across
+  const PETALS = [
+    [0, -2], [-1, -1], [1, -1], [-2, 0], [2, 0], [-1, 1], [1, 1], [0, 2],
+    [0, -1], [-1, 0], [1, 0], [0, 1],
+  ]
+  /** Flowers on the ash, over the fog. */
+  function drawFlowers() {
+    for (const f of game.flowers) {
+      ctx.fillStyle = '#ffffff'
+      for (const [dx, dy] of PETALS) px(f.x + dx, f.y + dy)
+      ctx.fillStyle = '#ffe98a'
+      px(f.x, f.y)
+    }
+  }
+
+  /** Flower bots (b4.25): a pixel like yours, white-lilac, no halo (no light). */
+  function drawFbots() {
+    const s = Math.max(T, 2 * dpr)
+    ctx.fillStyle = '#e6dcff'
+    for (const b of game.fbots) {
+      const [x, y] = at(b)
+      ctx.fillRect(Math.round(x - s / 2), Math.round(y - s / 2), Math.round(s), Math.round(s))
+    }
   }
 
   /** A world pixel's square on screen. @param {number} x @param {number} y */

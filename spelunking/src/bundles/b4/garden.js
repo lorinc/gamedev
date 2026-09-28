@@ -12,6 +12,9 @@
 // with no ash centre within 8–12 px (`ashGap`–`ashGapMax`), it becomes one: a disc of r 3–5 (`ash`–`ashMax`)
 // whose bare pixels turn to ash at once and whose cover flares up and turns to ash as it goes out. Ash is
 // permanent: bugs don't green it, vines don't grow into it (the user: a function for it comes later).
+// b4.25 (the user: "flames can be brighter"): a pixel burns for `burnFor` steps before it goes out, so the
+// front is a band, not a line; it spreads once, the step after it caught. Each disc is kept in `discs` for
+// its flowers (flowers.js).
 
 import { isOpen } from '../../sim/gen/world.js'
 import { wrap } from '../../sim/dig/rules.js'
@@ -25,6 +28,7 @@ export const GARDEN = {
   perFruit: 12, // px of vine (the user)
   fruitTicks: 3600, // make a fruit every minute (the user)
   burnTicks: 6, // the fire spreads 1 px every 0.1 s
+  burnFor: 4, // steps a pixel burns (b4.25): 0.4 s
   ash: 3, // an ash disc's radius, px: ash–ashMax (the user: 3–5)
   ashMax: 5,
   ashGap: 8, // px between ash centres: ashGap–ashGapMax (the user: 8–12)
@@ -67,6 +71,9 @@ const STEPS = [
  * @property {number[]} burning pixels on fire (b4.21)
  * @property {Set<number>} toAsh burning pixels inside an ash disc: ash when they go out
  * @property {Map<number, number[]>} centres ash centres (pixel indices) by BLOCK × BLOCK block
+ * @property {Map<number, number>} caught burning pixel → the fire step it caught at (b4.25)
+ * @property {number} step the fire's steps so far
+ * @property {{ i: number, r: number }[]} discs ash discs whose flowers aren't placed yet (flowers.js)
  */
 
 /** @param {number} n pixels @returns {GardenState} */
@@ -82,6 +89,9 @@ export function createGarden(n) {
     burning: [],
     toAsh: new Set(),
     centres: new Map(),
+    caught: new Map(),
+    step: 0,
+    discs: [],
   }
 }
 
@@ -190,6 +200,7 @@ export function ignite(g, i, rng) {
   if (G.wall[i] === FRUIT) G.fruit.delete(i)
   G.wall[i] = BURN
   G.burning.push(i)
+  G.caught.set(i, G.step)
   G.changed.push(i)
   ashDisc(g, i, rng)
 }
@@ -217,6 +228,7 @@ function ashDisc(g, i, rng) {
   const key = by * bw + bx
   G.centres.set(key, [...(G.centres.get(key) ?? []), i])
   const r = c.ash + (rng() % Math.max(1, c.ashMax - c.ash + 1))
+  G.discs.push({ i, r })
   for (let dy = -r; dy <= r; dy++)
     for (let dx = -r; dx <= r; dx++) {
       const yy = y + dy
@@ -229,6 +241,7 @@ function ashDisc(g, i, rng) {
         if (G.wall[j] === FRUIT) G.fruit.delete(j)
         G.wall[j] = BURN // the disc flares up
         G.burning.push(j)
+        G.caught.set(j, G.step)
         G.changed.push(j)
       } else {
         G.wall[j] = ASH
@@ -237,13 +250,15 @@ function ashDisc(g, i, rng) {
     }
 }
 
-/** The fire's step: the cover round each burning pixel catches, the burning ones go out. @param {import('./game.js').Game} g @param {() => number} rng */
+/** The fire's step: the cover round the pixels caught last step catches; pixels burning `burnFor` steps go out. @param {import('./game.js').Game} g @param {() => number} rng */
 function burn(g, rng) {
   const G = g.garden
   const { w, h } = g.world
   const was = G.burning
   G.burning = []
+  G.step++
   for (const i of was) {
+    if (G.caught.get(i) !== G.step - 1) continue
     const x = i % w
     const y = (i - x) / w
     for (const [sx, sy] of STEPS) {
@@ -254,6 +269,11 @@ function burn(g, rng) {
     }
   }
   for (const i of was) {
+    if (G.step - /** @type {number} */ (G.caught.get(i)) < Math.max(1, g.cfg.garden.burnFor)) {
+      G.burning.push(i)
+      continue
+    }
+    G.caught.delete(i)
     G.wall[i] = G.toAsh.delete(i) ? ASH : 0
     G.changed.push(i)
   }

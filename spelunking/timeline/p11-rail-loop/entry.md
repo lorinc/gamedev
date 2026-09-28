@@ -208,6 +208,9 @@ fires the moment the bot touches rock. D105: no lizard spawns in a cave under 40
 Then (D106, the user): lichen grows where the bugs' cover is large (150 px within 12), not where loot is.
 Then (D107, the user): pointing along a built root within 2 px of its node rides it; built nodes show a
 still bulb, buildable ones beat. Screenshots `gallery/p11/b4.23_*`.
+Then (D108, the user): brighter, many-coloured fire with sparks; the ash grows white flowers (1 per 24 px)
+that bloom after 2 minutes into light-less bots; they clear their ash, go to the network, zip along it,
+build 3 edges from your ore (60 s apart at least) and pop. Screenshots `gallery/p11/b4.25_*`.
 
 ## Feedback
 

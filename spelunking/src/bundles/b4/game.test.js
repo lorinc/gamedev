@@ -530,3 +530,46 @@ test('pointing along a built root near its node rides it to the far end, no cart
   for (let i = 0; i < 600 && g.ride?.run; i++) tick(g)
   assert.deepEqual([g.ch.x, g.ch.y], [far.x, far.y], 'at the far end')
 })
+
+test('ash grows a flower per 24 px; after 2 minutes it becomes a bot that clears its ash, builds 3 edges on the network, and pops (b4.25)', async () => {
+  const { ASH, GREEN, ignite } = await import('./garden.js')
+  const g = fresh()
+  g.cfg.worms.max = 0
+  g.cfg.lizards.max = 0
+  g.cfg.lichen.near = 0 // no lichen of its own
+  g.cfg.flowers.buildGap = 60
+  g.cfg.flowers.chance = 1
+  const { w } = MAP.world
+  const G = g.garden
+  for (let dy = -30; dy <= 30; dy++)
+    for (let dx = -30; dx <= 30; dx++) {
+      const i = (g.ch.y + dy) * w + g.ch.x + dx
+      if (isOpen(MAP.world.tiles[i])) G.wall[i] = GREEN
+    }
+  ignite(g, g.ch.y * w + g.ch.x, () => 0)
+  for (let k = 0; k < 3600 && (G.burning.length || G.discs.length); k++) tick(g)
+  assert.equal(G.discs.length, 0, 'every disc done')
+  const ash = G.wall.filter((v) => v === ASH).length
+  const n = g.flowers.length
+  assert.ok(n > 0 && Math.abs(n - ash / 24) <= G.centres.size, `${n} flowers on ${ash} px of ash`)
+  for (const f of g.flowers) assert.equal(G.wall[f.y * w + f.x], ASH, 'on the ash')
+  g.ledger.ore = 1000
+  const f0 = g.flowers[0]
+  let bloom = 0
+  let poof = 0
+  let built = 0
+  for (let k = 0; k < 7200 + 60 * 60 && !poof; k++) {
+    tick(g)
+    for (const e of g.events) {
+      if (e.type === 'bloom') bloom++
+      if (e.type === 'poof') poof++
+      if (e.type === 'built') built++
+    }
+    g.events.length = 0
+    if (bloom && k < 7300) assert.notEqual(G.wall[f0.y * w + f0.x], ASH, 'its ash went')
+  }
+  assert.equal(bloom, n, 'every flower bloomed')
+  assert.ok(poof >= 1, 'a bot popped')
+  assert.ok(built >= 3, `built ${built}`)
+  assert.equal(g.ledger.ore, 1000 - built * g.cfg.price)
+})
