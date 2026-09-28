@@ -11,7 +11,7 @@
 // keeps its fresh value.
 
 /** Top-level fields never saved. */
-const SKIP = new Set(['map', 'world', 'cfg', 'links', 'queue', 'events', 'bugField', 'lit', 'litFor'])
+const SKIP = new Set(['map', 'world', 'cfg', 'links', 'queue', 'events', 'bugField', 'lit', 'litFor', 'wander'])
 /** Fields never saved, at any depth: the view's repaint lists. */
 const SKIP_ANY = new Set(['changed'])
 const VERSION = 2 // 2: b4.64 renamed loot to crystals (the ledger's and the bugs' fields)

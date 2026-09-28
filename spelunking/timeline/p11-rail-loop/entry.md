@@ -317,6 +317,9 @@ evens out. Screenshot `gallery/p11/b4.67_spread_b.png`.
 Then (D151, the user): a tamed bug with fire within 6 px stops moving until it's out.
 Then (D152, the user): moss costs gas: a tamed bug greens a back-wall pixel only while that pixel's station
 holds gas, one gas a pixel (`gas.perMoss`).
+Then (D153, the user): bugs are wall-bouncers (`bounce.js`): they crawl along the rock and jump in random
+low-gravity arcs; tamed ones stay to mine, send each unit to the ledger at once, and fade after 30 s with none
+to come back at a node; wild ones wander the same way. One nibble tames a wild bug.
 
 ## Feedback
 

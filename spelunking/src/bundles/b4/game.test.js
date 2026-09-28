@@ -126,7 +126,7 @@ test('a node shows only with the price on the ledger; 2 px close it holds the bo
   assert.equal(g.engulf, null)
 })
 
-test('a wild bug fed 16 from the ledger is +1 bug on it, and leaves the world', () => {
+test('a wild bug fed 1 from the ledger is +1 bug on it, and leaves the world (b4.70; 16 until b4.69)', () => {
   const g = fresh()
   g.ledger.ore = 40
   g.refill = new Proxy({}, { get: () => 1e9 }) // no spawns: only ours
@@ -138,9 +138,9 @@ test('a wild bug fed 16 from the ledger is +1 bug on it, and leaves the world', 
   ].find(([dx, dy]) => open({ x: g.ch.x + dx, y: g.ch.y + dy }))
   assert.ok(c)
   addBug(/** @type {any} */ (g), g.ch.x + c[0], g.ch.y + c[1])
-  for (let i = 0; i < 16 * CONFIG.bugs.nibbleTicks + 5; i++) tick(g)
+  for (let i = 0; i < CONFIG.bugs.nibbleTicks + 5; i++) tick(g)
   assert.equal(g.ledger.bugs, 1)
-  assert.equal(g.ledger.ore, 40 - 16)
+  assert.equal(g.ledger.ore, 40 - 1)
   assert.equal(g.bugs.length, 0)
 })
 
@@ -194,24 +194,6 @@ test('a tamed bug works near the network and sends its haul to the ledger', () =
   assert.ok(dug > 0, 'they pulled something')
   assert.equal(hauled, dug)
   assert.equal(g.ledger.ore + g.ledger.crystals + g.ledger.fruit - before, hauled)
-})
-
-test('tamed bugs go for back wall not green yet: more greened than a plain random walk (b4.51)', () => {
-  /** Green pixels after a minute of 6 bugs. @param {number} look */
-  const greened = (look) => {
-    const g = fresh()
-    g.cfg.swarm.look = look
-    g.cfg.worms.max = 0
-    g.cfg.lizards.max = 0
-    g.cfg.lichen.near = 0
-    g.cfg.gas.perMoss = 0 // moss for free here, as before b4.69 (gas has its own test)
-    g.ledger.bugs = 6
-    for (let i = 0; i < 3600; i++) tick(g)
-    return g.garden.wall.reduce((a, v) => a + (v ? 1 : 0), 0)
-  }
-  const plain = greened(0)
-  const drawn = greened(8)
-  assert.ok(drawn > plain * 1.3, `greened ${drawn} vs ${plain} walking at random`)
 })
 
 test('bugs green the back wall, vines grow on green, and 12 px of vine make a fruit a minute (b4.10)', async () => {
@@ -870,12 +852,12 @@ test('a tamed bug starts its next trip at the network node with the fewest other
     g.net[A] = g.net[B] = 1
     g.ledger.bugs = 11
     for (let k = 0; k < 11; k++) {
-      g.swarm.push({ ...MAP.nodes[A], from: MAP.nodes[A], movedAt: 0, dir: 0, until: 1e9, target: null, pullFor: 0, ore: 0, crystals: 0, fruit: 0 })
+      g.swarm.push({ ...MAP.nodes[A], from: MAP.nodes[A], movedAt: 0, dir: 0, lastOre: 1e9, target: null, pullFor: 0 })
     }
     for (let t = 0; t < run; t++) tick(g) // a different tick: a different random draw
-    // a 12th whose trip ends now
+    // a 12th that fades now (b4.70: no ore for idleTicks)
     g.ledger.bugs = 12
-    g.swarm.push({ ...MAP.nodes[A], from: MAP.nodes[A], movedAt: 0, dir: 0, until: g.tick + 1, target: null, pullFor: 0, ore: 0, crystals: 0, fruit: 0 })
+    g.swarm.push({ ...MAP.nodes[A], from: MAP.nodes[A], movedAt: 0, dir: 0, lastOre: g.tick + 1 - g.cfg.swarm.idleTicks, target: null, pullFor: 0 })
     tick(g)
     assert.ok(d2(g.swarm[11], MAP.nodes[B]) <= g.cfg.swarm.spawn ** 2, 'its next trip starts at the empty node')
   }
@@ -901,11 +883,11 @@ test('a tamed bug on its next trip prefers a network node with no vine round it,
     g.garden.vines.push(v)
     g.ledger.bugs = 5
     for (let k = 0; k < 5; k++)
-      g.swarm.push({ ...MAP.nodes[B], from: MAP.nodes[B], movedAt: 0, dir: 0, until: 1e9, target: null, pullFor: 0, ore: 0, crystals: 0, fruit: 0 })
+      g.swarm.push({ ...MAP.nodes[B], from: MAP.nodes[B], movedAt: 0, dir: 0, lastOre: 1e9, target: null, pullFor: 0 })
     for (let t = 0; t < run; t++) tick(g)
-    // a 6th whose trip ends now
+    // a 6th that fades now (b4.70)
     g.ledger.bugs = 6
-    g.swarm.push({ ...MAP.nodes[A], from: MAP.nodes[A], movedAt: 0, dir: 0, until: g.tick + 1, target: null, pullFor: 0, ore: 0, crystals: 0, fruit: 0 })
+    g.swarm.push({ ...MAP.nodes[A], from: MAP.nodes[A], movedAt: 0, dir: 0, lastOre: g.tick + 1 - g.cfg.swarm.idleTicks, target: null, pullFor: 0 })
     tick(g)
     assert.ok(d2(g.swarm[5], MAP.nodes[B]) <= g.cfg.swarm.spawn ** 2, 'its next trip starts away from the vine')
   }
@@ -1229,7 +1211,7 @@ test('no cover within a tamed bug\'s 3×3 catches fire; round it, the fire burns
   assert.ok(bug >= 0)
   const bx = bug % w
   const by = Math.floor(bug / w)
-  g.swarm.push({ x: bx, y: by, from: { x: bx, y: by }, movedAt: 0, dir: 0, until: 1e9, target: null, pullFor: 0, ore: 0, crystals: 0, fruit: 0 })
+  g.swarm.push({ x: bx, y: by, from: { x: bx, y: by }, movedAt: 0, dir: 0, lastOre: 1e9, target: null, pullFor: 0 })
   g.lichen.on[at] = 1
   g.lichen.patches.push({ cells: [at], leaf: [], sparked: false })
   tick(g)
@@ -1399,4 +1381,80 @@ test('tamed bugs lay moss only where their station has gas, one gas a pixel (b4.
   const left = g.gas.reduce((a, v) => a + v, 0)
   assert.ok(green() > 0, 'moss where the gas is')
   assert.equal(green() + left, 5, 'a pixel of moss per gas')
+})
+
+test('tamed bugs are wall-bouncers: on the wall or in the air, never in rock; they jump, mine, and send each unit at once (b4.70)', async () => {
+  const { onWall } = await import('./bounce.js')
+  const g = fresh()
+  g.cfg.lichen.near = 0
+  g.cfg.worms.max = 0
+  g.cfg.swarm.upgradeCost = 1e9 // nothing spends from the ledger here
+  g.cfg.lizardUpgradeCost = 1e9
+  g.cfg.bugs.chasers = 0
+  g.ledger.bugs = 6
+  let jumps = 0
+  let landed = 0
+  let hauled = 0
+  let dug = 0
+  let ledger = g.ledger.ore + g.ledger.crystals + g.ledger.fruit
+  for (let i = 0; i < 2 * 3600; i++) {
+    const flying = g.swarm.map((b) => !!b.fly)
+    tick(g)
+    g.swarm.forEach((b, k) => {
+      assert.ok(open(b), 'never in rock')
+      if (b.fly && !flying[k]) jumps++
+      if (!b.fly && flying[k]) landed++
+      if (!b.fly && !flying[k] && g.tick - b.movedAt === 0) assert.ok(onWall(g, b.x, b.y), 'a crawl step stays on the wall')
+    })
+    for (const e of g.events) {
+      if (e.type === 'dug') dug++
+      if (e.type === 'haul') hauled += e.ore + e.crystals + e.fruit
+    }
+    g.events.length = 0
+    const now = g.ledger.ore + g.ledger.crystals + g.ledger.fruit
+    assert.ok(now >= ledger, 'the ledger only grows here')
+    ledger = now
+  }
+  assert.ok(jumps > 20, `${jumps} jumps`)
+  assert.ok(landed > 20, `${landed} landings`)
+  assert.ok(dug > 20, `${dug} units`)
+  assert.equal(hauled, dug, 'every unit flies to the ledger as it comes out')
+})
+
+test('a tamed bug with no unit for idleTicks fades and comes back near a node (b4.70)', () => {
+  const g = fresh()
+  g.cfg.swarm.pullTicks = 1e9 // never a unit
+  g.ledger.bugs = 1
+  tick(g)
+  let faded = 0
+  for (let i = 0; i < g.cfg.swarm.idleTicks + 2; i++) {
+    tick(g)
+    faded += g.events.filter((e) => e.type === 'faded').length
+    g.events.length = 0
+  }
+  assert.equal(faded, 1)
+  const b = g.swarm[0]
+  const near = g.net.some((on, i) => on && Math.hypot(MAP.nodes[i].x - b.x, MAP.nodes[i].y - b.y) <= g.cfg.swarm.spawn + 1)
+  assert.ok(near, 'back at a network node')
+})
+
+test('wild bugs crawl the wall and sometimes jump (b4.70)', async () => {
+  const { onWall } = await import('./bounce.js')
+  const g = fresh()
+  g.cfg.bugs.chasers = 0 // only wanderers
+  let air = 0
+  let wall = 0
+  let n = 0
+  for (let i = 0; i < 3600; i++) {
+    tick(g)
+    for (const b of g.bugs) {
+      assert.ok(open(b), 'never in rock')
+      n++
+      if (b.fly) air++
+      else if (onWall(g, b.x, b.y)) wall++
+    }
+  }
+  assert.ok(n > 1000)
+  assert.ok(air > 0, 'some jump')
+  assert.ok(wall + air > n * 0.9, `${wall} on the wall, ${air} in the air of ${n}`)
 })

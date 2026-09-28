@@ -69,6 +69,7 @@ import { FLOWERS, updateFlowers } from './flowers.js'
 import { ASHWORMS, updateAshworms } from './ashworms.js'
 import { BEASTS, builtNodes, updateBeasts } from './beasts.js'
 import { GAS, updateGas } from './gas.js'
+import { BOUNCE, wildWander } from './bounce.js'
 import { CRYSTAL, OPEN, ROCK } from './world.js'
 
 /** @typedef {import('./world.js').Map} Map */
@@ -97,12 +98,13 @@ export const CONFIG = {
     moveTicks: 12,
     seek: 20,
     nibbleTicks: 40,
-    tame: 16,
+    tame: 1, // one nibble tames (the user, b4.70; was 16)
     den: 12,
     barSlots: 0,
     ledger: true,
   }, // b3.7's wild bugs (rules/b3.7.json); no bar, no placed bugs (b4.3)
   swarm: { ...SWARM },
+  bounce: { ...BOUNCE }, // wall-bouncers, tamed and wild (b4.70)
   garden: { ...GARDEN },
   worms: { ...WORMS },
   lizards: { ...LIZARDS },
@@ -129,7 +131,7 @@ export const CONFIG = {
  *   | { type: 'pulled', x: number, y: number, tile: number, to: Cell }
  *   | { type: 'built', edge: number, from: number, price: number }
  *   | { type: 'refused', edge: number, reason: 'ore' | 'off' | 'far' | 'built' }
- *   | { type: 'dug', x: number, y: number, tile: number, by: number } | { type: 'haul', x: number, y: number, ore: number, crystals: number, fruit: number }
+ *   | { type: 'dug', x: number, y: number, tile: number, by: number } | { type: 'haul', x: number, y: number, ore: number, crystals: number, fruit: number } | { type: 'faded', x: number, y: number }
  *   | { type: 'worm', x: number, y: number } | { type: 'eaten', x: number, y: number } | { type: 'deposit', cells: number[] }
  *   | { type: 'upgrade', level: number } | { type: 'lizardUpgrade', level: number }
  *   | { type: 'lizard', x: number, y: number } | { type: 'lichen', x: number, y: number } | { type: 'engulf' | 'eject', node: number } | { type: 'flower' | 'bloom' | 'poof' | 'ashworm' | 'ashwormGone' | 'ashwormBurst', x: number, y: number } | { type: 'spark', x: number, y: number } | { type: 'licked', x: number, y: number, to: Cell }
@@ -187,6 +189,7 @@ export const CONFIG = {
  * @property {import('../../sim/dig/bugs.js').Bug[]} bugs b3's (D056)
  * @property {number} nextBug
  * @property {import('../../sim/dig/bugs.js').Field | null} bugField
+ * @property {(g: any, bug: any, rng: () => number) => boolean} wander a wild bug's move (b4.70, bounce.js)
  * @property {number} worldRev b4 never changes where bugs can go: always 0
  * @property {number} fed
  * @property {import('../../sim/dig/bugs.js').Bug[]} bar always empty (bugs.js reads it)
@@ -231,6 +234,7 @@ export function createGame(map, cfg) {
     liquid: new Uint8Array(map.world.w * map.world.h),
     gas: map.nodes.map(() => 0),
     swarm: [],
+    wander: wildWander, // wild bugs bounce too (b4.70)
     seen: new Uint8Array(world.w * world.h),
     lit: [],
     radius: 0,

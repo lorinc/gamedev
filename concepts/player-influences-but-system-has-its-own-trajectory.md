@@ -105,9 +105,9 @@ Each row is one tunable interaction. **P?** = does the player's position or acti
 | L02 | Ore → Network | + | an edge costs 10 ore (yours, from a bulb) | `price` | yes | game.js `build` |
 | L03 | Ore → Network | + | flower bots build with ledger ore; they wait at the rim while it's short | `price`, `flowers.*` | no | flowers.js |
 | L04 | Network → Tamed bugs | + | +1 bug per 4 built nodes reached, never taken back | `nodesPerBug` | no | game.js `nodeTames` |
-| L05 | Network → where bugs work | + | each trip starts near a network node: bugs only work round the network | `swarm.spawn`, `swarm.crowd` | no | swarm.js `spawnAt` |
-| L06 | Tamed bugs → Ore, Crystals, Fruit | + | a unit per 2 s within 4 px, hauled every 30 s | `swarm.pullTicks`, `swarm.reach` | no | swarm.js |
-| L07 | Ore → Wild bugs → Tamed bugs | + | 3 chasers eat ore; 16 nibbles = 1 bug (costs 16 ore) | `bugs.tame`, `bugs.chasers` | yes (near you) | bugs.js `nibble` |
+| L05 | Network → where bugs work | + | a bug arrives near a network node, and comes back near one after 30 s with no unit (it fades); between, it bounces round the caves | `swarm.spawn`, `swarm.crowd`, `swarm.idleTicks`, `bounce.*` | no | swarm.js `spawnAt`, bounce.js |
+| L06 | Tamed bugs → Ore, Crystals, Fruit | + | a unit per 2 s within 4 px, each to the ledger at once; they stay while one is in reach and jump away when none is within 8 px | `swarm.pullTicks`, `swarm.reach`, `swarm.near` | no | swarm.js |
+| L07 | Ore → Wild bugs → Tamed bugs | + | 3 chasers eat ore; 1 nibble = 1 bug (costs 1 ore; 16 until b4.69) | `bugs.tame`, `bugs.chasers` | yes (near you) | bugs.js `nibble` |
 | L08 | Wild bugs → Ore | − | the nibbles drain the ledger; empty ledger: they ask ("?") | `bugs.nibbleTicks` | yes | bugs.js |
 | L09 | Network → Beasts | + | 16, 32, 64… built nodes: +1 beast, forever | `beasts.first` | no | beasts.js |
 | L10 | Beasts → Network | − | every 5 min each eats a bulb near you: ~1.4 nodes and ~2 roots per meal (≈ 20 ore), may strand pieces | `beasts.everyTicks`, `beasts.near` | yes | beasts.js `eat` |
@@ -119,7 +119,7 @@ Each row is one tunable interaction. **P?** = does the player's position or acti
 
 | Id | From → To | Sign | Mechanism and rate | Knob | P? | Where |
 |---|---|---|---|---|---|---|
-| L12 | Tamed bugs → Cover | + | green the wall round their path; they seek wall not green yet (8 px look) | `garden.trail`, `swarm.look` | no | garden.js `greenAround` |
+| L12 | Tamed bugs → Cover | + | green the wall round their path; where they crawl and land (b4.51's pull to bare wall gone in b4.70) | `garden.trail` | no | garden.js `greenAround` |
 | L44 | Gas → Cover | + (gate) | a bug greens a pixel only while its station holds gas; 1 gas a pixel, so a beast meal's 192 particles make at most 192 px of moss | `gas.perMoss` | yes (the clouds thin as moss appears) | garden.js `greenAround` |
 | L13 | Cover → Vines | + | 1 in 40 greened px starts a vine; tips grow 1 px / 5 s on green only | `garden.sprout`, `garden.growTicks` | no | garden.js |
 | L14 | Vines → Fruit | + | 12 px of vine: 1 fruit a minute | `garden.perFruit`, `garden.fruitTicks` | no | garden.js |
@@ -244,3 +244,4 @@ matters). Stranded, still counted as built: 1 node at 16, 7 at 128.
 | 2026-09-28 | b4.67 | Gas spreads from saturated stations through the cave (D150); L43. |
 | 2026-09-28 | b4.68 | L41, tamed bugs stand still near fire (D151). |
 | 2026-09-28 | b4.69 | L44, moss costs gas (D152). |
+| 2026-09-28 | b4.70 | Wall-bouncing bugs, units to the ledger at once, taming costs 1 (D153): L05, L06, L07, L12. |

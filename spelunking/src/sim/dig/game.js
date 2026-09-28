@@ -141,6 +141,7 @@ import { updateMine, updatePull } from './pull.js'
  * @property {import('./bugs.js').Bug[]} bugs wild and tamed (D056); none without `cfg.bugs`
  * @property {number} nextBug the next bug's id
  * @property {import('./bugs.js').Field | null} bugField the bugs' way to you, cached
+ * @property {(g: any, bug: any, rng: () => number) => boolean} [wander] a wild bug's own move, in place of the drift inside its block (b4.70)
  * @property {number} worldRev counts the ticks that mined or built something
  * @property {number} fed ore the wild bugs ate toward the next taming, all of them together (D060)
  * @property {import('./bugs.js').Bug[]} bar the tamed bugs you carry, in slot order (D060)

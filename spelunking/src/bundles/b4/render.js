@@ -300,6 +300,7 @@ export function createRenderer(canvas, game, ui, view) {
       // (the user's crash in b4.28)
       fly(cell(e), cell(e.to), now, 0.3, `rgb(${WALL_RGB[ASH]})`, 0.3) // ash since b4.54
     }
+    else if (e.type === 'faded') faded.push({ x: e.x, y: e.y, s: now })
     else if (e.type === 'haul') {
       for (let k = 0; k < Math.min(e.ore, 12); k++) fly(cell(e), icon('ore'), now + k * 0.06, 0.9, ORE, 0)
       for (let k = 0; k < Math.min(e.crystals, 6); k++) fly(cell(e), icon('crystals'), now + k * 0.08, 0.9, CRYSTAL_C, 0)
@@ -754,23 +755,24 @@ export function createRenderer(canvas, game, ui, view) {
     }
   }
 
-  /** A worker between its last pixel and this one. @param {import('./swarm.js').Worker} b @param {number} alpha */
-  function workerAt(b, alpha) {
-    const f = Math.min(1, (game.tick - b.movedAt + alpha) / Math.max(1, game.cfg.swarm.moveTicks))
+  /** A bug between its last pixel and this one, over its last move's pace; in the air, where its flight is
+   * (b4.70). @param {{ x: number, y: number, from: Cell, movedAt: number, pace?: number, fly?: import('./bounce.js').Flight | null }} b @param {number} alpha @param {number} pace */
+  function bugAt(b, alpha, pace) {
+    if (b.fly) return { x: (b.fly.x + b.fly.vx * alpha) / 1000 - 0.5, y: (b.fly.y + b.fly.vy * alpha) / 1000 - 0.5 }
+    const f = Math.min(1, (game.tick - b.movedAt + alpha) / Math.max(1, b.pace || pace))
     let dx = b.x - b.from.x
     if (Math.abs(dx) > 1) dx = -Math.sign(dx)
     return { x: b.from.x + dx * f, y: b.from.y + (b.y - b.from.y) * f }
   }
+  /** @param {import('./swarm.js').Worker} b @param {number} alpha */
+  const workerAt = (b, alpha) => bugAt(b, alpha, game.cfg.swarm.moveTicks)
 
   /** Wild bugs (b4.13): like the tamed, in blue. @param {number} alpha */
   function drawWild(alpha) {
     const s = Math.max(T, 2 * dpr)
     const hr = Math.max(T * 2, 6 * dpr)
     for (const b of game.bugs) {
-      const f = Math.min(1, (game.tick - b.movedAt + alpha) / Math.max(1, game.cfg.bugs.moveTicks))
-      let dx = b.x - b.from.x
-      if (Math.abs(dx) > 1) dx = -Math.sign(dx)
-      const [x, y] = at({ x: b.from.x + dx * f, y: b.from.y + (b.y - b.from.y) * f })
+      const [x, y] = at(bugAt(/** @type {any} */ (b), alpha, game.cfg.bugs.moveTicks))
       if (x < -hr || y < -hr || x > W + hr || y > H + hr) continue
       dot(x, y, s, hr, WILD)
     }
@@ -787,10 +789,26 @@ export function createRenderer(canvas, game, ui, view) {
     ctx.fillRect(Math.round(x - s / 2), Math.round(y - s / 2), Math.round(s), Math.round(s))
   }
 
+  const FADE_S = 1.5
+  /** @type {{ x: number, y: number, s: number }[]} bugs fading away (b4.70) */
+  const faded = []
+
   /** Tamed bugs at work (b4.3): warm dots with a small halo, drawn over the fog (they're yours). @param {number} alpha @param {number} now */
   function drawSwarm(alpha, now) {
     const s = Math.max(T, 2 * dpr)
     const hr = Math.max(T * 2, 6 * dpr)
+    // a bug that faded (b4.70): its dot and halo thin out over FADE_S
+    for (let k = faded.length - 1; k >= 0; k--) {
+      const t = (now - faded[k].s) / FADE_S
+      if (t >= 1) {
+        faded.splice(k, 1)
+        continue
+      }
+      const [x, y] = at(faded[k])
+      ctx.globalAlpha = 1 - t
+      dot(x, y, s, hr * (1 + t), BUG)
+      ctx.globalAlpha = 1
+    }
     for (const b of game.swarm) {
       const p = workerAt(b, alpha)
       const [x, y] = at(p)

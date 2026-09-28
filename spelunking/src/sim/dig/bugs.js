@@ -30,6 +30,11 @@
 // Emptied (the hand-over) and within `mine.hand` of you, it's back in the bar (event `returned`).
 //
 // Randomness comes from the tick (rng.js), so replays and P2P checks stay exact. Integers only.
+//
+// b4.70: a game may carry `g.wander(g, bug, rng)`, called every tick for each wild bug in place of the random
+// step inside its block (b4's wall-bouncers); it returns true when it moved the bug. Chasers still drift down the
+// field (the hook is told first, to put a bug in the air back to plain drifting). Such a bug may leave its block;
+// it's gone only when its block is no longer near you.
 
 import { isOpen, Tile } from '../gen/world.js'
 import { hashSeed, mulberry32 } from '../rng.js'
@@ -183,13 +188,14 @@ export function updateBugs(g) {
   chase(g, b, field)
   for (const bug of g.bugs) {
     if (bug.kind !== 'wild') continue // a placed bug stays at its den (it mines in pull.js)
-    if (g.tick - bug.movedAt >= b.moveTicks) drift(g, b, field, bug, rng)
+    const wandered = g.wander ? g.wander(g, bug, rng) : false
+    if (!wandered && g.tick - bug.movedAt >= b.moveTicks && (bug.chasing || !g.wander)) drift(g, b, field, bug, rng)
     if (bug.chasing) nibble(g, b, bug)
   }
   for (const bug of g.bar) roam(g, b, field, bug, rng)
   for (const bug of g.bugs) if (bug.seeking) seek(g, b, field, bug)
   // a chaser the field lost wanders again in its block, else it's gone
-  g.bugs = g.bugs.filter((bug) => bug.kind !== 'wild' || bug.chasing || bug.block === blockOf(g, bug.x, bug.y) || !gone(g, b, bug))
+  g.bugs = g.bugs.filter((bug) => bug.kind !== 'wild' || bug.chasing || !!g.wander || bug.block === blockOf(g, bug.x, bug.y) || !gone(g, b, bug))
 }
 
 /** A wild bug leaves its block, which tries for a new one refillTicks later. Always true. @param {Game} g @param {Bugs} b @param {Bug} bug */
