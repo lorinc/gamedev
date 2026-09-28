@@ -299,6 +299,8 @@ pixels that crawl, with a dusty rim. Screenshots `gallery/p11/b4.61_*`.
 Then (D144, the user): the game saves itself (localStorage, per build, seed and map knobs) and comes back on
 the next visit; the dev panel's "new game" starts over. Screenshot `gallery/p11/b4.62_after_reload.png`.
 Then (D145, the user): every 4 built nodes add a tamed bug, on top of the nibbling; loot no longer tames.
+Then (D146, the user): loot is called crystals in b4's code and docs. Then (D147, the user): no cover within a
+tamed bug's 3×3 catches fire.
 
 ## Feedback
 

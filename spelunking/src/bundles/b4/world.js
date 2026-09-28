@@ -2,8 +2,8 @@
 // it: v6's raster of p7's quad caves as it is (4 px a fine cell, no sampling), from the drawn ice sheet on
 // top (v6's, solid) down to the ocean. The pod is its interior open space only (user: the dome's walls
 // would delete rock and ore). p10's traverse layer (v8 mode C, D078) is routed over the whole depth, and
-// each rail's cells are filled in pixel by pixel. The rock is b3.7's: its ore layer and loot, and its
-// soft/hard split for the look (user), all at the map's size, wrapping; no loot since b4.17 (lizards make it). Then b3's probe, pull, pack and
+// each rail's cells are filled in pixel by pixel. The rock is b3.7's: its ore layer and crystals, and its
+// soft/hard split for the look (user), all at the map's size, wrapping; no crystals since b4.17 (lizards make them). Then b3's probe, pull, pack and
 // light run on it unchanged. The world wraps in x, like b3's.
 
 import { QCOLS, QROWS, buildGrid } from '../v5/quadcaves.js'
@@ -45,11 +45,13 @@ import { chance, hashSeed, mulberry32 } from '../../sim/rng.js'
 export const SHEET = SKY // v6's sky pixels are the sheet here
 export { OPEN, ROCK, SEA }
 export const SPACE = 4 // above the sheet's rugged top: out of the map
+/** Crystals (b4.64, the user: "rename internally loot to crystals"): the shared tile id b1–b3 call Loot. */
+export const CRYSTAL = Tile.Loot
 
 /** The world's knobs (the dev panel's, and the URL's). */
 export const WKNOBS = {
   ore: DEFAULT_TERRAIN.ore.density, // b3.7's ore layer's seed density, permille
-  loot: 0, // permille of rock: none (the user, b4.17: only lizards make loot); b3.7's was DEFAULT_TERRAIN.loot
+  crystals: 0, // permille of rock: none (the user, b4.17: only lizards make crystals); b3.7's was DEFAULT_TERRAIN.loot
 }
 
 /** The roots' router (roots.js): rock ×5 like v8's C, an earlier root's edges ×2, its vertices +40 px. */
@@ -110,7 +112,7 @@ export function makeMap(seed, k = WKNOBS) {
   // so its base is w / 12 × h / 2 and it wraps with no seam), both at the map's size
   const ore = runLayer({ ...DEFAULT_TERRAIN.ore, density: k.ore }, w, h, mulberry32(hashSeed(seed, 3)))
   const hard = finalGrid({ ...STARTER_CAVES, width: w / 12, height: h / 2, seed: hashSeed(seed, 2) })
-  const lootRng = mulberry32(hashSeed(seed, 4))
+  const crystalRng = mulberry32(hashSeed(seed, 4))
   lap('rock')
   const noise = sheetNoise(w, seed)
   for (let x = 0; x < w; x++) {
@@ -141,7 +143,7 @@ export function makeMap(seed, k = WKNOBS) {
       } else {
         kind[i] = ROCK
         if (ore.cells[i]) tiles[i] = Tile.Ore
-        else if (chance(lootRng, k.loot)) tiles[i] = Tile.Loot
+        else if (chance(crystalRng, k.crystals)) tiles[i] = CRYSTAL
         else if (hard.cells[i]) tiles[i] = Tile.Hard
         else tiles[i] = Tile.Soft
       }

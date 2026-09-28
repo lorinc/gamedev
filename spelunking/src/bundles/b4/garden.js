@@ -22,6 +22,9 @@
 // a vine pixel with ash among its 8 neighbours makes fruit `hyper` (10) times as fast: it counts that many
 // times in the accumulator, and the next fruit lands on such a pixel with that weight. The list is rebuilt
 // every `HYPER_TICKS`.
+// b4.64 (the user: "give tame bugs a 3x3 fire suppression area"): no cover within `suppress` px (a square: 1 is
+// the 3×3) of a tamed bug at work catches fire: not from the spread, a lichen's ember or an ash disc's flare-up.
+// A pixel already burning there burns on. So the green round the bugs comes through a fire.
 
 import { isOpen } from '../../sim/gen/world.js'
 import { wrap } from '../../sim/dig/rules.js'
@@ -43,6 +46,7 @@ export const GARDEN = {
   ashGap: 8, // px between ash centres: ashGap–ashGapMax (the user: 8–12)
   ashGapMax: 12,
   hyper: 10, // a vine pixel touching ash makes fruit this many times as fast (the user, b4.33)
+  suppress: 1, // px round a tamed bug where nothing catches fire: 1 = its 3×3 (the user, b4.64)
 }
 /** @typedef {typeof GARDEN} Garden */
 
@@ -217,9 +221,29 @@ export function pick(g, x, y) {
   g.garden.changed.push(i)
 }
 
-/** Sets pixel i burning (b4.21): the lichen's ember, or the fire spreading. @param {import('./game.js').Game} g @param {number} i @param {() => number} rng */
+/** @type {{ tick: number, game: object | null, px: Set<number> }} the pixels the tamed bugs shield, per tick */
+const shield = { tick: -1, game: null, px: new Set() }
+
+/** The pixels no fire catches this tick: the `suppress` square round each tamed bug (b4.64). @param {import('./game.js').Game} g */
+function shielded(g) {
+  if (shield.tick === g.tick && shield.game === g) return shield.px
+  const r = Math.max(0, g.cfg.garden.suppress)
+  const { w, h } = g.world
+  const px = new Set()
+  for (const b of g.swarm)
+    for (let dy = -r; dy <= r; dy++)
+      for (let dx = -r; dx <= r; dx++) if (b.y + dy >= 0 && b.y + dy < h) px.add((b.y + dy) * w + wrap(b.x + dx, w))
+  shield.tick = g.tick
+  shield.game = g
+  shield.px = px
+  return px
+}
+
+/** Sets pixel i burning (b4.21): the lichen's ember, or the fire spreading; not by a tamed bug (b4.64).
+ * @param {import('./game.js').Game} g @param {number} i @param {() => number} rng */
 export function ignite(g, i, rng) {
   const G = g.garden
+  if (shielded(g).has(i)) return
   if (G.wall[i] === FRUIT) G.fruit.delete(i)
   G.wall[i] = BURN
   G.burning.push(i)
@@ -260,6 +284,7 @@ function ashDisc(g, i, rng) {
       if (!isOpen(tiles[j]) || G.wall[j] === ASH) continue
       if (G.wall[j] === BURN) G.toAsh.add(j)
       else if (cover(G.wall[j])) {
+        if (shielded(g).has(j)) continue // a tamed bug's cover stays (b4.64)
         G.toAsh.add(j)
         if (G.wall[j] === FRUIT) G.fruit.delete(j)
         G.wall[j] = BURN // the disc flares up

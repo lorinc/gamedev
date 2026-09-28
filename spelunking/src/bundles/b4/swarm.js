@@ -1,7 +1,7 @@
 // b4.3's tamed bugs, abstract (the user: "an incremental game with simulation aesthetics"; no pathfinding,
 // "there will be a lot of them"). Every bug on the ledger is a worker on a trip: it appears in open air
 // within `spawn` px of a random network node, random-walks through open air (a step to an open neighbour
-// every `moveTicks`, keeping its heading 3 times in 4; never into rock, D056), pulls ore and loot like you
+// every `moveTicks`, keeping its heading 3 times in 4; never into rock, D056), pulls ore and crystals like you
 // do (b4.7, the user): the nearest unit within `reach` px (seen or not) is its target, and after `pullTicks`
 // of having one it comes out (the pixel turns to rock, pull.js's toRock); the view draws your dust stream
 // and your flight for it. After `tripTicks` it sends its haul straight to the ledger (event `haul`: the view flies it to the ledger's icons)
@@ -14,6 +14,7 @@
 // b4.49 (the user): a just-tamed bug's first trip starts near you; the next ones at nodes.
 
 import { isOpen, Tile } from '../../sim/gen/world.js'
+import { CRYSTAL } from './world.js'
 import { toRock } from '../../sim/dig/pull.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
@@ -32,7 +33,7 @@ import { dist2, gain } from './game.js'
  * @property {Cell | null} target the unit it pulls now, for the dust stream
  * @property {number} pullFor ticks it has had a target since its last unit
  * @property {number} ore
- * @property {number} loot
+ * @property {number} crystals
  * @property {number} fruit its haul so far
  */
 
@@ -149,7 +150,7 @@ function startTrip(g, b, at, rng) {
   b.target = null
   b.pullFor = 0
   b.ore = 0
-  b.loot = 0
+  b.crystals = 0
   b.fruit = 0
   greenAround(g, b.x, b.y)
 }
@@ -163,16 +164,16 @@ export function updateSwarm(g) {
     const at = nearYou(g, s, rng)
     if (!at) break
     /** @type {Worker} */
-    const b = { x: 0, y: 0, from: at, movedAt: 0, dir: 0, until: 0, target: null, pullFor: 0, ore: 0, loot: 0, fruit: 0 }
+    const b = { x: 0, y: 0, from: at, movedAt: 0, dir: 0, until: 0, target: null, pullFor: 0, ore: 0, crystals: 0, fruit: 0 }
     startTrip(g, b, at, rng)
     g.swarm.push(b)
   }
   g.swarm.forEach((b, k) => {
     if (g.tick >= b.until) {
       g.ledger.ore += b.ore
-      g.ledger.loot += b.loot
+      g.ledger.crystals += b.crystals
       g.ledger.fruit += b.fruit
-      if (b.ore || b.loot || b.fruit) g.events.push({ type: 'haul', x: b.x, y: b.y, ore: b.ore, loot: b.loot, fruit: b.fruit })
+      if (b.ore || b.crystals || b.fruit) g.events.push({ type: 'haul', x: b.x, y: b.y, ore: b.ore, crystals: b.crystals, fruit: b.fruit })
       startTrip(g, b, spawnAt(g, s, rng, b) ?? b, rng)
       return
     }
@@ -223,7 +224,7 @@ function step(g, b, rng) {
   greenAround(g, b.x, b.y)
 }
 
-/** Like your pull: the nearest ore or loot within reach (then the first in reading order) is the target; after
+/** Like your pull: the nearest ore or crystals within reach (then the first in reading order) is the target; after
  * pullTicks of having one, it comes out, to the haul. @param {import('./game.js').Game} g @param {Swarm} s @param {Worker} b @param {number} k its index */
 function pull(g, s, b, k) {
   const { w, h, tiles } = g.world
@@ -237,7 +238,7 @@ function pull(g, s, b, k) {
       const d = dx * dx + dy * dy
       if (y < 0 || y >= h || d > r * r || d >= bestD) continue
       const i = y * w + wrap(b.x + dx, w)
-      if (tiles[i] !== Tile.Ore && tiles[i] !== Tile.Loot) continue
+      if (tiles[i] !== Tile.Ore && tiles[i] !== CRYSTAL) continue
       best = i
       bestD = d
     }
@@ -264,7 +265,7 @@ function pull(g, s, b, k) {
   }
   const tile = tiles[best]
   if (tile === Tile.Ore) b.ore++
-  else b.loot++
+  else b.crystals++
   toRock(/** @type {any} */ (g), x, y)
   g.events.push({ type: 'dug', x, y, tile, by: k })
 }

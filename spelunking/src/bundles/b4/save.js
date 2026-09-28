@@ -1,7 +1,7 @@
 // b4.62's save (the user: "how could you save game state […] and reload it, when the site is visited again?
 // all this without a lag spike of massive files stored"). The cave never changes shape, so a save is what's
 // layered over the map as made: the per-pixel layers (seen, the garden's wall, the lichen, the liquid) run-length
-// encoded (mostly zeros, a few blobs: a few KB), the pixels whose tile changed kind (ore and loot pulled, worm
+// encoded (mostly zeros, a few blobs: a few KB), the pixels whose tile changed kind (ore and crystals pulled, worm
 // ore laid) as a diff against the map as made, and the rest of the state (lists, numbers) as JSON. Randomness
 // comes from the tick (rng.js), so there's no generator state: restore `tick` and the game goes on as it would
 // have. A load is the map as made (already paid on every visit) plus one pass over its pixels.
@@ -14,7 +14,7 @@
 const SKIP = new Set(['map', 'world', 'cfg', 'links', 'queue', 'events', 'bugField', 'lit', 'litFor'])
 /** Fields never saved, at any depth: the view's repaint lists. */
 const SKIP_ANY = new Set(['changed'])
-const VERSION = 1
+const VERSION = 2 // 2: b4.64 renamed loot to crystals (the ledger's and the bugs' fields)
 
 /** Runs of a byte array: value, count, value, count… @param {Uint8Array} a @returns {number[]} */
 export function rle(a) {

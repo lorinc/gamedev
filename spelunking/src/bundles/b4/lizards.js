@@ -1,5 +1,5 @@
 // b4.14's lizards (the user): where ore is plentiful, bright green lizards appear; they zip, stop and zip
-// round the cave surfaces, mine the ore, and after 16 they burrow and make one loot in the wall.
+// round the cave surfaces, mine the ore, and after 16 they burrow and make one crystal in the wall.
 // Cheats, like the worms (no pathfinding): every `checkTicks` a random pixel within `near` px of the bot with
 // `density` reachable ore within `radius` px (ore within `reach` of a surface pixel: what a lizard can mine;
 // b4.20, the user: they got stuck short of 16) spawns a lizard on the nearest surface pixel there (open,
@@ -9,21 +9,22 @@
 // there (b4.20, the user: they got stuck; heading straight for ore snagged on the cave's shape), then a stop of 0.7–2 s,
 // taking an ore within `reach` px every `mineTicks` while it stops (the pixel turns to rock). Full, it
 // takes the worms' site finder with a 1 px site: a soft or hard rock pixel with no open one within 2; it
-// goes straight there through the rock, and that pixel turns to loot (event `deposit`). Randomness from the
+// goes straight there through the rock, and that pixel turns to a crystal (event `deposit`). Randomness from the
 // tick (rng.js).
 // b4.22 (the user: "lizards must not spawn in small enclosures"): the spawn pixel's cave must hold at least
 // `room` open pixels (an 8-way flood that stops once it has counted them).
 // b4.54 (the user: "change lizard mechanics. it should spawn in areas with ash, have a 6 mining radius, eat up
-// ash tiles, and when burrows, creates 5 loot resources"): everything above that said ore now means ash (the
+// ash tiles, and when burrows, creates 5 crystal resources"): everything above that said ore now means ash (the
 // burned back wall, garden.js): `density` ash pixels within `radius` spawn one, it goes for and licks ash
 // within `reach` 6, a licked ash pixel is bare back wall again (bugs can green it); full, it burrows into a
-// 5 px site (`lootPx`) that turns to loot.
+// 5 px site (`crystalPx`) that turns to crystals.
 // b4.55 (the user: "lizards can leave the walls for a short dash to reach ash in the cavern centre, but goes
 // back to the safety of the wall at the next movement"): no wall pixel in its route range reaching ash, it
 // dashes straight through the air towards the nearest ash within `dash` px, stops within reach and licks;
 // its next move is straight back to the nearest wall pixel. Off the wall = its head not on a surface pixel.
 
-import { isOpen, Tile } from '../../sim/gen/world.js'
+import { isOpen } from '../../sim/gen/world.js'
+import { CRYSTAL } from './world.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
 import { ASH } from './garden.js'
@@ -39,10 +40,10 @@ export const LIZARDS = {
   max: 6,
   zipTicks: 3, // 20 px/s while zipping
   sense: 16,
-  reach: 6, // px it licks ash within (the user, b4.54; 3 for ore); × 1.2 a lizard level (loot, b4.56)
+  reach: 6, // px it licks ash within (the user, b4.54; 3 for ore); × 1.2 a lizard level (crystals, b4.56)
   mineTicks: 90, // a lick every 1.5 s (the user, b4.57: 3× slower; was 30)
   eat: 27, // ash px, then it burrows (b4.57: 16 × 5/3, so 3× slower eating makes a 5× longer life, ~40 s; ore until b4.54)
-  lootPx: 5, // loot px it burrows into (the user, b4.54; was 1)
+  crystalPx: 5, // crystal px it burrows into (the user, b4.54; was 1)
   dash: 16, // px off the wall it dashes for ash (b4.55)
   site: 24,
   room: 400, // open px the cave must hold for a spawn (b4.22)
@@ -75,7 +76,7 @@ const STEPS = [
   [1, -1],
 ]
 
-/** The px a lizard licks within: `reach`, 20% more a lizard level, bought with loot (b4.56, the user). @param {import('./game.js').Game} g */
+/** The px a lizard licks within: `reach`, 20% more a lizard level, bought with crystals (b4.56, the user). @param {import('./game.js').Game} g */
 const reachOf = (g) => Math.round(g.cfg.lizards.reach * gain(g, g.lizardLevel))
 
 /** Open, and 8-bordering a solid pixel: a cave surface. @param {import('./game.js').Game} g @param {number} x @param {number} y */
@@ -156,14 +157,14 @@ export function updateLizards(g) {
     if (z.eaten >= c.eat) {
       if (!z.site && g.tick - z.lookedAt >= c.checkTicks) {
         z.lookedAt = g.tick
-        z.site = findSite(g, { site: c.site, length: Math.max(1, c.lootPx) }, head, rng)
+        z.site = findSite(g, { site: c.site, length: Math.max(1, c.crystalPx) }, head, rng)
       }
       if (!z.site) return true // nowhere to burrow yet: it waits, and looks again checkTicks later
       if (g.tick - z.movedAt < c.zipTicks) return true
       z.movedAt = g.tick
       const s = z.site
       if (head.x === s.x && head.y === s.y) {
-        for (const i of s.cells) g.world.tiles[i] = Tile.Loot
+        for (const i of s.cells) g.world.tiles[i] = CRYSTAL
         g.events.push({ type: 'deposit', cells: s.cells })
         return false
       }

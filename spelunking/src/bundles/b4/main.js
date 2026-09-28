@@ -15,7 +15,7 @@ const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.get
 // view.bright (b4.47, the user: "too dark to see, but only on the phone"): the canvas's CSS brightness; phone
 // screens crush the dark greys the desktop shows, so a touch screen starts brighter. Black stays black.
 const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
-const DEFAULTS = { world: { ...WKNOBS }, sim: JSON.parse(JSON.stringify(CONFIG)), view: { zoom: -1, bright: coarse ? 1.5 : 1, lootPing: 30 } }
+const DEFAULTS = { world: { ...WKNOBS }, sim: JSON.parse(JSON.stringify(CONFIG)), view: { zoom: -1, bright: coarse ? 1.5 : 1, crystalPing: 30 } }
 /** @type {typeof DEFAULTS} */
 const tunables = JSON.parse(JSON.stringify(DEFAULTS))
 
@@ -97,7 +97,7 @@ const panel = createPanel(
   tunables,
   {
     'world.ore': [100, 600, 10],
-    'world.loot': [0, 200, 5],
+    'world.crystals': [0, 200, 5],
     'sim.walkSpeed': [1, 60, 1],
     'sim.scan.radius': [4, 64, 1],
     'sim.scan.cooldown': [0, 600, 10],
@@ -131,6 +131,7 @@ const panel = createPanel(
     'sim.garden.burnTicks': [1, 60, 1],
     'sim.garden.burnFor': [1, 20, 1],
     'sim.garden.hyper': [1, 40, 1],
+    'sim.garden.suppress': [0, 8, 1],
     'sim.flowers.per': [1, 40, 1],
     'sim.flowers.bloomTicks': [600, 36000, 600],
     'sim.flowers.buildGap': [60, 18000, 60],
@@ -166,7 +167,7 @@ const panel = createPanel(
     'sim.upgradeGain': [0, 1, 0.05],
     'view.zoom': [-1, ZOOM_PX.length - 1, 1],
     'view.bright': [0.5, 3, 0.1],
-    'view.lootPing': [1, 120, 1],
+    'view.crystalPing': [1, 120, 1],
   },
   {
     onChange: () => {
@@ -324,7 +325,7 @@ function frame(t) {
         `pos ${game.ch.x},${game.ch.y} · light r ${game.radius} · ${game.ride ? 'riding' : game.move ? 'walking' : 'still'}`,
         `nodes on the network ${onNet}/${map.nodes.length} · edges built ${built}/${map.edges.length}`,
         `scan ${game.tick < game.scanAt ? `in ${((game.scanAt - game.tick) / 60).toFixed(1)} s` : 'ready'}`,
-        `ledger: ore ${game.ledger.ore} · loot ${game.ledger.loot} · fruit ${game.ledger.fruit} · vines ${game.garden.vines.length} px · worms ${game.worms.length} · lizards ${game.lizards.length} · bugs ${game.ledger.bugs} (at work ${game.swarm.length}, carrying ${game.swarm.reduce((a, b) => a + b.ore + b.loot, 0)})`,
+        `ledger: ore ${game.ledger.ore} · crystals ${game.ledger.crystals} · fruit ${game.ledger.fruit} · vines ${game.garden.vines.length} px · worms ${game.worms.length} · lizards ${game.lizards.length} · bugs ${game.ledger.bugs} (at work ${game.swarm.length}, carrying ${game.swarm.reduce((a, b) => a + b.ore + b.crystals, 0)})`,
         `wild bugs ${game.bugs.length} (chasing ${game.bugs.filter((b) => b.chasing).length}) · fed ${game.fed}/${game.cfg.bugs.tame}`,
         '` or tap the top-left corner: close',
       ].join('\n'),

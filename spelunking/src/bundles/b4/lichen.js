@@ -1,6 +1,6 @@
 // b4.15's lichen (the user): purple lichen covers the cave wall, a patch of 6–8 pixels, and grows a single
 // curly short leaf. b4.23 (the user): it's triggered by a large area of the bugs' cover (green, vine, fruit;
-// garden.js), no longer by loot. Cheats, like the lizards: every `checkTicks` a random pixel within `near` px
+// garden.js), no longer by crystals. Cheats, like the lizards: every `checkTicks` a random pixel within `near` px
 // of the bot with `density` px of cover within `radius` px starts a patch on the nearest surface pixel (open, 8-bordering solid) with no lichen
 // within `gap` px; the patch grows along surface pixels to `min`–`max` pixels at once; its leaf curls out
 // from the patch's first pixel, away from the rock: pixels, like everything else (b4.18, the user). Randomness from the tick (rng.js).
@@ -16,7 +16,7 @@ import { cover, ignite } from './garden.js'
 
 /** The lichen's numbers (the dev panel's). */
 export const LICHEN = {
-  density: 150, // px of cover within radius that start a patch (b4.23; was 8 loot within 8)
+  density: 150, // px of cover within radius that start a patch (b4.23; was 8 crystals within 8)
   radius: 12,
   near: 64,
   checkTicks: 300,

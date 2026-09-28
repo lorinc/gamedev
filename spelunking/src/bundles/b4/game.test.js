@@ -6,7 +6,7 @@ import { test } from 'node:test'
 import { addBug, blockOf } from '../../sim/dig/bugs.js'
 import { isOpen, Tile } from '../../sim/gen/world.js'
 import { buildable, command, CONFIG, createGame, HEADING, heading, shown, tick } from './game.js'
-import { makeMap } from './world.js'
+import { CRYSTAL, makeMap } from './world.js'
 
 const MAP = makeMap(1)
 const TILES = MAP.world.tiles.slice() // as made: other tests' games mine MAP
@@ -20,8 +20,8 @@ const fresh = () => {
 }
 const open = (/** @type {{ x: number, y: number }} */ c) => isOpen(MAP.world.tiles[c.y * MAP.world.w + c.x])
 
-test('the world has no loot: only lizards make it (b4.17)', () => {
-  assert.equal(MAP.world.tiles.filter((t) => t === Tile.Loot).length, 0)
+test('the world has no crystals: only lizards make it (b4.17)', () => {
+  assert.equal(MAP.world.tiles.filter((t) => t === CRYSTAL).length, 0)
 })
 
 test('no node on a rail is in rock (the candidate filter)', () => {
@@ -178,21 +178,21 @@ test('a tamed bug works near the network and sends its haul to the ledger', () =
   tick(g)
   assert.equal(g.swarm.length, 3)
   for (const b of g.swarm) assert.ok(open(b))
-  const before = g.ledger.ore + g.ledger.loot + g.ledger.fruit
+  const before = g.ledger.ore + g.ledger.crystals + g.ledger.fruit
   let dug = 0
   let hauled = 0
   for (let i = 0; i < 3600; i++) {
     tick(g)
     for (const e of g.events) {
       if (e.type === 'dug') dug++
-      if (e.type === 'haul') hauled += e.ore + e.loot + e.fruit
+      if (e.type === 'haul') hauled += e.ore + e.crystals + e.fruit
     }
     g.events.length = 0
     for (const b of g.swarm) assert.ok(open(b), 'never in rock')
   }
   assert.ok(dug > 0, 'they pulled something')
   assert.equal(hauled, dug)
-  assert.equal(g.ledger.ore + g.ledger.loot + g.ledger.fruit - before, hauled)
+  assert.equal(g.ledger.ore + g.ledger.crystals + g.ledger.fruit - before, hauled)
 })
 
 test('tamed bugs go for back wall not green yet: more greened than a plain random walk (b4.51)', () => {
@@ -316,7 +316,7 @@ test('your pull goes for the kind the ledger holds least of, even when another i
   const g = createGame(MAP, JSON.parse(JSON.stringify(CONFIG)))
   g.cfg.worms.max = 0
   const { w } = MAP.world
-  // rock pixels near the bot: the nearest becomes loot, one farther ore (both seen)
+  // rock pixels near the bot: the nearest becomes crystals, one farther ore (both seen)
   /** @type {{ i: number, d: number }[]} */
   const rock = []
   for (let dy = -6; dy <= 6; dy++)
@@ -325,12 +325,12 @@ test('your pull goes for the kind the ledger holds least of, even when another i
       if (!isOpen(MAP.world.tiles[i]) && dx * dx + dy * dy <= 36) rock.push({ i, d: dx * dx + dy * dy })
     }
   rock.sort((p, q) => p.d - q.d)
-  const loot = rock[0].i
+  const crystals = rock[0].i
   const ore = rock[rock.length - 1].i
-  MAP.world.tiles[loot] = Tile.Loot
+  MAP.world.tiles[crystals] = CRYSTAL
   MAP.world.tiles[ore] = Tile.Ore
-  g.seen[loot] = g.seen[ore] = 1
-  g.ledger.loot = 50
+  g.seen[crystals] = g.seen[ore] = 1
+  g.ledger.crystals = 50
   /** @type {number | null} */
   let first = null
   for (let t = 0; t < CONFIG.pull.ticks * 2 && first === null; t++) {
@@ -357,7 +357,7 @@ test('fruit buys the bugs upgrades by itself: 16, 32, 64… (b4.13)', async () =
   assert.equal(nextCost(g), 64)
 })
 
-test('ash spawns a lizard; it licks the ash within 6 px bare, burrows, and makes 5 loot inside the rock (b4.54)', async () => {
+test('ash spawns a lizard; it licks the ash within 6 px bare, burrows, and makes 5 crystals inside the rock (b4.54)', async () => {
   const { ASH } = await import('./garden.js')
   const g = fresh()
   g.cfg.worms.max = 0
@@ -378,9 +378,9 @@ test('ash spawns a lizard; it licks the ash within 6 px bare, burrows, and makes
   let spawned = 0
   let licked = 0
   /** @type {number[] | null} */
-  let loot = null
-  const before = tiles.filter((t) => t === Tile.Loot).length
-  for (let t = 0; t < 60 * 60 * 10 && !loot; t++) {
+  let crystals = null
+  const before = tiles.filter((t) => t === CRYSTAL).length
+  for (let t = 0; t < 60 * 60 * 10 && !crystals; t++) {
     tick(g)
     for (const e of g.events) {
       if (e.type === 'lizard') spawned++
@@ -391,21 +391,21 @@ test('ash spawns a lizard; it licks the ash within 6 px bare, burrows, and makes
         dx = Math.min(dx, w - dx)
         assert.ok(dx * dx + (e.y - e.to.y) ** 2 <= 36, 'within 6 px')
       }
-      if (e.type === 'deposit' && tiles[e.cells[0]] === Tile.Loot) loot = e.cells
+      if (e.type === 'deposit' && tiles[e.cells[0]] === CRYSTAL) crystals = e.cells
     }
     g.events.length = 0
     for (const z of g.lizards) if (z.eaten < 4) assert.ok(isOpen(tiles[z.body[0].y * w + z.body[0].x]), 'on the surface')
   }
   assert.ok(spawned > 0 && licked >= 4, `spawned ${spawned}, licked ${licked}`)
-  assert.ok(loot, 'burrowed')
-  assert.equal(loot.length, 5)
-  for (const c of loot) {
+  assert.ok(crystals, 'burrowed')
+  assert.equal(crystals.length, 5)
+  for (const c of crystals) {
     const x = c % w
     const y = (c - x) / w
     for (let dy = -1; dy <= 1; dy++)
       for (let dx = -1; dx <= 1; dx++) assert.ok(!isOpen(tiles[(y + dy) * w + ((x + dx + w) % w)]), 'inside the rock')
   }
-  assert.equal(tiles.filter((t) => t === Tile.Loot).length, before + 5)
+  assert.equal(tiles.filter((t) => t === CRYSTAL).length, before + 5)
 })
 
 test('a lizard dashes off the wall for ash in the middle of a cave, licks it, and runs straight back (b4.55)', async () => {
@@ -465,13 +465,13 @@ test('a lizard dashes off the wall for ash in the middle of a cave, licks it, an
   assert.ok(back > 0 && back - lickedAt < 600, `back on the wall ${back - lickedAt} ticks after`)
 })
 
-test('loot buys the lizards upgrades by itself: 16, 32, 64…, each their reach +20% (b4.56)', async () => {
+test('crystals buys the lizards upgrades by itself: 16, 32, 64…, each their reach +20% (b4.56)', async () => {
   const { lizardCost, gain } = await import('./game.js')
   const g = fresh()
-  g.ledger.loot = 16 + 32 + 3
+  g.ledger.crystals = 16 + 32 + 3
   tick(g)
   assert.equal(g.lizardLevel, 2)
-  assert.equal(g.ledger.loot, 3)
+  assert.equal(g.ledger.crystals, 3)
   assert.equal(lizardCost(g), 64)
   assert.equal(Math.round(CONFIG.lizards.reach * gain(g, 2)), 9) // 6 px → 9
   assert.equal(g.radius, CONFIG.light.base, 'your light stays')
@@ -519,16 +519,15 @@ test('a large area of cover grows a purple lichen patch of 6–8 surface pixels 
   g.cfg.lizards.max = 0
   g.cfg.lichen.near = 20
   g.cfg.lichen.spark = 1e9 // no fire here
-  g.cfg.lootTame = 0 // no bugs tamed by the loot (b4.40): they'd green the wall
   const { w } = MAP.world
-  // loot alone no longer does it (b4.15's trigger)
+  // crystals alone no longer do it (b4.15's trigger)
   for (let dy = -20; dy <= 20; dy += 3)
     for (let dx = -20; dx <= 20; dx += 3) {
       const i = (g.ch.y + dy) * w + g.ch.x + dx
-      if (!isOpen(MAP.world.tiles[i])) MAP.world.tiles[i] = Tile.Loot
+      if (!isOpen(MAP.world.tiles[i])) MAP.world.tiles[i] = CRYSTAL
     }
   for (let t = 0; t < 60 * 60; t++) tick(g)
-  assert.equal(g.lichen.patches.length, 0, 'loot: nothing')
+  assert.equal(g.lichen.patches.length, 0, 'crystals: nothing')
   // the cave round the bot green, as the bugs would leave it
   let n = 0
   for (let dy = -30; dy <= 30; dy++)
@@ -647,7 +646,7 @@ test('no lizard spawns in a small enclosure: its cave holds at least `room` open
     g.cfg.lizards.eat = 1e9 // they only mine: the rock stays as it is
     g.cfg.lizards.room = room
     // ash round the bot (lizards spawn by ash since b4.54): it passed by chance before, on ash from fires that
-    // bugs tamed by the loot earlier tests left in MAP had started
+    // bugs tamed by the crystals earlier tests left in MAP had started
     const { ASH } = await import('./garden.js')
     const { w: W } = g.world
     for (let dy = -40; dy <= 40; dy++)
@@ -868,12 +867,12 @@ test('a tamed bug starts its next trip at the network node with the fewest other
     g.net[A] = g.net[B] = 1
     g.ledger.bugs = 11
     for (let k = 0; k < 11; k++) {
-      g.swarm.push({ ...MAP.nodes[A], from: MAP.nodes[A], movedAt: 0, dir: 0, until: 1e9, target: null, pullFor: 0, ore: 0, loot: 0, fruit: 0 })
+      g.swarm.push({ ...MAP.nodes[A], from: MAP.nodes[A], movedAt: 0, dir: 0, until: 1e9, target: null, pullFor: 0, ore: 0, crystals: 0, fruit: 0 })
     }
     for (let t = 0; t < run; t++) tick(g) // a different tick: a different random draw
     // a 12th whose trip ends now
     g.ledger.bugs = 12
-    g.swarm.push({ ...MAP.nodes[A], from: MAP.nodes[A], movedAt: 0, dir: 0, until: g.tick + 1, target: null, pullFor: 0, ore: 0, loot: 0, fruit: 0 })
+    g.swarm.push({ ...MAP.nodes[A], from: MAP.nodes[A], movedAt: 0, dir: 0, until: g.tick + 1, target: null, pullFor: 0, ore: 0, crystals: 0, fruit: 0 })
     tick(g)
     assert.ok(d2(g.swarm[11], MAP.nodes[B]) <= g.cfg.swarm.spawn ** 2, 'its next trip starts at the empty node')
   }
@@ -899,11 +898,11 @@ test('a tamed bug on its next trip prefers a network node with no vine round it,
     g.garden.vines.push(v)
     g.ledger.bugs = 5
     for (let k = 0; k < 5; k++)
-      g.swarm.push({ ...MAP.nodes[B], from: MAP.nodes[B], movedAt: 0, dir: 0, until: 1e9, target: null, pullFor: 0, ore: 0, loot: 0, fruit: 0 })
+      g.swarm.push({ ...MAP.nodes[B], from: MAP.nodes[B], movedAt: 0, dir: 0, until: 1e9, target: null, pullFor: 0, ore: 0, crystals: 0, fruit: 0 })
     for (let t = 0; t < run; t++) tick(g)
     // a 6th whose trip ends now
     g.ledger.bugs = 6
-    g.swarm.push({ ...MAP.nodes[A], from: MAP.nodes[A], movedAt: 0, dir: 0, until: g.tick + 1, target: null, pullFor: 0, ore: 0, loot: 0, fruit: 0 })
+    g.swarm.push({ ...MAP.nodes[A], from: MAP.nodes[A], movedAt: 0, dir: 0, until: g.tick + 1, target: null, pullFor: 0, ore: 0, crystals: 0, fruit: 0 })
     tick(g)
     assert.ok(d2(g.swarm[5], MAP.nodes[B]) <= g.cfg.swarm.spawn ** 2, 'its next trip starts away from the vine')
   }
@@ -1009,7 +1008,7 @@ test('a tap while riding gets you off at the next open pixel, mid-root (b4.38)',
   if (p.slice(1, -1).some((c) => open(c))) assert.notDeepEqual([g.ch.x, g.ch.y], [far.x, far.y], 'before the far end')
 })
 
-test('every 4 built nodes add a tamed bug; nodes eaten take none back; loot tames no wild bug (b4.63)', async () => {
+test('every 4 built nodes add a tamed bug; nodes eaten take none back; crystals tames no wild bug (b4.63)', async () => {
   const { extend } = await import('./game.js')
   const { builtNodes } = await import('./beasts.js')
   const g = fresh()
@@ -1036,13 +1035,13 @@ test('every 4 built nodes add a tamed bug; nodes eaten take none back; loot tame
   tick(g)
   assert.ok(builtNodes(g) < 12)
   assert.equal(g.ledger.bugs, 3)
-  // a wild bug by a loot pixel stays wild
+  // a wild bug by a crystal pixel stays wild
   const { w } = MAP.world
   let at = -1
   for (let i = w * 200; i < MAP.world.tiles.length && at < 0; i++)
     if (isOpen(MAP.world.tiles[i]) && MAP.world.tiles[i + 1] === Tile.Soft) at = i
   const before = MAP.world.tiles[at + 1]
-  MAP.world.tiles[at + 1] = Tile.Loot
+  MAP.world.tiles[at + 1] = CRYSTAL
   g.bugs.length = 0
   addBug(/** @type {any} */ (g), at % w, Math.floor(at / w))
   const bug = g.bugs[0]
@@ -1050,7 +1049,7 @@ test('every 4 built nodes add a tamed bug; nodes eaten take none back; loot tame
   g.cfg.bugs.moveTicks = 1e9
   tick(g)
   assert.ok(g.bugs.includes(bug), 'still wild')
-  assert.equal(MAP.world.tiles[at + 1], Tile.Loot, 'the loot stays')
+  assert.equal(MAP.world.tiles[at + 1], CRYSTAL, 'the crystals stays')
   MAP.world.tiles[at + 1] = before
 })
 
@@ -1194,4 +1193,50 @@ test('a save loaded into a fresh game goes on exactly like the game it was saved
   run(g, 4000, 8000)
   run(h, 4000, 8000)
   assert.equal(save(h, TILES), save(g, TILES), 'the same game 4000 ticks on')
+})
+
+test('no cover within a tamed bug\'s 3×3 catches fire; round it, the fire burns on (b4.64)', async () => {
+  const { GREEN, cover } = await import('./garden.js')
+  const g = createGame(pristine(), JSON.parse(JSON.stringify(CONFIG)))
+  g.cfg.pull.ticks = 1e9
+  g.cfg.worms.max = 0
+  g.cfg.lizards.max = 0
+  g.cfg.lichen.spark = 1
+  g.cfg.lichen.checkTicks = 1
+  g.cfg.swarm.moveTicks = 1e9 // the bug stays put
+  g.cfg.swarm.pullTicks = 1e9
+  const { w } = MAP.world
+  const G = g.garden
+  for (let dy = -30; dy <= 30; dy++)
+    for (let dx = -30; dx <= 30; dx++) {
+      const i = (g.ch.y + dy) * w + g.ch.x + dx
+      if (isOpen(MAP.world.tiles[i])) G.wall[i] = GREEN
+    }
+  // a bug at an open pixel with its whole 3×3 green, 6+ px from the lichen
+  const at = g.ch.y * w + g.ch.x
+  let bug = -1
+  for (let dy = -20; dy <= 20 && bug < 0; dy++)
+    for (let dx = -20; dx <= 20 && bug < 0; dx++) {
+      const i = at + dy * w + dx
+      if (dx * dx + dy * dy < 36) continue
+      if ([-1, 0, 1].every((a) => [-1, 0, 1].every((b) => G.wall[i + a * w + b] === GREEN))) bug = i
+    }
+  assert.ok(bug >= 0)
+  const bx = bug % w
+  const by = Math.floor(bug / w)
+  g.swarm.push({ x: bx, y: by, from: { x: bx, y: by }, movedAt: 0, dir: 0, until: 1e9, target: null, pullFor: 0, ore: 0, crystals: 0, fruit: 0 })
+  g.lichen.on[at] = 1
+  g.lichen.patches.push({ cells: [at], leaf: [], sparked: false })
+  tick(g)
+  assert.ok(g.lichen.patches[0].sparked, 'sparked')
+  for (let k = 0; k < 3600 && G.burning.length; k++) tick(g)
+  assert.equal(G.burning.length, 0, 'the fire went out')
+  for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) assert.ok(cover(G.wall[bug + a * w + b]), 'the 3×3 stays green')
+  let burned = 0
+  for (let dy = -30; dy <= 30; dy++)
+    for (let dx = -30; dx <= 30; dx++) {
+      const i = at + dy * w + dx
+      if (isOpen(MAP.world.tiles[i]) && !cover(G.wall[i])) burned++
+    }
+  assert.ok(burned > 300, `the rest burned: ${burned} px`)
 })

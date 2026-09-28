@@ -6,14 +6,14 @@
 // (123k tiles: a whole repaint each step was too slow to play, not tuning).
 // New: nodes glow (the network's, and the rest near the bot), built rails, the spider
 // bot, ore flying to the bot as it's pulled. b4.3: the light fades out over its last EDGE px (drawing only);
-// the ledger, a column in the top-right corner (ore, loot, bugs); the selected edge flashes green, a refused
+// the ledger, a column in the top-right corner (ore, crystals, bugs); the selected edge flashes green, a refused
 // build pulses it red, a build streams ore from the ledger's ore icon to the site; tamed bugs at work (warm
 // dots) and their hauls flying to the ledger's icons. b4.10: the green back wall and vines in the texture, the
 // red fruit as a plain red pixel under the fog (it glowed in b4.10; the user: "fruits should not glow"), fruit
 // on the ledger. b4.12: worms, dark red and striped, drawn over the fog (so you see them burrow), and their
-// deposits turning to ore in the texture. b4.14: ore and loot in the wall are rock-coloured pixels with a speck
+// deposits turning to ore in the texture. b4.14: ore and crystals in the wall are rock-coloured pixels with a speck
 // in them (drawn under the fog, so seen and lit apply), hearts when a bug is tamed, lizards. b4.15: purple
-// lichen in the texture, its curly leaf under the fog; the bot's row on the ledger, loot as count/target.
+// lichen in the texture, its curly leaf under the fog; the bot's row on the ledger, crystals as count/target.
 
 import { cellRgb } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
@@ -21,7 +21,7 @@ import { sightCells } from '../../sim/dig/light.js'
 import { botAt, FRUIT_TILE, lizardCost, nextCost, shown } from './game.js'
 import { ASH, BURN, FRUIT, GREEN as MOSS, VINE } from './garden.js'
 import { LEAF_PX, WITHERED_PX } from './lichen.js'
-import { OPEN, ROCK, SHEET, SPACE } from './world.js'
+import { CRYSTAL, OPEN, ROCK, SHEET, SPACE } from './world.js'
 import { ledgerKinds } from './ledger.js'
 
 /** @typedef {import('./game.js').Game} Game */
@@ -47,7 +47,7 @@ const BULB_DIM = ['rgb(168,110,52)', 'rgb(128,70,26)', 'rgb(94,50,18)']
 const BULB_HELD = ['rgb(255,214,120)', 'rgb(246,150,44)', 'rgb(196,96,24)']
 const ORE = 'rgb(236,164,40)'
 const RED = '#ff2828'
-const LOOT = 'rgb(240,240,240)' // white (the user, b4.28; was b3's teal)
+const CRYSTAL_C = 'rgb(240,240,240)' // white (the user, b4.28; was b3's teal)
 const BUG = [255, 190, 90] // tamed: amber (D059)
 const WILD = [90, 170, 255] // wild: blue (D059)
 const LICHEN_RGB = [96, 44, 128]
@@ -73,7 +73,7 @@ const WALL_RGB = { [MOSS]: [22, 58, 30], [VINE]: [60, 140, 55], [FRUIT]: FRUIT_C
 /** @type {Record<number, number[]>} */
 const LICHEN_PX_RGB = { [LEAF_PX]: [176, 104, 220], [WITHERED_PX]: [112, 84, 56] } // b4.21: a sparked lichen's leaf, withered brown
 
-/** @param {HTMLCanvasElement} canvas @param {Game} game @param {Ui} ui @param {{ zoom: number, lootPing?: number }} view */
+/** @param {HTMLCanvasElement} canvas @param {Game} game @param {Ui} ui @param {{ zoom: number, crystalPing?: number }} view */
 export function createRenderer(canvas, game, ui, view) {
   const ctx = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d', { alpha: false }))
   const { world, map } = game
@@ -97,11 +97,11 @@ export function createRenderer(canvas, game, ui, view) {
     if (game.lichen.on[i] && world.tiles[i] === Tile.Open) timg.data.set([...(LICHEN_PX_RGB[game.lichen.on[i]] ?? LICHEN_RGB), 255], i * 4)
     else if (scenic(i)) timg.data.set(map.scenery.subarray(i * 4, i * 4 + 4), i * 4)
     else if (wall && world.tiles[i] === Tile.Open) timg.data.set([.../** @type {number[]} */ (WALL_RGB[wall]), 255], i * 4)
-    else if (world.tiles[i] === Tile.Ore || world.tiles[i] === Tile.Loot) timg.data.set([...rgb(rockUnder(i)), 255], i * 4)
+    else if (world.tiles[i] === Tile.Ore || world.tiles[i] === CRYSTAL) timg.data.set([...rgb(rockUnder(i)), 255], i * 4)
     else if (world.tiles[i] === Tile.Open) timg.data.set([...OPEN_RGB, 255], i * 4)
     else timg.data.set([...rgb(world.tiles[i]), 255], i * 4)
   }
-  /** The rock an ore or loot pixel sits in: its 8 neighbours' majority, soft on a tie (pull.js's toRock). @param {number} i */
+  /** The rock an ore or crystal pixel sits in: its 8 neighbours' majority, soft on a tie (pull.js's toRock). @param {number} i */
   function rockUnder(i) {
     const x = i % w
     const y = (i - x) / w
@@ -246,7 +246,7 @@ export function createRenderer(canvas, game, ui, view) {
       // flight (b4.7); each follows its puller as it moves
       const who = e.type === 'dug' ? game.swarm[e.by] : null
       const to = () => /** @type {[number, number]} */ (at(who ? workerAt(who, 0) : botAt(game, 0)))
-      fly(cell(e), to, now, 0.45, e.tile === FRUIT_TILE ? `rgb(${FRUIT_C})` : e.tile === Tile.Ore ? ORE : LOOT)
+      fly(cell(e), to, now, 0.45, e.tile === FRUIT_TILE ? `rgb(${FRUIT_C})` : e.tile === Tile.Ore ? ORE : CRYSTAL_C)
     } else if (e.type === 'deposit')
       for (const i of e.cells) {
         paintTile(i)
@@ -276,8 +276,8 @@ export function createRenderer(canvas, game, ui, view) {
       })
     } else if (e.type === 'poof') puff(e.x, e.y, now, 32, ['#ffffff', '#eef4ff', '#ffffff'], 14)
     else if (e.type === 'lizardUpgrade')
-      // loot to every lizard: they're what it upgrades (b4.56)
-      for (const z of game.lizards) for (let k = 0; k < 4; k++) fly(icon('loot'), cell({ ...z.body[0] }), now + k * 0.05, 0.6, LOOT, 0)
+      // crystals to every lizard: they're what it upgrades (b4.56)
+      for (const z of game.lizards) for (let k = 0; k < 4; k++) fly(icon('crystals'), cell({ ...z.body[0] }), now + k * 0.05, 0.6, CRYSTAL_C, 0)
     else if (e.type === 'upgrade')
       for (let k = 0; k < 8; k++) fly(icon('fruit'), icon('bugs'), now + k * 0.05, 0.6, `rgb(${FRUIT_C})`, 0) // no particles for a nibble (b4.13)
     else if (e.type === 'nibble') {
@@ -294,7 +294,7 @@ export function createRenderer(canvas, game, ui, view) {
     }
     else if (e.type === 'haul') {
       for (let k = 0; k < Math.min(e.ore, 12); k++) fly(cell(e), icon('ore'), now + k * 0.06, 0.9, ORE, 0)
-      for (let k = 0; k < Math.min(e.loot, 6); k++) fly(cell(e), icon('loot'), now + k * 0.08, 0.9, LOOT, 0)
+      for (let k = 0; k < Math.min(e.crystals, 6); k++) fly(cell(e), icon('crystals'), now + k * 0.08, 0.9, CRYSTAL_C, 0)
       for (let k = 0; k < e.fruit; k++) fly(cell(e), icon('fruit'), now + k * 0.08, 0.9, `rgb(${FRUIT_C})`, 0)
     } else if (e.type === 'built') {
       const site = cell(map.nodes[e.from])
@@ -339,7 +339,7 @@ export function createRenderer(canvas, game, ui, view) {
   function ledgerColor(kind) {
     if (kind === 'nodes') return BULB_HELD[1]
     if (kind === 'liquid') return `rgb(${LIQUID})`
-    return kind === 'ore' ? ORE : kind === 'fruit' ? `rgb(${FRUIT_C})` : kind === 'pink' ? `rgb(${PINK})` : kind === 'bugs' ? `rgb(${BUG})` : kind === 'bot' ? CHAR : LOOT
+    return kind === 'ore' ? ORE : kind === 'fruit' ? `rgb(${FRUIT_C})` : kind === 'pink' ? `rgb(${PINK})` : kind === 'bugs' ? `rgb(${BUG})` : kind === 'bot' ? CHAR : CRYSTAL_C
   }
   /** The screen's shake now, device px. @param {number} now @returns {[number, number]} */
   function shake(now) {
@@ -376,7 +376,7 @@ export function createRenderer(canvas, game, ui, view) {
     // the bot's count: you, and the flower bots at work on the network (b4.44, the user)
     const text = {
       ore: `${L.ore}`,
-      loot: `${L.loot}/${lizardCost(game)}`,
+      crystals: `${L.crystals}/${lizardCost(game)}`,
       bot: `${count('bot')}`,
       bugs: `${L.bugs}`,
       nodes: `${count('nodes')}`,
@@ -431,7 +431,7 @@ export function createRenderer(canvas, game, ui, view) {
   /** A stream's colour: the unit at c. @param {Cell} c */
   function unitColor(c) {
     const i = c.y * w + c.x
-    return game.garden.wall[i] === FRUIT ? `rgb(${FRUIT_C})` : world.tiles[i] === Tile.Loot ? LOOT : ORE
+    return game.garden.wall[i] === FRUIT ? `rgb(${FRUIT_C})` : world.tiles[i] === CRYSTAL ? CRYSTAL_C : ORE
   }
 
   /** The garden's changed pixels into the texture (b4.10; fruit is a red pixel there, b4.12). */
@@ -444,9 +444,9 @@ export function createRenderer(canvas, game, ui, view) {
     G.changed.length = 0
   }
 
-  /** Ore and loot in the wall (b4.14): a speck, half a pixel across, at a hashed spot in its pixel. Under the fog. */
+  /** Ore and crystals in the wall (b4.14): a speck, half a pixel across, at a hashed spot in its pixel. Under the fog. */
   function drawSpecks(/** @type {number} */ now) {
-    const P = Math.max(0.5, view.lootPing ?? 30)
+    const P = Math.max(0.5, view.crystalPing ?? 30)
     pingsNow.length = 0
     const s = Math.max(1, Math.round(T * 0.5))
     const cols = Math.ceil(W / T) + 2
@@ -464,14 +464,14 @@ export function createRenderer(canvas, game, ui, view) {
           ctx.fillRect(Math.round(sx(tx0 + k)), Math.round(sy(ty)), Math.ceil(T), Math.ceil(T))
         }
         const t = world.tiles[i]
-        if (t !== Tile.Ore && t !== Tile.Loot) continue
+        if (t !== Tile.Ore && t !== CRYSTAL) continue
         if (!game.seen[i]) continue
         const hsh = Math.imul(i, 2654435761) >>> 0
         const ox = T > s ? hsh % (T - s + 1) : 0
         const oy = T > s ? (hsh >>> 8) % (T - s + 1) : 0
-        ctx.fillStyle = t === Tile.Ore ? ORE : LOOT
+        ctx.fillStyle = t === Tile.Ore ? ORE : CRYSTAL_C
         ctx.fillRect(Math.round(sx(tx0 + k)) + ox, Math.round(sy(ty)) + oy, s, s)
-        if (t !== Tile.Loot) continue
+        if (t !== CRYSTAL) continue
         // its ping: once every P s at a hashed phase; frames 0, 2 and 4 of it draw the halo (below)
         const cycle = Math.floor(now / P + (hsh >>> 16) / 65536)
         const p = pings.get(i)
@@ -588,9 +588,9 @@ export function createRenderer(canvas, game, ui, view) {
     }
   }
 
-  // Loot's triple ping (b4.48, the user: "loot ore should rarely 'triple-ping': 5ms halo, 10ms gaps"): a
+  // Crystals' triple ping (b4.48, the user: "loot ore should rarely 'triple-ping': 5ms halo, 10ms gaps"): a
   // frame is 16.7 ms at 60 Hz, so the halo shows for one frame, then a frame's gap, three times (~83 ms);
-  // once every `view.lootPing` s (30) per seen loot pixel on screen, over the fog.
+  // once every `view.crystalPing` s (30) per seen crystal pixel on screen, over the fog.
   /** @type {Map<number, { cycle: number, f: number }>} */
   const pings = new Map()
   /** @type {[number, number][]} halos to draw this frame, device px */

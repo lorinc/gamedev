@@ -10,9 +10,9 @@
 // Scan: touching rock fires b3's probe at the rock pixel touched, at once, also while sliding along the wall
 // (b4.22, the user: "no need to wait"), rings out to `scan.radius`; `scan.cooldown` is 0 (was 1 s, b4.3). It fires only if some pixel within its radius is still
 // unseen (b4.6). Pull: b3's (D062): the nearest seen ore or
-// loot in the light is pulled, one unit every `pull.ticks`, and the pixel turns to rock; it goes straight to
+// crystals in the light is pulled, one unit every `pull.ticks`, and the pixel turns to rock; it goes straight to
 // the ledger (b4.3). Walking doesn't stop it (b4.5), a moving car does.
-// The ledger (b4.3, the user): every collectible, one count each: ore, loot, bugs. No pack.
+// The ledger (b4.3, the user): every collectible, one count each: ore, crystals, bugs. No pack.
 // Light (b4.3): a radius (`light.base`, 8 px; × the bug level's gain since b4.56), line of sight (light.js sightCells).
 // Nodes (b4.8, the user): the pod's are on the network until the first edge is built; from then on only the
 // ends of built edges. b4.22 (the user): a node shows only while the ledger holds the `price` and it has an
@@ -38,20 +38,20 @@
 // Garden (b4.10, garden.js): tamed bugs green the back wall, vines grow on green, vines make red fruit, a
 // resource: your pull takes fruit within the light too, seen or not. Your pull goes for the kind the ledger holds least
 // of (b4.12), the nearest of it.
-// Upgrades (b4.13, b4.15, the user): fruit on the ledger is spent by itself on the bugs, loot on the lizards: the
+// Upgrades (b4.13, b4.15, the user): fruit on the ledger is spent by itself on the bugs, crystals on the lizards: the
 // first costs 16 (swarm.upgradeCost, lizardUpgradeCost), each next twice the last; each makes something
 // `upgradeGain` (20%) bigger, compounding. b4.56 (the user: "loot should upgrade lizard mining distance, not the
 // player's; player reach, mining speed and light should depend on the bug level instead"): the bug level
 // grows the bugs' reach and speed, and your light (from 8 px), mining radius (the light's) and mining speed;
-// the lizard level (loot) grows the lizards' reach (from 6 px).
+// the lizard level (crystals) grows the lizards' reach (from 6 px).
 // Lizards (b4.14, lizards.js): plentiful ore spawns lizards; they zip round the cave surfaces mining ore, and
-// after 16 burrow and make one loot in the wall.
-// Lichen (b4.15, lichen.js): plentiful loot grows purple lichen patches of 6–8 px with a curly leaf (looks only).
+// after 16 burrow and make one crystal in the wall.
+// Lichen (b4.15, lichen.js): plentiful crystals grow purple lichen patches of 6–8 px with a curly leaf (looks only).
 // Worms (b4.12, worms.js): dense fruit spawns worms; they eat 8 fruit, burrow and curl up into an ore deposit.
 // Bugs (b4.3): b3.7's wild ones (`src/sim/dig/bugs.js`, D056–D061) with the `ledger` switch: they nibble ore
 // from the ledger; at 16 fed (D060) the last biter is +1 bug on the ledger. b4.63 (the user): the network gives
 // one too, per `nodesPerBug` (4) built nodes (`nodeTames`), so running from the bugs can't stall the taming;
-// loot no longer tames (b4.40's, gone). Tamed bugs are abstract workers (swarm.js).
+// crystals no longer tame (b4.40's, gone). Tamed bugs are abstract workers (swarm.js).
 
 import { Tile, isOpen } from '../../sim/gen/world.js'
 import { reveal } from '../../sim/dig/game.js'
@@ -68,7 +68,7 @@ import { createLichen, LICHEN, updateLichen } from './lichen.js'
 import { FLOWERS, updateFlowers } from './flowers.js'
 import { ASHWORMS, updateAshworms } from './ashworms.js'
 import { BEASTS, builtNodes, updateBeasts } from './beasts.js'
-import { OPEN, ROCK } from './world.js'
+import { CRYSTAL, OPEN, ROCK } from './world.js'
 
 /** @typedef {import('./world.js').Map} Map */
 /** @typedef {import('./world.js').Cell} Cell */
@@ -110,7 +110,7 @@ export const CONFIG = {
   ashworms: { ...ASHWORMS },
   beasts: { ...BEASTS },
   price: 10, // ore per edge (user: 8–12, tuned later)
-  lizardUpgradeCost: 16, // loot for the lizards' first upgrade, doubling (the bot's b4.15–b4.55; the user, b4.56)
+  lizardUpgradeCost: 16, // crystals for the lizards' first upgrade, doubling (the bot's b4.15–b4.55; the user, b4.56)
   upgradeGain: 0.2, // an upgrade: mining radius and speed +20% (the user, b4.15)
   rideSpeed: 40, // px/s riding (the user, b4.38: "too fast"; was 80); an integer budget, 60 a straight px, 85 a diagonal
 }
@@ -127,7 +127,7 @@ export const CONFIG = {
  *   | { type: 'pulled', x: number, y: number, tile: number, to: Cell }
  *   | { type: 'built', edge: number, from: number, price: number }
  *   | { type: 'refused', edge: number, reason: 'ore' | 'off' | 'far' | 'built' }
- *   | { type: 'dug', x: number, y: number, tile: number, by: number } | { type: 'haul', x: number, y: number, ore: number, loot: number, fruit: number }
+ *   | { type: 'dug', x: number, y: number, tile: number, by: number } | { type: 'haul', x: number, y: number, ore: number, crystals: number, fruit: number }
  *   | { type: 'worm', x: number, y: number } | { type: 'eaten', x: number, y: number } | { type: 'deposit', cells: number[] }
  *   | { type: 'upgrade', level: number } | { type: 'lizardUpgrade', level: number }
  *   | { type: 'lizard', x: number, y: number } | { type: 'lichen', x: number, y: number } | { type: 'engulf' | 'eject', node: number } | { type: 'flower' | 'bloom' | 'poof' | 'ashworm' | 'ashwormGone' | 'ashwormBurst', x: number, y: number } | { type: 'spark', x: number, y: number } | { type: 'licked', x: number, y: number, to: Cell }
@@ -156,11 +156,11 @@ export const CONFIG = {
  * @property {{ x: number, y: number, px: number, py: number }} pos the bot's position in thousandths of a px (x
  *   wraps at w × 1000), this tick's and the last's (for drawing); always inside ch
  * @property {{ dx: number, dy: number } | null} move the direction pointed, as heading() gives it
- * @property {{ ore: number, loot: number, bugs: number, fruit: number, pink: number, liquid: number }} ledger b4.3; fruit b4.10; pink b4.45 (burst ash worms)
+ * @property {{ ore: number, crystals: number, bugs: number, fruit: number, pink: number, liquid: number }} ledger b4.3; fruit b4.10; pink b4.45 (burst ash worms)
  * @property {import('./garden.js').GardenState} garden b4.10
  * @property {import('./worms.js').Worm[]} worms b4.12
  * @property {number} level bug upgrades bought (b4.13)
- * @property {number} lizardLevel lizard upgrades bought with loot (b4.56; the bot's since b4.15)
+ * @property {number} lizardLevel lizard upgrades bought with crystals (b4.56; the bot's since b4.15)
  * @property {number} nodeBugs tamed bugs the network has given so far (b4.63): the most built nodes reached / nodesPerBug
  * @property {import('./lizards.js').Lizard[]} lizards b4.14
  * @property {import('./lichen.js').LichenState} lichen b4.15
@@ -212,7 +212,7 @@ export function createGame(map, cfg) {
     ch: { x: map.start.x, y: map.start.y, facing: 1 },
     pos: { x: map.start.x * 1000 + 500, y: map.start.y * 1000 + 500, px: map.start.x * 1000 + 500, py: map.start.y * 1000 + 500 },
     move: null,
-    ledger: { ore: 0, loot: 0, bugs: 0, fruit: 0, pink: 0, liquid: 0 },
+    ledger: { ore: 0, crystals: 0, bugs: 0, fruit: 0, pink: 0, liquid: 0 },
     garden: createGarden(world.w * world.h),
     worms: [],
     level: 0,
@@ -306,8 +306,8 @@ export function tick(g) {
     g.level++
     g.events.push({ type: 'upgrade', level: g.level })
   }
-  while (g.ledger.loot >= lizardCost(g)) {
-    g.ledger.loot -= lizardCost(g)
+  while (g.ledger.crystals >= lizardCost(g)) {
+    g.ledger.crystals -= lizardCost(g)
     g.lizardLevel++
     g.events.push({ type: 'lizardUpgrade', level: g.lizardLevel })
   }
@@ -426,15 +426,15 @@ function pull(g) {
   let fruit = false
   if (!g.ride?.run) {
     // the kind the ledger holds least of first (the user, b4.12), then the next; nearest within a kind; ties
-    // on the ledger go ore, loot, fruit
+    // on the ledger go ore, crystals, fruit
     const r = g.radius // the light's (b4.56: it grows with the bug level)
     const L = g.ledger
-    const kinds = /** @type {const} */ (['ore', 'loot', 'fruit']).slice().sort((p, q) => L[p] - L[q])
+    const kinds = /** @type {const} */ (['ore', 'crystals', 'fruit']).slice().sort((p, q) => L[p] - L[q])
     for (const k of kinds) {
       if (k === 'fruit') {
         const f = fruitNear(g, g.ch, r)
         if (f) (c = { x: f.x, y: f.y }), (fruit = true)
-      } else c = nearestValuable(/** @type {any} */ (g), g.ch, r, (t) => t === (k === 'ore' ? Tile.Ore : Tile.Loot))
+      } else c = nearestValuable(/** @type {any} */ (g), g.ch, r, (t) => t === (k === 'ore' ? Tile.Ore : CRYSTAL))
       if (c) break
     }
   }
@@ -454,7 +454,7 @@ function pull(g) {
   }
   const tile = g.world.tiles[c.y * g.world.w + c.x]
   if (tile === Tile.Ore) g.ledger.ore++
-  else g.ledger.loot++
+  else g.ledger.crystals++
   toRock(/** @type {any} */ (g), c.x, c.y)
   g.pulling = null
   g.litFor.r = -1
@@ -464,7 +464,7 @@ function pull(g) {
 /** The fruit the next reach upgrade costs: upgradeCost × 2^level (b4.13). @param {Game} g */
 export const nextCost = (g) => Math.max(1, g.cfg.swarm.upgradeCost) * 2 ** g.level
 
-/** The loot the lizards' next upgrade costs: lizardUpgradeCost × 2^lizardLevel (b4.56). @param {Game} g */
+/** The crystals the lizards' next upgrade costs: lizardUpgradeCost × 2^lizardLevel (b4.56). @param {Game} g */
 export const lizardCost = (g) => Math.max(1, g.cfg.lizardUpgradeCost) * 2 ** g.lizardLevel
 
 /** How much bigger `level` upgrades make a mining radius and speed: (1 + upgradeGain)^level. @param {Game} g @param {number} level */

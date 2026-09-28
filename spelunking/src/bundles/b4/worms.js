@@ -165,7 +165,7 @@ function move(g, m, p) {
 /**
  * A deposit site: the nearest soft or hard rock pixel within `site` px with no open pixel within 2, grown
  * (randomly, 8-way) into `length` soft or hard pixels, none 8-bordering an open one. Null if none.
- * Lizards use it too, with their own `site` and `length` (1: a single loot pixel).
+ * Lizards use it too, with their own `site` and `length` (1: a single crystal pixel).
  * @param {import('./game.js').Game} g @param {{ site: number, length: number }} c @param {{ x: number, y: number }} at @param {() => number} rng
  */
 export function findSite(g, c, at, rng) {
