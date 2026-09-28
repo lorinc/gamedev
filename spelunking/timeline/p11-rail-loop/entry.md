@@ -190,6 +190,8 @@ Then (D097, the user): the cave's back wall is dark grey-blue, apart from the un
 Then (D098, the user): no loot in the generated world; lizards are its only source.
 Then (D099, the user): soft and hard rock much darker, under the back wall's grey-blue.
 Then (D100, the user): the lichen's leaf is world pixels, not a smooth curve.
+Then (D101, the user): lizards spawn only with 24 reachable ore within 16 px, and route along the surface to
+ore they can reach (a 32-step flood); 163 of 176 retired in a 20-minute measurement (was 1 of 20).
 
 ## Feedback
 

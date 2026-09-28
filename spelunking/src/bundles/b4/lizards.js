@@ -1,9 +1,12 @@
 // b4.14's lizards (the user): where ore is plentiful, bright green lizards appear; they zip, stop and zip
 // round the cave surfaces, mine the ore, and after 16 they burrow and make one loot in the wall.
 // Cheats, like the worms (no pathfinding): every `checkTicks` a random pixel within `near` px of the bot with
-// `density` ore within `radius` px spawns a lizard on the nearest surface pixel there (open, 8-bordering a
-// solid one), at most `max`. A lizard runs only on surface pixels: a zip of 4–12 px, a px every `zipTicks`,
-// toward the nearest ore within `sense` px (else on its heading, else anywhere), then a stop of 0.7–2 s,
+// `density` reachable ore within `radius` px (ore within `reach` of a surface pixel: what a lizard can mine;
+// b4.20, the user: they got stuck short of 16) spawns a lizard on the nearest surface pixel there (open,
+// 8-bordering a solid one), at most `max`. A lizard runs only on surface pixels: a zip of 4–12 px, a px every
+// `zipTicks`, along its route (else on its heading, else anywhere): as a zip starts, a flood over the surface
+// up to `sense` × 2 steps finds the nearest surface pixel (in steps) with ore within `reach`, and the route
+// there (b4.20, the user: they got stuck; heading straight for ore snagged on the cave's shape), then a stop of 0.7–2 s,
 // taking an ore within `reach` px every `mineTicks` while it stops (the pixel turns to rock). Full, it
 // takes the worms' site finder with a 1 px site: a soft or hard rock pixel with no open one within 2; it
 // goes straight there through the rock, and that pixel turns to loot (event `deposit`). Randomness from the
@@ -17,8 +20,8 @@ import { findSite } from './worms.js'
 
 /** The lizards' numbers (the dev panel's). */
 export const LIZARDS = {
-  density: 16, // ore within radius that spawn a lizard
-  radius: 8,
+  density: 24, // reachable ore within radius that spawn a lizard: 1.5× eat (b4.20; was 16 ore of any depth within 8)
+  radius: 16, // the lizard's sense
   near: 64, // px from the bot a spawn is tried
   checkTicks: 300,
   max: 6,
@@ -42,6 +45,7 @@ export const LIZARDS = {
  * @property {number} eaten
  * @property {{ x: number, y: number, cells: number[] } | null} site
  * @property {number} lookedAt the tick it last looked for a site
+ * @property {{ x: number, y: number }[]} route the surface pixels to its goal, next first (b4.20)
  */
 
 const SALT = 0x11a2
@@ -55,13 +59,6 @@ const STEPS = [
   [0, -1],
   [1, -1],
 ]
-
-/** @param {number} w @param {{ x: number, y: number }} a @param {{ x: number, y: number }} b */
-function d2(w, a, b) {
-  let dx = Math.abs(a.x - b.x)
-  dx = Math.min(dx, w - dx)
-  return dx * dx + (a.y - b.y) ** 2
-}
 
 /** Open, and 8-bordering a solid pixel: a cave surface. @param {import('./game.js').Game} g @param {number} x @param {number} y */
 function surface(g, x, y) {
@@ -89,6 +86,42 @@ function oreNear(g, at, r) {
     }
   }
   return best
+}
+
+/**
+ * A lizard's route: a flood over surface pixels (8-way) from `at`, up to sense × 2 steps, to the nearest one
+ * (in steps) with an ore within `reach`; its pixels, next first; empty if none, or if it's there.
+ * @param {import('./game.js').Game} g @param {Lizards} c @param {{ x: number, y: number }} at
+ */
+function routeFor(g, c, at) {
+  const { w } = g.world
+  const start = at.y * w + at.x
+  /** @type {Map<number, number>} */
+  const from = new Map([[start, -1]])
+  let front = [start]
+  for (let d = 0; d <= c.sense * 2 && front.length; d++) {
+    /** @type {number[]} */
+    const next = []
+    for (const i of front) {
+      const x = i % w
+      const y = (i - x) / w
+      if (oreNear(g, { x, y }, c.reach)) {
+        /** @type {{ x: number, y: number }[]} */
+        const route = []
+        for (let j = i; j !== start; j = /** @type {number} */ (from.get(j))) route.unshift({ x: j % w, y: Math.floor(j / w) })
+        return route
+      }
+      for (const [sx, sy] of STEPS) {
+        const nx = wrap(x + sx, w)
+        const n = (y + sy) * w + nx
+        if (from.has(n) || !surface(g, nx, y + sy)) continue
+        from.set(n, i)
+        next.push(n)
+      }
+    }
+    front = next
+  }
+  return []
 }
 
 /** The lizards' tick. @param {import('./game.js').Game} g */
@@ -131,7 +164,14 @@ export function updateLizards(g) {
       }
       return true
     }
-    if (!z.zip) z.zip = 4 + (rng() % 9)
+    if (!z.zip) {
+      if (oreNear(g, head, c.reach)) {
+        z.restUntil = g.tick + 40 + (rng() % 80) // ore in reach: it stays and mines
+        return true
+      }
+      z.route = routeFor(g, c, head)
+      z.zip = z.route.length ? Math.min(z.route.length, 12) : 4 + (rng() % 9)
+    }
     if (g.tick - z.movedAt < Math.max(1, c.zipTicks)) return true
     z.movedAt = g.tick
     step(g, c, z, rng)
@@ -149,12 +189,18 @@ function spawn(g, c, rng) {
   const n = Math.max(1, c.near)
   const p = { x: wrap(g.ch.x + (rng() % (2 * n + 1)) - n, w), y: g.ch.y + (rng() % (2 * n + 1)) - n }
   if (p.y < 0 || p.y >= h) return
+  // reachable ore: within `reach` of a surface pixel
   let ore = 0
   const r = c.radius
-  for (let dy = -r; dy <= r; dy++)
+  const re = c.reach
+  for (let dy = -r; dy <= r && ore < c.density; dy++)
     for (let dx = -r; dx <= r; dx++) {
       const y = p.y + dy
-      if (y >= 0 && y < h && dx * dx + dy * dy <= r * r && tiles[y * w + wrap(p.x + dx, w)] === Tile.Ore) ore++
+      if (y < 0 || y >= h || dx * dx + dy * dy > r * r || tiles[y * w + wrap(p.x + dx, w)] !== Tile.Ore) continue
+      let reach = false
+      for (let ey = -re; ey <= re && !reach; ey++)
+        for (let ex = -re; ex <= re && !reach; ex++) reach = ex * ex + ey * ey <= re * re && surface(g, p.x + dx + ex, y + ey)
+      if (reach) ore++
     }
   if (ore < c.density) return
   // the nearest surface pixel within the radius
@@ -169,27 +215,29 @@ function spawn(g, c, rng) {
     }
   if (!best) return
   const b = /** @type {{ x: number, y: number }} */ (best)
-  g.lizards.push({ body: [b, { ...b }, { ...b }], dir: rng() % 8, zip: 0, movedAt: g.tick, restUntil: g.tick + 30, mineAt: 0, eaten: 0, site: null, lookedAt: -1e9 })
+  g.lizards.push({ body: [b, { ...b }, { ...b }], dir: rng() % 8, zip: 0, movedAt: g.tick, restUntil: g.tick + 30, mineAt: 0, eaten: 0, site: null, lookedAt: -1e9, route: [] })
   g.events.push({ type: 'lizard', x: b.x, y: b.y })
 }
 
-/** One px along the surface: toward the nearest ore in sense, else on its heading, else any. @param {import('./game.js').Game} g @param {Lizards} c @param {Lizard} z @param {() => number} rng */
+/** One px: along its route, else on its heading, else anywhere on the surface. @param {import('./game.js').Game} g @param {Lizards} c @param {Lizard} z @param {() => number} rng */
 function step(g, c, z, rng) {
   const head = z.body[0]
   const { w } = g.world
+  const r = z.route.shift()
+  if (r && surface(g, r.x, r.y)) {
+    const k = STEPS.findIndex(([sx, sy]) => wrap(head.x + sx, w) === r.x && head.y + sy === r.y)
+    if (k >= 0) z.dir = k
+    move(z, r)
+    if (!z.route.length) z.zip = 1 // there: stop and mine
+    return
+  }
+  z.route = []
   const ok = [0, 1, 2, 3, 4, 5, 6, 7].filter((k) => surface(g, head.x + STEPS[k][0], head.y + STEPS[k][1]))
   if (!ok.length) return
-  const at = (/** @type {number} */ k) => ({ x: wrap(head.x + STEPS[k][0], w), y: head.y + STEPS[k][1] })
-  const o = oreNear(g, head, c.sense)
-  let k = -1
-  if (o) {
-    let bd = d2(w, head, o)
-    for (const j of ok) if (d2(w, at(j), o) < bd) (bd = d2(w, at(j), o)), (k = j)
-  }
-  if (k < 0 && ok.includes(z.dir) && rng() % 4) k = z.dir
-  if (k < 0) k = ok[rng() % ok.length]
+  const k = ok.includes(z.dir) && rng() % 4 ? z.dir : ok[rng() % ok.length]
   z.dir = k
-  move(z, at(k))
+  move(z, { x: wrap(head.x + STEPS[k][0], w), y: head.y + STEPS[k][1] })
+  void c
 }
 
 /** @param {Lizard} z @param {{ x: number, y: number }} p */
