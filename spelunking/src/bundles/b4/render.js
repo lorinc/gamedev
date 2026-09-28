@@ -34,11 +34,13 @@ const BG_RGB = [5, 5, 8]
 const DIM_A = 0.825 // seen, not lit: 17.5% bright (b4.2's 35%, 50% darker: the user, b4.3)
 const CHAR = '#f4f1de'
 const NODE = [255, 200, 40]
-const ROOT = 'rgb(214,118,36)' // a root's two shades (b4.22)
-const ROOT2 = 'rgb(176,86,26)'
-const BULB_CORE = 'rgb(255,214,120)' // a node's bulb: core, body, rim (b4.22)
-const BULB = 'rgb(246,150,44)'
-const BULB_RIM = 'rgb(196,96,24)'
+// a root's two shades (b4.22), dim (b4.27, the user: "it outshines the whole map")
+const ROOT = 'rgb(120,64,24)'
+const ROOT2 = 'rgb(96,50,20)'
+// a node's bulb, core, body, rim (b4.22): dim while still, bright while it holds the bot (b4.27); a still
+// bulb you can build from keeps a dim core, one on a built root has none
+const BULB_DIM = ['rgb(168,110,52)', 'rgb(128,70,26)', 'rgb(94,50,18)']
+const BULB_HELD = ['rgb(255,214,120)', 'rgb(246,150,44)', 'rgb(196,96,24)']
 const ORE = 'rgb(236,164,40)'
 const RED = '#ff2828'
 const LOOT = 'rgb(64,232,214)'
@@ -590,19 +592,20 @@ export function createRenderer(canvas, game, ui, view) {
     for (const c of map.edges[aim].path) px(c.x, c.y)
   }
 
-  /** Nodes (b4.22, the user): an orange bulb of pixels, beating while it can be built from (the one holding the
-   * bot, bigger); on a built root, still (b4.23, the user). @param {number} now */
+  /** Nodes (b4.22, the user): an orange bulb of pixels, still and dim; the one holding the bot beats, bigger
+   * and bright (b4.27, the user). @param {number} now */
   function drawNodes(now) {
     map.nodes.forEach((n, i) => {
       const live = shown(game, i)
       if (!live && !game.railed[i]) return
       const held = game.engulf === i
-      const r = live ? (held ? 3 : 2) + (Math.sin(now * 4 + i) > 0.2 ? 1 : 0) : 2
+      const r = held ? 3 + (Math.sin(now * 4) > 0.2 ? 1 : 0) : 2
+      const [core, body, rim] = held ? BULB_HELD : BULB_DIM
       for (let dy = -r; dy <= r; dy++)
         for (let dx = -r; dx <= r; dx++) {
           const d = dx * dx + dy * dy
           if (d > r * r + r) continue
-          ctx.fillStyle = d <= 1 ? BULB_CORE : d <= r * r - r ? BULB : BULB_RIM
+          ctx.fillStyle = d <= 1 && (live || held) ? core : d <= r * r - r ? body : rim
           px(n.x + dx, n.y + dy)
         }
     })

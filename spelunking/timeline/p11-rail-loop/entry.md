@@ -214,6 +214,7 @@ Then (D108, the user): brighter, many-coloured fire with sparks; the ash grows w
 that bloom after 2 minutes into light-less bots; they clear their ash, go to the network, zip along it,
 build 3 edges from your ore (60 s apart at least) and pop. Screenshots `gallery/p11/b4.25_*`.
 Then (D109, the user): a bulb lets the bot go after 3 s with nothing built.
+Then (D110, the user): the roots and bulbs much dimmer; only the bulb holding the bot beats, bright.
 
 ## Feedback
 
