@@ -230,6 +230,7 @@ Then (D113, the user): lichen sparks 4× rarer, 1 in 24 checks.
 Then (D114, the user): roots and still bulbs under the fog, bulbs a 5 px plus. Screenshots `gallery/p11/b4.32_*`.
 Then (D115, the user): flower bots grow the network outwards only, heading for its rim; vines touching ash
 make fruit 10× as fast.
+Then (D116, the user): a tamed bug starts its trip at the network node with the fewest bugs round it.
 
 ## Feedback
 

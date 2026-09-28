@@ -170,6 +170,7 @@ test('a tamed bug works near the network and sends its haul to the ledger', () =
 test('bugs green the back wall, vines grow on green, and 12 px of vine make a fruit a minute (b4.10)', async () => {
   const { FRUIT, GREEN, VINE } = await import('./garden.js')
   const g = fresh()
+  g.cfg.lichen.near = 0 // no lichen, so no fire (b4.21): this is the garden alone
   g.ledger.bugs = 10
   for (let i = 0; i < 3600; i++) tick(g)
   const wall = [...g.garden.wall]
@@ -636,4 +637,29 @@ test('a vine touching ash makes fruit 10 times as fast (b4.33)', async () => {
   const hyper = fruit(true)
   assert.ok(plain >= 3 && plain <= 7, `plain ${plain}`) // 60 px / 12 = 5 a minute
   assert.ok(hyper >= 38 && hyper <= 52, `next to ash ${hyper}`) // ×10, less the pixels already holding one
+})
+
+test('a tamed bug starts its trip at the network node with the fewest other bugs round it (b4.34)', () => {
+  const { w } = MAP.world
+  const d2 = (/** @type {{x: number, y: number}} */ a, /** @type {{x: number, y: number}} */ b) => {
+    const dx = Math.min(Math.abs(a.x - b.x), w - Math.abs(a.x - b.x))
+    return dx * dx + (a.y - b.y) ** 2
+  }
+  // two network nodes far apart; 11 bugs at work round the first
+  const A = MAP.podNodes[0]
+  const B = MAP.nodes.findIndex((n) => d2(n, MAP.nodes[A]) > 100 ** 2)
+  for (let run = 0; run < 8; run++) {
+    const g = fresh()
+    g.cfg.lichen.near = 0
+    g.net.fill(0)
+    g.net[A] = g.net[B] = 1
+    g.ledger.bugs = 11
+    for (let k = 0; k < 11; k++) {
+      g.swarm.push({ ...MAP.nodes[A], from: MAP.nodes[A], movedAt: 0, dir: 0, until: 1e9, target: null, pullFor: 0, ore: 0, loot: 0, fruit: 0 })
+    }
+    for (let t = 0; t < run; t++) tick(g) // a different tick: a different random draw
+    g.ledger.bugs = 12
+    tick(g)
+    assert.ok(d2(g.swarm[11], MAP.nodes[B]) <= g.cfg.swarm.spawn ** 2, 'the new one starts at the empty node')
+  }
 })

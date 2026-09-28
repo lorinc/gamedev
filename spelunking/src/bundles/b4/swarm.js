@@ -7,13 +7,15 @@
 // and your flight for it. After `tripTicks` it sends its haul straight to the ledger (event `haul`: the view flies it to the ledger's icons)
 // and starts a new trip near another node. b4.10: where it goes it greens the back wall (garden.js), and it
 // picks fruit too, up to `fruitCarry` a trip. Randomness from the tick, like b3's bugs, so runs repeat.
+// b4.34 (the user: "tame bugs try to spawn in areas with the least amount of tame bugs"): a trip starts at
+// the network node with the fewest other bugs within `crowd` px, ties at random.
 
 import { isOpen, Tile } from '../../sim/gen/world.js'
 import { toRock } from '../../sim/dig/pull.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
 import { fruitNear, greenAround, pick } from './garden.js'
-import { gain } from './game.js'
+import { dist2, gain } from './game.js'
 
 /** @typedef {import('./world.js').Cell} Cell */
 /**
@@ -38,6 +40,7 @@ export const SWARM = {
   reach: 4, // px a bug mines and picks within (the user, b4.11; was 2)
   pullTicks: 60, // a unit a second at most, like your pull
   spawn: 12, // px round a network node (nodeReach)
+  crowd: 32, // px round a node its bugs are counted within (b4.34)
   fruitCarry: 8, // fruit a bug holds at most (the user, b4.10)
   upgradeCost: 16, // fruit for the first upgrade, doubling each time: 16, 32, 64… (the user, b4.13)
 }
@@ -61,13 +64,23 @@ function open(g, x, y) {
   return y >= 0 && y < g.world.h && isOpen(g.world.tiles[y * g.world.w + wrap(x, g.world.w)])
 }
 
-/** An open pixel near a random network node, or null (no network). @param {import('./game.js').Game} g @param {Swarm} s @param {() => number} rng */
-function spawnAt(g, s, rng) {
+/** An open pixel near the network node with the fewest other bugs round it, or null (no network).
+ * @param {import('./game.js').Game} g @param {Swarm} s @param {() => number} rng @param {Worker} [self] the bug starting a trip */
+function spawnAt(g, s, rng, self) {
   /** @type {number[]} */
-  const net = []
-  g.net.forEach((on, i) => on && net.push(i))
-  if (!net.length) return null
-  const n = g.map.nodes[net[rng() % net.length]]
+  let best = []
+  let least = Infinity
+  const c2 = s.crowd * s.crowd
+  g.net.forEach((on, i) => {
+    if (!on) return
+    const n = g.map.nodes[i]
+    let k = 0
+    for (const b of g.swarm) if (b !== self && dist2(g, b, n) <= c2) k++
+    if (k < least) (least = k), (best = [i])
+    else if (k === least) best.push(i)
+  })
+  if (!best.length) return null
+  const n = g.map.nodes[best[rng() % best.length]]
   const r = Math.max(0, s.spawn)
   for (let k = 0; k < 24; k++) {
     const dx = (rng() % (2 * r + 1)) - r
@@ -111,7 +124,7 @@ export function updateSwarm(g) {
       g.ledger.loot += b.loot
       g.ledger.fruit += b.fruit
       if (b.ore || b.loot || b.fruit) g.events.push({ type: 'haul', x: b.x, y: b.y, ore: b.ore, loot: b.loot, fruit: b.fruit })
-      startTrip(g, b, spawnAt(g, s, rng) ?? b, rng)
+      startTrip(g, b, spawnAt(g, s, rng, b) ?? b, rng)
       return
     }
     if (g.tick - b.movedAt >= Math.max(1, s.moveTicks)) step(g, b, rng)

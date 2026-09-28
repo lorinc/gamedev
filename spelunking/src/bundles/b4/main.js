@@ -76,6 +76,7 @@ const panel = createPanel(
     'sim.swarm.pullTicks': [1, 600, 5],
     'sim.swarm.reach': [1, 8, 1],
     'sim.swarm.spawn': [0, 64, 1],
+    'sim.swarm.crowd': [4, 128, 4],
     'sim.swarm.fruitCarry': [1, 32, 1],
     'sim.garden.trail': [0, 4, 1],
     'sim.garden.sprout': [1, 400, 1],
