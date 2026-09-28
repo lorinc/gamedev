@@ -302,6 +302,7 @@ the next visit; the dev panel's "new game" starts over. Screenshot `gallery/p11/
 Then (D145, the user): every 4 built nodes add a tamed bug, on top of the nibbling; loot no longer tames.
 Then (D146, the user): loot is called crystals in b4's code and docs. Then (D147, the user): no cover within a
 tamed bug's 3×3 catches fire.
+Then (D148, the user): worms glide between pixels like the bot, not a pixel jump a step (view only).
 
 ## Feedback
 

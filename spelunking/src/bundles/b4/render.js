@@ -661,11 +661,34 @@ export function createRenderer(canvas, game, ui, view) {
   }
 
   /** Worms (b4.12): 12 px of dark red, striped every other px; the head a little brighter. */
-  function drawWorms() {
+  /** @type {WeakMap<import('./worms.js').Worm, { head: Cell, prev: Cell[], body: Cell[], tick: number }>} a worm's last step, for gliding */
+  const wormSteps = new WeakMap()
+  /**
+   * Worms glide (b4.65, the user: "it moves at a tile-resolution, please move it the same way the player
+   * moves"): each body pixel slides from where it was before the worm's last step to where it is, over the
+   * step's `moveTicks`, like the bot and the bugs between ticks. The sim still steps whole pixels.
+   * @param {number} alpha 0..1 of the next tick
+   */
+  function drawWorms(alpha) {
     const s = Math.max(T, 2 * dpr)
+    const ticks = Math.max(1, game.cfg.worms.moveTicks)
     for (const m of game.worms) {
+      let st = wormSteps.get(m)
+      if (!st) wormSteps.set(m, (st = { head: m.body[0], prev: m.body.map((c) => ({ ...c })), body: m.body.map((c) => ({ ...c })), tick: game.tick }))
+      else if (st.head !== m.body[0]) {
+        // it stepped: the head is a new pixel object (worms.js `move`)
+        st.head = m.body[0]
+        st.prev = st.body
+        st.body = m.body.map((c) => ({ ...c }))
+        st.tick = game.tick
+      }
+      const f = Math.min(1, (game.tick - st.tick + alpha) / ticks)
       for (let k = m.body.length - 1; k >= 0; k--) {
-        const [x, y] = at(m.body[k])
+        const a = st.prev[k] ?? m.body[k]
+        const b = m.body[k]
+        let dx = b.x - a.x
+        if (Math.abs(dx) > w / 2) dx -= Math.sign(dx) * w
+        const [x, y] = at({ x: a.x + dx * f, y: a.y + (b.y - a.y) * f })
         if (x < -s || y < -s || x > W + s || y > H + s) continue
         ctx.fillStyle = k === 0 ? 'rgb(170,40,45)' : k % 2 ? 'rgb(70,8,14)' : 'rgb(125,22,30)'
         ctx.fillRect(Math.round(x - s / 2), Math.round(y - s / 2), Math.round(s), Math.round(s))
@@ -771,7 +794,7 @@ export function createRenderer(canvas, game, ui, view) {
     drawStreams(now)
     drawWild(alpha) // b3.7's wild bugs (D056–D061), drawn like the tamed ones, in blue (b4.13)
     drawSwarm(alpha, now)
-    drawWorms()
+    drawWorms(alpha)
     drawLizards() // over the fog, like every moving animal (the user, b4.39), in b4.28's dull greens: no glow
     drawHearts(now)
     drawEmbers(now, dt)
