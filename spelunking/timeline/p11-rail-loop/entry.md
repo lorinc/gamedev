@@ -331,6 +331,7 @@ the bugs that touch them (tamed ones for good) and leave 3 ore in the rock per b
 Then (D156–D159, the user): predators haul the catch up into the rock and come down again slowly, only the pink
 tip glows; bugs no longer pick fruit and come back at nodes with gas first; liquid makes 5× the gas; hives grow
 by ore and hatch 3 moths each, and moths hover while they harvest.
+Then (D160, the user): hives look for a site twice as often (every 30 s).
 
 ## Feedback
 

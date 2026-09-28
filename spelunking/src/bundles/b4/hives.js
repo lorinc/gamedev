@@ -15,7 +15,7 @@ import { hatch } from './swarm.js'
 
 /** The hives' numbers (the dev panel's). */
 export const HIVES = {
-  everyTicks: 3600, // a hive looks for a site every minute
+  everyTicks: 1800, // a hive looks for a site every 30 s (the user, b4.74: 2×; was a minute)
   max: 1, // hives at once (at 20 s and 2, an idle game hatched ~90 bugs in 10 min)
   look: 48, // px round a network node it looks within
   radius: 12, // px round a site the ore is counted within
