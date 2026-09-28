@@ -141,6 +141,31 @@ test('a wild bug fed 16 from the ledger is +1 bug on it, and leaves the world', 
   assert.equal(g.bugs.length, 0)
 })
 
+test('a wild bug that would bite an empty ledger asks, once per nibble time (b4.42)', () => {
+  const g = fresh()
+  g.ledger.ore = 0
+  g.refill = new Proxy({}, { get: () => 1e9 }) // no spawns: only ours
+  const c = [
+    [1, 0],
+    [-1, 0],
+    [0, -1],
+    [0, 1],
+  ].find(([dx, dy]) => open({ x: g.ch.x + dx, y: g.ch.y + dy }))
+  assert.ok(c)
+  addBug(/** @type {any} */ (g), g.ch.x + c[0], g.ch.y + c[1])
+  let hungry = 0
+  let nibbles = 0
+  for (let i = 0; i < 4 * CONFIG.bugs.nibbleTicks; i++) {
+    tick(g)
+    hungry += g.events.filter((e) => e.type === 'hungry').length
+    nibbles += g.events.filter((e) => e.type === 'nibble').length
+    g.events.length = 0
+  }
+  assert.equal(nibbles, 0)
+  assert.ok(hungry >= 3 && hungry <= 4, `${hungry} asks`)
+  assert.equal(g.fed, 0)
+})
+
 test('a tamed bug works near the network and sends its haul to the ledger', () => {
   const g = fresh()
   g.cfg.swarm.tripTicks = 3600

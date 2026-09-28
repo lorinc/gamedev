@@ -64,7 +64,7 @@ import { updateMine, updatePull } from './pull.js'
  *   | { type: 'home', dive: Dive | null }
  *   | { type: 'seen', cells: number[] }
  *   | { type: 'ring', x: number, y: number, r: number }
- *   | { type: 'nibble', id: number, x: number, y: number, from: Cell }
+ *   | { type: 'nibble', id: number, x: number, y: number, from: Cell } | { type: 'hungry', id: number, x: number, y: number }
  *   | { type: 'tamed', id: number, x: number, y: number, slot: number }
  *   | { type: 'placed', id: number, x: number, y: number }
  *   | { type: 'pulled', x: number, y: number, tile: number, to: Cell, by: number }

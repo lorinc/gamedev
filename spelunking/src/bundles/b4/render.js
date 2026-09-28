@@ -209,7 +209,8 @@ export function createRenderer(canvas, game, ui, view) {
   /** @typedef {() => [number, number]} End a point on screen, device px, read each frame (the camera moves) */
   /** @type {{ from: End, to: End, s: number, dur: number, color: string, arc: number }[]} */
   const flights = []
-  /** @type {{ x: number, y: number, s: number, k: number }[]} hearts from a tamed bug (b4.14) */
+  /** @type {{ x: number, y: number, s: number, k: number, q?: boolean }[]} hearts from a tamed bug (b4.14), or from a
+   * bitten one half the time, and "?"s from a bug that finds no ore on the ledger (b4.42; `q`) */
   const hearts = []
   /** @type {{ x: number, y: number, vx: number, vy: number, s: number, life: number, color: string, size: number }[]} embers and puffs, world px (b4.25) */
   const embers = []
@@ -251,6 +252,10 @@ export function createRenderer(canvas, game, ui, view) {
       for (let k = 0; k < 8; k++) fly(icon('loot'), icon('bot'), now + k * 0.05, 0.6, LOOT, 0)
     else if (e.type === 'upgrade')
       for (let k = 0; k < 8; k++) fly(icon('fruit'), icon('bugs'), now + k * 0.05, 0.6, `rgb(${FRUIT_C})`, 0) // no particles for a nibble (b4.13)
+    else if (e.type === 'nibble') {
+      // b4.42 (the user): hearts half the time a bug gets its taming ore
+      if (Math.random() < 0.5) for (let k = 0; k < 3; k++) hearts.push({ x: e.x + 0.5, y: e.y + 0.5, s: now + k * 0.07, k: k + 1.5 })
+    } else if (e.type === 'hungry') hearts.push({ x: e.x + 0.5, y: e.y + 0.5, s: now, k: 2.5, q: true })
     else if (e.type === 'tamed') {
       fly(cell(e), icon('bugs'), now, 0.9, `rgb(${BUG})`, 0)
       for (let k = 0; k < 6; k++) hearts.push({ x: e.x + 0.5, y: e.y + 0.5, s: now + k * 0.07, k }) // b4.14
@@ -375,6 +380,14 @@ export function createRenderer(canvas, game, ui, view) {
       const u = 3 * dpr * (1 + 0.3 * Math.sin(t * Math.PI))
       const x = sx(p.x) + Math.sin(p.k * 2.1 + t * 5) * 8 * dpr + (p.k - 2.5) * 3 * dpr
       const y = sy(p.y) - t * 40 * dpr
+      if (p.q) {
+        ctx.fillStyle = `rgba(255,255,255,${1 - t * t})`
+        ctx.font = `bold ${Math.round(16 * dpr)}px monospace`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText('?', x, y)
+        continue
+      }
       ctx.fillStyle = `rgba(255,90,140,${1 - t})`
       ctx.beginPath()
       ctx.arc(x - u * 0.5, y, u * 0.55, Math.PI, 0)

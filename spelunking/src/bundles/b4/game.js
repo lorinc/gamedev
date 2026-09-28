@@ -127,7 +127,7 @@ export const CONFIG = {
  *   | { type: 'upgrade', level: number } | { type: 'botUpgrade', level: number }
  *   | { type: 'lizard', x: number, y: number } | { type: 'lichen', x: number, y: number } | { type: 'engulf' | 'eject', node: number } | { type: 'flower' | 'bloom' | 'poof' | 'ashworm' | 'ashwormGone', x: number, y: number } | { type: 'spark', x: number, y: number } | { type: 'licked', x: number, y: number, to: Cell }
  *   | { type: 'board', node: number } | { type: 'exit', node: number }
- *   | { type: 'nibble', id: number, x: number, y: number, from: Cell } | { type: 'tamed', id: number, x: number, y: number, slot: number }
+ *   | { type: 'nibble', id: number, x: number, y: number, from: Cell } | { type: 'hungry', id: number, x: number, y: number } | { type: 'tamed', id: number, x: number, y: number, slot: number }
  *  } GameEvent bugs.js adds the wild bugs'; tamed has slot -1 (to the ledger); tile FRUIT_TILE is a fruit (b4.10)
  */
 

@@ -86,6 +86,7 @@ import { wrap } from './rules.js'
  * @property {Cell | null} glow a bar bug's light source: its cell when that's open, else yours
  * @property {number} scared until this tick
  * @property {number} nibbleAt its next nibble, not before this tick
+ * @property {number} [askAt] b4: its next `hungry`, not before this tick
  * @property {number} dir a bar bug's heading, an index into STEPS (the 4 neighbours); -1 for none
  * @property {number} run steps a bar bug has gone on its heading
  * @property {number} pace ticks its last step took, for drawing
@@ -495,7 +496,14 @@ function nibble(g, b, bug) {
   if (g.tick < bug.scared || g.tick < bug.nibbleAt || dist2(g, bug, g.ch) > 2 || denAt(g, bug, b.den)) return
   /** @type {{ ore: number, bugs: number } | null} */
   const led = b.ledger ? /** @type {any} */ (g).ledger : null
-  if (led ? led.ore <= 0 : !take(g.pack, Tile.Ore)) return
+  if (led && led.ore <= 0) {
+    // b4.42 (the user): it would bite but the ledger has no ore: the view shows a "?", once per nibbleTicks
+    if (g.tick < (bug.askAt ?? 0)) return
+    bug.askAt = g.tick + b.nibbleTicks
+    g.events.push({ type: 'hungry', id: bug.id, x: bug.x, y: bug.y })
+    return
+  }
+  if (!led && !take(g.pack, Tile.Ore)) return
   if (led) led.ore--
   g.fed = Math.min(b.tame, g.fed + 1)
   bug.nibbleAt = g.tick + b.nibbleTicks

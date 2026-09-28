@@ -250,6 +250,7 @@ Then (D122, the user): a wild bug that finds loot eats it and is tamed.
 Then (D123, the user): lichen lights 24 px round it, faintly and for good; no white scan circle; in a bulb a
 drag picks a root (built: lit orange, affordable: green), letting go rides or builds it, 3 s puts you 5 px
 out. Screenshots `gallery/p11/b4.41_*`.
+Then (D124, the user): a bite sends up hearts half the time; with no ore on the ledger, a "?".
 
 ## Feedback
 
