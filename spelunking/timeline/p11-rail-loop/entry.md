@@ -30,6 +30,7 @@ build b4.21: 2026-09-28 · p11: b4.21, lichen sparks a fire through the bugs' co
 build b4.22: 2026-09-28 · p11: b4.22, roots and bulbs instead of the metro map, scan on touch, no lizards in small caves (D103-D105)
 build b4.23: 2026-09-28 · p11: b4.23, lichen grows on a large area of the bugs' cover, not on loot (D106)
 build b4.24: 2026-09-28 · p11: b4.24, ride a root by pointing along it near its node; still bulbs on built nodes (D107)
+build b4.25: 2026-09-28 · p11: b4.25, brighter fire with sparks; ash flowers bloom into bots that extend the network (D108)
 ---
 
 # p11 · b4 · Rail Loop
