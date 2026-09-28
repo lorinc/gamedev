@@ -1496,3 +1496,49 @@ test('a tamed bug that meets gas turns moth: it circles through open air, still 
     if (!gas) assert.ok(!b.moth, 'back at a node without gas: a jumper')
   }
 })
+
+test('predators: one per 4 built nodes at a crowd of bugs; a caught bug is gone (tamed: off the ledger), 3 ore appear; 5 meals and it goes (b4.72)', async () => {
+  const { updatePredators } = await import('./predators.js')
+  const g = createGame(pristine(), JSON.parse(JSON.stringify(CONFIG)))
+  const pod = MAP.nodes[MAP.podNodes[0]]
+  g.cfg.predators.crowd = 1 // any bug calls one
+  g.ledger.bugs = 1
+  tick(g)
+  const b = g.swarm[0]
+  g.tick = 600 * 1000 - 1
+  // 3 built nodes: none
+  for (let i = 0; i < 3; i++) g.railed[i] = 1
+  g.tick++
+  updatePredators(g)
+  assert.equal(g.predators.length, 0, 'fewer than 4 built nodes: no predator')
+  g.railed[3] = 1
+  // a bug under a ceiling
+  const { w, tiles } = g.world
+  let spot = null
+  for (let y = pod.y - 20; y < pod.y + 20 && !spot; y++)
+    for (let x = pod.x - 20; x < pod.x + 20 && !spot; x++)
+      if (isOpen(tiles[y * w + x]) && isOpen(tiles[(y + 1) * w + x]) && isOpen(tiles[(y + 2) * w + x]) && !isOpen(tiles[(y - 1) * w + x])) spot = { x, y }
+  assert.ok(spot)
+  Object.assign(b, { x: spot.x, y: spot.y + 2, fly: null, moth: null })
+  g.bugs.length = 0
+  g.tick += 600 - (g.tick % 600)
+  updatePredators(g)
+  assert.equal(g.predators.length, 1, 'a predator at the crowd')
+  const p = g.predators[0]
+  assert.deepEqual([p.x, p.y], [spot.x, spot.y], 'anchored under the ceiling')
+  // the bug was on the string: caught at once
+  const caught = g.events.filter((e) => e.type === 'caught')
+  assert.equal(caught.length, 1)
+  assert.equal(g.swarm.length, 0)
+  assert.equal(g.ledger.bugs, 0, 'a tamed bug is gone for good')
+  assert.equal(caught[0].cells.length, 3)
+  for (const i of caught[0].cells) assert.equal(tiles[i], Tile.Ore)
+  // four more wild meals, and it goes
+  for (let k = 0; k < 4; k++) {
+    addBug(/** @type {any} */ (g), p.x, p.y + 1)
+    g.tick++
+    updatePredators(g)
+  }
+  assert.equal(g.predators.length, 0, 'after 5 meals it withdraws')
+  assert.ok(g.events.some((e) => e.type === 'predatorGone'))
+})

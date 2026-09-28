@@ -324,6 +324,8 @@ low-gravity arcs; tamed ones stay to mine, send each unit to the ledger at once,
 to come back at a node; wild ones wander the same way. One nibble tames a wild bug.
 Then (D154, the user): a tamed bug that meets gas turns into a moth, circling through open air (moss where it
 flies), still sending units at once and fading after 30 s; jumpers are drawn paler, moths amber.
+Then (D155, the user): pink predators hang from the ceiling where bugs crowd (one per 4 built nodes at most), eat
+the bugs that touch them (tamed ones for good) and leave 3 ore in the rock per bug, 5 times, then withdraw.
 
 ## Feedback
 

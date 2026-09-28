@@ -51,6 +51,8 @@ const CRYSTAL_C = 'rgb(240,240,240)' // white (the user, b4.28; was b3's teal)
 const BUG = [255, 190, 90] // tamed: amber (D059)
 const JUMPER = [245, 222, 160] // a tamed bug that hasn't met gas: paler, less warm (the user, b4.71)
 const WILD = [90, 170, 255] // wild: blue (D059)
+const PREDATOR = [235, 90, 170] // the predator's string: pink (the user, b4.72)
+const PREDATOR_TIP = [255, 225, 245] // its bright tip
 const LICHEN_RGB = [96, 44, 128]
 const OPEN_RGB = [36, 44, 62] // the cave's back wall: dark grey-blue, not the unexplored black (the user, b4.16)
 // the rock, much darker than b3's (the user, b4.18): under the back wall, so the caves read as the lit part
@@ -250,6 +252,13 @@ export function createRenderer(canvas, game, ui, view) {
       const who = e.type === 'dug' ? game.swarm[e.by] : null
       const to = () => /** @type {[number, number]} */ (at(who ? workerAt(who, 0) : botAt(game, 0)))
       fly(cell(e), to, now, 0.45, e.tile === FRUIT_TILE ? `rgb(${FRUIT_C})` : e.tile === Tile.Ore ? ORE : CRYSTAL_C)
+    } else if (e.type === 'caught') {
+      // b4.72: the bug slides up to the anchor and into the rock, the ore appears
+      snatched.push({ x: e.x, y: e.y, px: e.px, py: e.py, s: now, rgb: e.tame ? JUMPER : WILD })
+      for (const i of e.cells) {
+        paintTile(i)
+        tctx.putImageData(timg, 0, 0, i % w, Math.floor(i / w), 1, 1)
+      }
     } else if (e.type === 'deposit')
       for (const i of e.cells) {
         paintTile(i)
@@ -791,6 +800,43 @@ export function createRenderer(canvas, game, ui, view) {
     ctx.fillRect(Math.round(x - s / 2), Math.round(y - s / 2), Math.round(s), Math.round(s))
   }
 
+  const SNATCH_S = 0.8
+  /** @type {{ x: number, y: number, px: number, py: number, s: number, rgb: number[] }[]} bugs a predator caught (b4.72) */
+  const snatched = []
+
+  /** Predators (b4.72): a pink string of pixels from the ceiling, swaying a little lower down, a bright tip. @param {number} now */
+  function drawPredators(now) {
+    const s = Math.max(T, 2 * dpr)
+    for (const p of game.predators) {
+      for (let k = 0; k < p.len; k++) {
+        const sway = Math.sin(now * 1.3 + p.x * 0.7 + k * 0.35) * 0.5 * (k / Math.max(1, p.len))
+        const [x, y] = at({ x: p.x + sway, y: p.y + k })
+        if (x < -s || y < -s || x > W + s || y > H + s) continue
+        const tip = k === p.len - 1
+        if (tip) dot(x, y, s, Math.max(T * 2, 6 * dpr), PREDATOR_TIP)
+        else {
+          ctx.fillStyle = `rgb(${PREDATOR})`
+          ctx.fillRect(Math.round(x - s / 2), Math.round(y - s / 2), Math.round(s), Math.round(s))
+        }
+      }
+    }
+    for (let k = snatched.length - 1; k >= 0; k--) {
+      const c = snatched[k]
+      const t = (now - c.s) / SNATCH_S
+      if (t >= 1) {
+        snatched.splice(k, 1)
+        continue
+      }
+      let dx = c.px - c.x
+      if (Math.abs(dx) > w / 2) dx -= Math.sign(dx) * w
+      const e = t * t // slow, then fast: pulled in
+      const [x, y] = at({ x: c.x + dx * e, y: c.y + (c.py - 1 - c.y) * e })
+      ctx.globalAlpha = 1 - t * t
+      dot(x, y, s, Math.max(T * 2, 6 * dpr), c.rgb)
+      ctx.globalAlpha = 1
+    }
+  }
+
   const FADE_S = 1.5
   /** @type {{ x: number, y: number, s: number, moth: boolean }[]} bugs fading away (b4.70) */
   const faded = []
@@ -872,6 +918,7 @@ export function createRenderer(canvas, game, ui, view) {
     drawAshworms(now)
     drawBot(bot, now)
     drawStreams(now)
+    drawPredators(now) // over the fog, like the other animals (b4.72)
     drawWild(alpha) // b3.7's wild bugs (D056–D061), drawn like the tamed ones, in blue (b4.13)
     drawSwarm(alpha, now)
     drawWorms(alpha)
