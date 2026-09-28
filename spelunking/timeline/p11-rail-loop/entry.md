@@ -266,6 +266,7 @@ Then (D128, the user): scans no longer scare wild bugs.
 Then (D129, the user): pinch zoom; zoom levels in CSS px (a phone zooms as far in as a desktop); touch screens
 1.5× brighter (`view.bright`). Screenshots `gallery/p11/b4.47_*`.
 Then (D130, the user): seen loot triple-pings a white halo, a frame on and a frame off, once every 30 s.
+Then (D131, the user): a just-tamed bug starts its first trip near you.
 
 ## Feedback
 

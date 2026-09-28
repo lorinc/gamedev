@@ -9,6 +9,9 @@ import { buildable, command, CONFIG, createGame, HEADING, heading, shown, tick }
 import { makeMap } from './world.js'
 
 const MAP = makeMap(1)
+const TILES = MAP.world.tiles.slice() // as made: other tests' games mine MAP
+/** The map as made, with its own tiles. */
+const pristine = () => ({ ...MAP, world: { ...MAP.world, tiles: TILES.slice() } })
 /** A game where the bot never pulls (so the ledger moves only by what's tested). */
 const fresh = () => {
   const g = createGame(MAP, JSON.parse(JSON.stringify(CONFIG)))
@@ -419,7 +422,9 @@ test('a large area of cover grows a purple lichen patch of 6–8 surface pixels 
 test('a lichen by the cover sparks once: the fire eats all the connected cover, leaving r 2–3 ash discs 8–12 px apart (b4.21, b4.35)', async () => {
   const { ASH, BURN, FRUIT, GREEN, VINE, cover, greenAround } = await import('./garden.js')
   const { WITHERED_PX } = await import('./lichen.js')
-  const g = fresh()
+  // the fire spreads by chance: on the map as made, not one earlier tests' bugs have mined
+  const g = createGame(pristine(), JSON.parse(JSON.stringify(CONFIG)))
+  g.cfg.pull.ticks = 1e9
   g.cfg.worms.max = 0
   g.cfg.lizards.max = 0
   g.cfg.lichen.spark = 1
@@ -710,7 +715,7 @@ test('a vine touching ash makes fruit 10 times as fast (b4.33)', async () => {
   assert.ok(hyper >= 38 && hyper <= 52, `next to ash ${hyper}`) // ×10, less the pixels already holding one
 })
 
-test('a tamed bug starts its trip at the network node with the fewest other bugs round it (b4.34)', () => {
+test('a tamed bug starts its next trip at the network node with the fewest other bugs round it (b4.34)', () => {
   const { w } = MAP.world
   const d2 = (/** @type {{x: number, y: number}} */ a, /** @type {{x: number, y: number}} */ b) => {
     const dx = Math.min(Math.abs(a.x - b.x), w - Math.abs(a.x - b.x))
@@ -729,13 +734,15 @@ test('a tamed bug starts its trip at the network node with the fewest other bugs
       g.swarm.push({ ...MAP.nodes[A], from: MAP.nodes[A], movedAt: 0, dir: 0, until: 1e9, target: null, pullFor: 0, ore: 0, loot: 0, fruit: 0 })
     }
     for (let t = 0; t < run; t++) tick(g) // a different tick: a different random draw
+    // a 12th whose trip ends now
     g.ledger.bugs = 12
+    g.swarm.push({ ...MAP.nodes[A], from: MAP.nodes[A], movedAt: 0, dir: 0, until: g.tick + 1, target: null, pullFor: 0, ore: 0, loot: 0, fruit: 0 })
     tick(g)
-    assert.ok(d2(g.swarm[11], MAP.nodes[B]) <= g.cfg.swarm.spawn ** 2, 'the new one starts at the empty node')
+    assert.ok(d2(g.swarm[11], MAP.nodes[B]) <= g.cfg.swarm.spawn ** 2, 'its next trip starts at the empty node')
   }
 })
 
-test('a tamed bug prefers a network node with no vine round it, even over a less crowded one (b4.36)', async () => {
+test('a tamed bug on its next trip prefers a network node with no vine round it, even over a less crowded one (b4.36)', async () => {
   const { VINE } = await import('./garden.js')
   const { w } = MAP.world
   const d2 = (/** @type {{x: number, y: number}} */ a, /** @type {{x: number, y: number}} */ b) => {
@@ -757,9 +764,24 @@ test('a tamed bug prefers a network node with no vine round it, even over a less
     for (let k = 0; k < 5; k++)
       g.swarm.push({ ...MAP.nodes[B], from: MAP.nodes[B], movedAt: 0, dir: 0, until: 1e9, target: null, pullFor: 0, ore: 0, loot: 0, fruit: 0 })
     for (let t = 0; t < run; t++) tick(g)
+    // a 6th whose trip ends now
     g.ledger.bugs = 6
+    g.swarm.push({ ...MAP.nodes[A], from: MAP.nodes[A], movedAt: 0, dir: 0, until: g.tick + 1, target: null, pullFor: 0, ore: 0, loot: 0, fruit: 0 })
     tick(g)
-    assert.ok(d2(g.swarm[5], MAP.nodes[B]) <= g.cfg.swarm.spawn ** 2, 'the new one starts away from the vine')
+    assert.ok(d2(g.swarm[5], MAP.nodes[B]) <= g.cfg.swarm.spawn ** 2, 'its next trip starts away from the vine')
+  }
+})
+
+test('a just-tamed bug starts near you (b4.49)', () => {
+  for (let run = 0; run < 8; run++) {
+    const g = fresh()
+    for (let t = 0; t < run; t++) tick(g)
+    g.ledger.bugs = 1
+    tick(g)
+    assert.equal(g.swarm.length, 1)
+    const b = g.swarm[0]
+    assert.ok((b.x - g.ch.x) ** 2 + (b.y - g.ch.y) ** 2 <= g.cfg.swarm.spawn ** 2, `near you: ${b.x - g.ch.x}, ${b.y - g.ch.y}`)
+    assert.ok(open(b))
   }
 })
 

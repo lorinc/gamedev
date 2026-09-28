@@ -11,6 +11,7 @@
 // the network node with the fewest other bugs within `crowd` px, ties at random. b4.36 (the user: "prefer to
 // spawn the bugs in areas with no vine"): before that, nodes with no vine (or fruit) within about `crowd` px
 // come first; vines are counted per BLOCK px square, and a node looks at the blocks its circle overlaps.
+// b4.49 (the user): a just-tamed bug's first trip starts near you; the next ones at nodes.
 
 import { isOpen, Tile } from '../../sim/gen/world.js'
 import { toRock } from '../../sim/dig/pull.js'
@@ -125,6 +126,17 @@ function spawnAt(g, s, rng, self) {
   return { x: n.x, y: n.y } // nodes are never in rock (b4.3)
 }
 
+/** An open pixel within `spawn` px of the bot, else the bot's. @param {import('./game.js').Game} g @param {Swarm} s @param {() => number} rng */
+function nearYou(g, s, rng) {
+  const r = Math.max(0, s.spawn)
+  for (let k = 0; k < 24; k++) {
+    const dx = (rng() % (2 * r + 1)) - r
+    const dy = (rng() % (2 * r + 1)) - r
+    if (dx * dx + dy * dy <= r * r && open(g, g.ch.x + dx, g.ch.y + dy)) return { x: wrap(g.ch.x + dx, g.world.w), y: g.ch.y + dy }
+  }
+  return { x: g.ch.x, y: g.ch.y }
+}
+
 /** @param {import('./game.js').Game} g @param {Worker} b @param {Cell} at @param {() => number} rng */
 function startTrip(g, b, at, rng) {
   b.x = at.x
@@ -146,7 +158,8 @@ export function updateSwarm(g) {
   const s = g.cfg.swarm
   const rng = mulberry32(hashSeed(SALT, g.tick))
   while (g.swarm.length < g.ledger.bugs) {
-    const at = spawnAt(g, s, rng)
+    // just tamed: near you (b4.49, the user: "so that the player sees it and connects taming -> green stuff")
+    const at = nearYou(g, s, rng)
     if (!at) break
     /** @type {Worker} */
     const b = { x: 0, y: 0, from: at, movedAt: 0, dir: 0, until: 0, target: null, pullFor: 0, ore: 0, loot: 0, fruit: 0 }
