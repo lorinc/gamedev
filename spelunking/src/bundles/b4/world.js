@@ -13,6 +13,7 @@ import { SHEET_PX } from '../v6/paint.js'
 import { placePod, podPart, POD_H, POD_W } from '../v6/storeys.js'
 import { K, OPEN, ROCK, SEA, SKY, rasterize } from '../v6/terrain.js'
 import { RKNOBS, rails } from '../v8/rails.js'
+import { roots } from './roots.js'
 import { runLayer } from '../../sim/gen/ca.js'
 import { finalGrid } from '../../sim/gen/pipeline.js'
 import { STARTER_CAVES } from '../../sim/gen/starterCaves.js'
@@ -51,6 +52,9 @@ export const WKNOBS = {
   loot: 0, // permille of rock: none (the user, b4.17: only lizards make loot); b3.7's was DEFAULT_TERRAIN.loot
 }
 
+/** The roots' router (roots.js): rock ×5 like v8's C, an earlier root's edges ×2, its vertices +40 px. */
+const ROOTS = { dig: RKNOBS.dig, overlap: RKNOBS.overlap, cross: 40 }
+
 /** @type {[number, number, number]} */ const SPACE_RGB = [8, 10, 26]
 /** @type {[number, number, number]} */ const SHEET_RGB = [150, 184, 204]
 /** @type {[number, number, number]} */ const SHEET2_RGB = [138, 172, 194]
@@ -87,8 +91,10 @@ export function makeMap(seed, k = WKNOBS) {
         podPx.push(i)
       }
   }
-  // the network over the whole depth (D081), not v7's ice-only frame
-  const net = rails(T, G, { top: 0, rows: T.h }, 'C', RKNOBS, seed)
+  // the network over the whole depth (D081), not v7's ice-only frame: v8's mode A pairs, routed as roots
+  // along the caves' relaxed mesh (b4.22, the user)
+  const net = rails(T, G, { top: 0, rows: T.h }, 'A', RKNOBS, seed)
+  net.rails = /** @type {any} */ (roots(T, G, net.nodes, net.rails, ROOTS))
   lap('rails')
 
   // the world: the sheet's rows over T, down to a little below the lowest pixel that isn't sea
@@ -144,7 +150,7 @@ export function makeMap(seed, k = WKNOBS) {
   }
   lap('tiles')
 
-  // nodes at their cells' centres (the router's), in world px; each rail's cells filled in pixel by pixel
+  // nodes at their mesh vertices, in world px; each root's vertices filled in pixel by pixel
   const at = (/** @type {number} */ px, /** @type {number} */ py) => ({ x: ((Math.floor(px) % w) + w) % w, y: Math.floor(py) + top })
   const nodes = net.nodes.map((n) => at(n.x, n.y))
   const same = (/** @type {Cell} */ p, /** @type {Cell} */ q) => p.x === q.x && p.y === q.y
@@ -172,7 +178,7 @@ export function makeMap(seed, k = WKNOBS) {
   return { world: { w, h, tiles }, kind, scenery, start, podCells, nodes, edges, podNodes, ms }
 }
 
-/** A cell path (points 4 px apart, 8-way) as every pixel on it, each an 8-way step from the last. @param {Cell[]} p @param {number} w */
+/** A path of points (the mesh's vertices, ~3.6 px apart) as every pixel on it, each an 8-way step from the last. @param {Cell[]} p @param {number} w */
 function fill(p, w) {
   /** @type {Cell[]} */
   const out = p.length ? [p[0]] : []

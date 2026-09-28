@@ -197,6 +197,11 @@ ore they can reach (a 32-step flood); 163 of 176 retired in a 20-minute measurem
 Then (D102, the user): a lichen next to the bugs' cover sparks once and its leaf withers; the fire spreads
 through all the connected cover like a cellular automaton, leaves bare wall, and burns permanent round ash
 discs (r 3–5, 8–12 px apart). Screenshots `gallery/p11/b4.21_fire_*`.
+Then (D103, the user): the network is wiggly orange roots along the caves' relaxed mesh, in pixels; a node
+is a beating orange pixel bulb, shown only while the ledger holds the price; 2 px close it holds the bot
+until an edge is built (drag aims, tap builds); no carts, the bot rides the root itself. D104: the scan
+fires the moment the bot touches rock. D105: no lizard spawns in a cave under 400 px. Screenshots
+`gallery/p11/b4.22_*`.
 
 ## Feedback
 

@@ -2,7 +2,7 @@
 // interpolates. The URL carries the seed and every knob tuned away from its default (`?seed=1&k=price:12`).
 
 import { createPanel } from '../b3/panel.js'
-import { buildable, command, CONFIG, createGame, HEADING, near, shown, tick } from './game.js'
+import { command, CONFIG, createGame, HEADING, tick } from './game.js'
 import { createInput } from './input.js'
 import { createRenderer, ZOOM_PX } from './render.js'
 import { makeMap, WKNOBS } from './world.js'
@@ -42,7 +42,7 @@ history.replaceState(null, '', urlFor(seed))
 const map = makeMap(seed, tunables.world)
 const game = createGame(map, tunables.sim)
 /** @type {import('./render.js').Ui} */
-const ui = { preview: null, select: null, refusedAt: -9 }
+const ui = { select: null, refusedAt: -9 }
 const canvas = /** @type {HTMLCanvasElement} */ ($('game'))
 const renderer = createRenderer(canvas, game, ui, tunables.view)
 let now = 0 // seconds, the frame's
@@ -95,6 +95,7 @@ const panel = createPanel(
     'sim.lizards.max': [0, 40, 1],
     'sim.lizards.zipTicks': [1, 20, 1],
     'sim.lizards.eat': [1, 64, 1],
+    'sim.lizards.room': [0, 4000, 50],
     'sim.lichen.density': [1, 60, 1],
     'sim.lichen.spark': [1, 60, 1],
     'sim.botUpgradeCost': [1, 256, 1],
@@ -147,51 +148,20 @@ function aimEdge(node, dx, dy) {
 }
 
 createInput(canvas, {
-  move: (dx, dy) => command(game, { type: 'move', dx, dy }),
+  // held in a node (b4.22), a direction aims at its edges and a tap builds the one aimed at
+  move: (dx, dy) => {
+    const n = game.engulf
+    if (n === null) return command(game, { type: 'move', dx, dy })
+    if (!dx && !dy) return // letting go keeps the aim
+    const edge = aimEdge(n, dx, dy)
+    ui.select = edge >= 0 ? { node: n, edge } : null
+  },
   tap: () => {
-    if (ui.select) ui.select = null
-    else command(game, { type: 'tap' })
-  },
-  hit: (cx, cy) => {
-    const dpr = renderer.dpr()
-    const T = renderer.tilePx()
-    const p = renderer.toWorld(cx, cy)
-    const reach = Math.max(0.9, (24 * dpr) / T) // px of the world a finger covers
-    /** @param {{ x: number, y: number }} c */
-    const d = (c) => {
-      let dx = Math.abs(p.x - (c.x + 0.5))
-      dx = Math.min(dx, map.world.w - dx)
-      return Math.hypot(dx, p.y - (c.y + 0.5))
-    }
-    // the selected edge: a tap on it builds (b4.3)
-    if (ui.select && map.edges[ui.select.edge].path.some((c) => d(c) <= reach)) return { kind: 'edge' }
-    if (game.ride) return null // in a car a drag is a swipe, also on the node it stands on
-    let best = -1
-    let bestD = reach
-    map.nodes.forEach((n, i) => {
-      if (!shown(game, i) || !near(game, i)) return // only the network grows, from where you are (D080, b4.8)
-      if (d(n) < bestD) {
-        bestD = d(n)
-        best = i
-      }
-    })
-    return best >= 0 ? { kind: 'node', node: best } : null
-  },
-  preview: (node) => {
-    ui.preview = node
-    if (node !== null) ui.select = null
-  },
-  aim: (node, dx, dy) => {
-    ui.preview = null
-    const edge = aimEdge(node, dx, dy)
-    ui.select = edge >= 0 ? { node, edge } : null
-  },
-  build: () => {
     const s = ui.select
+    if (game.engulf === null) return command(game, { type: 'tap' })
     if (!s) return
-    if (buildable(game, s.edge, s.node))
-      ui.refusedAt = now // short of ore: the red pulse, nothing built
-    else command(game, { type: 'build', edge: s.edge, from: s.node })
+    command(game, { type: 'build', edge: s.edge, from: s.node })
+    ui.select = null
   },
   zoom: (steps) => {
     const next = Math.min(Math.max(renderer.level() + steps, 0), ZOOM_PX.length - 1)
@@ -233,8 +203,8 @@ function frame(t) {
     panel.setReadout(
       [
         `${BUILD} · seed ${seed} · map ${map.world.w}×${map.world.h}`,
-        `pos ${game.ch.x},${game.ch.y} · light r ${game.radius} · ${game.ride ? 'in a car' : game.move ? 'walking' : 'still'}`,
-        `nodes on the network ${onNet}/${map.nodes.length} · edges built ${built}/${map.edges.length} · cars ${game.cars.length}`,
+        `pos ${game.ch.x},${game.ch.y} · light r ${game.radius} · ${game.ride ? 'riding' : game.move ? 'walking' : 'still'}`,
+        `nodes on the network ${onNet}/${map.nodes.length} · edges built ${built}/${map.edges.length}`,
         `scan ${game.tick < game.scanAt ? `in ${((game.scanAt - game.tick) / 60).toFixed(1)} s` : 'ready'}`,
         `ledger: ore ${game.ledger.ore} · loot ${game.ledger.loot} · fruit ${game.ledger.fruit} · vines ${game.garden.vines.length} px · worms ${game.worms.length} · lizards ${game.lizards.length} · bugs ${game.ledger.bugs} (at work ${game.swarm.length}, carrying ${game.swarm.reduce((a, b) => a + b.ore + b.loot, 0)})`,
         `wild bugs ${game.bugs.length} (chasing ${game.bugs.filter((b) => b.chasing).length}) · fed ${game.fed}/${game.cfg.bugs.tame}`,

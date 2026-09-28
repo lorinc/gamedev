@@ -68,27 +68,59 @@ test('the scan fires only when something within its radius is unseen (b4.6)', ()
   assert.equal(scans, 1, 'the first scan reveals everything round it; pushing on, nothing is left to find')
 })
 
-test('building takes the price from the ledger at once; short of it, refused', () => {
+test('the scan fires the tick the bot touches rock, also sliding along it (b4.22)', () => {
+  const g = fresh()
+  assert.ok(!open({ x: g.ch.x, y: g.ch.y + 1 }), 'the start stands on the pod floor')
+  const x0 = g.ch.x
+  // down and a little right: into the floor, sliding right along it (b4.21 scanned only when fully stuck)
+  command(g, { type: 'move', dx: 0.3, dy: 1 })
+  let scanned = -1
+  for (let i = 0; i < 30 && scanned < 0; i++) {
+    tick(g)
+    if (g.events.some((e) => e.type === 'scan')) scanned = g.tick
+    g.events.length = 0
+  }
+  assert.ok(scanned > 0 && scanned <= 5, `scanned at tick ${scanned}: within the first pixel's worth of walking`)
+  for (let i = 0; i < 30; i++) tick(g)
+  assert.notEqual(g.ch.x, x0, 'and it slid on')
+})
+
+test('a node shows only with the price on the ledger; 2 px close it holds the bot until an edge is built (b4.22)', () => {
   const g = fresh()
   const from = MAP.podNodes.find((n) => MAP.edges.some((e) => e.a === n || e.b === n))
   assert.ok(from !== undefined)
   const edge = MAP.edges.findIndex((e) => e.a === from || e.b === from)
-  g.ch.x = MAP.nodes[from].x
-  g.ch.y = MAP.nodes[from].y
-  assert.equal(buildable(g, edge, from), 'ore')
-  command(g, { type: 'build', edge, from })
+  const node = MAP.nodes[from]
+  g.ch.x = node.x + 2
+  g.ch.y = node.y
+  assert.ok(open(g.ch))
+  // short of the price: hidden, and it doesn't take the bot
   tick(g)
-  assert.equal(g.built[edge], 0)
+  assert.equal(shown(g, from), false)
+  assert.equal(g.engulf, null)
+  assert.equal(buildable(g, edge, from), 'far')
   g.ledger.ore = 12
+  tick(g)
+  assert.equal(g.engulf, from, 'engulfed')
+  assert.deepEqual([g.ch.x, g.ch.y], [node.x, node.y], 'on the node')
+  // held: walking does nothing
+  command(g, { type: 'move', dx: 1, dy: 0 })
+  for (let i = 0; i < 60; i++) tick(g)
+  assert.deepEqual([g.ch.x, g.ch.y], [node.x, node.y])
   command(g, { type: 'build', edge, from })
   tick(g)
   assert.equal(g.built[edge], 1)
   assert.equal(g.ledger.ore, 2)
-  assert.equal(g.cars.length, 1)
-  // from now on only the built edge's ends show (b4.8), and a pod node off it can't be built from
+  assert.equal(g.engulf, null, 'let go')
+  // short of the price again: every node hides
+  for (const n of MAP.podNodes) assert.equal(shown(g, n), false)
+  g.ledger.ore = 10
+  // from now on only the built edge's ends show (b4.8), while they have an unbuilt edge
   const e = MAP.edges[edge]
-  for (const n of MAP.podNodes) assert.equal(shown(g, n), n === e.a || n === e.b)
-  assert.ok(shown(g, e.a) && shown(g, e.b))
+  for (const n of MAP.podNodes) if (n !== e.a && n !== e.b) assert.equal(shown(g, n), false)
+  // the node that let go doesn't take the bot again while it's still within reach
+  tick(g)
+  assert.equal(g.engulf, null)
 })
 
 test('a wild bug fed 16 from the ledger is +1 bug on it, and leaves the world', () => {
@@ -419,5 +451,42 @@ test('a lichen by the cover sparks once: the fire eats all the connected cover, 
     G.wall[bare] = GREEN
     for (let k = 0; k < 60; k++) tick(g)
     assert.equal(G.wall[bare], GREEN, 'no second spark')
+  }
+})
+
+test('no lizard spawns in a small enclosure: its cave holds at least `room` open px (b4.22)', () => {
+  const { w, h, tiles } = MAP.world
+  /** The open px 8-connected to (x, y). @param {number} x @param {number} y */
+  const cave = (x, y) => {
+    const got = new Set([y * w + x])
+    for (const i of got) {
+      const cx = i % w
+      const cy = (i - cx) / w
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          const j = (cy + dy) * w + ((cx + dx + w) % w)
+          if (cy + dy >= 0 && cy + dy < h && isOpen(tiles[j])) got.add(j)
+        }
+    }
+    return got.size
+  }
+  for (const room of [400, 1e6]) {
+    const g = fresh()
+    g.cfg.worms.max = 0
+    g.cfg.lizards.density = 3
+    g.cfg.lizards.near = 64
+    g.cfg.lizards.eat = 1e9 // they only mine: the rock stays as it is
+    g.cfg.lizards.room = room
+    const sizes = []
+    for (let t = 0; t < 60 * 60 * 5; t++) {
+      tick(g)
+      for (const e of g.events) if (e.type === 'lizard') sizes.push(cave(e.x, e.y))
+      g.events.length = 0
+    }
+    if (room === 1e6) assert.equal(sizes.length, 0, 'no cave is that big')
+    else {
+      assert.ok(sizes.length > 0, 'some spawned')
+      for (const s of sizes) assert.ok(s >= room, `a cave of ${s} px`)
+    }
   }
 })

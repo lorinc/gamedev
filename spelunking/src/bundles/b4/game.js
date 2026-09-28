@@ -7,20 +7,23 @@
 // The bot has a sub-pixel position (`pos`, in thousandths of a pixel) that glides along the exact angle at
 // `walkSpeed`; its pixel (`ch`) is where that position is, and it may only be an open one; it climbs the back
 // wall, D077; no gravity. Into rock, it slides along the open side (the move's x or y part alone).
-// Scan: pointing into rock fires b3's probe at the rock pixel, rings out to `scan.radius`, then it cools down
-// for `scan.cooldown` ticks (1 s, the user, b4.3). It fires only if some pixel within its radius is still
+// Scan: touching rock fires b3's probe at the rock pixel touched, at once, also while sliding along the wall
+// (b4.22, the user: "no need to wait"), rings out to `scan.radius`; `scan.cooldown` is 0 (was 1 s, b4.3). It fires only if some pixel within its radius is still
 // unseen (b4.6). Pull: b3's (D062): the nearest seen ore or
 // loot in the light is pulled, one unit every `pull.ticks`, and the pixel turns to rock; it goes straight to
 // the ledger (b4.3). Walking doesn't stop it (b4.5), a moving car does.
 // The ledger (b4.3, the user): every collectible, one count each: ore, loot, bugs. No pack.
 // Light (b4.3): a fixed radius (`light.base`, 8 px; upgrades later), line of sight (light.js sightCells).
-// Nodes (b4.8, the user): the pod's show (and glow) until the first edge is built; from then on only the
-// ends of built edges show, and only a shown node can be built from.
-// Building (b4.3): `build` an unbuilt edge from a node on the network, the bot within `nodeReach` of it (D080),
-// with `price` ore on the ledger: the price is taken and the edge is built at once, its far node joins the
-// network, and a travel pod (a car) waits at the near node. Short of ore: refused.
-// Riding: stepping onto a waiting car gets you in. A pointed direction picks, at each node, the built edge
-// that fits it best (within 67.5°); the car runs node to node until no edge fits (it stops at the last
+// Nodes (b4.8, the user): the pod's are on the network until the first edge is built; from then on only the
+// ends of built edges. b4.22 (the user): a node shows only while the ledger holds the `price` and it has an
+// unbuilt edge. The bot walking within `nodeReach` (2 px) of a shown node is engulfed: it sits on the
+// node and can't walk until it builds one of the node's edges (`engulf`); then it walks free, and the same
+// node doesn't take it again until it has been out of reach (`freed`).
+// Building (b4.3): `build` an unbuilt edge from the node the bot is engulfed in: the price is taken and the
+// edge is built at once and its far node joins the network.
+// Riding: stepping onto the end of a built root (a node on one) gets you riding it; there are no carts
+// (b4.22, the user), the bot glides along the root itself. A pointed direction picks, at each node, the built edge
+// that fits it best (within 67.5°); the bot runs node to node until no edge fits (it stops at the last
 // node), a tap (it stops at the next node), or a new direction (it turns at the next node). Pointed while
 // stopped where no edge fits, you get out and walk that way.
 // Garden (b4.10, garden.js): tamed bugs green the back wall, vines grow on green, vines make red fruit, a
@@ -61,10 +64,10 @@ export const CONFIG = {
   walkSpeed: 12, // px/s (a step takes whole ticks: 60 / speed, rounded; a diagonal √2 times that)
   // at 1 px a tile (D080) the scan and the node detection grew ×4 with the scale (D081); the light is b4.2's
   // 16 halved (b4.3, the user: "torchlight is waaay too big"), fixed, and the pull's reach with it
-  scan: { radius: 24, cooldown: 60, ringTicks: 1 }, // 1 s cooldown (the user, b4.3; was 3 s, D079)
+  scan: { radius: 24, cooldown: 0, ringTicks: 1 }, // no cooldown: it fires on touch (the user, b4.22; was 1 s, b4.3)
   pull: { ticks: 60 }, // b3's pull was 300 (5 s a unit); 1 s here, or an edge is a minute of standing still
   light: { base: 8 },
-  nodeReach: 12, // D079's 3 tiles (user) ×4
+  nodeReach: 2, // px: a shown node engulfs the bot this close (the user, b4.22; was 12, a build's reach)
   bugs: {
     block: 32,
     blocks: 64,
@@ -106,16 +109,14 @@ export const CONFIG = {
  *   | { type: 'dug', x: number, y: number, tile: number, by: number } | { type: 'haul', x: number, y: number, ore: number, loot: number, fruit: number }
  *   | { type: 'worm', x: number, y: number } | { type: 'eaten', x: number, y: number } | { type: 'deposit', cells: number[] }
  *   | { type: 'upgrade', level: number } | { type: 'botUpgrade', level: number }
- *   | { type: 'lizard', x: number, y: number } | { type: 'lichen', x: number, y: number } | { type: 'spark', x: number, y: number } | { type: 'licked', x: number, y: number, by: number }
- *   | { type: 'board', car: number } | { type: 'exit', car: number }
+ *   | { type: 'lizard', x: number, y: number } | { type: 'lichen', x: number, y: number } | { type: 'engulf', node: number } | { type: 'spark', x: number, y: number } | { type: 'licked', x: number, y: number, by: number }
+ *   | { type: 'board', node: number } | { type: 'exit', node: number }
  *   | { type: 'nibble', id: number, x: number, y: number, from: Cell } | { type: 'tamed', id: number, x: number, y: number, slot: number }
  *  } GameEvent bugs.js adds the wild bugs'; tamed has slot -1 (to the ledger); tile FRUIT_TILE is a fruit (b4.10)
  */
 
-/** @typedef {{ node: number }} Car a travel pod, waiting at a node or carrying you */
 /**
- * @typedef {object} Ride you in a car
- * @property {number} car
+ * @typedef {object} Ride you riding a root (no cart since b4.22, the user: "just the bulbs")
  * @property {number} node the node it's at or last left
  * @property {{ edge: number, i: number, dir: 1 | -1, acc: number } | null} run on edge, going from path[i] to path[i + dir], with
  *   acc of the step's cost (STEP or DIAG) covered
@@ -161,8 +162,11 @@ export const CONFIG = {
  * @property {Uint8Array} built per edge
  * @property {Uint8Array} railed per node: the end of a built edge (b4.8)
  * @property {boolean} firstBuilt an edge has been built
- * @property {Car[]} cars
  * @property {Ride | null} ride
+ * @property {number | null} engulf the node the bot is held in (b4.22)
+ * @property {number | null} freed the node that just let the bot go: it doesn't take it again until it's out of reach
+ * @property {number[][]} links per node: its edges
+ * @property {globalThis.Map<number, number>} nodeAt pixel index → node
  * @property {Command[]} queue
  * @property {GameEvent[]} events
  */
@@ -207,12 +211,16 @@ export function createGame(map, cfg) {
     built: new Uint8Array(map.edges.length),
     railed: new Uint8Array(map.nodes.length),
     firstBuilt: false,
-    cars: [],
     ride: null,
+    engulf: null,
+    freed: null,
+    links: map.nodes.map(() => []),
+    nodeAt: new globalThis.Map(map.nodes.map((n, i) => [n.y * world.w + n.x, i])),
     queue: [],
     events: [],
   }
   for (const n of map.podNodes) g.net[n] = 1
+  map.edges.forEach((e, k) => (g.links[e.a].push(k), g.links[e.b].push(k)))
   reveal(/** @type {any} */ (g), map.podCells) // the pod's interior starts seen
   updateLight(g)
   return g
@@ -229,6 +237,7 @@ export function tick(g) {
   for (const cmd of g.queue) {
     if (cmd.type === 'move') {
       const dir = heading(cmd.dx, cmd.dy)
+      if (g.engulf !== null) continue // held: the page turns a drag into aiming
       if (g.ride) point(g, g.ride, dir)
       else g.move = dir
     } else if (cmd.type === 'tap') {
@@ -238,7 +247,10 @@ export function tick(g) {
   g.queue.length = 0
 
   if (g.ride) rideTick(g, g.ride)
-  else walk(g)
+  else if (g.engulf === null) {
+    walk(g)
+    if (!g.ride) engulf(g)
+  }
   if (g.probe) spread(g, g.probe)
   pull(g)
   updateBugs(/** @type {any} */ (g))
@@ -291,30 +303,34 @@ function walk(g) {
     const cy = Math.floor(ny / 1000)
     const sx = cx === g.ch.x ? 0 : Math.abs(cx - g.ch.x) > 1 ? -Math.sign(cx - g.ch.x) : Math.sign(cx - g.ch.x) // across the wrap
     const sy = cy - g.ch.y
-    if ((sx || sy) && !open(g, cx, cy)) continue
-    if (sx && sy && !open(g, g.ch.x + sx, g.ch.y) && !open(g, g.ch.x, g.ch.y + sy)) continue // no squeezing between two rock corners
+    const blocked = ((sx || sy) && !open(g, cx, cy)) || (sx && sy && !open(g, g.ch.x + sx, g.ch.y) && !open(g, g.ch.x, g.ch.y + sy)) // no squeezing between two rock corners
+    if (blocked) {
+      // the wall touched: the scan at once, sliding or not (b4.22), at the rock pixel touched
+      if (ex === vx && ey === vy) open(g, cx, cy) ? scan(g, wrap(g.ch.x + sx, g.world.w), g.ch.y) : scan(g, cx, cy)
+      continue
+    }
     p.x = nx
     p.y = ny
     if (!sx && !sy) return
     g.ch.x = cx
     g.ch.y = cy
-    const car = g.cars.findIndex((c) => same(g.map.nodes[c.node], g.ch))
-    if (car >= 0) {
-      g.ride = { car, node: g.cars[car].node, run: null, want: null, stopNext: false }
+    const node = g.nodeAt.get(g.ch.y * g.world.w + g.ch.x) ?? -1
+    if (node >= 0 && g.railed[node]) {
+      g.ride = { node, run: null, want: null, stopNext: false }
       g.move = null
-      g.events.push({ type: 'board', car })
+      g.events.push({ type: 'board', node })
     }
     return
   }
-  // pointed into rock: the scan (D079), if it's ready; its centre is the rock pixel the direction points at
-  // (the nearest of the 8). The sheet, the sea and space aren't rock: nothing to scan
-  const dx = Math.round(m.dx / len)
-  const dy = Math.round(m.dy / len)
-  const y = g.ch.y + dy
+}
+
+/** The bot touched rock at (x, y): the scan (D079) there, if it's ready. The sheet, the sea and space aren't
+ * rock: nothing to scan. @param {Game} g @param {number} x @param {number} y */
+function scan(g, x, y) {
   if (g.probe || g.tick < g.scanAt || y < 0 || y >= g.world.h) return
-  if (g.map.kind[y * g.world.w + wrap(g.ch.x + dx, g.world.w)] !== ROCK) return
-  if (!hidden(g, wrap(g.ch.x + dx, g.world.w), y, g.cfg.scan.radius)) return // nothing left to find there (the user, b4.6)
-  g.probe = { x: wrap(g.ch.x + dx, g.world.w), y, r: 0, t: 0 }
+  if (g.map.kind[y * g.world.w + x] !== ROCK) return
+  if (!hidden(g, x, y, g.cfg.scan.radius)) return // nothing left to find there (the user, b4.6)
+  g.probe = { x, y, r: 0, t: 0 }
   g.scanAt = g.tick + g.cfg.scan.cooldown
   g.events.push({ type: 'scan', x: g.probe.x, y })
   ring(g, g.probe, 1)
@@ -348,9 +364,6 @@ function open(g, x, y) {
   if (y < 0 || y >= g.world.h) return false
   return isOpen(g.world.tiles[y * g.world.w + wrap(x, g.world.w)])
 }
-
-/** @param {Cell} a @param {Cell} b */
-const same = (a, b) => a.x === b.x && a.y === b.y
 
 /** @param {Game} g @param {{ x: number, y: number, r: number, t: number }} p */
 function spread(g, p) {
@@ -434,14 +447,32 @@ export function dist2(g, a, b) {
 /** The bot is within `nodeReach` of node i. @param {Game} g @param {number} i */
 export const near = (g, i) => dist2(g, g.map.nodes[i], g.ch) <= g.cfg.nodeReach * g.cfg.nodeReach
 
-/** Node i shows (b4.8): before the first edge, a pod node; after it, the end of a built edge. @param {Game} g @param {number} i */
-export const shown = (g, i) => (g.firstBuilt ? !!g.railed[i] : !!g.net[i])
+/** Node i shows (b4.8): before the first edge, a pod node; after it, the end of a built edge; and (b4.22) only
+ * while the ledger holds the price and it has an unbuilt edge. @param {Game} g @param {number} i */
+export const shown = (g, i) =>
+  (g.firstBuilt ? !!g.railed[i] : !!g.net[i]) && g.ledger.ore >= g.cfg.price && g.links[i].some((k) => !g.built[k])
+
+/** A shown node within reach takes the bot in (b4.22): it sits on the node, pointing nowhere. @param {Game} g */
+function engulf(g) {
+  if (g.freed !== null && !near(g, g.freed)) g.freed = null
+  for (let i = 0; i < g.map.nodes.length; i++) {
+    if (i === g.freed || !near(g, i) || !shown(g, i)) continue
+    g.engulf = i
+    g.move = null
+    g.ch.x = g.map.nodes[i].x
+    g.ch.y = g.map.nodes[i].y
+    g.pos.x = g.pos.px = g.ch.x * 1000 + 500
+    g.pos.y = g.pos.py = g.ch.y * 1000 + 500
+    g.events.push({ type: 'engulf', node: i })
+    return
+  }
+}
 
 /** Can the edge be built from node `from` now? The reason it can't, or null. @param {Game} g @param {number} edge @param {number} from */
 export function buildable(g, edge, from) {
   const e = g.map.edges[edge]
-  if (!e || (e.a !== from && e.b !== from) || !g.net[from] || !shown(g, from)) return 'off'
-  if (!near(g, from)) return 'far'
+  if (!e || (e.a !== from && e.b !== from) || !g.net[from]) return 'off'
+  if (g.engulf !== from) return 'far'
   if (g.built[edge]) return 'built'
   if (g.ledger.ore < g.cfg.price) return 'ore'
   return null
@@ -454,10 +485,11 @@ function build(g, edge, from) {
   const e = g.map.edges[edge]
   g.ledger.ore -= g.cfg.price
   g.built[edge] = 1
-  g.cars.push({ node: from })
   g.net[e.a === from ? e.b : e.a] = 1
   g.railed[e.a] = g.railed[e.b] = 1
   g.firstBuilt = true
+  g.engulf = null
+  g.freed = from
   g.events.push({ type: 'built', edge, from, price: g.cfg.price })
 }
 
@@ -499,7 +531,7 @@ function point(g, r, dir) {
   r.run = pick(g, r.node, dir)
   if (r.run) return
   // nothing that way: out, and walk that way (nodes are never in rock, b4.3)
-  g.events.push({ type: 'exit', car: r.car })
+  g.events.push({ type: 'exit', node: r.node })
   g.ride = null
   g.move = dir
 }
@@ -527,7 +559,6 @@ function rideTick(g, r) {
     if (run.i !== (run.dir === 1 ? p.length - 1 : 0)) continue
     const e = g.map.edges[run.edge]
     r.node = run.dir === 1 ? e.b : e.a
-    g.cars[r.car].node = r.node
     const next = r.stopNext || !r.want ? null : pick(g, r.node, r.want)
     r.run = next
     if (!next) {

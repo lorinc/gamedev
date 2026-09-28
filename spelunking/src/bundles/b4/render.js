@@ -4,7 +4,7 @@
 // as v6 draws them, the sheet and space with no fog (scenery); the bot is its pixel with a halo, so it's
 // seen; the zoom levels go down to 2 device px a tile; the textures change pixel by pixel, never whole
 // (123k tiles: a whole repaint each step was too slow to play, not tuning).
-// New: nodes glow (the network's, and the rest near the bot), built rails, the travel pods (cars), the spider
+// New: nodes glow (the network's, and the rest near the bot), built rails, the spider
 // bot, ore flying to the bot as it's pulled. b4.3: the light fades out over its last EDGE px (drawing only);
 // the ledger, a column in the top-right corner (ore, loot, bugs); the selected edge flashes green, a refused
 // build pulses it red, a build streams ore from the ledger's ore icon to the site; tamed bugs at work (warm
@@ -25,7 +25,7 @@ import { ledgerKinds } from './ledger.js'
 
 /** @typedef {import('./game.js').Game} Game */
 /** @typedef {import('./world.js').Cell} Cell */
-/** @typedef {{ preview: number | null, select: { node: number, edge: number } | null, refusedAt: number }} Ui */
+/** @typedef {{ select: { node: number, edge: number } | null, refusedAt: number }} Ui */
 
 export const ZOOM_PX = [2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24] // tile sizes in device px
 const AUTO_TILES = 100 // the default zoom: about this many tiles across the short side
@@ -34,10 +34,12 @@ const BG_RGB = [5, 5, 8]
 const DIM_A = 0.825 // seen, not lit: 17.5% bright (b4.2's 35%, 50% darker: the user, b4.3)
 const CHAR = '#f4f1de'
 const NODE = [255, 200, 40]
-const RAIL = '#d8d8e0'
-const CAR = '#e6a03c'
+const ROOT = 'rgb(214,118,36)' // a root's two shades (b4.22)
+const ROOT2 = 'rgb(176,86,26)'
+const BULB_CORE = 'rgb(255,214,120)' // a node's bulb: core, body, rim (b4.22)
+const BULB = 'rgb(246,150,44)'
+const BULB_RIM = 'rgb(196,96,24)'
 const ORE = 'rgb(236,164,40)'
-const GREEN = '#5ac878'
 const RED = '#ff2828'
 const LOOT = 'rgb(64,232,214)'
 const BUG = [255, 190, 90] // tamed: amber (D059)
@@ -459,8 +461,7 @@ export function createRenderer(canvas, game, ui, view) {
     drawGarden()
     drawRails(now) // over the fog: you built them, and a glowing edge shows where it would go
     drawNodes(now)
-    drawCars(bot)
-    if (!game.ride) drawBot(bot, now)
+    drawBot(bot, now)
     drawRings(now)
     drawStreams(now)
     drawWild(alpha) // b3.7's wild bugs (D056–D061), drawn like the tamed ones, in blue (b4.13)
@@ -469,122 +470,53 @@ export function createRenderer(canvas, game, ui, view) {
     drawLizards()
     drawHearts(now)
     drawFlights(now)
-    drawPrice()
     drawLedger(now)
   }
 
-  /** The selected edge's price, along it: green when the ledger has it, else red. */
-  function drawPrice() {
-    const s = ui.select
-    if (!s) return
-    const e = map.edges[s.edge]
-    const p = e.path[e.a === s.node ? Math.floor(e.path.length * 0.6) : Math.floor(e.path.length * 0.4)]
-    const [x, y] = at(p)
-    const ok = game.ledger.ore >= game.cfg.price
-    ctx.font = `bold ${Math.round(14 * dpr)}px monospace`
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    const label = `${game.cfg.price}`
-    const bw = (label.length * 9 + 22) * dpr
-    ctx.fillStyle = 'rgba(0,0,0,0.7)'
-    ctx.fillRect(x - bw / 2, y - 26 * dpr, bw, 20 * dpr)
-    ctx.fillStyle = ORE
-    ctx.fillRect(x - bw / 2 + 5 * dpr, y - 20 * dpr, 8 * dpr, 8 * dpr)
-    ctx.fillStyle = ok ? GREEN : RED
-    ctx.fillText(label, x + 6 * dpr, y - 15 * dpr)
+  /** A world pixel's square on screen. @param {number} x @param {number} y */
+  function px(x, y) {
+    ctx.fillRect(Math.round(sx(x)), Math.round(sy(y)), Math.ceil(T), Math.ceil(T))
   }
 
-  /** A path through tile centres. @param {Cell[]} p */
-  function pathLine(p) {
-    ctx.beginPath()
-    let [x, y] = at(p[0])
-    ctx.moveTo(x, y)
-    for (let i = 1; i < p.length; i++) {
-      const [nx, ny] = at(p[i])
-      // across the wrap: start again on the near side
-      if (Math.abs(nx - x) > T * 2) ctx.moveTo(nx, ny)
-      else ctx.lineTo(nx, ny)
-      x = nx
-      y = ny
-    }
-  }
-
-  /** @param {number} now */
+  /** Roots (b4.22, the user): pixels, like everything else; two shades of orange, hashed per pixel. @param {number} now */
   function drawRails(now) {
-    ctx.lineCap = 'round'
-    ctx.lineJoin = 'round'
-    map.edges.forEach((e, i) => {
-      if (!game.built[i]) return
-      pathLine(e.path)
-      ctx.strokeStyle = '#000'
-      ctx.lineWidth = Math.max(T * 0.9, 4 * dpr)
-      ctx.stroke()
-      ctx.strokeStyle = RAIL
-      ctx.lineWidth = Math.max(T * 0.45, 2 * dpr)
-      ctx.stroke()
+    map.edges.forEach((e, k) => {
+      if (!game.built[k]) return
+      for (const c of e.path) {
+        ctx.fillStyle = (Math.imul(c.y * w + c.x, 2654435761) >>> 29) & 1 ? ROOT : ROOT2
+        px(c.x, c.y)
+      }
     })
-    // the edges of the node held, or the one selected, over the fog: they glow (D079)
-    const glow = (/** @type {number} */ i, /** @type {number} */ a, /** @type {number} */ wd) => {
-      pathLine(map.edges[i].path)
-      ctx.strokeStyle = `rgba(${NODE},${a})`
-      ctx.lineWidth = Math.max(T, 4 * dpr) * wd * 2
-      ctx.stroke()
+    // held in a node: its unbuilt edges, faint; the one aimed at flashes green; refused, it pulses red (b4.3)
+    const n = game.engulf
+    if (n === null) return
+    const aim = ui.select?.node === n ? ui.select.edge : -1
+    for (const k of game.links[n]) {
+      if (game.built[k] || k === aim) continue
+      ctx.fillStyle = `rgba(${NODE},${0.3 + 0.15 * Math.sin(now * 4)})`
+      for (const c of map.edges[k].path) px(c.x, c.y)
     }
-    const pulse = 0.55 + 0.25 * Math.sin(now * 6)
-    if (ui.preview !== null)
-      map.edges.forEach((e, i) => !game.built[i] && (e.a === ui.preview || e.b === ui.preview) && glow(i, pulse, 0.3))
-    // the selected edge flashes green; refused, it pulses red (b4.3)
-    if (ui.select) {
-      const refused = now - ui.refusedAt < 0.7
-      pathLine(map.edges[ui.select.edge].path)
-      const a = refused ? 0.5 + 0.5 * Math.sin((now - ui.refusedAt) * Math.PI * 8) : 0.45 + 0.45 * Math.sin(now * 10)
-      ctx.strokeStyle = refused ? `rgba(255,40,40,${a})` : `rgba(90,200,120,${a})`
-      ctx.lineWidth = Math.max(T, 4 * dpr) * 0.9
-      ctx.stroke()
-    }
+    if (aim < 0) return
+    const refused = now - ui.refusedAt < 0.7
+    const a = refused ? 0.5 + 0.5 * Math.sin((now - ui.refusedAt) * Math.PI * 8) : 0.55 + 0.45 * Math.sin(now * 10)
+    ctx.fillStyle = refused ? `rgba(255,40,40,${a})` : `rgba(90,200,120,${a})`
+    for (const c of map.edges[aim].path) px(c.x, c.y)
   }
 
-  /** @param {number} now */
+  /** Nodes (b4.22, the user): a pulsating orange bulb of pixels; the one holding the bot, bigger. @param {number} now */
   function drawNodes(now) {
-    // before the first edge the pod's nodes glow, pulsing, so the start is found; after it, the network's are
-    // quiet rings: easy to find, not outshining the world (b4.8, the user)
-    const first = !game.firstBuilt
     map.nodes.forEach((n, i) => {
       if (!shown(game, i)) return
-      const [x, y] = at(n)
-      const busy = ui.preview === i || ui.select?.node === i
-      const glow = first || busy
-      const r = Math.max(T, 4 * dpr) * (busy ? 1.3 : 1) * (first ? 1 + 0.12 * Math.sin(now * 4 + i) : 1)
-      if (glow) {
-        const halo = ctx.createRadialGradient(x, y, 0, x, y, r * 2.2)
-        halo.addColorStop(0, `rgba(${NODE},${first ? 0.3 : 0.2})`)
-        halo.addColorStop(1, `rgba(${NODE},0)`)
-        ctx.fillStyle = halo
-        ctx.fillRect(x - r * 2.2, y - r * 2.2, r * 4.4, r * 4.4)
-      }
-      // a ring, not a dot: at 1 px a tile a tamed bug is a warm dot too (b4.2)
-      ctx.strokeStyle = `rgba(${NODE},${glow ? 0.85 : 0.5})`
-      ctx.lineWidth = Math.max(1.5 * dpr, r * 0.22)
-      ctx.beginPath()
-      ctx.arc(x, y, r, 0, Math.PI * 2)
-      ctx.stroke()
-    })
-  }
-
-  /** @param {{ x: number, y: number }} bot */
-  function drawCars(bot) {
-    game.cars.forEach((c, i) => {
-      const riding = game.ride?.car === i
-      const p = riding ? bot : map.nodes[c.node]
-      const [x, y] = at(p)
-      const cw = Math.max(T * 3, 14 * dpr)
-      const ch = cw * 0.7
-      ctx.fillStyle = '#000'
-      ctx.fillRect(x - cw / 2 - 2, y - ch / 2 - 2, cw + 4, ch + 4)
-      ctx.fillStyle = CAR
-      ctx.fillRect(x - cw / 2, y - ch / 2, cw, ch)
-      ctx.fillStyle = riding ? CHAR : '#3a2a14'
-      ctx.fillRect(x - cw / 4, y - ch / 4, cw / 2, ch / 3) // the window: you, when you're in
+      const held = game.engulf === i
+      const beat = Math.sin(now * 4 + i)
+      const r = (held ? 3 : 2) + (beat > 0.2 ? 1 : 0)
+      for (let dy = -r; dy <= r; dy++)
+        for (let dx = -r; dx <= r; dx++) {
+          const d = dx * dx + dy * dy
+          if (d > r * r + r) continue
+          ctx.fillStyle = d <= 1 ? BULB_CORE : d <= r * r - r ? BULB : BULB_RIM
+          px(n.x + dx, n.y + dy)
+        }
     })
   }
 

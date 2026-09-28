@@ -11,6 +11,8 @@
 // takes the worms' site finder with a 1 px site: a soft or hard rock pixel with no open one within 2; it
 // goes straight there through the rock, and that pixel turns to loot (event `deposit`). Randomness from the
 // tick (rng.js).
+// b4.22 (the user: "lizards must not spawn in small enclosures"): the spawn pixel's cave must hold at least
+// `room` open pixels (an 8-way flood that stops once it has counted them).
 
 import { isOpen, Tile } from '../../sim/gen/world.js'
 import { toRock } from '../../sim/dig/pull.js'
@@ -31,6 +33,7 @@ export const LIZARDS = {
   mineTicks: 30,
   eat: 16, // ore, then it burrows (the user)
   site: 24,
+  room: 400, // open px the cave must hold for a spawn (b4.22)
 }
 /** @typedef {typeof LIZARDS} Lizards */
 
@@ -215,8 +218,26 @@ function spawn(g, c, rng) {
     }
   if (!best) return
   const b = /** @type {{ x: number, y: number }} */ (best)
+  if (!roomy(g, b, c.room)) return
   g.lizards.push({ body: [b, { ...b }, { ...b }], dir: rng() % 8, zip: 0, movedAt: g.tick, restUntil: g.tick + 30, mineAt: 0, eaten: 0, site: null, lookedAt: -1e9, route: [] })
   g.events.push({ type: 'lizard', x: b.x, y: b.y })
+}
+
+/** The open pixels 8-connected to `at` number at least n. @param {import('./game.js').Game} g @param {{ x: number, y: number }} at @param {number} n */
+function roomy(g, at, n) {
+  const { w, h, tiles } = g.world
+  const got = new Set([at.y * w + at.x])
+  for (const i of got) {
+    if (got.size >= n) return true
+    const x = i % w
+    const y = (i - x) / w
+    for (const [sx, sy] of STEPS) {
+      const yy = y + sy
+      const j = yy * w + wrap(x + sx, w)
+      if (yy >= 0 && yy < h && isOpen(tiles[j])) got.add(j)
+    }
+  }
+  return got.size >= n
 }
 
 /** One px: along its route, else on its heading, else anywhere on the surface. @param {import('./game.js').Game} g @param {Lizards} c @param {Lizard} z @param {() => number} rng */
