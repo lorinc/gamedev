@@ -112,8 +112,8 @@ Each row is one tunable interaction. **P?** = does the player's position or acti
 | L09 | Network → Beasts | + | 16, 32, 64… built nodes: +1 beast, forever | `beasts.first` | no | beasts.js |
 | L10 | Beasts → Network | − | every 5 min each eats a bulb near you: ~1.4 nodes and ~2 roots per meal (≈ 20 ore), may strand pieces | `beasts.everyTicks`, `beasts.near` | yes | beasts.js `eat` |
 | L11 | Beasts → Liquid | + | 24 drops a meal; pools shrink from the top as they evaporate (a 24-drop pool in ~2–4 min) | `beasts.drops` | yes | beasts.js |
-| L12 | Liquid → Gas | + | 8 particles a drop, one per surface pixel every 5 s, to the station in the same cave | `gas.per`, `gas.everyTicks` | yes (clouds round the nodes, wisps from the pools) | gas.js |
-| L13 | Gas → Gas (spread) | ± | a meal's 192 particles fill ~26 stations to 8 in ~5 s; a full cave evens out (111 stations in ~22 s) | `gas.cap`, `gas.spreadTicks` | yes (wisps between nodes) | gas.js `spread` |
+| L42 | Liquid → Gas | + | 8 particles a drop, one per surface pixel every 5 s, to the station in the same cave | `gas.per`, `gas.everyTicks` | yes (clouds round the nodes, wisps from the pools) | gas.js |
+| L43 | Gas → Gas (spread) | ± | a meal's 192 particles fill ~26 stations to 8 in ~5 s; a full cave evens out (111 stations in ~22 s) | `gas.cap`, `gas.spreadTicks` | yes (wisps between nodes) | gas.js `spread` |
 
 ### Garden: cover, fruit, worms
 
@@ -239,6 +239,6 @@ matters). Stranded, still counted as built: 1 node at 16, 7 at 128.
 |---|---|---|
 | 2026-09-28 | b4.63 | First version: stocks, actors, 39 links, 11 loops, the idle measurement. |
 | 2026-09-28 | b4.64 | Loot renamed crystals (D146); L40, the tamed bugs' fire suppression (D147). |
-| 2026-09-28 | b4.66 | Liquid drains into Gas, a new stock per node (D149); L12. |
-| 2026-09-28 | b4.67 | Gas spreads from saturated stations through the cave (D150); L13. |
+| 2026-09-28 | b4.66 | Liquid drains into Gas, a new stock per node (D149); L42. |
+| 2026-09-28 | b4.67 | Gas spreads from saturated stations through the cave (D150); L43. |
 | 2026-09-28 | b4.68 | L41, tamed bugs stand still near fire (D151). |
