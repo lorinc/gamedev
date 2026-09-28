@@ -168,6 +168,7 @@ const panel = createPanel(
     'sim.gas.cap': [1, 64, 1],
     'sim.gas.spreadTicks': [1, 600, 1],
     'sim.gas.everyTicks': [30, 3600, 30],
+    'sim.gas.perMoss': [0, 8, 1],
     'sim.lizardUpgradeCost': [1, 256, 1],
     'sim.upgradeGain': [0, 1, 0.05],
     'view.zoom': [-1, ZOOM_PX.length - 1, 1],

@@ -174,6 +174,7 @@ test('a tamed bug works near the network and sends its haul to the ledger', () =
   g.cfg.swarm.tripTicks = 3600
   g.cfg.swarm.reach = 4
   g.cfg.swarm.upgradeCost = 1e9 // no fruit spent on upgrades here
+  g.cfg.gas.perMoss = 0 // moss for free here, as before b4.69 (gas has its own test)
   g.ledger.bugs = 3
   tick(g)
   assert.equal(g.swarm.length, 3)
@@ -203,6 +204,7 @@ test('tamed bugs go for back wall not green yet: more greened than a plain rando
     g.cfg.worms.max = 0
     g.cfg.lizards.max = 0
     g.cfg.lichen.near = 0
+    g.cfg.gas.perMoss = 0 // moss for free here, as before b4.69 (gas has its own test)
     g.ledger.bugs = 6
     for (let i = 0; i < 3600; i++) tick(g)
     return g.garden.wall.reduce((a, v) => a + (v ? 1 : 0), 0)
@@ -216,6 +218,7 @@ test('bugs green the back wall, vines grow on green, and 12 px of vine make a fr
   const { FRUIT, GREEN, VINE } = await import('./garden.js')
   const g = fresh()
   g.cfg.lichen.near = 0 // no lichen, so no fire (b4.21): this is the garden alone
+  g.cfg.gas.perMoss = 0 // moss for free here, as before b4.69 (gas has its own test)
   g.ledger.bugs = 10
   for (let i = 0; i < 3600; i++) tick(g)
   const wall = [...g.garden.wall]
@@ -1376,4 +1379,24 @@ test('a tamed bug with fire within 6 px stands still; out of reach of it, or onc
   assert.equal(moves(3), false, 'fire 3 px away: still')
   g.garden.burning = []
   assert.equal(moves(40), true, 'fire far away: walks')
+})
+
+test('tamed bugs lay moss only where their station has gas, one gas a pixel (b4.69)', async () => {
+  const { stationOf } = await import('./gas.js')
+  const g = fresh()
+  g.cfg.lichen.near = 0
+  g.cfg.worms.max = 0
+  g.cfg.swarm.tripTicks = 1e9
+  g.cfg.gas.spreadTicks = 1e9 // the gas stays where we put it
+  g.ledger.bugs = 1
+  tick(g)
+  const green = () => g.garden.wall.reduce((a, v) => a + (v ? 1 : 0), 0)
+  for (let i = 0; i < 600; i++) tick(g)
+  assert.equal(green(), 0, 'no gas: bare wall')
+  const b = g.swarm[0]
+  g.gas[stationOf(g, b.y * g.world.w + b.x)] = 5
+  for (let i = 0; i < 600; i++) tick(g)
+  const left = g.gas.reduce((a, v) => a + v, 0)
+  assert.ok(green() > 0, 'moss where the gas is')
+  assert.equal(green() + left, 5, 'a pixel of moss per gas')
 })

@@ -25,10 +25,14 @@
 // b4.64 (the user: "give tame bugs a 3x3 fire suppression area"): no cover within `suppress` px (a square: 1 is
 // the 3×3) of a tamed bug at work catches fire: not from the spread, a lichen's ember or an ash disc's flare-up.
 // A pixel already burning there burns on. So the green round the bugs comes through a fire.
+// b4.69 (the user: "tamed bugs place moss on cave back wall only in the presence of gas, every placed moss uses
+// one gas"): a pixel greens only while its station (gas.js, the node whose share of the cave it's in) holds
+// `gas.perMoss` (1) or more, and takes that much from it. No gas there: the bug passes and the wall stays bare.
 
 import { isOpen } from '../../sim/gen/world.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
+import { stationOf } from './gas.js'
 
 /** The garden's numbers (the dev panel's). */
 export const GARDEN = {
@@ -115,17 +119,23 @@ export function createGarden(n) {
 /** @param {import('./game.js').Game} g @param {number} i */
 const openAt = (g, i) => isOpen(g.world.tiles[i])
 
-/** A bug at (x, y) greens the back wall round it. @param {import('./game.js').Game} g @param {number} x @param {number} y */
+/** A bug at (x, y) greens the back wall round it, paying gas for each pixel (b4.69). @param {import('./game.js').Game} g @param {number} x @param {number} y */
 export function greenAround(g, x, y) {
   const { w, h } = g.world
   const G = g.garden
   const r = Math.max(0, g.cfg.garden.trail)
+  const cost = Math.max(0, g.cfg.gas.perMoss)
   for (let dy = -r; dy <= r; dy++)
     for (let dx = -r; dx <= r; dx++) {
       const yy = y + dy
       if (Math.abs(dx) + Math.abs(dy) > r || yy < 0 || yy >= h) continue
       const i = yy * w + wrap(x + dx, w)
       if (G.wall[i] || !openAt(g, i)) continue
+      if (cost) {
+        const k = stationOf(g, i)
+        if (g.gas[k] < cost) continue
+        g.gas[k] -= cost
+      }
       G.wall[i] = GREEN
       G.changed.push(i)
       if (++G.sown % Math.max(1, g.cfg.garden.sprout) === 0) {

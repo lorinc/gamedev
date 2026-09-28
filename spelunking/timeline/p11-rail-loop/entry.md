@@ -314,6 +314,8 @@ Then (D150, the user): a station holds 8; over that it passes half its surplus o
 station with room in its cave, so the gas fills the cave out from the pool and settles in seconds; a full cave
 evens out. Screenshot `gallery/p11/b4.67_spread_b.png`.
 Then (D151, the user): a tamed bug with fire within 6 px stops moving until it's out.
+Then (D152, the user): moss costs gas: a tamed bug greens a back-wall pixel only while that pixel's station
+holds gas, one gas a pixel (`gas.perMoss`).
 
 ## Feedback
 

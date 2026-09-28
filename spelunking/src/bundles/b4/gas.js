@@ -29,6 +29,7 @@ export const GAS = {
   everyTicks: 300, // a particle off each pool surface pixel every 5 s: a layer of pool in 40 s
   cap: 8, // particles a station holds before it's saturated and passes gas on
   spreadTicks: 30, // a spread step every 0.5 s
+  perMoss: 1, // gas a tamed bug's pixel of moss (green back wall) takes from its station (b4.69; 0: free)
 }
 
 /**
