@@ -405,6 +405,42 @@ Claude's earlier ideas that still fit: strains that mutate in your cave and can 
 postcards (an image or GIF of your glowing cave); visit links (seed + edits, opened read-only as a
 garden). All work without a server (P2P and browser only).
 
+## The game: an intelligent idle game (user, 2026-09-28)
+
+Decided after p11 (b4, the cave ecosystem). This frames everything below it that is still a draft.
+
+**The genre:** "an intelligent, complex, systematically beautiful cookie clicker." Idle games retain about 10× the
+next genre (the user's research), "and I need that now". Vampire Survivors counts too: "You grind, unlock, grind
+better, unlock in n different dimensions, grind elegantly and masterfully." Not a puzzle game: Terra Nil "feels
+good", but "it is NOT a simulation, it is a puzzle game. I want this game to be fundamentally different."
+
+**What p11 proved (user):**
+- A cave ecosystem idle game can feel very involved without the player needing to run it; time spent can be made
+  rewarding (push it out of balance for a big reward) and the system resilient (it restores balance after).
+- "This kind of complexity CAN be made fun with no menus, no instructions, and VERY simple swipe controls."
+
+**Rules for the design (user):**
+- **Unlock moments must explain themselves.** b4's ledger theatrics (D127) were "not done well enough. You do not
+  know what you did well, where that resource even came from. We got to do this aspect MUCH better."
+- **The real level-up is pushing through a clearly understood point of no return,** like seeding slime. The
+  hyper-inflated cookie: "now I have all the regenerating ore in the world to just spam nodes and unlock the whole
+  map".
+- **Synergies need levers.** b4 gave the player two (building nodes, taming bugs): "not nearly enough".
+- **Don't densify the graph.** Unlike the Powder Game's dense web of interactions, ours is fairly loose, "but it is
+  still complicated to comprehend, probably should not be pushed further."
+
+**The structure (user):**
+- **Endless, one world.** "Stuff accumulating that I could invest right now" is the genre's strongest retention
+  factor (the user's research), so the player keeps resource-producing environments.
+- **Restoring a biome opens others.** With two restored, **a transition zone appears** between them (e.g. the ice /
+  dust boundary); fixing it lets both biomes unlock new states.
+- **Offline:** the simulation can run "in a spreadsheet" (numbers, no pixels; see
+  `guides/engineering/ideal_sw_architecture.md`), with the visuals loaded on arrival; while the player is away, the
+  system is treated as stable.
+
+**Setting and audience (user):** the Callisto setting stays ("unfortunately I love the setting"). A 6-year-old is
+not the target audience, but the floor: the lowest complexity tolerance and system thinking to design for.
+
 ## Geological layers (user, 2026-09-26)
 The user: "We need more variety and probably more depth. We need different geological layers playing
 different roles." Each layer must change what you *do*, not just its colour (Claude's test). The stack

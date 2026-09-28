@@ -374,4 +374,8 @@ Found on the way:
 - **It isn't a game yet.** A young player: "Where do I go? Why is this following me? I'm lost! What just
   happened?" The user: the simulation felt flat, "like an open world game that looks the same everywhere you go".
 
-**Next (user):** how to turn this into a game.
+**Next (user):** how to turn this into a game. Settled the same day (D164): an intelligent idle game, "an
+intelligent, complex, systematically beautiful cookie clicker": endless, biomes restored one by one open others,
+transition zones between restored pairs, levers beyond building and taming, unlocks that explain themselves,
+level-ups as understood points of no return; Callisto stays; a 6-year-old is the complexity floor. Full text in
+`concepts/callisto_design.md`.
