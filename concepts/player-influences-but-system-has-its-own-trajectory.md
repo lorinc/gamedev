@@ -138,6 +138,7 @@ Each row is one tunable interaction. **P?** = does the player's position or acti
 | L23 | Lichen → Fire | + | 1 in 24 checks (every 5 s) with cover within 2 px: once per lichen | `lichen.spark` | no | lichen.js |
 | L24 | Fire → Cover | − | burns all connected cover (vines and fruit too) | `garden.spread*` | no | garden.js |
 | L40 | Tamed bugs → Fire | − | no cover within a tamed bug's 3×3 catches fire (spread, ember or disc flare-up); already burning pixels burn on | `garden.suppress` | no | garden.js `shielded` |
+| L41 | Fire → Tamed bugs | − | a bug with fire within 6 px stands still until it's out (it still pulls) | `swarm.fireStop` | no | swarm.js `fireNear` |
 | L25 | Fire → Ash | + | ash discs r 2–3, every 8–12 px | `garden.ash*` | no | garden.js |
 | L26 | Ash → Flower bots | + | 1 in 8 discs; bloom after 2 min | `flowers.per`, `flowers.bloomTicks` | no | flowers.js |
 | L27 | Flower bots → Network | + | 3 edges each to nodes not on the network yet (the rim), ≥ 60 s apart, then pop | `flowers.builds`, `flowers.buildGap` | no | flowers.js |
@@ -238,3 +239,6 @@ matters). Stranded, still counted as built: 1 node at 16, 7 at 128.
 |---|---|---|
 | 2026-09-28 | b4.63 | First version: stocks, actors, 39 links, 11 loops, the idle measurement. |
 | 2026-09-28 | b4.64 | Loot renamed crystals (D146); L40, the tamed bugs' fire suppression (D147). |
+| 2026-09-28 | b4.66 | Liquid drains into Gas, a new stock per node (D149); L12. |
+| 2026-09-28 | b4.67 | Gas spreads from saturated stations through the cave (D150); L13. |
+| 2026-09-28 | b4.68 | L41, tamed bugs stand still near fire (D151). |

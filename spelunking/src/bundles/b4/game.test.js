@@ -1352,3 +1352,28 @@ test('a saturated station passes half its surplus to emptier neighbours in its c
     for (const u of big.has(k) ? adj[k] : []) assert.ok(Math.abs(g.gas[u] - v) <= 1, 'even to within 1')
   })
 })
+
+test('a tamed bug with fire within 6 px stands still; out of reach of it, or once it is out, it walks (b4.68)', () => {
+  const g = fresh()
+  g.cfg.garden.burnTicks = 1e9 // the fire holds still
+  g.cfg.swarm.tripTicks = 1e9
+  g.ledger.bugs = 1
+  tick(g)
+  const b = g.swarm[0]
+  const { w } = g.world
+  /** @param {number} d fire this far to the bug's right @returns {boolean} it moved over 2 s */
+  const moves = (d) => {
+    g.garden.burning = [b.y * w + ((b.x + d) % w)]
+    const at = `${b.x},${b.y}`
+    let moved = false
+    for (let t = 0; t < 120; t++) {
+      tick(g)
+      if (`${b.x},${b.y}` !== at) moved = true
+    }
+    return moved
+  }
+  assert.equal(moves(6), false, 'fire 6 px away: still')
+  assert.equal(moves(3), false, 'fire 3 px away: still')
+  g.garden.burning = []
+  assert.equal(moves(40), true, 'fire far away: walks')
+})

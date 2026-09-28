@@ -12,6 +12,9 @@
 // spawn the bugs in areas with no vine"): before that, nodes with no vine (or fruit) within about `crowd` px
 // come first; vines are counted per BLOCK px square, and a node looks at the blocks its circle overlaps.
 // b4.49 (the user): a just-tamed bug's first trip starts near you; the next ones at nodes.
+// b4.68 (the user: "tame bugs must stop moving if there's fire in their 6px vicinity"): a bug with a burning
+// pixel within `fireStop` px stays put (it still pulls, and its trip still ends on time); it walks on once
+// the fire there is out. Its 3×3 fire shield (b4.64) holds its ground meanwhile.
 
 import { isOpen, Tile } from '../../sim/gen/world.js'
 import { CRYSTAL } from './world.js'
@@ -48,6 +51,7 @@ export const SWARM = {
   fruitCarry: 8, // fruit a bug holds at most (the user, b4.10)
   look: 8, // px a bug looks along each way for back wall not green yet (b4.51; 0: a plain random walk)
   upgradeCost: 16, // fruit for the first upgrade, doubling each time: 16, 32, 64… (the user, b4.13)
+  fireStop: 6, // px: fire this close and a bug stands still (the user, b4.68; 0: never)
 }
 /** @typedef {typeof SWARM} Swarm */
 
@@ -177,9 +181,16 @@ export function updateSwarm(g) {
       startTrip(g, b, spawnAt(g, s, rng, b) ?? b, rng)
       return
     }
-    if (g.tick - b.movedAt >= Math.max(1, s.moveTicks)) step(g, b, rng)
+    if (g.tick - b.movedAt >= Math.max(1, s.moveTicks) && !fireNear(g, b, s.fireStop)) step(g, b, rng)
     pull(g, s, b, k)
   })
+}
+
+/** A burning pixel within r px of the bug (b4.68). @param {import('./game.js').Game} g @param {Worker} b @param {number} r */
+function fireNear(g, b, r) {
+  if (r <= 0) return false
+  const w = g.world.w
+  return g.garden.burning.some((i) => dist2(g, { x: i % w, y: Math.floor(i / w) }, b) <= r * r)
 }
 
 /** Back wall not green yet along a way: open pixels with no cover in the next `look` px (b4.51). @param {import('./game.js').Game} g @param {Worker} b @param {number} k @param {number} look */
