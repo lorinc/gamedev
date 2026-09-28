@@ -685,6 +685,7 @@ test('a root built from a bulb is ridden to the far end, no cart (b4.23, b4.41)'
 test('1 in 8 ash discs grows a flower; after 2 minutes it becomes a bot that clears its ash, builds 3 edges on the network, and pops (b4.25)', async () => {
   const { ASH, GREEN, ignite } = await import('./garden.js')
   const g = fresh()
+  g.cfg.hives.max = 0 // no hives' moths here (b4.73)
   g.cfg.worms.max = 0
   g.cfg.lizards.max = 0
   g.cfg.lichen.near = 0 // no lichen of its own
@@ -1228,7 +1229,7 @@ test('no cover within a tamed bug\'s 3×3 catches fire; round it, the fire burns
   assert.ok(burned > 300, `the rest burned: ${burned} px`)
 })
 
-test('a pool evaporates from the top, 8 particles a drop, each to the nearest station through open pixels (b4.66)', async () => {
+test('a pool evaporates from the top, 40 particles a drop (5 a step; b4.73, 8 and 1 before), each to the nearest station through open pixels (b4.66)', async () => {
   const { stationOf } = await import('./gas.js')
   const g = createGame(pristine(), JSON.parse(JSON.stringify(CONFIG)))
   g.cfg.pull.ticks = 1e9
@@ -1283,18 +1284,19 @@ test('a pool evaporates from the top, 8 particles a drop, each to the nearest st
     for (let t = 0; t < every; t++) tick(g)
   }
   for (let k = 0; k < 8; k++) step()
-  assert.deepEqual([...cells].map((i) => g.liquid[i]), [0, 8, 8], 'the top dries first')
+  assert.deepEqual([...cells].map((i) => g.liquid[i]), [0, 40, 40], 'the top dries first')
   assert.equal(g.ledger.liquid, 2)
   for (let k = 0; k < 16; k++) step()
   assert.deepEqual([...cells].map((i) => g.liquid[i]), [0, 0, 0])
   assert.equal(g.ledger.liquid, 0)
-  assert.equal(g.gas.reduce((a, b) => a + b, 0), 24, '8 particles a drop')
+  assert.equal(g.gas.reduce((a, b) => a + b, 0), 120, '40 particles a drop')
   assert.ok(g.gas[st] > 0)
 })
 
 test('a saturated station passes half its surplus to emptier neighbours in its cave, and it settles (b4.67)', async () => {
   const { stations } = await import('./gas.js')
   const g = createGame(pristine(), JSON.parse(JSON.stringify(CONFIG)))
+  g.cfg.hives.max = 0 // no hives' moths here (b4.73)
   g.cfg.pull.ticks = 1e9
   g.cfg.worms.max = 0
   g.cfg.lizards.max = 0
@@ -1386,6 +1388,7 @@ test('tamed bugs lay moss only where their station has gas, one gas a pixel (b4.
 test('tamed bugs are wall-bouncers: on the wall or in the air, never in rock; they jump, mine, and send each unit at once (b4.70)', async () => {
   const { onWall } = await import('./bounce.js')
   const g = fresh()
+  g.cfg.hives.max = 0 // no hives' moths here (b4.73)
   g.cfg.lichen.near = 0
   g.cfg.worms.max = 0
   g.cfg.swarm.upgradeCost = 1e9 // nothing spends from the ledger here
@@ -1497,7 +1500,7 @@ test('a tamed bug that meets gas turns moth: it circles through open air, still 
   }
 })
 
-test('predators: one per 4 built nodes at a crowd of bugs; a caught bug is gone (tamed: off the ledger), 3 ore appear; 5 meals and it goes (b4.72)', async () => {
+test('predators: one per 4 built nodes at a crowd of bugs, coming down slowly; a catch is gone (tamed: off the ledger), hauled up, then 3 ore; the 5th hauled up too, then it goes (b4.72, b4.73)', async () => {
   const { updatePredators } = await import('./predators.js')
   const g = createGame(pristine(), JSON.parse(JSON.stringify(CONFIG)))
   const pod = MAP.nodes[MAP.podNodes[0]]
@@ -1526,19 +1529,107 @@ test('predators: one per 4 built nodes at a crowd of bugs; a caught bug is gone 
   assert.equal(g.predators.length, 1, 'a predator at the crowd')
   const p = g.predators[0]
   assert.deepEqual([p.x, p.y], [spot.x, spot.y], 'anchored under the ceiling')
-  // the bug was on the string: caught at once
-  const caught = g.events.filter((e) => e.type === 'caught')
-  assert.equal(caught.length, 1)
+  assert.equal(p.len, 0, 'it comes down from the rock')
+  /** Ticks of updatePredators alone, gathering events. @param {number} n */
+  const run = (n) => {
+    const ev = []
+    for (let t = 0; t < n; t++) {
+      g.tick++
+      g.events.length = 0
+      updatePredators(g)
+      ev.push(...g.events)
+    }
+    return ev
+  }
+  // it comes down slowly; the bug 2 px under the anchor is caught once the string reaches it
+  let ev = []
+  for (let t = 0; t < 4 * g.cfg.predators.descendTicks && !ev.length; t++) ev = run(1).filter((e) => e.type === 'caught')
+  assert.equal(ev.length, 1, 'caught once the string reaches it')
+  assert.ok(p.len >= 2 && p.len <= 3, `at ${p.len} px down`)
   assert.equal(g.swarm.length, 0)
   assert.equal(g.ledger.bugs, 0, 'a tamed bug is gone for good')
-  assert.equal(caught[0].cells.length, 3)
-  for (const i of caught[0].cells) assert.equal(tiles[i], Tile.Ore)
-  // four more wild meals, and it goes
+  assert.ok(p.prey, 'hauling it up')
+  // up into the rock with it, then the ore
+  ev = run(p.len * g.cfg.predators.retractTicks + 1)
+  const ore = ev.filter((e) => e.type === 'predatorOre')
+  assert.equal(ore.length, 1)
+  assert.equal(p.len, 0)
+  assert.equal(ore[0].cells.length, 3)
+  for (const i of ore[0].cells) assert.equal(tiles[i], Tile.Ore)
+  // four more wild meals; the last it hauls up too, then it goes
   for (let k = 0; k < 4; k++) {
+    while (p.len < 2) run(1)
     addBug(/** @type {any} */ (g), p.x, p.y + 1)
-    g.tick++
-    updatePredators(g)
+    run(1)
+    assert.ok(p.prey, `meal ${k + 2}`)
+    if (k < 3) while (p.prey) run(1)
   }
-  assert.equal(g.predators.length, 0, 'after 5 meals it withdraws')
-  assert.ok(g.events.some((e) => e.type === 'predatorGone'))
+  assert.equal(g.predators.length, 1, 'it still hauls its last catch')
+  ev = run(p.len * g.cfg.predators.retractTicks + 2)
+  assert.ok(ev.some((e) => e.type === 'predatorOre'), 'the last catch makes ore too')
+  assert.equal(g.predators.length, 0, 'then it is gone')
+  assert.ok(ev.some((e) => e.type === 'predatorGone'))
+})
+
+test('a tamed bug coming back prefers a network node with gas (b4.73)', () => {
+  const { w } = MAP.world
+  const d2 = (/** @type {{x: number, y: number}} */ a, /** @type {{x: number, y: number}} */ b) => {
+    const dx = Math.min(Math.abs(a.x - b.x), w - Math.abs(a.x - b.x))
+    return dx * dx + (a.y - b.y) ** 2
+  }
+  const A = MAP.podNodes[0]
+  const B = MAP.nodes.findIndex((n) => d2(n, MAP.nodes[A]) > 100 ** 2)
+  for (let run = 0; run < 8; run++) {
+    const g = fresh()
+    g.cfg.lichen.near = 0
+    g.cfg.gas.spreadTicks = 1e9
+    g.net.fill(0)
+    g.net[A] = g.net[B] = 1
+    g.gas[A] = 50 // gas at A, though its bugs crowd it
+    g.ledger.bugs = 4
+    for (let k = 0; k < 4; k++) g.swarm.push({ ...MAP.nodes[A], from: MAP.nodes[A], movedAt: 0, dir: 0, lastOre: 1e9, target: null, pullFor: 0 })
+    for (let t = 0; t < run; t++) tick(g)
+    g.ledger.bugs = 5
+    g.swarm.push({ ...MAP.nodes[B], from: MAP.nodes[B], movedAt: 0, dir: 0, lastOre: g.tick + 1 - g.cfg.swarm.idleTicks, target: null, pullFor: 0 })
+    tick(g)
+    assert.ok(d2(g.swarm[4], MAP.nodes[A]) <= g.cfg.swarm.spawn ** 2 + 2, 'back at the node with gas')
+  }
+})
+
+test('a hive grows by ore near the network, hatches 3 moths onto the ledger, shrinks and goes (b4.73)', async () => {
+  const { onWall } = await import('./bounce.js')
+  const g = createGame(pristine(), JSON.parse(JSON.stringify(CONFIG)))
+  g.cfg.pull.ticks = 1e9
+  g.cfg.bugs.chasers = 0
+  const c = g.cfg.hives
+  let hive = null
+  let hatched = 0
+  let gone = 0
+  const bugs0 = g.ledger.bugs
+  for (let i = 0; i < c.everyTicks * 3 + c.moths * c.birthTicks + c.shrinkTicks + 10 && !gone; i++) {
+    tick(g)
+    for (const e of g.events) {
+      if (e.type === 'hive' && !hive) {
+        hive = { x: e.x, y: e.y }
+        assert.ok(onWall(g, e.x, e.y), 'on the wall')
+        let ore = 0
+        for (let dy = -c.radius; dy <= c.radius; dy++)
+          for (let dx = -c.radius; dx <= c.radius; dx++)
+            if (dx * dx + dy * dy <= c.radius ** 2 && g.world.tiles[(e.y + dy) * g.world.w + ((e.x + dx + g.world.w) % g.world.w)] === Tile.Ore) ore++
+        assert.ok(ore >= c.ore, `${ore} ore round it`)
+      }
+      if (e.type === 'hatched') {
+        hatched++
+        const b = g.swarm[g.swarm.length - 1]
+        assert.ok(b.moth, 'a moth')
+        assert.deepEqual([b.x, b.y], [hive?.x, hive?.y], 'at the hive')
+      }
+      if (e.type === 'hiveGone') gone++
+    }
+    g.events.length = 0
+  }
+  assert.ok(hive, 'a hive grew')
+  assert.equal(hatched, c.moths)
+  assert.equal(gone, 1)
+  assert.ok(g.ledger.bugs >= bugs0 + c.moths, 'the moths are on the ledger')
 })

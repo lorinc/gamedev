@@ -327,6 +327,9 @@ Then (D154, the user): a tamed bug that meets gas turns into a moth, circling th
 flies), still sending units at once and fading after 30 s; jumpers are drawn paler, moths amber.
 Then (D155, the user): pink predators hang from the ceiling where bugs crowd (one per 4 built nodes at most), eat
 the bugs that touch them (tamed ones for good) and leave 3 ore in the rock per bug, 5 times, then withdraw.
+Then (D156–D159, the user): predators haul the catch up into the rock and come down again slowly, only the pink
+tip glows; bugs no longer pick fruit and come back at nodes with gas first; liquid makes 5× the gas; hives grow
+by ore and hatch 3 moths each, and moths hover while they harvest.
 
 ## Feedback
 

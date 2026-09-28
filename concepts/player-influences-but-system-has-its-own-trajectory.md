@@ -124,6 +124,7 @@ Each row is one tunable interaction. **P?** = does the player's position or acti
 | L46 | Bugs → Predators | + | a crowd of 6 bugs within 24 px calls one, ≤ 1 per 4 built nodes | `predators.crowd`, `predators.perNodes` | yes (pink strings) | predators.js |
 | L47 | Predators → Bugs | − | a bug touching the string is eaten; tamed ones leave the ledger for good | `predators.length`, `predators.meals` | yes | predators.js |
 | L48 | Predators → Ore | + | 3 ore pixels in the rock by the anchor per bug eaten: the main ore replenisher (the user) | `predators.ore` | yes | predators.js |
+| L49 | Ore → Hives → Tamed bugs | + | 20 ore within 12 px of a wall pixel near the network: a hive (1 at a time, a look a minute), 3 moths each | `hives.*` | yes (honey blobs) | hives.js |
 | L44 | Gas → Cover | + (gate) | a bug greens a pixel only while its station holds gas; 1 gas a pixel, so a beast meal's 192 particles make at most 192 px of moss | `gas.perMoss` | yes (the clouds thin as moss appears) | garden.js `greenAround` |
 | L13 | Cover → Vines | + | 1 in 40 greened px starts a vine; tips grow 1 px / 5 s on green only | `garden.sprout`, `garden.growTicks` | no | garden.js |
 | L14 | Vines → Fruit | + | 12 px of vine: 1 fruit a minute | `garden.perFruit`, `garden.fruitTicks` | no | garden.js |
@@ -251,3 +252,4 @@ matters). Stranded, still counted as built: 1 node at 16, 7 at 128.
 | 2026-09-28 | b4.70 | Wall-bouncing bugs, units to the ledger at once, taming costs 1 (D153): L05, L06, L07, L12. |
 | 2026-09-28 | b4.71 | L45, bugs in gas turn moth (D154). |
 | 2026-09-28 | b4.72 | Predators, a new actor: L46–L48 (D155). |
+| 2026-09-28 | b4.73 | Predators haul (D156); no fruit for bugs, gas-first returns (D157, L06); 5× gas (D158, L42); hives, L49 (D159). |

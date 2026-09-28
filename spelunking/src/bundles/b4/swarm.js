@@ -27,13 +27,16 @@
 // circles through open air, never stopping for a unit; it still pulls what's in reach as it passes, each unit to
 // the ledger at once, greens the wall it flies over (where there's gas), and fades after `idleTicks` with no
 // unit, to come back a jumper. The view draws moths amber, jumpers paler (the user: "a bit less warm").
+// b4.73 (the user: "bugs should not collect the fruit anymore, it will be way less common"): they pull ore and
+// crystals only; fruit is yours to pick. A moth with a unit in reach hovers till it's out, then flies on. And (the user: "bugs now should prefer spawning at a node with gas") a
+// bug coming back after it faded goes to a network node whose station holds gas first (where it turns moth).
 
 import { isOpen, Tile } from '../../sim/gen/world.js'
 import { CRYSTAL } from './world.js'
 import { toRock } from '../../sim/dig/pull.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
-import { FRUIT, fruitNear, greenAround, pick, VINE } from './garden.js'
+import { FRUIT, greenAround, VINE } from './garden.js'
 import { dist2, gain } from './game.js'
 import { becomeMoth, crawl, fall, flyTick, jump, mothTick } from './bounce.js'
 import { stationOf } from './gas.js'
@@ -119,7 +122,8 @@ function spawnAt(g, s, rng, self) {
   g.net.forEach((on, i) => {
     if (!on) return
     const n = g.map.nodes[i]
-    let k = vineNear(g, n, s.crowd) ? 1e6 : 0 // no vine first (b4.36), then the fewest bugs (b4.34)
+    // gas first (b4.73), then no vine (b4.36), then the fewest bugs (b4.34)
+    let k = (g.gas[i] > 0 ? 0 : 2e6) + (vineNear(g, n, s.crowd) ? 1e6 : 0)
     for (const b of g.swarm) if (b !== self && dist2(g, b, n) <= c2) k++
     if (k < least) (least = k), (best = [i])
     else if (k === least) best.push(i)
@@ -183,8 +187,9 @@ export function updateSwarm(g) {
     }
     if (!b.moth && g.gas[stationOf(g, b.y * g.world.w + b.x)] > 0) becomeMoth(b, rng)
     if (b.moth) {
-      if (!fireNear(g, b, s.fireStop) && mothTick(g, b, rng)) greenAround(g, b.x, b.y)
       pull(g, s, b, k)
+      // harvesting: it hovers till the unit is out (the user, b4.73: "moths should stop, when they are harvesting")
+      if (!b.target && !fireNear(g, b, s.fireStop) && mothTick(g, b, rng)) greenAround(g, b.x, b.y)
       return
     }
     if (b.fly) {
@@ -200,7 +205,7 @@ export function updateSwarm(g) {
   })
 }
 
-/** Ore, crystals or fruit within r px. @param {import('./game.js').Game} g @param {Cell} at @param {number} r */
+/** Ore or crystals within r px (no fruit since b4.73). @param {import('./game.js').Game} g @param {Cell} at @param {number} r */
 function unitNear(g, at, r) {
   const { w, h, tiles } = g.world
   for (let dy = -r; dy <= r; dy++)
@@ -210,7 +215,7 @@ function unitNear(g, at, r) {
       const t = tiles[y * w + wrap(at.x + dx, w)]
       if (t === Tile.Ore || t === CRYSTAL) return true
     }
-  return !!fruitNear(g, at, r)
+  return false
 }
 
 /** A burning pixel within r px of the bug (b4.68). @param {import('./game.js').Game} g @param {Worker} b @param {number} r */
@@ -238,10 +243,6 @@ function pull(g, s, b, k) {
       best = i
       bestD = d
     }
-  // a fruit nearer than (or as near as) the nearest tile wins
-  const f = fruitNear(g, b, r)
-  const isFruit = !!f && (best < 0 || f.d <= bestD)
-  if (f && isFruit) best = f.y * w + f.x
   if (best < 0) {
     b.target = null
     b.pullFor = 0
@@ -256,16 +257,20 @@ function pull(g, s, b, k) {
   b.lastOre = g.tick
   // straight to the ledger (b4.70)
   const haul = { type: /** @type {'haul'} */ ('haul'), x: b.x, y: b.y, ore: 0, crystals: 0, fruit: 0 }
-  if (isFruit) {
-    g.ledger.fruit++
-    haul.fruit = 1
-    pick(g, x, y)
-    g.events.push({ type: 'dug', x, y, tile: -1, by: k }, haul)
-    return
-  }
   const tile = tiles[best]
   if (tile === Tile.Ore) (g.ledger.ore++, (haul.ore = 1))
   else (g.ledger.crystals++, (haul.crystals = 1))
   toRock(/** @type {any} */ (g), x, y)
   g.events.push({ type: 'dug', x, y, tile, by: k }, haul)
+}
+
+/** A hive's moth (b4.73, hives.js): +1 bug on the ledger, at work at `at`, a moth from the start. @param {import('./game.js').Game} g @param {Cell} at */
+export function hatch(g, at) {
+  const rng = mulberry32(hashSeed(SALT + 1, g.tick * 31 + at.x))
+  /** @type {Worker} */
+  const b = { x: 0, y: 0, from: at, movedAt: 0, dir: 0, lastOre: 0, target: null, pullFor: 0, fly: null }
+  arrive(g, b, at, rng)
+  becomeMoth(b, rng)
+  g.ledger.bugs++
+  g.swarm.push(b)
 }

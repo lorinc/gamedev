@@ -25,7 +25,8 @@ import { dist2 } from './game.js'
 
 /** The gas's numbers (the dev panel's). */
 export const GAS = {
-  per: 8, // particles in a drop of liquid
+  per: 40, // particles in a drop of liquid (the user, b4.73: 5× the gas; was 8)
+  burst: 5, // particles a surface pixel gives each evaporation (b4.73: 5×, so pools dry as fast as with 8 and 1)
   everyTicks: 300, // a particle off each pool surface pixel every 5 s: a layer of pool in 40 s
   cap: 8, // particles a station holds before it's saturated and passes gas on
   spreadTicks: 30, // a spread step every 0.5 s
@@ -99,8 +100,10 @@ function evaporate(g) {
     // bottom up: a pixel under one that dries this pass still counts as covered
     if (!L[i] || (i >= w && L[i - w])) continue // under another wet pixel: not yet
     const node = stationOf(g, i)
-    g.gas[node]++
-    if (--L[i] === 0) g.ledger.liquid = Math.max(0, g.ledger.liquid - 1)
+    const n = Math.min(L[i], Math.max(1, g.cfg.gas.burst))
+    g.gas[node] += n
+    L[i] -= n
+    if (L[i] === 0) g.ledger.liquid = Math.max(0, g.ledger.liquid - 1)
     g.events.push({ type: 'evaporated', x: i % w, y: Math.floor(i / w), node })
   }
 }
