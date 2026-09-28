@@ -9,6 +9,9 @@
 // (8-way); then it goes straight there through the rock (not carving it), and at the site the pixels turn to
 // ore (event `deposit`) and the worm is gone. No site found: it wanders and looks again every checkTicks.
 // Randomness from the tick (rng.js).
+// b4.60 (the user: "worms can tunnel towards fruits"): with a fruit in sense, the head steps to the neighbour
+// nearest it through rock as well as air (not the sheet, sea or space; the rock stays as it is, as on the
+// way to a site), so it reaches fruit in the next cave; with none in sense it wanders the open cave as before.
 
 import { isOpen, Tile } from '../../sim/gen/world.js'
 import { wrap } from '../../sim/dig/rules.js'
@@ -136,12 +139,19 @@ function step(g, m, to, rng) {
     const x = wrap(head.x + sx, w)
     if (isOpen(tiles[y * w + x])) ok.push({ x, y })
   }
-  if (!ok.length) return
   let best = null
   if (to) {
+    // through the rock too (b4.60)
     let bd = d2(w, head, to)
-    for (const p of ok) if (d2(w, p, to) < bd) (bd = d2(w, p, to)), (best = p)
+    for (const [sx, sy] of STEPS) {
+      const y = head.y + sy
+      if (y < 0 || y >= h) continue
+      const p = { x: wrap(head.x + sx, w), y }
+      const k = g.map.kind[y * w + p.x]
+      if ((k === ROCK || k === OPEN) && d2(w, p, to) < bd) ((bd = d2(w, p, to)), (best = p))
+    }
   }
+  if (!best && !ok.length) return
   move(g, m, best ?? ok[rng() % ok.length])
 }
 

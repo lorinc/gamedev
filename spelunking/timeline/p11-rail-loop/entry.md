@@ -289,6 +289,7 @@ Then (D139, the user): lizards lick 3× slower, zip on after every rest, and liv
 Then (D140, the user): tamed bugs pull 2× slower.
 Then (D141, the user): mega beasts join at 16, 32, 64… built nodes; every 5 min each tunnels in (a shadow, a
 tremor), eats a bulb near you and its roots, and 24 drops run down into lasting pools. Screenshots `gallery/p11/b4.59_*`.
+Then (D142, the user): worms tunnel through rock towards fruit.
 
 ## Feedback
 

@@ -1078,3 +1078,33 @@ test('16 built nodes bring a mega beast: 5 s after its warning it eats a bulb ne
   }
   assert.equal(ate.paths.length, 24)
 })
+
+test('a worm tunnels through rock to a fruit in the next cave (b4.60)', async () => {
+  const { FRUIT } = await import('./garden.js')
+  const g = createGame(pristine(), JSON.parse(JSON.stringify(CONFIG)))
+  g.cfg.pull.ticks = 1e9
+  g.cfg.lizards.max = 0
+  g.cfg.lichen.near = 0
+  g.cfg.worms.checkTicks = 1e9 // no spawns: only ours
+  const { w } = g.world
+  const tiles = g.world.tiles
+  // an open pixel with rock 3 px under it and open again 8 px under it: two caves
+  let a = null
+  for (let y = 30; y < g.world.h - 30 && !a; y++)
+    for (let x = 0; x < w && !a; x++)
+      if (isOpen(tiles[y * w + x]) && !isOpen(tiles[(y + 3) * w + x]) && isOpen(tiles[(y + 8) * w + x])) a = { x, y }
+  assert.ok(a)
+  const A = /** @type {{ x: number, y: number }} */ (a)
+  const f = (A.y + 8) * w + A.x
+  g.garden.wall[f] = FRUIT
+  g.garden.fruit.add(f)
+  g.worms.push({ body: Array.from({ length: 12 }, () => ({ ...A })), eaten: 0, movedAt: 0, lookedAt: -1e9, site: null })
+  let inRock = false
+  for (let t = 0; t < 20 * 40 && !g.worms[0]?.eaten; t++) {
+    tick(g)
+    const hd = g.worms[0]?.body[0]
+    if (hd && !isOpen(tiles[hd.y * w + hd.x])) inRock = true
+  }
+  assert.ok(inRock, 'through the rock')
+  assert.equal(g.worms[0]?.eaten, 1, 'ate the fruit')
+})
