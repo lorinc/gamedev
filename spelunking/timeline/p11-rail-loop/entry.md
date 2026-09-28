@@ -31,6 +31,7 @@ build b4.22: 2026-09-28 · p11: b4.22, roots and bulbs instead of the metro map,
 build b4.23: 2026-09-28 · p11: b4.23, lichen grows on a large area of the bugs' cover, not on loot (D106)
 build b4.24: 2026-09-28 · p11: b4.24, ride a root by pointing along it near its node; still bulbs on built nodes (D107)
 build b4.25: 2026-09-28 · p11: b4.25, brighter fire with sparks; ash flowers bloom into bots that extend the network (D108)
+build b4.26: 2026-09-28 · p11: b4.26, a bulb ejects the bot after 3 s with nothing built (D109)
 ---
 
 # p11 · b4 · Rail Loop
