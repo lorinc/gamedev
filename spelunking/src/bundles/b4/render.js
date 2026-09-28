@@ -51,8 +51,6 @@ const CRYSTAL_C = 'rgb(240,240,240)' // white (the user, b4.28; was b3's teal)
 const BUG = [255, 190, 90] // tamed: amber (D059)
 const JUMPER = [245, 222, 160] // a tamed bug that hasn't met gas: paler, less warm (the user, b4.71)
 const WILD = [90, 170, 255] // wild: blue (D059)
-const HIVE = [196, 132, 48] // a hive: honey (b4.73)
-const HIVE_DARK = [120, 74, 24]
 const PREDATOR = [120, 62, 92] // the predator's string: a dull pink, under the fog, no glow (the user, b4.73)
 const PREDATOR_TIP = [255, 70, 175] // its tip: glowing pink, over the fog (the user, b4.73: "THAT should be pink")
 const LICHEN_RGB = [96, 44, 128]
@@ -816,32 +814,6 @@ export function createRenderer(canvas, game, ui, view) {
       }
   }
 
-  /** Hives (b4.73): a honey blob of pixels on the wall, over the fog; it swells as it grows, beats as a moth
-   * hatches and shrinks to nothing at the end. @param {number} alpha */
-  function drawHives(alpha) {
-    const c = game.cfg.hives
-    const s = Math.max(T, 2 * dpr)
-    for (const h of game.hives) {
-      const t = game.tick + alpha
-      const grow = Math.min(1, (t - h.at) / 60) // before its first moth, h.at is when it grew
-      let k = h.shrink >= 0 ? Math.max(0, 1 - (t - h.shrink) / Math.max(1, c.shrinkTicks)) : h.born ? 1 : grow
-      k *= 1 + 0.25 * Math.max(0, 1 - (t - h.at) / 20) * (h.born ? 1 : 0) // a beat as one hatches
-      const r = 3 * k
-      if (r < 0.3) continue
-      const [cx, cy] = at(h)
-      if (cx < -8 * s || cy < -8 * s || cx > W + 8 * s || cy > H + 8 * s) continue
-      const R = Math.ceil(r)
-      for (let dy = -R; dy <= R; dy++)
-        for (let dx = -R; dx <= R; dx++) {
-          const d = Math.hypot(dx, dy)
-          if (d > r) continue
-          const cell = (dx * 7 + dy * 13 + h.x) & 3 // a honeycomb speckle
-          ctx.fillStyle = `rgb(${d > r - 1 || cell === 0 ? HIVE_DARK : HIVE})`
-          ctx.fillRect(Math.round(cx + dx * T - s / 2), Math.round(cy + dy * T - s / 2), Math.round(s), Math.round(s))
-        }
-    }
-  }
-
   /** Predators' tips: glowing pink over the fog, a catch held on the tip as it goes up (b4.73). @param {number} now */
   function drawTips(now) {
     const s = Math.max(T, 2 * dpr)
@@ -937,7 +909,6 @@ export function createRenderer(canvas, game, ui, view) {
     drawAshworms(now)
     drawBot(bot, now)
     drawStreams(now)
-    drawHives(alpha) // over the fog (b4.73)
     drawTips(now) // over the fog (b4.73)
     drawWild(alpha) // b3.7's wild bugs (D056–D061), drawn like the tamed ones, in blue (b4.13)
     drawSwarm(alpha, now)

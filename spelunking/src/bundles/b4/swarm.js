@@ -30,6 +30,9 @@
 // b4.73 (the user: "bugs should not collect the fruit anymore, it will be way less common"): they pull ore and
 // crystals only; fruit is yours to pick. A moth with a unit in reach hovers till it's out, then flies on. And (the user: "bugs now should prefer spawning at a node with gas") a
 // bug coming back after it faded goes to a network node whose station holds gas first (where it turns moth).
+// b4.75 (the user: "nodes, that have gas, should spawn their own moths every 30 seconds"; the hives of b4.73
+// are gone): every `mothTicks` each built node whose station holds gas hatches a moth there (`hatch`: +1 bug on
+// the ledger). Claude's call: built nodes only (the ledger's "nodes"); hatching takes no gas.
 
 import { isOpen, Tile } from '../../sim/gen/world.js'
 import { CRYSTAL } from './world.js'
@@ -69,6 +72,7 @@ export const SWARM = {
   crowd: 32, // px round a node its bugs are counted within (b4.34)
   upgradeCost: 16, // fruit for the first upgrade, doubling each time: 16, 32, 64… (the user, b4.13)
   fireStop: 6, // px: fire this close and a bug stands still (the user, b4.68; 0: never)
+  mothTicks: 1800, // every 30 s each built node with gas hatches a moth (the user, b4.75; 0: never)
 }
 /** @typedef {typeof SWARM} Swarm */
 
@@ -169,6 +173,13 @@ function arrive(g, b, at, rng) {
 export function updateSwarm(g) {
   const s = g.cfg.swarm
   const rng = mulberry32(hashSeed(SALT, g.tick))
+  if (s.mothTicks > 0 && g.tick % s.mothTicks === 0)
+    g.railed.forEach((on, i) => {
+      if (!on || !(g.gas[i] > 0)) return
+      const n = g.map.nodes[i]
+      hatch(g, n)
+      g.events.push({ type: 'hatched', x: n.x, y: n.y })
+    })
   while (g.swarm.length < g.ledger.bugs) {
     // just tamed: near you (b4.49, the user: "so that the player sees it and connects taming -> green stuff")
     const at = nearYou(g, s, rng)
@@ -264,7 +275,7 @@ function pull(g, s, b, k) {
   g.events.push({ type: 'dug', x, y, tile, by: k }, haul)
 }
 
-/** A hive's moth (b4.73, hives.js): +1 bug on the ledger, at work at `at`, a moth from the start. @param {import('./game.js').Game} g @param {Cell} at */
+/** A gas node's moth (b4.75): +1 bug on the ledger, at work at `at`, a moth from the start. @param {import('./game.js').Game} g @param {Cell} at */
 export function hatch(g, at) {
   const rng = mulberry32(hashSeed(SALT + 1, g.tick * 31 + at.x))
   /** @type {Worker} */

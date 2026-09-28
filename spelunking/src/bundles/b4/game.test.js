@@ -685,7 +685,7 @@ test('a root built from a bulb is ridden to the far end, no cart (b4.23, b4.41)'
 test('1 in 8 ash discs grows a flower; after 2 minutes it becomes a bot that clears its ash, builds 3 edges on the network, and pops (b4.25)', async () => {
   const { ASH, GREEN, ignite } = await import('./garden.js')
   const g = fresh()
-  g.cfg.hives.max = 0 // no hives' moths here (b4.73)
+  g.cfg.swarm.mothTicks = 0 // no gas moths here (b4.75)
   g.cfg.worms.max = 0
   g.cfg.lizards.max = 0
   g.cfg.lichen.near = 0 // no lichen of its own
@@ -1296,7 +1296,7 @@ test('a pool evaporates from the top, 40 particles a drop (5 a step; b4.73, 8 an
 test('a saturated station passes half its surplus to emptier neighbours in its cave, and it settles (b4.67)', async () => {
   const { stations } = await import('./gas.js')
   const g = createGame(pristine(), JSON.parse(JSON.stringify(CONFIG)))
-  g.cfg.hives.max = 0 // no hives' moths here (b4.73)
+  g.cfg.swarm.mothTicks = 0 // no gas moths here (b4.75)
   g.cfg.pull.ticks = 1e9
   g.cfg.worms.max = 0
   g.cfg.lizards.max = 0
@@ -1388,7 +1388,7 @@ test('tamed bugs lay moss only where their station has gas, one gas a pixel (b4.
 test('tamed bugs are wall-bouncers: on the wall or in the air, never in rock; they jump, mine, and send each unit at once (b4.70)', async () => {
   const { onWall } = await import('./bounce.js')
   const g = fresh()
-  g.cfg.hives.max = 0 // no hives' moths here (b4.73)
+  g.cfg.swarm.mothTicks = 0 // no gas moths here (b4.75)
   g.cfg.lichen.near = 0
   g.cfg.worms.max = 0
   g.cfg.swarm.upgradeCost = 1e9 // nothing spends from the ledger here
@@ -1596,40 +1596,22 @@ test('a tamed bug coming back prefers a network node with gas (b4.73)', () => {
   }
 })
 
-test('a hive grows by ore near the network, hatches 3 moths onto the ledger, shrinks and goes (b4.73)', async () => {
-  const { onWall } = await import('./bounce.js')
-  const g = createGame(pristine(), JSON.parse(JSON.stringify(CONFIG)))
-  g.cfg.pull.ticks = 1e9
-  g.cfg.bugs.chasers = 0
-  const c = g.cfg.hives
-  let hive = null
-  let hatched = 0
-  let gone = 0
+test('every 30 s each built node with gas hatches a moth onto the ledger; an unbuilt one does not (b4.75)', () => {
+  const g = fresh()
+  g.cfg.gas.spreadTicks = 1e9
+  g.cfg.gas.perMoss = 0 // the gas stays
+  const [a, b] = [0, 1]
+  g.railed[a] = 1
+  g.gas[a] = 5
+  g.gas[b] = 5 // not built
   const bugs0 = g.ledger.bugs
-  for (let i = 0; i < c.everyTicks * 3 + c.moths * c.birthTicks + c.shrinkTicks + 10 && !gone; i++) {
+  const hatched = []
+  for (let i = 0; i < 2 * g.cfg.swarm.mothTicks + 1; i++) {
     tick(g)
-    for (const e of g.events) {
-      if (e.type === 'hive' && !hive) {
-        hive = { x: e.x, y: e.y }
-        assert.ok(onWall(g, e.x, e.y), 'on the wall')
-        let ore = 0
-        for (let dy = -c.radius; dy <= c.radius; dy++)
-          for (let dx = -c.radius; dx <= c.radius; dx++)
-            if (dx * dx + dy * dy <= c.radius ** 2 && g.world.tiles[(e.y + dy) * g.world.w + ((e.x + dx + g.world.w) % g.world.w)] === Tile.Ore) ore++
-        assert.ok(ore >= c.ore, `${ore} ore round it`)
-      }
-      if (e.type === 'hatched') {
-        hatched++
-        const b = g.swarm[g.swarm.length - 1]
-        assert.ok(b.moth, 'a moth')
-        assert.deepEqual([b.x, b.y], [hive?.x, hive?.y], 'at the hive')
-      }
-      if (e.type === 'hiveGone') gone++
-    }
+    for (const e of g.events) if (e.type === 'hatched') hatched.push(e)
     g.events.length = 0
   }
-  assert.ok(hive, 'a hive grew')
-  assert.equal(hatched, c.moths)
-  assert.equal(gone, 1)
-  assert.ok(g.ledger.bugs >= bugs0 + c.moths, 'the moths are on the ledger')
+  assert.ok(hatched.length >= 2, `${hatched.length} moths`)
+  for (const e of hatched) assert.deepEqual([e.x, e.y], [MAP.nodes[a].x, MAP.nodes[a].y], 'at the built node')
+  assert.equal(g.ledger.bugs - bugs0, hatched.length, 'each on the ledger')
 })

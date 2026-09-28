@@ -333,6 +333,7 @@ Then (D156–D159, the user): predators haul the catch up into the rock and come
 tip glows; bugs no longer pick fruit and come back at nodes with gas first; liquid makes 5× the gas; hives grow
 by ore and hatch 3 moths each, and moths hover while they harvest.
 Then (D160, the user): hives look for a site twice as often (every 30 s).
+Then (D161, the user): no hives after all; every 30 s each built node with gas hatches a moth.
 
 ## Feedback
 

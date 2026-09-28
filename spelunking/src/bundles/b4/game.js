@@ -71,7 +71,6 @@ import { BEASTS, builtNodes, updateBeasts } from './beasts.js'
 import { GAS, updateGas } from './gas.js'
 import { BOUNCE, wildWander } from './bounce.js'
 import { PREDATORS, updatePredators } from './predators.js'
-import { HIVES, updateHives } from './hives.js'
 import { CRYSTAL, OPEN, ROCK } from './world.js'
 
 /** @typedef {import('./world.js').Map} Map */
@@ -116,7 +115,6 @@ export const CONFIG = {
   beasts: { ...BEASTS },
   gas: { ...GAS },
   predators: { ...PREDATORS }, // pink strings that eat crowded bugs and leave ore (b4.72)
-  hives: { ...HIVES }, // near ore, hatching moths (b4.73)
   price: 10, // ore per edge (user: 8–12, tuned later)
   lizardUpgradeCost: 16, // crystals for the lizards' first upgrade, doubling (the bot's b4.15–b4.55; the user, b4.56)
   upgradeGain: 0.2, // an upgrade: mining radius and speed +20% (the user, b4.15)
@@ -139,7 +137,7 @@ export const CONFIG = {
  *   | { type: 'predator', x: number, y: number } | { type: 'predatorGone', x: number, y: number }
  *   | { type: 'caught', x: number, y: number, px: number, py: number, tame: boolean }
  *   | { type: 'predatorOre', x: number, y: number, cells: number[], tame: boolean }
- *   | { type: 'hive', x: number, y: number } | { type: 'hatched', x: number, y: number } | { type: 'hiveGone', x: number, y: number }
+ *   | { type: 'hatched', x: number, y: number }
  *   | { type: 'worm', x: number, y: number } | { type: 'eaten', x: number, y: number } | { type: 'deposit', cells: number[] }
  *   | { type: 'upgrade', level: number } | { type: 'lizardUpgrade', level: number }
  *   | { type: 'lizard', x: number, y: number } | { type: 'lichen', x: number, y: number } | { type: 'engulf' | 'eject', node: number } | { type: 'flower' | 'bloom' | 'poof' | 'ashworm' | 'ashwormGone' | 'ashwormBurst', x: number, y: number } | { type: 'spark', x: number, y: number } | { type: 'licked', x: number, y: number, to: Cell }
@@ -185,7 +183,6 @@ export const CONFIG = {
  * @property {number[]} gas per node: its gas particles (b4.66, gas.js)
  * @property {import('./swarm.js').Worker[]} swarm the ledger's bugs at work
  * @property {import('./predators.js').Predator[]} predators (b4.72)
- * @property {import('./hives.js').Hive[]} hives (b4.73)
  * @property {Uint8Array} seen
  * @property {number[]} lit
  * @property {number} radius
@@ -245,7 +242,6 @@ export function createGame(map, cfg) {
     gas: map.nodes.map(() => 0),
     swarm: [],
     predators: [],
-    hives: [],
     wander: wildWander, // wild bugs bounce too (b4.70)
     seen: new Uint8Array(world.w * world.h),
     lit: [],
@@ -324,7 +320,6 @@ export function tick(g) {
   updateBeasts(g)
   updateGas(g)
   updatePredators(g)
-  updateHives(g)
   while (g.ledger.fruit >= nextCost(g)) {
     g.ledger.fruit -= nextCost(g)
     g.level++
