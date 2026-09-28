@@ -121,7 +121,7 @@ const panel = createPanel(
     'sim.lichen.density': [1, 450, 5],
     'sim.lichen.radius': [2, 24, 1],
     'sim.lichen.spark': [1, 120, 1],
-    'sim.botUpgradeCost': [1, 256, 1],
+    'sim.lizardUpgradeCost': [1, 256, 1],
     'sim.upgradeGain': [0, 1, 0.05],
     'view.zoom': [-1, ZOOM_PX.length - 1, 1],
     'view.bright': [0.5, 3, 0.1],

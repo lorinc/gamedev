@@ -18,7 +18,7 @@
 import { cellRgb } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
 import { sightCells } from '../../sim/dig/light.js'
-import { botAt, botCost, FRUIT_TILE, nextCost, shown } from './game.js'
+import { botAt, FRUIT_TILE, lizardCost, nextCost, shown } from './game.js'
 import { ASH, BURN, FRUIT, GREEN as MOSS, VINE } from './garden.js'
 import { LEAF_PX, WITHERED_PX } from './lichen.js'
 import { OPEN, ROCK, SHEET, SPACE } from './world.js'
@@ -258,8 +258,9 @@ export function createRenderer(canvas, game, ui, view) {
       fly(cell(e), icon('pink'), now + 0.2, 0.9, `rgb(${PINK})`, 0)
     }
     else if (e.type === 'poof') puff(e.x, e.y, now, 32, ['#ffffff', '#eef4ff', '#ffffff'], 14)
-    else if (e.type === 'botUpgrade')
-      for (let k = 0; k < 8; k++) fly(icon('loot'), icon('bot'), now + k * 0.05, 0.6, LOOT, 0)
+    else if (e.type === 'lizardUpgrade')
+      // loot to every lizard: they're what it upgrades (b4.56)
+      for (const z of game.lizards) for (let k = 0; k < 4; k++) fly(icon('loot'), cell({ ...z.body[0] }), now + k * 0.05, 0.6, LOOT, 0)
     else if (e.type === 'upgrade')
       for (let k = 0; k < 8; k++) fly(icon('fruit'), icon('bugs'), now + k * 0.05, 0.6, `rgb(${FRUIT_C})`, 0) // no particles for a nibble (b4.13)
     else if (e.type === 'nibble') {
@@ -353,7 +354,7 @@ export function createRenderer(canvas, game, ui, view) {
     // the bot's count: you, and the flower bots at work on the network (b4.44, the user)
     const text = {
       ore: `${L.ore}`,
-      loot: `${L.loot}/${botCost(game)}`,
+      loot: `${L.loot}/${lizardCost(game)}`,
       bot: `${count('bot')}`,
       bugs: `${L.bugs}`,
       nodes: `${count('nodes')}`,
@@ -367,7 +368,7 @@ export function createRenderer(canvas, game, ui, view) {
       if (!kind || !known.has(kind)) continue // the gap, a row not shown yet
       const [x, y] = ledgerIcon(kind)
       const r = 7 * dpr
-      const icons = kind === 'bugs' ? 1 + game.level : kind === 'bot' ? 1 + game.botLevel : 1
+      const icons = kind === 'bugs' ? 1 + game.level : kind === 'bot' ? 1 + game.level : 1 // the bot grows with the bug level (b4.56)
       const gap = 16 * dpr
       const label = text[/** @type {keyof typeof text} */ (kind)]
       const tx = x - 14 * dpr - (icons - 1) * gap

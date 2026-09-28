@@ -27,6 +27,7 @@ import { isOpen, Tile } from '../../sim/gen/world.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
 import { ASH } from './garden.js'
+import { gain } from './game.js'
 import { findSite } from './worms.js'
 
 /** The lizards' numbers (the dev panel's). */
@@ -38,7 +39,7 @@ export const LIZARDS = {
   max: 6,
   zipTicks: 3, // 20 px/s while zipping
   sense: 16,
-  reach: 6, // px it licks ash within (the user, b4.54; 3 for ore)
+  reach: 6, // px it licks ash within (the user, b4.54; 3 for ore); × 1.2 a lizard level (loot, b4.56)
   mineTicks: 30,
   eat: 16, // ash px, then it burrows (the user; ore until b4.54)
   lootPx: 5, // loot px it burrows into (the user, b4.54; was 1)
@@ -73,6 +74,9 @@ const STEPS = [
   [0, -1],
   [1, -1],
 ]
+
+/** The px a lizard licks within: `reach`, 20% more a lizard level, bought with loot (b4.56, the user). @param {import('./game.js').Game} g */
+const reachOf = (g) => Math.round(g.cfg.lizards.reach * gain(g, g.lizardLevel))
 
 /** Open, and 8-bordering a solid pixel: a cave surface. @param {import('./game.js').Game} g @param {number} x @param {number} y */
 function surface(g, x, y) {
@@ -110,6 +114,7 @@ function ashNear(g, at, r) {
  */
 function routeFor(g, c, at) {
   const { w } = g.world
+  const reach = reachOf(g)
   const start = at.y * w + at.x
   /** @type {Map<number, number>} */
   const from = new Map([[start, -1]])
@@ -120,7 +125,7 @@ function routeFor(g, c, at) {
     for (const i of front) {
       const x = i % w
       const y = (i - x) / w
-      if (ashNear(g, { x, y }, c.reach)) {
+      if (ashNear(g, { x, y }, reach)) {
         /** @type {{ x: number, y: number }[]} */
         const route = []
         for (let j = i; j !== start; j = /** @type {number} */ (from.get(j))) route.unshift({ x: j % w, y: Math.floor(j / w) })
@@ -142,6 +147,7 @@ function routeFor(g, c, at) {
 /** The lizards' tick. @param {import('./game.js').Game} g */
 export function updateLizards(g) {
   const c = g.cfg.lizards
+  const reach = reachOf(g)
   const { w } = g.world
   const rng = mulberry32(hashSeed(SALT, g.tick))
   if (g.tick % Math.max(1, c.checkTicks) === 0 && g.lizards.length < c.max) spawn(g, c, rng)
@@ -169,7 +175,7 @@ export function updateLizards(g) {
     if (g.tick < z.restUntil) {
       // stopped: it mines
       if (g.tick >= z.mineAt) {
-        const o = ashNear(g, head, c.reach)
+        const o = ashNear(g, head, reach)
         if (o) {
           const i = o.y * w + o.x
           g.garden.wall[i] = 0 // bare back wall again
@@ -187,7 +193,7 @@ export function updateLizards(g) {
         const back = surfaceNear(g, head, c.dash * 2)
         z.route = back ? line(g, head, back, 0) : []
         z.zip = Math.max(1, z.route.length)
-      } else if (ashNear(g, head, c.reach)) {
+      } else if (ashNear(g, head, reach)) {
         z.restUntil = g.tick + 40 + (rng() % 80) // ash in reach: it stays and licks
         return true
       } else {
@@ -195,7 +201,7 @@ export function updateLizards(g) {
         if (!z.route.length) {
           // nothing from the wall: a dash for ash in the open (b4.55)
           const a = ashNear(g, head, c.dash)
-          if (a) z.route = line(g, head, a, c.reach)
+          if (a) z.route = line(g, head, a, reach)
         }
         z.zip = z.route.length ? Math.min(z.route.length, c.dash + 12) : 4 + (rng() % 9)
       }

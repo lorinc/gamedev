@@ -465,16 +465,51 @@ test('a lizard dashes off the wall for ash in the middle of a cave, licks it, an
   assert.ok(back > 0 && back - lickedAt < 600, `back on the wall ${back - lickedAt} ticks after`)
 })
 
-test('loot buys the bot upgrades by itself: 16, 32, 64…, each mining radius and speed +20% (b4.15)', async () => {
-  const { botCost, gain } = await import('./game.js')
+test('loot buys the lizards upgrades by itself: 16, 32, 64…, each their reach +20% (b4.56)', async () => {
+  const { lizardCost, gain } = await import('./game.js')
   const g = fresh()
   g.ledger.loot = 16 + 32 + 3
   tick(g)
-  assert.equal(g.botLevel, 2)
+  assert.equal(g.lizardLevel, 2)
   assert.equal(g.ledger.loot, 3)
-  assert.equal(botCost(g), 64)
-  assert.ok(Math.abs(gain(g, 2) - 1.44) < 1e-9)
-  assert.equal(Math.round(CONFIG.light.base * gain(g, 2)), 12) // 8 px → 12
+  assert.equal(lizardCost(g), 64)
+  assert.equal(Math.round(CONFIG.lizards.reach * gain(g, 2)), 9) // 6 px → 9
+  assert.equal(g.radius, CONFIG.light.base, 'your light stays')
+})
+
+test('the bug level grows your light, mining radius and mining speed (b4.56)', () => {
+  const g = createGame(pristine(), JSON.parse(JSON.stringify(CONFIG)))
+  g.cfg.swarm.upgradeCost = 1
+  g.cfg.worms.max = 0
+  g.cfg.lizards.max = 0
+  const { w } = g.world
+  // ore in the rock 9–12 px out: beyond the light at level 0, within it at level 2
+  let planted = 0
+  for (let dy = -12; dy <= 12; dy++)
+    for (let dx = -12; dx <= 12; dx++) {
+      const d = dx * dx + dy * dy
+      const i = (g.ch.y + dy) * w + g.ch.x + dx
+      if (d > 81 && d <= 144 && !isOpen(g.world.tiles[i])) ((g.world.tiles[i] = Tile.Ore), (g.seen[i] = 1), planted++)
+    }
+  assert.ok(planted > 20, `planted ${planted}`)
+  /** Units pulled in `n` ticks. @param {number} n */
+  const pulls = (n) => {
+    let k = 0
+    for (let i = 0; i < n; i++) {
+      tick(g)
+      k += g.events.filter((e) => e.type === 'pulled').length
+      g.events.length = 0
+    }
+    return k
+  }
+  assert.equal(pulls(300), 0, 'out of reach at level 0')
+  assert.equal(g.radius, 8)
+  g.ledger.fruit = 1 + 2 // two bug levels
+  const got = pulls(600)
+  assert.equal(g.level, 2)
+  assert.equal(g.radius, 12, 'light 8 px → 12')
+  // a unit every 60 / 1.44 ≈ 42 ticks: 14 in 10 s (60 ticks: 10)
+  assert.ok(got >= 13, `pulled ${got} in 10 s`)
 })
 
 test('a large area of cover grows a purple lichen patch of 6–8 surface pixels with a leaf (b4.23)', async () => {
