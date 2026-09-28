@@ -291,6 +291,8 @@ Then (D140, the user): tamed bugs pull 2× slower.
 Then (D141, the user): mega beasts join at 16, 32, 64… built nodes; every 5 min each tunnels in (a shadow, a
 tremor), eats a bulb near you and its roots, and 24 drops run down into lasting pools. Screenshots `gallery/p11/b4.59_*`.
 Then (D142, the user): worms tunnel through rock towards fruit.
+Then (D143, the user): the mega beast's shadow is pixel art and bigger: a 96 px body, head 12 px, darkened world
+pixels that crawl, with a dusty rim. Screenshots `gallery/p11/b4.61_*`.
 
 ## Feedback
 

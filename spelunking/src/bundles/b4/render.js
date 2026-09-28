@@ -493,8 +493,16 @@ export function createRenderer(canvas, game, ui, view) {
   const drops = []
   /** @type {Map<number, number>} a settled drop's pixel: when its drop gets there (drawn from then on) */
   const wetAt = new Map()
-  /** A dark, soft, long shadow sliding in under the rock, over the fog. @param {number} now */
+  /**
+   * A beast under the rock, over the fog (the user, b4.61: "bigger and pixel-art, like everything else on
+   * screen […] shifting, darkened pixels"): a long body, head first, snaking behind along its way, drawn as
+   * world pixels darkened by how deep inside it they are; hashed per pixel and re-rolled 12 times a second, so
+   * the ground over it crawls, with a sparse dusty rim. @param {number} now
+   */
   function drawBeasts(now) {
+    const L = 96 // body length, px
+    const R = 12 // head radius, px; the tail tapers to half
+    const frame = Math.floor(now * 12)
     for (const [k, v] of shadows) {
       const t = (now - v.s) / v.dur
       if (t > 1.2) {
@@ -504,34 +512,41 @@ export function createRenderer(canvas, game, ui, view) {
       let dx = v.to.x - v.from.x
       if (Math.abs(dx) > w / 2) dx -= Math.sign(dx) * w
       const dy = v.to.y - v.from.y
+      const len = Math.hypot(dx, dy) || 1
+      const [ux, uy] = [dx / len, dy / len]
       const u = Math.min(1, t) ** 0.7
-      const R = Math.max(T * 9, 24 * dpr)
-      ctx.globalAlpha = Math.min(1, t * 3) * 0.75
-      // one long body: 8 blobs, head first, trailing back along its way; all the dusty rims first, then the dark
-      // cores over them, so it reads as one mass, not a chain of rings
-      /** @type {[number, number, number][]} */
-      const body = []
-      for (let j = 0; j < 8; j++) {
-        const b = Math.max(0, u - j * 0.05)
-        const [x, y] = at({ x: v.from.x + dx * b, y: v.from.y + dy * b })
-        body.push([x, y, R * (1 - j * 0.07)])
+      const hx = v.from.x + dx * u
+      const hy = v.from.y + dy * u
+      /** @type {Map<number, [number, number, number]>} pixel key → [x, y, depth 0..1] */
+      const cover = new Map()
+      for (let s = 0; s <= L; s += 3) {
+        const wig = Math.sin(s / 14 - now * 3) * 4 * (s / L)
+        const cx = hx - ux * s - uy * wig
+        const cy = hy - uy * s + ux * wig
+        const r = R * (1 - (s / L) * 0.5)
+        const rr = Math.ceil(r * 1.3)
+        for (let y = Math.round(cy) - rr; y <= Math.round(cy) + rr; y++)
+          for (let x = Math.round(cx) - rr; x <= Math.round(cx) + rr; x++) {
+            const d = 1 - Math.hypot(x - cx, y - cy) / r // > 0 inside, down to -0.3 on the rim
+            if (d < -0.3) continue
+            const key = y * 65536 + (x & 0xffff)
+            const c = cover.get(key)
+            if (!c) cover.set(key, [x, y, d])
+            else if (d > c[2]) c[2] = d
+          }
       }
-      for (const [x, y, r] of body) {
-        const gr = ctx.createRadialGradient(x, y, r * 0.5, x, y, r * 1.25)
-        gr.addColorStop(0, 'rgba(120,100,80,0.18)')
-        gr.addColorStop(1, 'rgba(120,100,80,0)')
-        ctx.fillStyle = gr
-        ctx.fillRect(x - r * 1.25, y - r * 1.25, r * 2.5, r * 2.5)
+      const fade = Math.min(1, t * 3)
+      for (const [key, [x, y, d]] of cover) {
+        const n = (Math.imul(key ^ Math.imul(frame, 0x9e3779b1), 2654435761) >>> 8) / 16777216
+        if (d > 0) {
+          if (n > 0.35 + d) continue // the edge thins out, the middle is solid
+          ctx.fillStyle = `rgba(0,0,0,${fade * (d > 0.45 ? 0.8 : 0.55) * (n < 0.15 ? 0.7 : 1)})`
+        } else {
+          if (n > 0.18) continue
+          ctx.fillStyle = `rgba(120,100,80,${fade * 0.5})`
+        }
+        px(x, y)
       }
-      for (const [x, y, r] of body) {
-        const gr = ctx.createRadialGradient(x, y, 0, x, y, r)
-        gr.addColorStop(0, 'rgba(0,0,0,0.8)')
-        gr.addColorStop(0.7, 'rgba(0,0,0,0.5)')
-        gr.addColorStop(1, 'rgba(0,0,0,0)')
-        ctx.fillStyle = gr
-        ctx.fillRect(x - r, y - r, 2 * r, 2 * r)
-      }
-      ctx.globalAlpha = 1
     }
     // the bulb pulled into the back wall: shrinking, darkening
     for (let k = sinks.length - 1; k >= 0; k--) {
