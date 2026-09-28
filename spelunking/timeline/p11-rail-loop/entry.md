@@ -26,6 +26,7 @@ build b4.17: 2026-09-28 · p11: b4.17, no loot in the generated world, only liza
 build b4.18: 2026-09-28 · p11: b4.18, soft and hard rock much darker (D099)
 build b4.19: 2026-09-28 · p11: b4.19, the lichen's leaf in pixels (D100)
 build b4.20: 2026-09-28 · p11: b4.20, lizards spawn on reachable ore and route to it, so they retire (D101)
+build b4.21: 2026-09-28 · p11: b4.21, lichen sparks a fire through the bugs' cover, leaving ash discs (D102)
 ---
 
 # p11 · b4 · Rail Loop
