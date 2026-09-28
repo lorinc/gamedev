@@ -48,6 +48,7 @@ build b4.39: 2026-09-28 · p11: b4.39, lizards over the fog; a round mask hides 
 build b4.40: 2026-09-28 · p11: b4.40, a wild bug that finds loot eats it and is tamed (D122)
 build b4.41: 2026-09-28 · p11: b4.41, lichen light, no scan circle, drag-and-release bulbs (D123)
 build b4.42: 2026-09-28 · p11: b4.42, hearts half the bites, a "?" when the ledger has no ore (D124)
+build b4.43: 2026-09-28 · p11: b4.43, the ledger: resources, a gap, then levels; fruit a pixel (D125)
 ---
 
 # p11 · b4 · Rail Loop
