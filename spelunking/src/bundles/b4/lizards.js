@@ -40,8 +40,8 @@ export const LIZARDS = {
   zipTicks: 3, // 20 px/s while zipping
   sense: 16,
   reach: 6, // px it licks ash within (the user, b4.54; 3 for ore); × 1.2 a lizard level (loot, b4.56)
-  mineTicks: 30,
-  eat: 16, // ash px, then it burrows (the user; ore until b4.54)
+  mineTicks: 90, // a lick every 1.5 s (the user, b4.57: 3× slower; was 30)
+  eat: 27, // ash px, then it burrows (b4.57: 16 × 5/3, so 3× slower eating makes a 5× longer life, ~40 s; ore until b4.54)
   lootPx: 5, // loot px it burrows into (the user, b4.54; was 1)
   dash: 16, // px off the wall it dashes for ash (b4.55)
   site: 24,
@@ -193,12 +193,11 @@ export function updateLizards(g) {
         const back = surfaceNear(g, head, c.dash * 2)
         z.route = back ? line(g, head, back, 0) : []
         z.zip = Math.max(1, z.route.length)
-      } else if (ashNear(g, head, reach)) {
-        z.restUntil = g.tick + 40 + (rng() % 80) // ash in reach: it stays and licks
-        return true
       } else {
+        // b4.57 (the user: "zip around the walls 5x longer… I barely see them"): after every rest it zips on,
+        // even with ash still in reach (it stayed and licked on before)
         z.route = routeFor(g, c, head)
-        if (!z.route.length) {
+        if (!z.route.length && !ashNear(g, head, reach)) {
           // nothing from the wall: a dash for ash in the open (b4.55)
           const a = ashNear(g, head, c.dash)
           if (a) z.route = line(g, head, a, reach)
