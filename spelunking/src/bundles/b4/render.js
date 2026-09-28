@@ -28,8 +28,11 @@ import { ledgerKinds } from './ledger.js'
 /** @typedef {import('./world.js').Cell} Cell */
 /** @typedef {{ select: { node: number, edge: number } | null, refusedAt: number }} Ui */
 
-export const ZOOM_PX = [2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24] // tile sizes in device px
+// tile sizes in CSS px, times the device pixel ratio (b4.47: they were device px, so a 3× phone could zoom in only
+// to 8 CSS px a tile, and started at 4: too small and dark to see, the user)
+export const ZOOM_PX = [2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24]
 const AUTO_TILES = 100 // the default zoom: about this many tiles across the short side
+const AUTO_MIN = 6 // but at least this many CSS px a tile (b4.47: a phone's short side is ~390 CSS px)
 
 const BG_RGB = [5, 5, 8]
 const DIM_A = 0.825 // seen, not lit: 17.5% bright (b4.2's 35%, 50% darker: the user, b4.3)
@@ -191,7 +194,7 @@ export function createRenderer(canvas, game, ui, view) {
   /** The zoom level in use: the chosen one, or the one closest to AUTO_TILES across the short side. */
   function level() {
     if (view.zoom >= 0) return Math.min(view.zoom, ZOOM_PX.length - 1)
-    const want = Math.min(W, H) / AUTO_TILES
+    const want = Math.max(Math.min(W, H) / dpr / AUTO_TILES, AUTO_MIN)
     let best = 0
     ZOOM_PX.forEach((px, i) => Math.abs(px - want) < Math.abs(ZOOM_PX[best] - want) && (best = i))
     return best
@@ -199,7 +202,7 @@ export function createRenderer(canvas, game, ui, view) {
 
   const start = botAt(game, 0)
   const cam = { x: start.x + 0.5, y: start.y + 0.5 }
-  let T = ZOOM_PX[level()]
+  let T = ZOOM_PX[level()] * dpr
 
   /** The copy of world x nearest the camera. @param {number} x */
   const nearCam = (x) => x - Math.round((x - cam.x) / w) * w
@@ -542,7 +545,7 @@ export function createRenderer(canvas, game, ui, view) {
   /** @param {number} alpha @param {number} dt @param {number} now seconds */
   function draw(alpha, dt, now) {
     paintFog()
-    T = ZOOM_PX[level()]
+    T = ZOOM_PX[level()] * dpr
     const bot = botAt(game, alpha)
     // the camera follows the bot, the short way round
     const k = 1 - Math.pow(1 - 0.15, dt * 60)

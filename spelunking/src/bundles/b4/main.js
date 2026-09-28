@@ -11,7 +11,10 @@ const BUILD = 'b4-dev' // the live build; npm run freeze stamps the build id int
 const TICK_MS = 1000 / 60
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id))
 
-const DEFAULTS = { world: { ...WKNOBS }, sim: JSON.parse(JSON.stringify(CONFIG)), view: { zoom: -1 } }
+// view.bright (b4.47, the user: "too dark to see, but only on the phone"): the canvas's CSS brightness; phone
+// screens crush the dark greys the desktop shows, so a touch screen starts brighter. Black stays black.
+const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
+const DEFAULTS = { world: { ...WKNOBS }, sim: JSON.parse(JSON.stringify(CONFIG)), view: { zoom: -1, bright: coarse ? 1.5 : 1 } }
 /** @type {typeof DEFAULTS} */
 const tunables = JSON.parse(JSON.stringify(DEFAULTS))
 
@@ -45,6 +48,8 @@ const game = createGame(map, tunables.sim)
 const ui = { select: null, refusedAt: -9 }
 const canvas = /** @type {HTMLCanvasElement} */ ($('game'))
 const renderer = createRenderer(canvas, game, ui, tunables.view)
+const bright = () => (canvas.style.filter = tunables.view.bright === 1 ? '' : `brightness(${tunables.view.bright})`)
+bright()
 let now = 0 // seconds, the frame's
 
 const worldBefore = JSON.stringify(tunables.world)
@@ -117,9 +122,11 @@ const panel = createPanel(
     'sim.botUpgradeCost': [1, 256, 1],
     'sim.upgradeGain': [0, 1, 0.05],
     'view.zoom': [-1, ZOOM_PX.length - 1, 1],
+    'view.bright': [0.5, 3, 0.1],
   },
   {
     onChange: () => {
+      bright()
       history.replaceState(null, '', urlFor(seed))
       // a new ore layer needs a new map: reload once the slider rests
       if (JSON.stringify(tunables.world) !== worldBefore) {
@@ -200,6 +207,11 @@ createInput(canvas, {
   tap: () => {
     if (game.engulf === null) return command(game, { type: 'tap' })
     confirm()
+  },
+  cancel: () => {
+    held.dx = held.dy = 0
+    if (game.engulf === null) command(game, { type: 'move', dx: 0, dy: 0 })
+    else ui.select = null
   },
   zoom: (steps) => {
     const next = Math.min(Math.max(renderer.level() + steps, 0), ZOOM_PX.length - 1)

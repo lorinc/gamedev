@@ -10,6 +10,7 @@
  * @param {object} h
  * @param {(dx: number, dy: number) => void} h.move 0, 0 = stop
  * @param {() => void} h.tap
+ * @param {() => void} h.cancel a drag ended by a pinch: stop, confirm nothing
  * @param {(steps: number) => void} h.zoom
  * @param {() => void} h.togglePanel
  * @param {() => void} h.gesture any first touch or key (for sound, one day)
@@ -68,18 +69,43 @@ export function createInput(canvas, h) {
     keysChanged()
   })
 
-  // One finger (or the mouse) at a time; a second finger is ignored
+  // One finger (or the mouse) drives; a second finger makes it a pinch (b4.47, the user: zoom didn't work on
+  // the phone): the drive stops, and every PINCH × change of the fingers' distance is a zoom step
+  const PINCH = 1.25
   /** @type {{ id: number, x: number, y: number, dir: number | null, dragged: boolean } | null} */
   let p = null
+  /** @type {Map<number, { x: number, y: number }>} */
+  const touches = new Map()
+  let pinchFrom = 0 // the fingers' distance at the last step; 0: no pinch
+  const spread = () => {
+    const [a, b] = [...touches.values()]
+    return Math.hypot(a.x - b.x, a.y - b.y) || 1
+  }
   canvas.addEventListener('pointerdown', (e) => {
     h.gesture()
-    if (p) return
+    touches.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (touches.size === 2) {
+      // a pinch: the first finger's drive ends here, with no tap
+      if (p?.dir !== null && p) h.cancel()
+      p = null
+      pinchFrom = spread()
+      return
+    }
+    if (p || pinchFrom) return
     // the top-left corner opens the dev panel, as in b3
     if (e.clientX < 40 && e.clientY < 40) return h.togglePanel()
     canvas.setPointerCapture(e.pointerId)
     p = { id: e.pointerId, x: e.clientX, y: e.clientY, dir: null, dragged: false }
   })
   canvas.addEventListener('pointermove', (e) => {
+    const t = touches.get(e.pointerId)
+    if (t) ((t.x = e.clientX), (t.y = e.clientY))
+    if (pinchFrom && touches.size === 2) {
+      const d = spread()
+      if (d > pinchFrom * PINCH) ((pinchFrom = d), h.zoom(1))
+      else if (d < pinchFrom / PINCH) ((pinchFrom = d), h.zoom(-1))
+      return
+    }
     if (!p || e.pointerId !== p.id) return
     const dx = e.clientX - p.x
     const dy = e.clientY - p.y
@@ -96,6 +122,11 @@ export function createInput(canvas, h) {
     h.move(Math.cos(a), Math.sin(a))
   })
   const up = (/** @type {PointerEvent} */ e) => {
+    touches.delete(e.pointerId)
+    if (pinchFrom) {
+      if (!touches.size) pinchFrom = 0 // the pinch ends when both fingers are up
+      return
+    }
     if (!p || e.pointerId !== p.id) return
     const was = p
     p = null

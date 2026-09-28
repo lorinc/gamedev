@@ -261,6 +261,8 @@ Then (D126, the user): the bot row counts you plus the flower bots at work.
 Then (D127, the user): a light worm with nothing to light bursts into rainbow and a pink resource; ledger
 rows show only once earned, the first time with a shake and 8 streams of their colour. Screenshots `gallery/p11/b4.45_*`.
 Then (D128, the user): scans no longer scare wild bugs.
+Then (D129, the user): pinch zoom; zoom levels in CSS px (a phone zooms as far in as a desktop); touch screens
+1.5× brighter (`view.bright`). Screenshots `gallery/p11/b4.47_*`.
 
 ## Feedback
 
