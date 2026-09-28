@@ -308,6 +308,9 @@ Then (D148, the user): worms glide between pixels like the bot, not a pixel jump
 Then (D149, the user): the beasts' pools evaporate from the top, 8 particles a drop, each to its climate
 station (every node) in the same cave; the stations' gas counts are saved and drawn as pale clouds round the
 nodes. Screenshot `gallery/p11/b4.66_gas_b.png`.
+Then (D150, the user): a station holds 8; over that it passes half its surplus on, a hop towards the nearest
+station with room in its cave, so the gas fills the cave out from the pool and settles in seconds; a full cave
+evens out. Screenshot `gallery/p11/b4.67_spread_b.png`.
 
 ## Feedback
 

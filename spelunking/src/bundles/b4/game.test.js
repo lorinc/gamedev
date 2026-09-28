@@ -1306,3 +1306,49 @@ test('a pool evaporates from the top, 8 particles a drop, each to the nearest st
   assert.equal(g.gas.reduce((a, b) => a + b, 0), 24, '8 particles a drop')
   assert.ok(g.gas[st] > 0)
 })
+
+test('a saturated station passes half its surplus to emptier neighbours in its cave, and it settles (b4.67)', async () => {
+  const { stations } = await import('./gas.js')
+  const g = createGame(pristine(), JSON.parse(JSON.stringify(CONFIG)))
+  g.cfg.pull.ticks = 1e9
+  g.cfg.worms.max = 0
+  g.cfg.lizards.max = 0
+  g.cfg.lichen.near = 0
+  const { adj } = stations(g)
+  // the biggest group of neighbouring stations
+  const group = (/** @type {number} */ k) => {
+    const s = new Set([k])
+    for (const u of s) for (const v of adj[u]) s.add(v)
+    return s
+  }
+  let big = new Set()
+  for (let k = 0; k < adj.length; k++) if (!big.has(k)) big = group(k).size > big.size ? group(k) : big
+  const start = [...big][0]
+  g.gas[start] = 200
+  const cap = g.cfg.gas.cap
+  let last = 0
+  for (let t = 1; t <= 60 * 120; t++) {
+    tick(g)
+    if (g.events.some((e) => e.type === 'gasFlow')) last = t
+    g.events.length = 0
+  }
+  assert.ok(last > 0 && last < 60 * 60, `settled after ${(last / 60).toFixed(1)} s`)
+  assert.equal(g.gas.reduce((a, b) => a + b, 0), 200, 'none lost or made')
+  g.gas.forEach((v, k) => v && assert.ok(big.has(k), `station ${k} outside the cave`))
+  // the cave had room for it all: nothing over the cap, and 200 / 8 stations full
+  assert.ok(Math.max(...g.gas) <= cap, 'nothing saturated')
+  assert.ok(g.gas.filter((v) => v === cap).length >= 200 / cap - 1, 'filled up to the cap')
+  // a full cave evens out: 111 stations, 9 more each than they can hold
+  const all = big.size * (cap + 9)
+  g.gas.fill(0)
+  g.gas[start] = all
+  for (let t = 1; t <= 60 * 600; t++) {
+    tick(g)
+    if (g.events.some((e) => e.type === 'gasFlow')) last = t
+    g.events.length = 0
+  }
+  assert.equal(g.gas.reduce((a, b) => a + b, 0), all, 'none lost or made')
+  g.gas.forEach((v, k) => {
+    for (const u of big.has(k) ? adj[k] : []) assert.ok(Math.abs(g.gas[u] - v) <= 1, 'even to within 1')
+  })
+})

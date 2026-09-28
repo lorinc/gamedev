@@ -59,7 +59,7 @@ flowchart LR
 | **Fruit** (ledger) | your pull (within the light, seen or not), bug hauls (≤ 8 a trip) | bug upgrades (16, 32, 64…); in the world: worms eat it, fire burns it | pulling |
 | **Pink** (ledger) | ash worms bursting with nothing left to reveal | **none** | none |
 | **Liquid** (ledger + pools) | mega beast meals, 24 drops each | evaporation: each drop's 8 particles, one per pool surface pixel every 5 s (D149) | standing near bulbs (beasts eat only near you) |
-| **Gas** (per node, every node a climate station) | evaporating pools: each particle to the nearest node through open pixels (never across rock) | **none** yet, no cap ("we will do something with the gas levels", D149) | none directly |
+| **Gas** (per node, every node a climate station) | evaporating pools: each particle to the nearest node through open pixels (never across rock); a station over `gas.cap` 8 passes half its surplus towards the nearest station with room in its cave (D150) | **none** yet ("we will do something with the gas levels", D149) | none directly |
 | **Tamed bugs** (ledger) | 16 nibbles by wild bugs (D060), 1 per 4 built nodes reached (D145) | **none**: bugs never die | feeding wild bugs, building |
 | **Bug level** | fruit spent automatically | never goes down | pulling fruit |
 | **Lizard level** | crystals spent automatically | never goes down | pulling crystals |
@@ -113,6 +113,7 @@ Each row is one tunable interaction. **P?** = does the player's position or acti
 | L10 | Beasts → Network | − | every 5 min each eats a bulb near you: ~1.4 nodes and ~2 roots per meal (≈ 20 ore), may strand pieces | `beasts.everyTicks`, `beasts.near` | yes | beasts.js `eat` |
 | L11 | Beasts → Liquid | + | 24 drops a meal; pools shrink from the top as they evaporate (a 24-drop pool in ~2–4 min) | `beasts.drops` | yes | beasts.js |
 | L12 | Liquid → Gas | + | 8 particles a drop, one per surface pixel every 5 s, to the station in the same cave | `gas.per`, `gas.everyTicks` | yes (clouds round the nodes, wisps from the pools) | gas.js |
+| L13 | Gas → Gas (spread) | ± | a meal's 192 particles fill ~26 stations to 8 in ~5 s; a full cave evens out (111 stations in ~22 s) | `gas.cap`, `gas.spreadTicks` | yes (wisps between nodes) | gas.js `spread` |
 
 ### Garden: cover, fruit, worms
 

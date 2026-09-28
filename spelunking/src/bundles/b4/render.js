@@ -276,14 +276,13 @@ export function createRenderer(canvas, game, ui, view) {
         drops.push({ path: p, s })
         wetAt.set(p[p.length - 1], s + p.length / DROP_PX_S)
       })
-    } else if (e.type === 'evaporated') {
+    } else if (e.type === 'evaporated')
       // b4.66: a particle leaves the pool some time within the step and drifts to its station
-      const to = map.nodes[e.node]
-      let dx = to.x - e.x
-      if (Math.abs(dx) > w / 2) dx -= Math.sign(dx) * w
-      const dur = Math.max(1.5, Math.hypot(dx, to.y - e.y) / WISP_PX_S)
-      wisps.push({ x: e.x + 0.5, y: e.y + 0.5, dx, dy: to.y - e.y, s: now + (Math.random() * game.cfg.gas.everyTicks) / 60, dur })
-    } else if (e.type === 'poof') puff(e.x, e.y, now, 32, ['#ffffff', '#eef4ff', '#ffffff'], 14)
+      wisp(e, map.nodes[e.node], now + (Math.random() * game.cfg.gas.everyTicks) / 60, 4)
+    else if (e.type === 'gasFlow')
+      // b4.67: a saturated station passing gas on, a wisp a particle (up to 4)
+      for (let k = 0; k < Math.min(e.n, 4); k++) wisp(map.nodes[e.from], map.nodes[e.to], now + (Math.random() * game.cfg.gas.spreadTicks) / 60, 1)
+    else if (e.type === 'poof') puff(e.x, e.y, now, 32, ['#ffffff', '#eef4ff', '#ffffff'], 14)
     else if (e.type === 'lizardUpgrade')
       // crystals to every lizard: they're what it upgrades (b4.56)
       for (const z of game.lizards) for (let k = 0; k < 4; k++) fly(icon('crystals'), cell({ ...z.body[0] }), now + k * 0.05, 0.6, CRYSTAL_C, 0)
@@ -495,8 +494,15 @@ export function createRenderer(canvas, game, ui, view) {
   }
 
   // b4.66's gas: drawn from the stations' counts, nothing per particle in the sim
-  /** @type {{ x: number, y: number, dx: number, dy: number, s: number, dur: number }[]} evaporated particles on their way, world px */
+  /** @type {{ x: number, y: number, dx: number, dy: number, s: number, dur: number, rise: number }[]} particles on their way, world px */
   const wisps = []
+  /** A wisp from a to b, starting at s, rising `rise` px mid-way. @param {Cell} a @param {Cell} b @param {number} s @param {number} rise */
+  function wisp(a, b, s, rise) {
+    let dx = b.x - a.x
+    if (Math.abs(dx) > w / 2) dx -= Math.sign(dx) * w
+    const dur = Math.max(1.5, Math.hypot(dx, b.y - a.y) / WISP_PX_S)
+    wisps.push({ x: a.x + 0.5, y: a.y + 0.5, dx, dy: b.y - a.y, s, dur, rise })
+  }
   /** A cloud round each station with gas: a speck per particle (up to 48), wider as it holds more, each on its
    * own slow hashed drift; and the wisps rising from the pools to their stations. Under the fog. @param {number} now */
   function drawGas(now) {
@@ -530,7 +536,7 @@ export function createRenderer(canvas, game, ui, view) {
       }
       const e = t * t * (3 - 2 * t)
       const x = p.x + p.dx * e + Math.sin(t * 7 + k) * 0.7
-      const y = p.y + p.dy * e - Math.sin(t * Math.PI) * 4 // rises before it settles
+      const y = p.y + p.dy * e - Math.sin(t * Math.PI) * p.rise // rises before it settles
       ctx.fillStyle = `rgba(${GAS_RGB},${0.8 * Math.sin(t * Math.PI) + 0.2})`
       ctx.fillRect(Math.round(sx(x) - s / 2), Math.round(sy(y) - s / 2), s, s)
     }

@@ -164,6 +164,8 @@ const panel = createPanel(
     'sim.beasts.everyTicks': [600, 72000, 600],
     'sim.beasts.near': [10, 200, 5],
     'sim.gas.per': [1, 64, 1],
+    'sim.gas.cap': [1, 64, 1],
+    'sim.gas.spreadTicks': [1, 600, 1],
     'sim.gas.everyTicks': [30, 3600, 30],
     'sim.lizardUpgradeCost': [1, 256, 1],
     'sim.upgradeGain': [0, 1, 0.05],
