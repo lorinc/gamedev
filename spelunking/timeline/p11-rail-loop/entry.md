@@ -252,6 +252,7 @@ Then (D123, the user): lichen lights 24 px round it, faintly and for good; no wh
 drag picks a root (built: lit orange, affordable: green), letting go rides or builds it, 3 s puts you 5 px
 out. Screenshots `gallery/p11/b4.41_*`.
 Then (D124, the user): a bite sends up hearts half the time; with no ore on the ledger, a "?".
+Then (D125, the user): the ledger is ore, loot, fruit, a gap, then the bot's and the bugs' levels; fruit a pixel.
 
 ## Feedback
 

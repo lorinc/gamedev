@@ -291,6 +291,7 @@ export function createRenderer(canvas, game, ui, view) {
     ctx.textAlign = 'right'
     ctx.textBaseline = 'middle'
     for (const kind of ledgerKinds) {
+      if (!kind) continue // the gap
       const [x, y] = ledgerIcon(kind)
       const r = 7 * dpr
       const icons = kind === 'bugs' ? 1 + game.level : kind === 'bot' ? 1 + game.botLevel : 1
@@ -302,15 +303,11 @@ export function createRenderer(canvas, game, ui, view) {
       ctx.fillRect(x + 14 * dpr - bw, y - 13 * dpr, bw, 26 * dpr)
       for (let k = 0; k < icons; k++) {
         const ix = x - k * gap
-        if (kind === 'fruit') {
-          ctx.fillStyle = `rgb(${FRUIT_C})`
-          ctx.beginPath()
-          ctx.arc(ix, y, r * 0.8, 0, Math.PI * 2)
-          ctx.fill()
-        } else if (kind === 'bugs') dot(ix, y, r, r * 1.8, BUG)
+        if (kind === 'bugs') dot(ix, y, r, r * 1.8, BUG)
         else if (kind === 'bot') dot(ix, y, r, r * 1.8, [244, 241, 222])
         else {
-          ctx.fillStyle = kind === 'ore' ? ORE : LOOT
+          // a pixel, like the resources (fruit too since b4.43, the user)
+          ctx.fillStyle = kind === 'ore' ? ORE : kind === 'fruit' ? `rgb(${FRUIT_C})` : LOOT
           ctx.fillRect(ix - r, y - r, 2 * r, 2 * r)
         }
       }
