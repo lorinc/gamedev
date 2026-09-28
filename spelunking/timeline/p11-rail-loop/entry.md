@@ -42,6 +42,7 @@ build b4.33: 2026-09-28 · p11: b4.33, flower bots grow the network's rim; vines
 build b4.34: 2026-09-28 · p11: b4.34, tamed bugs start their trips where the fewest bugs are (D116)
 build b4.35: 2026-09-28 · p11: b4.35, smaller ash patches, r 2-3 (D117)
 build b4.36: 2026-09-28 · p11: b4.36, tamed bugs start their trips away from vines first (D118)
+build b4.37: 2026-09-28 · p11: b4.37, a ragged fire from 3 embers; ash worms that lift the fog (D119)
 ---
 
 # p11 · b4 · Rail Loop
