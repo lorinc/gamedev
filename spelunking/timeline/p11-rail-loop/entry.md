@@ -66,6 +66,7 @@ build b4.57: 2026-09-28 · p11: b4.57, lizards linger: 3x slower licks, zip afte
 build b4.58: 2026-09-28 · p11: b4.58, tamed bugs eat 2x slower (D140)
 build b4.59: 2026-09-28 · p11: b4.59, mega beasts eat bulbs; their drops fill cave pools (D141)
 build b4.60: 2026-09-28 · p11: b4.60, worms tunnel to fruit (D142)
+build b4.61: 2026-09-28 · p11: b4.61, the mega beast in crawling dark pixels (D143)
 ---
 
 # p11 · b4 · Rail Loop
