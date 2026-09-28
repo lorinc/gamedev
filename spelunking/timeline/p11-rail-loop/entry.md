@@ -82,6 +82,7 @@ build b4.73: 2026-09-28 · p11: b4.73, predators haul their catch, hives hatch m
 build b4.74: 2026-09-28 · p11: b4.74, hives twice as often (D160)
 build b4.75: 2026-09-28 · p11: b4.75, no hives; built nodes with gas hatch a moth every 30 s (D161)
 build b4.76: 2026-09-28 · p11: b4.76, beasts eat 30-100 px from you where there's no moss (D162)
+build b4.77: 2026-09-28 · p11: b4.77, slime films gassy rock and bugs tap it for gas (D163)
 ---
 
 # p11 · b4 · Rail Loop
