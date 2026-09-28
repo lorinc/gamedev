@@ -28,6 +28,7 @@ build b4.19: 2026-09-28 · p11: b4.19, the lichen's leaf in pixels (D100)
 build b4.20: 2026-09-28 · p11: b4.20, lizards spawn on reachable ore and route to it, so they retire (D101)
 build b4.21: 2026-09-28 · p11: b4.21, lichen sparks a fire through the bugs' cover, leaving ash discs (D102)
 build b4.22: 2026-09-28 · p11: b4.22, roots and bulbs instead of the metro map, scan on touch, no lizards in small caves (D103-D105)
+build b4.23: 2026-09-28 · p11: b4.23, lichen grows on a large area of the bugs' cover, not on loot (D106)
 ---
 
 # p11 · b4 · Rail Loop
