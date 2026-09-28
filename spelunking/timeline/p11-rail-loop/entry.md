@@ -80,6 +80,7 @@ build b4.71: 2026-09-28 · p11: b4.71, tamed bugs that meet gas fly as moths, ju
 build b4.72: 2026-09-28 · p11: b4.72, pink predators eat crowded bugs and leave ore (D155)
 build b4.73: 2026-09-28 · p11: b4.73, predators haul their catch, hives hatch moths, 5x gas, bugs leave fruit (D156-D159)
 build b4.74: 2026-09-28 · p11: b4.74, hives twice as often (D160)
+build b4.75: 2026-09-28 · p11: b4.75, no hives; built nodes with gas hatch a moth every 30 s (D161)
 ---
 
 # p11 · b4 · Rail Loop
