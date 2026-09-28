@@ -259,6 +259,7 @@ Then (D125, the user): the ledger is ore, loot, fruit, a gap, then the bot's and
 Then (D126, the user): the bot row counts you plus the flower bots at work.
 Then (D127, the user): a light worm with nothing to light bursts into rainbow and a pink resource; ledger
 rows show only once earned, the first time with a shake and 8 streams of their colour. Screenshots `gallery/p11/b4.45_*`.
+Then (D128, the user): scans no longer scare wild bugs.
 
 ## Feedback
 

@@ -54,7 +54,7 @@ import { Tile, isOpen } from '../../sim/gen/world.js'
 import { reveal } from '../../sim/dig/game.js'
 import { ringCells } from '../../sim/dig/probe.js'
 import { nearestValuable, toRock } from '../../sim/dig/pull.js'
-import { scare, updateBugs } from '../../sim/dig/bugs.js'
+import { updateBugs } from '../../sim/dig/bugs.js'
 import { sightCells } from '../../sim/dig/light.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { SWARM, updateSwarm } from './swarm.js'
@@ -92,7 +92,6 @@ export const CONFIG = {
     seek: 20,
     nibbleTicks: 40,
     tame: 16,
-    scareTicks: 240,
     den: 12,
     barSlots: 0,
     ledger: true,
@@ -399,7 +398,7 @@ function spread(g, p) {
 function ring(g, p, r) {
   p.r = r
   reveal(/** @type {any} */ (g), ringCells(g.world, p, r))
-  scare(/** @type {any} */ (g), p, r)
+  // no scaring the wild bugs any more (b4.46, the user)
   g.events.push({ type: 'ring', x: p.x, y: p.y, r })
 }
 
