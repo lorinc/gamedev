@@ -5,6 +5,7 @@ import { createPanel } from '../b3/panel.js'
 import { command, CONFIG, createGame, HEADING, tick } from './game.js'
 import { createInput } from './input.js'
 import { createRenderer, ZOOM_PX } from './render.js'
+import { load, save } from './save.js'
 import { makeMap, WKNOBS } from './world.js'
 
 const BUILD = 'b4-dev' // the live build; npm run freeze stamps the build id into frozen copies
@@ -42,8 +43,44 @@ const urlFor = (s) => {
 }
 history.replaceState(null, '', urlFor(seed))
 
-const map = makeMap(seed, tunables.world)
-const game = createGame(map, tunables.sim)
+// b4.62's save: one per build, seed and map knobs, in localStorage; loaded here, before the view paints it
+const SAVE_KEY = `b4-save:${BUILD}:${seed}:${changed(tunables.world, DEFAULTS.world, '').join(',')}`
+const SAVE_MS = 30000
+/** The map and a game on it: the save's, else a fresh one. */
+function start() {
+  const map = makeMap(seed, tunables.world)
+  const made = map.world.tiles.slice()
+  const game = createGame(map, tunables.sim)
+  /** @type {string | null} */
+  let s = null
+  try {
+    s = localStorage.getItem(SAVE_KEY)
+  } catch {} // storage blocked: no saves
+  if (!s) return { map, made, game }
+  try {
+    load(game, s)
+    return { map, made, game }
+  } catch (err) {
+    console.warn('save not loaded, a fresh game:', err)
+    try {
+      localStorage.removeItem(SAVE_KEY)
+    } catch {}
+    const fresh = makeMap(seed, tunables.world)
+    return { map: fresh, made, game: createGame(fresh, tunables.sim) }
+  }
+}
+const { map, made, game } = start()
+let wiped = false // "new game": no save on the way out
+let savedAt = performance.now()
+function persist() {
+  if (wiped) return
+  savedAt = performance.now()
+  try {
+    localStorage.setItem(SAVE_KEY, save(game, made))
+  } catch {} // full or blocked: play on unsaved
+}
+addEventListener('pagehide', persist)
+document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && persist())
 /** @type {import('./render.js').Ui} */
 const ui = { select: null, refusedAt: -9 }
 const canvas = /** @type {HTMLCanvasElement} */ ($('game'))
@@ -141,6 +178,16 @@ const panel = createPanel(
       }
     },
     buttons: [
+      [
+        'new game',
+        () => {
+          wiped = true
+          try {
+            localStorage.removeItem(SAVE_KEY)
+          } catch {}
+          location.reload()
+        },
+      ],
       ['next map', () => location.assign(urlFor(seed + 1))],
       ['random map', () => location.assign(urlFor(1 + Math.floor(Math.random() * 99999)))],
       ['copy link', () => navigator.clipboard?.writeText(location.href)],
@@ -265,6 +312,7 @@ function frame(t) {
     aim()
   }
   renderer.draw(acc / TICK_MS, Math.min(ms, 100) / 1000, now)
+  if (t - savedAt > SAVE_MS) persist()
   if (panel.isOpen() && t - lastReadout > 250) {
     lastReadout = t
     const built = game.built.reduce((a, b) => a + b, 0)

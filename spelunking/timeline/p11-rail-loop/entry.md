@@ -294,6 +294,8 @@ tremor), eats a bulb near you and its roots, and 24 drops run down into lasting 
 Then (D142, the user): worms tunnel through rock towards fruit.
 Then (D143, the user): the mega beast's shadow is pixel art and bigger: a 96 px body, head 12 px, darkened world
 pixels that crawl, with a dusty rim. Screenshots `gallery/p11/b4.61_*`.
+Then (D144, the user): the game saves itself (localStorage, per build, seed and map knobs) and comes back on
+the next visit; the dev panel's "new game" starts over. Screenshot `gallery/p11/b4.62_after_reload.png`.
 
 ## Feedback
 

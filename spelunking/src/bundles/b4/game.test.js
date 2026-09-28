@@ -1108,3 +1108,60 @@ test('a worm tunnels through rock to a fruit in the next cave (b4.60)', async ()
   assert.ok(inRock, 'through the rock')
   assert.equal(g.worms[0]?.eaten, 1, 'ate the fruit')
 })
+
+test('a save loaded into a fresh game goes on exactly like the game it was saved from (b4.62)', async () => {
+  const { extend } = await import('./game.js')
+  const { builtNodes } = await import('./beasts.js')
+  const { GREEN, VINE, FRUIT } = await import('./garden.js')
+  const { save, load } = await import('./save.js')
+  const cfg = () => {
+    const c = JSON.parse(JSON.stringify(CONFIG))
+    c.lichen.spark = 1
+    c.beasts.everyTicks = 600
+    c.garden.fruitTicks = 600
+    return c
+  }
+  const g = createGame(pristine(), cfg())
+  const { w } = g.world
+  // a busy game: a network with a beast, bugs at work, cover round a lichen that sparks a fire
+  g.ledger.ore = 10000
+  while (builtNodes(g) < 17) {
+    const k = MAP.edges.findIndex((e, j) => !g.built[j] && g.net[e.a] !== g.net[e.b])
+    const e = MAP.edges[k]
+    extend(g, k, g.net[e.a] ? e.a : e.b)
+  }
+  g.ledger.bugs = 12
+  let n = 0
+  for (let dy = -30; dy <= 30; dy++)
+    for (let dx = -30; dx <= 30; dx++) {
+      const i = (g.ch.y + dy) * w + g.ch.x + dx
+      if (!isOpen(g.world.tiles[i])) continue
+      g.garden.wall[i] = n % 10 === 0 ? VINE : n % 10 === 5 ? FRUIT : GREEN
+      if (g.garden.wall[i] !== GREEN) g.garden.vines.push(i)
+      if (g.garden.wall[i] === FRUIT) g.garden.fruit.add(i)
+      n++
+    }
+  const at = g.ch.y * w + g.ch.x + 20
+  g.lichen.on[at] = 1
+  g.lichen.patches.push({ cells: [at], leaf: [], sparked: false })
+  /** @param {import('./game.js').Game} x @param {number} from @param {number} to */
+  const run = (x, from, to) => {
+    for (let t = from; t < to; t++) {
+      if (t % 300 === 0) command(x, { type: 'move', dx: Math.cos(t), dy: Math.sin(t) })
+      tick(x)
+      x.events.length = 0
+    }
+  }
+  run(g, 0, 4000)
+  assert.ok(g.swarm.length > 0, 'bugs at work')
+  assert.ok(g.garden.wall.some((v) => v === 5), 'ash')
+  assert.ok(g.beasts.length > 0, 'a beast')
+  const s = save(g, TILES)
+  assert.ok(s.length < 60000, `save ${s.length} chars`)
+  const h = createGame(pristine(), cfg())
+  load(h, s)
+  assert.equal(save(h, TILES), s, 'loads as saved')
+  run(g, 4000, 8000)
+  run(h, 4000, 8000)
+  assert.equal(save(h, TILES), save(g, TILES), 'the same game 4000 ticks on')
+})
