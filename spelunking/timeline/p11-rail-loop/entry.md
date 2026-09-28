@@ -23,6 +23,7 @@ build b4.14: 2026-09-28 · p11: b4.14, taming hearts, ore-eating lizards that bu
 build b4.15: 2026-09-28 · p11: b4.15, loot upgrades the bot, +20% radius and speed per upgrade, the bot on the ledger, purple lichen (D096)
 build b4.16: 2026-09-28 · p11: b4.16, the cave's back wall dark grey-blue, apart from the unexplored black (D097)
 build b4.17: 2026-09-28 · p11: b4.17, no loot in the generated world, only lizards make it (D098)
+build b4.18: 2026-09-28 · p11: b4.18, soft and hard rock much darker (D099)
 ---
 
 # p11 · b4 · Rail Loop
