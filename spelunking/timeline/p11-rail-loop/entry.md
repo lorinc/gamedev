@@ -76,6 +76,7 @@ build b4.67: 2026-09-28 · p11: b4.67, saturated gas stations pass half their su
 build b4.68: 2026-09-28 · p11: b4.68, tamed bugs stand still with fire within 6 px (D151)
 build b4.69: 2026-09-28 · p11: b4.69, tamed bugs lay moss only where there's gas, one gas a pixel (D152)
 build b4.70: 2026-09-28 · p11: b4.70, bugs are wall-bouncers, units to the ledger at once, one nibble tames (D153)
+build b4.71: 2026-09-28 · p11: b4.71, tamed bugs that meet gas fly as moths, jumpers paler (D154)
 ---
 
 # p11 · b4 · Rail Loop
