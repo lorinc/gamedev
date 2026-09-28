@@ -39,6 +39,7 @@ build b4.30: 2026-09-28 · p11: b4.30, fix the crash when a lizard's ore flight 
 build b4.31: 2026-09-28 · p11: b4.31, lichen sparks 4x rarer (D113)
 build b4.32: 2026-09-28 · p11: b4.32, the network under the fog, smaller bulbs (D114)
 build b4.33: 2026-09-28 · p11: b4.33, flower bots grow the network's rim; vines touching ash make fruit 10x (D115)
+build b4.34: 2026-09-28 · p11: b4.34, tamed bugs start their trips where the fewest bugs are (D116)
 ---
 
 # p11 · b4 · Rail Loop
