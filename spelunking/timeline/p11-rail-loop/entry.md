@@ -34,6 +34,7 @@ build b4.25: 2026-09-28 · p11: b4.25, brighter fire with sparks; ash flowers bl
 build b4.26: 2026-09-28 · p11: b4.26, a bulb ejects the bot after 3 s with nothing built (D109)
 build b4.27: 2026-09-28 · p11: b4.27, a dimmer network; only the bulb holding the bot beats (D110)
 build b4.28: 2026-09-28 · p11: b4.28, white loot, lizards don't glow, 1 flower per 4 ash discs (D111)
+build b4.29: 2026-09-28 · p11: b4.29, half the flowers, dimmer (D112)
 ---
 
 # p11 · b4 · Rail Loop
