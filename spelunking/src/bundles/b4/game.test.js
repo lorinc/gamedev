@@ -502,7 +502,7 @@ test('no lizard spawns in a small enclosure: its cave holds at least `room` open
   }
 })
 
-test('pointing along a built root near its node rides it to the far end, no cart (b4.23)', () => {
+test('a root built from a bulb is ridden to the far end, no cart (b4.23, b4.41)', () => {
   const g = fresh()
   const from = MAP.podNodes.find((n) => MAP.edges.some((e) => e.a === n || e.b === n))
   assert.ok(from !== undefined)
@@ -601,14 +601,61 @@ test('a bulb lets the bot go after 3 s with nothing built; it takes it again onl
   }
   assert.equal(eject - at, 180, 'after 3 s')
   assert.equal(g.engulf, null)
+  // put on an open pixel 5 px out (b4.41)
+  assert.ok(open(g.ch), 'open')
+  assert.ok(Math.abs(Math.hypot(g.ch.x - node.x, g.ch.y - node.y) - 5) <= 0.5, `5 px out: ${g.ch.x - node.x}, ${g.ch.y - node.y}`)
+  assert.equal(g.pos.x, g.ch.x * 1000 + 500, 'glides on from there')
   for (let i = 0; i < 30; i++) tick(g)
-  assert.equal(g.engulf, null, 'not again while still in reach')
-  // out of reach and back: taken again
-  g.ch.x = node.x + 6
-  tick(g)
+  assert.equal(g.engulf, null, 'standing there, not taken again')
+  // back: taken again
+  g.pos.x = g.pos.px = (node.x + 1) * 1000 + 500
+  g.pos.y = g.pos.py = node.y * 1000 + 500
   g.ch.x = node.x + 1
+  g.ch.y = node.y
   tick(g)
   assert.equal(g.engulf, from)
+})
+
+test('a bulb puts the bot out the way it came in (b4.41)', () => {
+  const g = fresh()
+  const from = MAP.podNodes.find((n) => MAP.edges.some((e) => e.a === n || e.b === n))
+  assert.ok(from !== undefined)
+  const node = MAP.nodes[from]
+  g.ch.x = node.x + 1
+  g.ch.y = node.y
+  g.ledger.ore = 10
+  g.move = { dx: -1000, dy: 0 } // walking left, into it
+  tick(g)
+  assert.equal(g.engulf, from)
+  for (let i = 0; i < 200 && g.engulf !== null; i++) tick(g)
+  assert.ok(g.ch.x < node.x, `out on the left: ${g.ch.x - node.x}, ${g.ch.y - node.y}`)
+})
+
+test('held in a bulb: a built root is ridden, an unbuilt one built and ridden; a ride that stops is back in a bulb (b4.41)', () => {
+  const g = fresh()
+  const from = MAP.podNodes.find((n) => MAP.edges.some((e) => e.a === n || e.b === n))
+  assert.ok(from !== undefined)
+  const edge = MAP.edges.findIndex((e) => e.a === from || e.b === from)
+  const e = MAP.edges[edge]
+  const far = e.a === from ? e.b : e.a
+  const node = MAP.nodes[from]
+  g.ch.x = node.x + 1
+  g.ch.y = node.y
+  g.ledger.ore = 10
+  tick(g)
+  command(g, { type: 'build', edge, from })
+  tick(g)
+  assert.equal(g.built[edge], 1)
+  assert.ok(g.ride, 'built and riding it')
+  for (let i = 0; i < 1200 && g.ride; i++) tick(g)
+  assert.equal(g.engulf, far, 'stopped at the far end, in its bulb')
+  assert.deepEqual([g.ch.x, g.ch.y], [MAP.nodes[far].x, MAP.nodes[far].y])
+  // no ore now: the far bulb still offers the built root back
+  command(g, { type: 'ride', edge, from: far, dx: 0, dy: 0 })
+  tick(g)
+  assert.ok(g.ride, 'riding back')
+  for (let i = 0; i < 1200 && g.ride; i++) tick(g)
+  assert.equal(g.engulf, from, 'back in the first bulb')
 })
 
 test('a vine touching ash makes fruit 10 times as fast (b4.33)', async () => {

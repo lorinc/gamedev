@@ -142,13 +142,15 @@ const panel = createPanel(
   },
 )
 
-/** The unbuilt edge from `node` whose heading is closest to the drag. @param {number} node @param {number} dx @param {number} dy */
+/** The edge from `node` whose heading is closest to the drag, within 67.5° (b4.41): a built one, or an unbuilt
+ * one while the ledger holds the price. -1: none. @param {number} node @param {number} dx @param {number} dy */
 function aimEdge(node, dx, dy) {
   const a0 = Math.atan2(dy, dx)
   let best = -1
-  let bestD = Infinity
+  let bestD = (67.5 * Math.PI) / 180 + 1e-9
+  const afford = game.ledger.ore >= game.cfg.price
   map.edges.forEach((e, k) => {
-    if (game.built[k] || (e.a !== node && e.b !== node)) return
+    if ((!game.built[k] && !afford) || (e.a !== node && e.b !== node)) return
     const p = e.a === node ? e.path : [...e.path].reverse()
     const q = p[Math.min(HEADING, p.length - 1)]
     let ex = q.x - p[0].x
@@ -166,23 +168,38 @@ function aimEdge(node, dx, dy) {
 /** The direction pointed now (0, 0: none), for walking on when a bulb lets go (b4.26). */
 const held = { dx: 0, dy: 0 }
 
+/** Held in a bulb, the direction pointed picks one of its edges (b4.41). */
+function aim() {
+  const n = game.engulf
+  if (n === null || (!held.dx && !held.dy)) return
+  const edge = aimEdge(n, held.dx, held.dy)
+  ui.select = edge >= 0 ? { node: n, edge } : null
+}
+/** Release confirms the edge picked: ride a built one, build an unbuilt one (b4.41). */
+function confirm() {
+  const s = ui.select
+  ui.select = null
+  if (!s || game.engulf !== s.node) return
+  if (game.built[s.edge]) command(game, { type: 'ride', edge: s.edge, from: s.node, dx: aimed.dx, dy: aimed.dy })
+  else command(game, { type: 'build', edge: s.edge, from: s.node })
+}
+/** The direction the pick was made with: the ride goes on that way through the next nodes. */
+const aimed = { dx: 0, dy: 0 }
+
 createInput(canvas, {
-  // held in a node (b4.22), a direction aims at its edges and a tap builds the one aimed at
+  // held in a node (b4.22), a drag picks one of its edges and letting go confirms it (b4.41)
   move: (dx, dy) => {
     held.dx = dx
     held.dy = dy
-    const n = game.engulf
-    if (n === null) return command(game, { type: 'move', dx, dy })
-    if (!dx && !dy) return // letting go keeps the aim
-    const edge = aimEdge(n, dx, dy)
-    ui.select = edge >= 0 ? { node: n, edge } : null
+    if (game.engulf === null) return command(game, { type: 'move', dx, dy })
+    if (!dx && !dy) return confirm()
+    aimed.dx = dx
+    aimed.dy = dy
+    aim()
   },
   tap: () => {
-    const s = ui.select
     if (game.engulf === null) return command(game, { type: 'tap' })
-    if (!s) return
-    command(game, { type: 'build', edge: s.edge, from: s.node })
-    ui.select = null
+    confirm()
   },
   zoom: (steps) => {
     const next = Math.min(Math.max(renderer.level() + steps, 0), ZOOM_PX.length - 1)
@@ -213,6 +230,12 @@ function frame(t) {
   for (const e of game.events) {
     renderer.onEvent(e, now)
     if (e.type === 'refused') ui.refusedAt = now
+    if (e.type === 'engulf') {
+      // taken in while still pointing: that direction picks (b4.41)
+      aimed.dx = held.dx
+      aimed.dy = held.dy
+      aim()
+    }
     if (e.type === 'eject') {
       ui.select = null
       if (held.dx || held.dy) command(game, { type: 'move', dx: held.dx, dy: held.dy }) // still pointing: walk on

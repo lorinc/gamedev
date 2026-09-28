@@ -2,8 +2,8 @@
 // stops. A drag is a joystick: its direction from where the finger went down, any angle (b4.3, the user;
 // keys give 8), past a dead zone. In a car the same direction is the swipe that picks the rail. A short touch
 // that didn't drag is a tap (Space on a keyboard): in a moving car it stops at the next node.
-// Building (b4.22, the user): the bot engulfed in a node, a drag (or keys) aims at the node's edges and a tap
-// (or Space) builds the one aimed at; the page turns `move` and `tap` into that while the bot is held.
+// In a bulb (b4.41, the user): a drag (or keys) picks one of the node's roots, letting go (or Space) confirms:
+// the page turns `move` and `tap` into that while the bot is held.
 
 /**
  * @param {HTMLCanvasElement} canvas

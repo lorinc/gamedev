@@ -22,7 +22,13 @@
 // again until it has been out of reach (`freed`).
 // Building (b4.3): `build` an unbuilt edge from the node the bot is engulfed in: the price is taken and the
 // edge is built at once and its far node joins the network.
-// Riding: pointing along a built root (within 67.5°) within `nodeReach` of one of its nodes gets you riding
+// b4.41 (the user: "bulb-entry-exit is still not great UX"): a node on the network takes the bot in
+// (`engulf`) when it offers something: a built root, or an unbuilt one with the price on the ledger. Held, a drag picks one of its roots (`aim`, within 67.5°): a built
+// one, or an unbuilt one while the ledger holds the price; release confirms: `ride` a built one, `build` an
+// unbuilt one and ride it. After `ejectTicks` (3 s) the bulb puts the bot on an open pixel `ejectR` (5) px out
+// (`eject`), the way it came in if it can. A ride that stops at a node stops in its bulb. Pointing along a
+// root to board it (b4.23) is gone: the bulb is the one way on.
+// Riding (before b4.41): pointing along a built root (within 67.5°) within `nodeReach` of one of its nodes gets you riding
 // it, the bot on the node (b4.23, the user: "I still need to travel"; b4.22 needed the node's own pixel);
 // there are no carts (b4.22, the user), the bot glides along the root itself. A pointed direction picks, at each node, the built edge
 // that fits it best (within 67.5°); the bot runs node to node until no edge fits (it stops at the last
@@ -75,6 +81,7 @@ export const CONFIG = {
   nodeReach: 2, // px: a shown node engulfs the bot this close (the user, b4.22; was 12, a build's reach)
   lootTame: 2, // px: a wild bug this close to a loot pixel eats it and is tamed (the user, b4.40)
   ejectTicks: 180, // a bulb lets the bot go after 3 s with nothing built (the user, b4.26)
+  ejectR: 5, // px from the bulb's centre it puts the bot (the user, b4.41)
   bugs: {
     block: 32,
     blocks: 64,
@@ -105,7 +112,7 @@ export const CONFIG = {
 /** @typedef {typeof CONFIG} Config */
 
 /**
- * @typedef {{ type: 'move', dx: number, dy: number } | { type: 'tap' } | { type: 'build', edge: number, from: number }} Command
+ * @typedef {{ type: 'move', dx: number, dy: number } | { type: 'tap' } | { type: 'build', edge: number, from: number } | { type: 'ride', edge: number, from: number, dx: number, dy: number }} Command
  *   move: any direction, dx and dy any numbers (0, 0 = stop)
  */
 /**
@@ -177,6 +184,7 @@ export const CONFIG = {
  * @property {Ride | null} ride
  * @property {number | null} engulf the node the bot is held in (b4.22)
  * @property {number} engulfAt the tick it was taken in
+ * @property {{ dx: number, dy: number } | null} cameIn the way the bot was going when a bulb took it in (b4.41)
  * @property {number | null} freed the node that just let the bot go: it doesn't take it again until it's out of reach
  * @property {number[][]} links per node: its edges
  * @property {Command[]} queue
@@ -229,6 +237,7 @@ export function createGame(map, cfg) {
     ride: null,
     engulf: null,
     engulfAt: 0,
+    cameIn: null,
     freed: null,
     links: map.nodes.map(() => []),
     queue: [],
@@ -257,20 +266,16 @@ export function tick(g) {
       else g.move = dir
     } else if (cmd.type === 'tap') {
       if (g.ride?.run) g.ride.stopNext = true
-    } else build(g, cmd.edge, cmd.from)
+    } else if (cmd.type === 'ride') rideFrom(g, cmd.edge, cmd.from, heading(cmd.dx, cmd.dy))
+    else build(g, cmd.edge, cmd.from)
   }
   g.queue.length = 0
 
-  if (g.engulf !== null && g.tick - g.engulfAt >= g.cfg.ejectTicks) {
-    g.events.push({ type: 'eject', node: g.engulf })
-    g.freed = g.engulf
-    g.engulf = null
-  }
+  if (g.engulf !== null && g.tick - g.engulfAt >= g.cfg.ejectTicks) eject(g)
   if (g.ride) rideTick(g, g.ride)
   else if (g.engulf === null) {
     walk(g)
-    board(g)
-    if (!g.ride) engulf(g)
+    engulf(g)
   }
   if (g.probe) spread(g, g.probe)
   pull(g)
@@ -470,22 +475,6 @@ export const near = (g, i) => dist2(g, g.map.nodes[i], g.ch) <= g.cfg.nodeReach 
 export const shown = (g, i) =>
   (g.firstBuilt ? !!g.railed[i] : !!g.net[i]) && g.ledger.ore >= g.cfg.price && g.links[i].some((k) => !g.built[k])
 
-/** Pointed along a built root near one of its nodes: riding it from there (b4.23). @param {Game} g */
-function board(g) {
-  if (!g.move) return
-  for (let i = 0; i < g.map.nodes.length; i++) {
-    if (!g.railed[i] || !near(g, i)) continue
-    const run = pick(g, i, g.move)
-    if (!run) continue
-    g.ride = { node: i, run, want: g.move, stopNext: false }
-    g.move = null
-    g.ch.x = g.map.nodes[i].x
-    g.ch.y = g.map.nodes[i].y
-    g.events.push({ type: 'board', node: i })
-    return
-  }
-}
-
 /** A wild bug that finds loot is tamed (b4.40, the user: "when wild bugs find a loot, they become tame"): within
  * `lootTame` px of a loot pixel in the rock, it eats it (the pixel turns to rock, Claude's call: else one loot
  * would tame every bug that passes) and leaves the world as +1 on the ledger, as the ore-fed taming does
@@ -510,21 +499,59 @@ function lootTames(g) {
   })
 }
 
-/** A shown node within reach takes the bot in (b4.22): it sits on the node, pointing nowhere. @param {Game} g */
+/** Node i's bulb has something to offer (b4.41): a built root, or it shows (an unbuilt one, the price on the ledger). @param {Game} g @param {number} i */
+export const offers = (g, i) => shown(g, i) || g.links[i].some((k) => g.built[k])
+
+/** A node within reach whose bulb offers something takes the bot in (b4.22; since b4.41 a built root is
+ * enough): it sits on the node, pointing nowhere. @param {Game} g */
 function engulf(g) {
   if (g.freed !== null && !near(g, g.freed)) g.freed = null
   for (let i = 0; i < g.map.nodes.length; i++) {
-    if (i === g.freed || !near(g, i) || !shown(g, i)) continue
-    g.engulf = i
-    g.engulfAt = g.tick
-    g.move = null
-    g.ch.x = g.map.nodes[i].x
-    g.ch.y = g.map.nodes[i].y
-    g.pos.x = g.pos.px = g.ch.x * 1000 + 500
-    g.pos.y = g.pos.py = g.ch.y * 1000 + 500
-    g.events.push({ type: 'engulf', node: i })
+    if (i === g.freed || !near(g, i) || !offers(g, i)) continue
+    hold(g, i, g.move)
     return
   }
+}
+
+/** The bot held in node i's bulb. @param {Game} g @param {number} i @param {{ dx: number, dy: number } | null} cameIn */
+function hold(g, i, cameIn) {
+  g.engulf = i
+  g.engulfAt = g.tick
+  g.cameIn = cameIn
+  g.move = null
+  g.ch.x = g.map.nodes[i].x
+  g.ch.y = g.map.nodes[i].y
+  g.pos.x = g.pos.px = g.ch.x * 1000 + 500
+  g.pos.y = g.pos.py = g.ch.y * 1000 + 500
+  g.events.push({ type: 'engulf', node: i })
+}
+
+/** The bulb lets go (b4.41): the bot on the open pixel `ejectR` px from its centre (the ring r - 0.5 .. r + 0.5)
+ * closest to the way it came in; with none that way, the lowest index. None open: it stays on the node. @param {Game} g */
+function eject(g) {
+  const n = /** @type {number} */ (g.engulf)
+  const c = g.map.nodes[n]
+  const R = Math.max(1, g.cfg.ejectR)
+  const a0 = g.cameIn ? Math.atan2(g.cameIn.dy, g.cameIn.dx) : 0
+  let best = null
+  let bestD = Infinity
+  for (let dy = -R - 1; dy <= R + 1; dy++)
+    for (let dx = -R - 1; dx <= R + 1; dx++) {
+      const d = Math.hypot(dx, dy)
+      if (d < R - 0.5 || d > R + 0.5 || !open(g, c.x + dx, c.y + dy)) continue
+      let da = g.cameIn ? Math.abs(Math.atan2(dy, dx) - a0) : 0
+      if (da > Math.PI) da = 2 * Math.PI - da
+      if (da < bestD) ((bestD = da), (best = { x: wrap(c.x + dx, g.world.w), y: c.y + dy }))
+    }
+  g.engulf = null
+  g.freed = n
+  g.events.push({ type: 'eject', node: n })
+  if (!best) return
+  g.ch.x = best.x
+  g.ch.y = best.y
+  g.pos.x = g.pos.px = best.x * 1000 + 500
+  g.pos.y = g.pos.py = best.y * 1000 + 500
+  g.litFor.r = -1
 }
 
 /** Can the edge be built from node `from` now? The reason it can't, or null. @param {Game} g @param {number} edge @param {number} from */
@@ -542,8 +569,19 @@ function build(g, edge, from) {
   const why = buildable(g, edge, from)
   if (why) return g.events.push({ type: 'refused', edge, reason: why })
   extend(g, edge, from)
+  rideFrom(g, edge, from, null)
+}
+
+/** Out of the bulb along a built edge (b4.41): release confirms it. `want` carries the ride on through the
+ * next nodes; null stops it at the next one. @param {Game} g @param {number} edge @param {number} from @param {{ dx: number, dy: number } | null} want */
+function rideFrom(g, edge, from, want) {
+  const e = g.map.edges[edge]
+  if (g.engulf !== from || !e || !g.built[edge] || (e.a !== from && e.b !== from)) return
+  const dir = e.a === from ? 1 : -1
   g.engulf = null
   g.freed = from
+  g.ride = { node: from, run: { edge, i: dir === 1 ? 0 : e.path.length - 1, dir, acc: 0 }, want, stopNext: false }
+  g.events.push({ type: 'board', node: from })
 }
 
 /** Edge built from node `from`, its price off the ledger: yours, or a flower bot's (b4.25). @param {Game} g @param {number} edge @param {number} from */
@@ -632,8 +670,13 @@ function rideTick(g, r) {
     const next = r.stopNext || !r.want ? null : pick(g, r.node, r.want)
     r.run = next
     if (!next) {
-      r.stopNext = false
-      r.want = null // stopped: the next direction pointed starts it again
+      // stopped at a node: in its bulb (b4.41)
+      g.ride = null
+      g.freed = null
+      const back = p[run.i - run.dir] ?? p[run.i]
+      let dx = p[run.i].x - back.x
+      if (Math.abs(dx) > 1) dx = -Math.sign(dx)
+      hold(g, r.node, { dx, dy: p[run.i].y - back.y })
       return
     }
     next.acc = run.acc // the budget carries on through the node

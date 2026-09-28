@@ -1,6 +1,6 @@
 // b4's Canvas2D view (throwaway: rendering moves to PixiJS later, so nothing here is tuned). b3's look: the
 // world 1 px per tile scaled up, b3's palette, b3's fog (never seen = black, seen = dim, lit = clear), the
-// probe's rings. At b4.2 a tile is one v5 pixel (D080): the sheet, the space above it and the sea are drawn
+// probe's rings (gone since b4.41, the user). At b4.2 a tile is one v5 pixel (D080): the sheet, the space above it and the sea are drawn
 // as v6 draws them, the sheet and space with no fog (scenery); the bot is its pixel with a halo, so it's
 // seen; the zoom levels go down to 2 device px a tile; the textures change pixel by pixel, never whole
 // (123k tiles: a whole repaint each step was too slow to play, not tuning).
@@ -17,6 +17,7 @@
 
 import { cellRgb } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
+import { sightCells } from '../../sim/dig/light.js'
 import { botAt, botCost, FRUIT_TILE, nextCost, shown } from './game.js'
 import { ASH, BURN, FRUIT, GREEN as MOSS, VINE } from './garden.js'
 import { LEAF_PX, WITHERED_PX } from './lichen.js'
@@ -53,8 +54,12 @@ const OPEN_RGB = [36, 44, 62] // the cave's back wall: dark grey-blue, not the u
 const ROCK_RGB = { [Tile.Soft]: [40, 30, 24], [Tile.Hard]: [22, 23, 28] }
 /** A tile's colour in b4: its rock, else b3's palette. @param {number} t */
 const rgb = (t) => ROCK_RGB[t] ?? cellRgb(/** @type {any} */ (t))
-const RING_TRAIL = 4
 const EDGE = 3 // px over which the light fades out
+const PLUS = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]] // a still bulb's 5 px (b4.32)
+// b4.41 (the user): a lichen's permanent light, faint but large: line of sight from the patch's first pixel,
+// LICHEN_R px, the fog LICHEN_A at the patch easing to the seen dim at the rim; drawing only (not `seen`)
+const LICHEN_R = 24
+const LICHEN_A = 0.55
 const FRUIT_C = [235, 40, 50]
 /** @type {Record<number, number[]>} */
 const WALL_RGB = { [MOSS]: [22, 58, 30], [VINE]: [60, 140, 55], [FRUIT]: FRUIT_C, [BURN]: [120, 28, 8], [ASH]: [96, 94, 92] }
@@ -106,6 +111,8 @@ export function createRenderer(canvas, game, ui, view) {
   }
   const lit = new Uint8Array(w * h)
   const DIM = Math.round(DIM_A * 255)
+  const glow = new Uint8Array(w * h).fill(255) // the fog's most over a pixel from the lichens' light
+  let glowed = 0 // lichen patches whose light is in `glow`
   /** @param {number} i */
   const paintFogAt = (i) => {
     let a = unfogged(i) ? 0 : game.seen[i] ? DIM : 255
@@ -117,7 +124,7 @@ export function createRenderer(canvas, game, ui, view) {
       const d = Math.hypot(dx, (i - x) / w - game.ch.y)
       a = Math.round(DIM * Math.min(1, Math.max(0, (d - (game.radius - EDGE)) / EDGE)))
     }
-    fimg.data[i * 4 + 3] = a
+    fimg.data[i * 4 + 3] = Math.min(a, glow[i])
   }
   for (let i = 0; i < w * h; i++) {
     paintTile(i)
@@ -147,6 +154,19 @@ export function createRenderer(canvas, game, ui, view) {
       for (const i of litDrawn) fogChanged(i)
       for (const i of game.lit) fogChanged(i)
       litDrawn = game.lit
+    }
+    for (const P = game.lichen.patches; glowed < P.length; glowed++) {
+      const c = P[glowed].cells[0]
+      const cx = c % w
+      const cy = (c - cx) / w
+      for (const i of sightCells(world, { x: cx, y: cy }, LICHEN_R)) {
+        const x = i % w
+        let dx = Math.abs(x - cx)
+        dx = Math.min(dx, w - dx)
+        const d = Math.hypot(dx, (i - x) / w - cy) / LICHEN_R
+        glow[i] = Math.min(glow[i], Math.round(255 * (LICHEN_A + (DIM_A - LICHEN_A) * d)))
+        fogChanged(i)
+      }
     }
     if (!fogBox) return
     const b = fogBox
@@ -186,8 +206,6 @@ export function createRenderer(canvas, game, ui, view) {
   /** A tile's centre on screen. @param {Cell} c */
   const at = (c) => [sx(c.x + 0.5), sy(c.y + 0.5)]
 
-  /** @type {{ x: number, y: number, r: number, s: number }[]} */
-  const rings = []
   /** @typedef {() => [number, number]} End a point on screen, device px, read each frame (the camera moves) */
   /** @type {{ from: End, to: End, s: number, dur: number, color: string, arc: number }[]} */
   const flights = []
@@ -226,7 +244,6 @@ export function createRenderer(canvas, game, ui, view) {
         paintTile(i)
         tctx.putImageData(timg, 0, 0, i % w, Math.floor(i / w), 1, 1)
       }
-    else if (e.type === 'ring') rings.push({ x: e.x, y: e.y, r: e.r, s: now })
     else if (e.type === 'bloom') puff(e.x, e.y, now, 14, ['#ffffff', '#f4f0ff'], 8)
     else if (e.type === 'ashwormGone') puff(e.x, e.y, now, 10, ['#9a9aa0', '#7c7c84'], 5)
     else if (e.type === 'poof') puff(e.x, e.y, now, 32, ['#ffffff', '#eef4ff', '#ffffff'], 14)
@@ -484,7 +501,6 @@ export function createRenderer(canvas, game, ui, view) {
     drawFbots()
     drawAshworms(now)
     drawBot(bot, now)
-    drawRings(now)
     drawStreams(now)
     drawWild(alpha) // b3.7's wild bugs (D056–D061), drawn like the tamed ones, in blue (b4.13)
     drawSwarm(alpha, now)
@@ -628,16 +644,30 @@ export function createRenderer(canvas, game, ui, view) {
 
   /** @param {number} now */
   function drawAim(now) {
-    // held in a node: its unbuilt edges, faint; the one aimed at flashes green; refused, it pulses red (b4.3)
+    // held in a node (b4.41, the user): the whole network pulses dimly, the bulb's built roots light up, its
+    // roots the ledger can pay for are green; the one aimed at flashes; refused, it pulses red (b4.3)
     const n = game.engulf
     if (n === null) return
     const aim = ui.select?.node === n ? ui.select.edge : -1
+    ctx.fillStyle = `rgba(${NODE},${0.14 + 0.1 * Math.sin(now * 3)})`
+    map.edges.forEach((e, k) => {
+      if (game.built[k] && !game.links[n].includes(k)) for (const c of e.path) px(c.x, c.y)
+    })
+    map.nodes.forEach((c, i) => {
+      if (game.railed[i] && i !== n) for (const [dx, dy] of PLUS) px(c.x + dx, c.y + dy)
+    })
+    const afford = game.ledger.ore >= game.cfg.price
     for (const k of game.links[n]) {
-      if (game.built[k] || k === aim) continue
-      ctx.fillStyle = `rgba(${NODE},${0.3 + 0.15 * Math.sin(now * 4)})`
+      if (k === aim || (!game.built[k] && !afford)) continue
+      ctx.fillStyle = game.built[k] ? `rgba(${NODE},0.75)` : `rgba(90,200,120,${0.35 + 0.15 * Math.sin(now * 4)})`
       for (const c of map.edges[k].path) px(c.x, c.y)
     }
     if (aim < 0) return
+    if (game.built[aim]) {
+      ctx.fillStyle = `rgba(255,236,170,${0.75 + 0.25 * Math.sin(now * 10)})`
+      for (const c of map.edges[aim].path) px(c.x, c.y)
+      return
+    }
     const refused = now - ui.refusedAt < 0.7
     const a = refused ? 0.5 + 0.5 * Math.sin((now - ui.refusedAt) * Math.PI * 8) : 0.55 + 0.45 * Math.sin(now * 10)
     ctx.fillStyle = refused ? `rgba(255,40,40,${a})` : `rgba(90,200,120,${a})`
@@ -676,21 +706,6 @@ export function createRenderer(canvas, game, ui, view) {
     const s = Math.max(T, 2 * dpr)
     ctx.fillStyle = CHAR
     ctx.fillRect(Math.round(x - s / 2), Math.round(y - s / 2), Math.round(s), Math.round(s))
-  }
-
-  /** @param {number} now */
-  function drawRings(now) {
-    const ringS = game.cfg.scan.ringTicks / 60
-    while (rings.length && now - rings[0].s > ringS * RING_TRAIL) rings.shift()
-    ctx.lineWidth = Math.max(1, dpr)
-    for (const r of rings) {
-      const a = 1 - (now - r.s) / (ringS * RING_TRAIL)
-      ctx.strokeStyle = `rgba(230,230,255,${a})`
-      ctx.beginPath()
-      const [x, y] = at(r)
-      ctx.arc(x, y, r.r * T, 0, Math.PI * 2)
-      ctx.stroke()
-    }
   }
 
   /** Dust from the pixel being pulled to the bot. @param {number} now */

@@ -246,6 +246,9 @@ Then (D120, the user): riding at half the speed, 40 px/s; a tap gets you off at 
 Then (D121, the user): lizards over the fog like every animal; a round, soft-edged mask as wide as the map
 hides its repeat. Screenshots `gallery/p11/b4.39_*`.
 Then (D122, the user): a wild bug that finds loot eats it and is tamed.
+Then (D123, the user): lichen lights 24 px round it, faintly and for good; no white scan circle; in a bulb a
+drag picks a root (built: lit orange, affordable: green), letting go rides or builds it, 3 s puts you 5 px
+out. Screenshots `gallery/p11/b4.41_*`.
 
 ## Feedback
 
