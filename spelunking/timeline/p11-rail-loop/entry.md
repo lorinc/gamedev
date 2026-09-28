@@ -77,6 +77,7 @@ build b4.68: 2026-09-28 · p11: b4.68, tamed bugs stand still with fire within 6
 build b4.69: 2026-09-28 · p11: b4.69, tamed bugs lay moss only where there's gas, one gas a pixel (D152)
 build b4.70: 2026-09-28 · p11: b4.70, bugs are wall-bouncers, units to the ledger at once, one nibble tames (D153)
 build b4.71: 2026-09-28 · p11: b4.71, tamed bugs that meet gas fly as moths, jumpers paler (D154)
+build b4.72: 2026-09-28 · p11: b4.72, pink predators eat crowded bugs and leave ore (D155)
 ---
 
 # p11 · b4 · Rail Loop
