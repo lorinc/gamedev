@@ -71,7 +71,7 @@ const WALL_RGB = { [MOSS]: [22, 58, 30], [VINE]: [60, 140, 55], [FRUIT]: FRUIT_C
 /** @type {Record<number, number[]>} */
 const LICHEN_PX_RGB = { [LEAF_PX]: [176, 104, 220], [WITHERED_PX]: [112, 84, 56] } // b4.21: a sparked lichen's leaf, withered brown
 
-/** @param {HTMLCanvasElement} canvas @param {Game} game @param {Ui} ui @param {{ zoom: number }} view */
+/** @param {HTMLCanvasElement} canvas @param {Game} game @param {Ui} ui @param {{ zoom: number, lootPing?: number }} view */
 export function createRenderer(canvas, game, ui, view) {
   const ctx = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d', { alpha: false }))
   const { world, map } = game
@@ -397,7 +397,9 @@ export function createRenderer(canvas, game, ui, view) {
   }
 
   /** Ore and loot in the wall (b4.14): a speck, half a pixel across, at a hashed spot in its pixel. Under the fog. */
-  function drawSpecks() {
+  function drawSpecks(/** @type {number} */ now) {
+    const P = Math.max(0.5, view.lootPing ?? 30)
+    pingsNow.length = 0
     const s = Math.max(1, Math.round(T * 0.5))
     const cols = Math.ceil(W / T) + 2
     const rows = Math.ceil(H / T) + 2
@@ -415,7 +417,36 @@ export function createRenderer(canvas, game, ui, view) {
         const oy = T > s ? (hsh >>> 8) % (T - s + 1) : 0
         ctx.fillStyle = t === Tile.Ore ? ORE : LOOT
         ctx.fillRect(Math.round(sx(tx0 + k)) + ox, Math.round(sy(ty)) + oy, s, s)
+        if (t !== Tile.Loot) continue
+        // its ping: once every P s at a hashed phase; frames 0, 2 and 4 of it draw the halo (below)
+        const cycle = Math.floor(now / P + (hsh >>> 16) / 65536)
+        const p = pings.get(i)
+        if (!p) pings.set(i, { cycle, f: 99 }) // first seen on screen: no ping yet
+        else {
+          if (p.cycle !== cycle) ((p.cycle = cycle), (p.f = 0))
+          else p.f++
+          if (p.f <= 4 && p.f % 2 === 0) pingsNow.push([Math.round(sx(tx0 + k)) + ox + s / 2, Math.round(sy(ty)) + oy + s / 2])
+        }
       }
+  }
+
+  // Loot's triple ping (b4.48, the user: "loot ore should rarely 'triple-ping': 5ms halo, 10ms gaps"): a
+  // frame is 16.7 ms at 60 Hz, so the halo shows for one frame, then a frame's gap, three times (~83 ms);
+  // once every `view.lootPing` s (30) per seen loot pixel on screen, over the fog.
+  /** @type {Map<number, { cycle: number, f: number }>} */
+  const pings = new Map()
+  /** @type {[number, number][]} halos to draw this frame, device px */
+  const pingsNow = []
+  function drawPings() {
+    const hr = Math.max(T * 4, 14 * dpr)
+    for (const [x, y] of pingsNow) {
+      const halo = ctx.createRadialGradient(x, y, 0, x, y, hr)
+      halo.addColorStop(0, 'rgba(255,255,255,0.9)')
+      halo.addColorStop(0.3, 'rgba(255,255,255,0.35)')
+      halo.addColorStop(1, 'rgba(255,255,255,0)')
+      ctx.fillStyle = halo
+      ctx.fillRect(x - hr, y - hr, hr * 2, hr * 2)
+    }
   }
 
   /** Lichen (b4.15): its changed pixels (patch and leaf, b4.18) into the texture. */
@@ -564,12 +595,13 @@ export function createRenderer(canvas, game, ui, view) {
     for (let x = x0; x < W; x += w * T) {
       ctx.drawImage(tex, 0, 0, w, h, x, sy(0), w * T, h * T)
     }
-    drawSpecks()
+    drawSpecks(now)
     drawLichen()
     drawRails() // under the fog too (the user, b4.32: "network is still WAAAY too dominant")
     drawNodes(now, false)
     for (let x = x0; x < W; x += w * T) ctx.drawImage(fog, 0, 0, w, h, x, sy(0), w * T, h * T)
     drawGarden()
+    drawPings()
     drawFire(now, dt) // over the fog: a fire is seen from afar (b4.25)
     drawFlowers()
     drawAim(now) // over the fog: the bulb holding you and the edges it offers

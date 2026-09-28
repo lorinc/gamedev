@@ -14,7 +14,7 @@ const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.get
 // view.bright (b4.47, the user: "too dark to see, but only on the phone"): the canvas's CSS brightness; phone
 // screens crush the dark greys the desktop shows, so a touch screen starts brighter. Black stays black.
 const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
-const DEFAULTS = { world: { ...WKNOBS }, sim: JSON.parse(JSON.stringify(CONFIG)), view: { zoom: -1, bright: coarse ? 1.5 : 1 } }
+const DEFAULTS = { world: { ...WKNOBS }, sim: JSON.parse(JSON.stringify(CONFIG)), view: { zoom: -1, bright: coarse ? 1.5 : 1, lootPing: 30 } }
 /** @type {typeof DEFAULTS} */
 const tunables = JSON.parse(JSON.stringify(DEFAULTS))
 
@@ -123,6 +123,7 @@ const panel = createPanel(
     'sim.upgradeGain': [0, 1, 0.05],
     'view.zoom': [-1, ZOOM_PX.length - 1, 1],
     'view.bright': [0.5, 3, 0.1],
+    'view.lootPing': [1, 120, 1],
   },
   {
     onChange: () => {

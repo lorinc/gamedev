@@ -264,6 +264,7 @@ rows show only once earned, the first time with a shake and 8 streams of their c
 Then (D128, the user): scans no longer scare wild bugs.
 Then (D129, the user): pinch zoom; zoom levels in CSS px (a phone zooms as far in as a desktop); touch screens
 1.5× brighter (`view.bright`). Screenshots `gallery/p11/b4.47_*`.
+Then (D130, the user): seen loot triple-pings a white halo, a frame on and a frame off, once every 30 s.
 
 ## Feedback
 
