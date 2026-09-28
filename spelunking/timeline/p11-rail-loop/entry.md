@@ -232,6 +232,7 @@ Then (D114, the user): roots and still bulbs under the fog, bulbs a 5 px plus. S
 Then (D115, the user): flower bots grow the network outwards only, heading for its rim; vines touching ash
 make fruit 10× as fast.
 Then (D116, the user): a tamed bug starts its trip at the network node with the fewest bugs round it.
+Then (D117, the user): ash discs r 2–3, leaving room for the vines.
 
 ## Feedback
 

@@ -390,7 +390,7 @@ test('a large area of cover grows a purple lichen patch of 6–8 surface pixels 
   for (const i of p.leaf) assert.ok(isOpen(MAP.world.tiles[i]) && !p.cells.includes(i), 'the leaf: its own pixels, in the air')
 })
 
-test('a lichen by the cover sparks once: the fire eats all the connected cover, leaving r 3–5 ash discs 8–12 px apart (b4.21)', async () => {
+test('a lichen by the cover sparks once: the fire eats all the connected cover, leaving r 2–3 ash discs 8–12 px apart (b4.21, b4.35)', async () => {
   const { ASH, BURN, FRUIT, GREEN, VINE, cover, greenAround } = await import('./garden.js')
   const { WITHERED_PX } = await import('./lichen.js')
   const g = fresh()
@@ -450,11 +450,7 @@ test('a lichen by the cover sparks once: the fire eats all the connected cover, 
   for (const a of centres) for (const b of centres) if (a !== b) assert.ok(d(a, b) >= 8, 'discs 8+ apart')
   const ash = [...G.wall.keys()].filter((i) => G.wall[i] === ASH)
   assert.ok(ash.length > 3 * centres.length)
-  for (const i of ash)
-    assert.ok(
-      centres.some((c) => d(i, c) <= 5),
-      'ash only in a disc',
-    )
+  for (const i of ash) assert.ok(centres.some((c) => d(i, c) <= 3), 'ash only in a disc of r 2–3 (b4.35)')
   // ash is permanent; the lichen never sparks again
   greenAround(g, ash[0] % w, Math.floor(ash[0] / w))
   assert.equal(G.wall[ash[0]], ASH)

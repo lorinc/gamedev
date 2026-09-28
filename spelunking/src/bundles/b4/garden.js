@@ -9,7 +9,8 @@
 // b4.21's fire (the user): a lichen's ember (lichen.js) sets the cover (green, vine, fruit) burning; every
 // `burnTicks` each burning pixel sets the cover in its 8 neighbours burning and goes out, so the fire runs
 // through the whole connected cover like a cellular automaton and leaves bare back wall. Where a pixel catches
-// with no ash centre within 8–12 px (`ashGap`–`ashGapMax`), it becomes one: a disc of r 3–5 (`ash`–`ashMax`)
+// with no ash centre within 8–12 px (`ashGap`–`ashGapMax`), it becomes one: a disc of r 2–3 (`ash`–`ashMax`;
+// 3–5 until b4.35)
 // whose bare pixels turn to ash at once and whose cover flares up and turns to ash as it goes out. Ash is
 // permanent: bugs don't green it, vines don't grow into it (the user: a function for it comes later).
 // b4.25 (the user: "flames can be brighter"): a pixel burns for `burnFor` steps before it goes out, so the
@@ -33,8 +34,8 @@ export const GARDEN = {
   fruitTicks: 3600, // make a fruit every minute (the user)
   burnTicks: 6, // the fire spreads 1 px every 0.1 s
   burnFor: 4, // steps a pixel burns (b4.25): 0.4 s
-  ash: 3, // an ash disc's radius, px: ash–ashMax (the user: 3–5)
-  ashMax: 5,
+  ash: 2, // an ash disc's radius, px: ash–ashMax (the user: 3–5; b4.35, the user: smaller, room for the vines)
+  ashMax: 3,
   ashGap: 8, // px between ash centres: ashGap–ashGapMax (the user: 8–12)
   ashGapMax: 12,
   hyper: 10, // a vine pixel touching ash makes fruit this many times as fast (the user, b4.33)
