@@ -239,6 +239,7 @@ Then (D117, the user): ash discs r 2–3, leaving room for the vines.
 Then (D118, the user): a tamed bug starts where there's no vine first, then where the fewest bugs are.
 Then (D119, the user): the fire starts at 3 points and spreads by chance, ragged; ash sends out grey worms
 with side lights that snake 12 s towards the unexplored and lift the fog. Screenshots `gallery/p11/b4.37_*`.
+Then (D120, the user): riding at half the speed, 40 px/s; a tap gets you off at the next open pixel.
 
 ## Feedback
 

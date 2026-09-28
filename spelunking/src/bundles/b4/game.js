@@ -26,8 +26,9 @@
 // it, the bot on the node (b4.23, the user: "I still need to travel"; b4.22 needed the node's own pixel);
 // there are no carts (b4.22, the user), the bot glides along the root itself. A pointed direction picks, at each node, the built edge
 // that fits it best (within 67.5°); the bot runs node to node until no edge fits (it stops at the last
-// node), a tap (it stops at the next node), or a new direction (it turns at the next node). Pointed while
-// stopped where no edge fits, you get out and walk that way.
+// node), or a new direction (it turns at the next node). A tap gets you off at the next open pixel along
+// the root, mid-root (b4.38, the user: "can not get out where I want"; it stopped at the next node before).
+// Pointed while stopped where no edge fits, you get out and walk that way. `rideSpeed` 40 px/s (b4.38; was 80).
 // Garden (b4.10, garden.js): tamed bugs green the back wall, vines grow on green, vines make red fruit, a
 // resource: your pull takes fruit within the light too, seen or not. Your pull goes for the kind the ledger holds least
 // of (b4.12), the nearest of it.
@@ -98,7 +99,7 @@ export const CONFIG = {
   price: 10, // ore per edge (user: 8–12, tuned later)
   botUpgradeCost: 16, // loot for the bot's first upgrade, doubling (the user, b4.15)
   upgradeGain: 0.2, // an upgrade: mining radius and speed +20% (the user, b4.15)
-  rideSpeed: 80, // px/s in a car (several px a tick: an integer budget, 60 a straight px, 85 a diagonal)
+  rideSpeed: 40, // px/s riding (the user, b4.38: "too fast"; was 80); an integer budget, 60 a straight px, 85 a diagonal
 }
 /** @typedef {typeof CONFIG} Config */
 
@@ -128,7 +129,7 @@ export const CONFIG = {
  * @property {{ edge: number, i: number, dir: 1 | -1, acc: number } | null} run on edge, going from path[i] to path[i + dir], with
  *   acc of the step's cost (STEP or DIAG) covered
  * @property {{ dx: number, dy: number } | null} want the direction pointed
- * @property {boolean} stopNext a tap: stop at the next node
+ * @property {boolean} stopNext a tap: get off at the next open pixel (b4.38)
  */
 
 /**
@@ -593,6 +594,12 @@ function rideTick(g, r) {
     run.i += run.dir
     g.ch.x = p[run.i].x
     g.ch.y = p[run.i].y
+    if (r.stopNext && open(g, g.ch.x, g.ch.y)) {
+      // off here, mid-root (b4.38)
+      g.ride = null
+      g.events.push({ type: 'exit', node: r.node })
+      return
+    }
     if (run.i !== (run.dir === 1 ? p.length - 1 : 0)) continue
     const e = g.map.edges[run.edge]
     r.node = run.dir === 1 ? e.b : e.a

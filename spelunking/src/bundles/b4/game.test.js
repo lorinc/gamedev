@@ -730,3 +730,39 @@ test('ash sends out grey worms that snake towards the unexplored, lift the fog f
   const seen1 = g.seen.reduce((a, b) => a + b, 0)
   assert.ok(seen1 - seen0 > 500 * Math.min(spawned, 1), `the fog lifted: ${seen1 - seen0} px more seen`)
 })
+
+test('a tap while riding gets you off at the next open pixel, mid-root (b4.38)', () => {
+  const g = fresh()
+  const from = MAP.podNodes.find((n) => MAP.edges.some((e) => e.a === n || e.b === n))
+  assert.ok(from !== undefined)
+  const edge = MAP.edges.findIndex((e) => e.a === from || e.b === from)
+  const e = MAP.edges[edge]
+  const node = MAP.nodes[from]
+  g.ch.x = node.x + 1
+  g.ch.y = node.y
+  g.ledger.ore = 10
+  tick(g)
+  assert.equal(g.engulf, from)
+  command(g, { type: 'build', edge, from })
+  tick(g)
+  assert.equal(g.built[edge], 1)
+  // along the root, from where the bot stands (on the node)
+  const p = e.a === from ? e.path : [...e.path].reverse()
+  const q = p[Math.min(HEADING, p.length - 1)]
+  let dx = q.x - p[0].x
+  if (Math.abs(dx) > MAP.world.w / 2) dx -= Math.sign(dx) * MAP.world.w
+  const d = /** @type {{ dx: number, dy: number }} */ (heading(dx, q.y - p[0].y))
+  command(g, { type: 'move', dx: d.dx, dy: d.dy })
+  tick(g)
+  assert.ok(g.ride, 'riding')
+  const far = MAP.nodes[e.a === from ? e.b : e.a]
+  for (let i = 0; i < 6; i++) tick(g) // a few px along
+  assert.ok(g.ride?.run, 'on its way')
+  command(g, { type: 'tap' })
+  for (let i = 0; i < 600 && g.ride; i++) tick(g)
+  assert.equal(g.ride, null, 'off')
+  assert.ok(open(g.ch), 'in open air')
+  const k = p.findIndex((c) => c.x === g.ch.x && c.y === g.ch.y)
+  assert.ok(k > 0, 'on the root')
+  if (p.slice(1, -1).some((c) => open(c))) assert.notDeepEqual([g.ch.x, g.ch.y], [far.x, far.y], 'before the far end')
+})
