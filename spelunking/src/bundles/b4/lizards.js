@@ -18,6 +18,10 @@
 // burned back wall, garden.js): `density` ash pixels within `radius` spawn one, it goes for and licks ash
 // within `reach` 6, a licked ash pixel is bare back wall again (bugs can green it); full, it burrows into a
 // 5 px site (`lootPx`) that turns to loot.
+// b4.55 (the user: "lizards can leave the walls for a short dash to reach ash in the cavern centre, but goes
+// back to the safety of the wall at the next movement"): no wall pixel in its route range reaching ash, it
+// dashes straight through the air towards the nearest ash within `dash` px, stops within reach and licks;
+// its next move is straight back to the nearest wall pixel. Off the wall = its head not on a surface pixel.
 
 import { isOpen, Tile } from '../../sim/gen/world.js'
 import { wrap } from '../../sim/dig/rules.js'
@@ -38,6 +42,7 @@ export const LIZARDS = {
   mineTicks: 30,
   eat: 16, // ash px, then it burrows (the user; ore until b4.54)
   lootPx: 5, // loot px it burrows into (the user, b4.54; was 1)
+  dash: 16, // px off the wall it dashes for ash (b4.55)
   site: 24,
   room: 400, // open px the cave must hold for a spawn (b4.22)
 }
@@ -177,12 +182,23 @@ export function updateLizards(g) {
       return true
     }
     if (!z.zip) {
-      if (ashNear(g, head, c.reach)) {
-        z.restUntil = g.tick + 40 + (rng() % 80) // ore in reach: it stays and mines
+      if (!surface(g, head.x, head.y)) {
+        // off the wall after a dash: straight back (b4.55)
+        const back = surfaceNear(g, head, c.dash * 2)
+        z.route = back ? line(g, head, back, 0) : []
+        z.zip = Math.max(1, z.route.length)
+      } else if (ashNear(g, head, c.reach)) {
+        z.restUntil = g.tick + 40 + (rng() % 80) // ash in reach: it stays and licks
         return true
+      } else {
+        z.route = routeFor(g, c, head)
+        if (!z.route.length) {
+          // nothing from the wall: a dash for ash in the open (b4.55)
+          const a = ashNear(g, head, c.dash)
+          if (a) z.route = line(g, head, a, c.reach)
+        }
+        z.zip = z.route.length ? Math.min(z.route.length, c.dash + 12) : 4 + (rng() % 9)
       }
-      z.route = routeFor(g, c, head)
-      z.zip = z.route.length ? Math.min(z.route.length, 12) : 4 + (rng() % 9)
     }
     if (g.tick - z.movedAt < Math.max(1, c.zipTicks)) return true
     z.movedAt = g.tick
@@ -250,7 +266,7 @@ function step(g, c, z, rng) {
   const head = z.body[0]
   const { w } = g.world
   const r = z.route.shift()
-  if (r && surface(g, r.x, r.y)) {
+  if (r && isOpen(g.world.tiles[r.y * w + r.x])) {
     const k = STEPS.findIndex(([sx, sy]) => wrap(head.x + sx, w) === r.x && head.y + sy === r.y)
     if (k >= 0) z.dir = k
     move(z, r)
@@ -264,6 +280,42 @@ function step(g, c, z, rng) {
   z.dir = k
   move(z, { x: wrap(head.x + STEPS[k][0], w), y: head.y + STEPS[k][1] })
   void c
+}
+
+/** The open pixels on the straight line from `a` towards `b`, a's excluded, ending once within `within` px of b
+ * (0: at b) or before the first solid one (b4.55). @param {import('./game.js').Game} g @param {{ x: number, y: number }} a @param {{ x: number, y: number }} b @param {number} within */
+function line(g, a, b, within) {
+  const { w, tiles } = g.world
+  let dx = b.x - a.x
+  if (Math.abs(dx) > w / 2) dx -= Math.sign(dx) * w
+  const dy = b.y - a.y
+  const n = Math.max(Math.abs(dx), Math.abs(dy))
+  /** @type {{ x: number, y: number }[]} */
+  const out = []
+  for (let k = 1; k <= n; k++) {
+    const x = wrap(a.x + Math.round((dx * k) / n), w)
+    const y = a.y + Math.round((dy * k) / n)
+    if (!isOpen(tiles[y * w + x])) break
+    out.push({ x, y })
+    const rx = Math.round(dx * (1 - k / n))
+    const ry = Math.round(dy * (1 - k / n))
+    if (within && rx * rx + ry * ry <= within * within) break
+  }
+  return out
+}
+
+/** The nearest surface pixel within r of `at`, or null. @param {import('./game.js').Game} g @param {{ x: number, y: number }} at @param {number} r */
+function surfaceNear(g, at, r) {
+  let best = null
+  let bd = Infinity
+  for (let dy = -r; dy <= r; dy++)
+    for (let dx = -r; dx <= r; dx++) {
+      const d = dx * dx + dy * dy
+      if (d > r * r || d >= bd || !surface(g, at.x + dx, at.y + dy)) continue
+      best = { x: wrap(at.x + dx, g.world.w), y: at.y + dy }
+      bd = d
+    }
+  return best
 }
 
 /** @param {Lizard} z @param {{ x: number, y: number }} p */

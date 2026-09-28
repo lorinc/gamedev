@@ -278,6 +278,7 @@ Then (D133, the user): tamed bugs head for back wall that isn't green yet, looki
 Then (D134, the user): a bulb ignores picks for its first 50 ms and lets you go after 1.5 s.
 Then (D135, the user): bulbs within the light's radius are drawn bright and bigger.
 Then (D136, the user): lizards spawn on ash, lick ash within 6 px bare, and burrow into 5 loot.
+Then (D137, the user): lizards dash off the wall for ash in the middle of a cave, then run straight back.
 
 ## Feedback
 

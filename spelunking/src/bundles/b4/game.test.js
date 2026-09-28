@@ -408,6 +408,63 @@ test('ash spawns a lizard; it licks the ash within 6 px bare, burrows, and makes
   assert.equal(tiles.filter((t) => t === Tile.Loot).length, before + 5)
 })
 
+test('a lizard dashes off the wall for ash in the middle of a cave, licks it, and runs straight back (b4.55)', async () => {
+  const { ASH } = await import('./garden.js')
+  const { OPEN } = await import('./world.js')
+  const g = fresh()
+  g.cfg.worms.max = 0
+  g.cfg.lichen.near = 0
+  g.cfg.lizards.max = 0 // only ours
+  const { w, h } = MAP.world
+  const tiles = MAP.world.tiles
+  const solidWithin = (/** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ r) => {
+    for (let dy = -r; dy <= r; dy++)
+      for (let dx = -r; dx <= r; dx++) if (dx * dx + dy * dy <= r * r && !isOpen(tiles[(y + dy) * w + ((x + dx + w) % w)])) return true
+    return false
+  }
+  // an open pixel 9–14 px from the nearest rock, near the start
+  let mid = null
+  for (let r = 0; r < 200 && !mid; r++)
+    for (let dy = -r; dy <= r && !mid; dy++)
+      for (let dx = -r; dx <= r && !mid; dx++) {
+        const x = (g.ch.x + dx + w) % w
+        const y = g.ch.y + dy
+        if (y > 20 && y < h - 20 && MAP.kind[y * w + x] === OPEN && !solidWithin(x, y, 9) && solidWithin(x, y, 14)) mid = { x, y }
+      }
+  assert.ok(mid, 'a cave with a middle')
+  const m = /** @type {{ x: number, y: number }} */ (mid)
+  const i0 = m.y * w + m.x
+  g.garden.wall[i0] = ASH
+  // a lizard on the nearest wall pixel
+  let at = null
+  for (let r = 1; r <= 14 && !at; r++)
+    for (let dy = -r; dy <= r && !at; dy++)
+      for (let dx = -r; dx <= r && !at; dx++) {
+        const x = (m.x + dx + w) % w
+        const y = m.y + dy
+        if (isOpen(tiles[y * w + x]) && solidWithin(x, y, 1)) at = { x, y }
+      }
+  assert.ok(at)
+  const a = /** @type {{ x: number, y: number }} */ (at)
+  g.lizards.push({ body: [a, { ...a }, { ...a }], dir: 0, zip: 0, movedAt: 0, restUntil: 0, mineAt: 0, eaten: 0, site: null, lookedAt: -1e9, route: [] })
+  let off = 0
+  let lickedAt = -1
+  let back = -1
+  for (let t = 0; t < 1200 && back < 0; t++) {
+    tick(g)
+    const z = g.lizards[0]
+    const hd = z.body[0]
+    if (!solidWithin(hd.x, hd.y, 1)) off++
+    if (g.events.some((e) => e.type === 'licked')) lickedAt = g.tick
+    if (lickedAt > 0 && solidWithin(hd.x, hd.y, 1)) back = g.tick
+    g.events.length = 0
+  }
+  assert.ok(off > 0, 'it left the wall')
+  assert.ok(lickedAt > 0, 'it licked the ash')
+  assert.equal(g.garden.wall[i0], 0)
+  assert.ok(back > 0 && back - lickedAt < 600, `back on the wall ${back - lickedAt} ticks after`)
+})
+
 test('loot buys the bot upgrades by itself: 16, 32, 64…, each mining radius and speed +20% (b4.15)', async () => {
   const { botCost, gain } = await import('./game.js')
   const g = fresh()
