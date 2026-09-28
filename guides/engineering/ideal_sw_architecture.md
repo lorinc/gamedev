@@ -148,6 +148,47 @@ Speed doesn't stop runaways; rules about flows do.
 - **Headless measurement scripts,** like the ones used during p11: N minutes of sim at fixed seeds, reporting
   counts per minute. They caught the predator bug drain and the gas pulse.
 
+## 8. A scenario engine: goals in, knobs out
+
+> "What I would love is an engine, where I could run fast simulation or even optimizations. E.g. 'I want this
+> terrain, these actors, this climate, and in 5 minutes, I want actor A overwhelm Actor B, and event C
+> triggered'." (the user)
+
+This is **goal-directed tuning**: describe a scenario and the outcome, and a search finds the knob settings that
+produce it. A small version exists: `tools/knobsearch.js` searched the cave generator's knobs (random search, then
+refinement, on 8 cores) until seed 18142's look came out steadily.
+
+What it needs:
+
+1. **A scenario file** (JSON):
+   - the terrain: seed and map knobs;
+   - the actors placed at the start: bugs, beasts, predators, pools, built nodes;
+   - the climate: gas, liquid, moss;
+   - which knobs the search may change, and their ranges.
+2. **Goals as tests on the sim over time,** each returning a *distance*, not just pass/fail (a search needs a slope):
+   - "by 5:00, tamed bugs > 3 × wild bugs";
+   - "a fire starts between 2:00 and 4:00";
+   - "gas never passes 500".
+3. **A fast headless runner.** The sim is already deterministic and runs without drawing. At ~0.1 ms a tick
+   (b4.77), 5 game minutes ≈ 2 s on one core, so 8 cores try ~4 settings a second, ~15,000 an hour
+   *(estimate)*. Sections 1–3 would multiply that.
+4. **A search:** random search then refinement, like knobsearch. Something smarter only if that proves too slow.
+5. **Guards against cheating answers.** An optimiser will make "A overwhelms B" true by setting predator speed to
+   1000:
+   - knobs within sane ranges;
+   - a small penalty for straying far from the defaults;
+   - above all, every setting scored across several seeds, so it can't fit one map by luck.
+6. **Readable output:** the winning knobs as a shareable URL (how the user already tunes), a per-minute count
+   table per seed, and optionally which knobs mattered most for the goal.
+
+**The same engine is a test harness.** A design rule becomes a scenario that runs on every build: "30 minutes
+idle, bugs stay under 200" would have caught the b4.77 runaway before it was played. Worth adding to the checks
+(see [02](02-pre-commit-and-release-checks.md)) once it exists.
+
+**First version when it's wanted:** a throwaway `tools/scenario.js` for b4: a scenario plus goals, a search over a
+few chosen knobs on 8 cores, printing the best URL and the count curve. First test case: the runaway ("no more
+than 200 bugs in 30 minutes").
+
 ## Keep what already works
 
 - **Deterministic ticks:** integer maths and a seeded RNG from the tick. Needed for P2P and for replays.
@@ -161,7 +202,8 @@ Speed doesn't stop runaways; rules about flows do.
 The current b4 is a throwaway prototype and the open question is the design, so no restructuring now.
 
 1. **Now, cheap:** a carrying cap on hatching (a node hatches only while fewer than ~8 bugs are near it), and
-   per-system timing on the dev panel.
+   per-system timing on the dev panel. Optionally the first `tools/scenario.js` (section 8), with the runaway as
+   its first test.
 2. **When the loop feels right: an architecture spike, research first.** A write-up here (how existing games do
    fields, simulation level of detail and worker snapshots in the browser, with sources), then a lean build: the
    fields module, struct-of-arrays bugs, then simulation level of detail. Measure it against the last b4 build
