@@ -60,6 +60,7 @@ build b4.51: 2026-09-28 · p11: b4.51, tamed bugs head for back wall not green y
 build b4.52: 2026-09-28 · p11: b4.52, bulbs: 50 ms hold-off, 1.5 s eject (D134)
 build b4.53: 2026-09-28 · p11: b4.53, bulbs light up within the light's radius (D135)
 build b4.54: 2026-09-28 · p11: b4.54, lizards eat ash and burrow into 5 loot (D136)
+build b4.55: 2026-09-28 · p11: b4.55, lizards dash off the wall for ash and back (D137)
 ---
 
 # p11 · b4 · Rail Loop
