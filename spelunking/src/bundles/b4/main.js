@@ -112,6 +112,7 @@ const panel = createPanel(
     'sim.bugs.seek': [4, 160, 1],
     'sim.bugs.moveTicks': [1, 30, 1],
     'sim.bugs.tame': [1, 64, 1],
+    'sim.nodesPerBug': [1, 32, 1],
     'sim.bugs.block': [8, 128, 4],
     'sim.bugs.chasers': [0, 12, 1],
     'sim.swarm.tripTicks': [600, 36000, 600],

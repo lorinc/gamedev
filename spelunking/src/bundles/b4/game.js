@@ -49,8 +49,9 @@
 // Lichen (b4.15, lichen.js): plentiful loot grows purple lichen patches of 6–8 px with a curly leaf (looks only).
 // Worms (b4.12, worms.js): dense fruit spawns worms; they eat 8 fruit, burrow and curl up into an ore deposit.
 // Bugs (b4.3): b3.7's wild ones (`src/sim/dig/bugs.js`, D056–D061) with the `ledger` switch: they nibble ore
-// from the ledger; at 16 fed (D060) the last biter is +1 bug on the ledger. Tamed bugs are abstract workers
-// (swarm.js).
+// from the ledger; at 16 fed (D060) the last biter is +1 bug on the ledger. b4.63 (the user): the network gives
+// one too, per `nodesPerBug` (4) built nodes (`nodeTames`), so running from the bugs can't stall the taming;
+// loot no longer tames (b4.40's, gone). Tamed bugs are abstract workers (swarm.js).
 
 import { Tile, isOpen } from '../../sim/gen/world.js'
 import { reveal } from '../../sim/dig/game.js'
@@ -66,7 +67,7 @@ import { LIZARDS, updateLizards } from './lizards.js'
 import { createLichen, LICHEN, updateLichen } from './lichen.js'
 import { FLOWERS, updateFlowers } from './flowers.js'
 import { ASHWORMS, updateAshworms } from './ashworms.js'
-import { BEASTS, updateBeasts } from './beasts.js'
+import { BEASTS, builtNodes, updateBeasts } from './beasts.js'
 import { OPEN, ROCK } from './world.js'
 
 /** @typedef {import('./world.js').Map} Map */
@@ -82,7 +83,7 @@ export const CONFIG = {
   pull: { ticks: 60 }, // b3's pull was 300 (5 s a unit); 1 s here, or an edge is a minute of standing still
   light: { base: 8 },
   nodeReach: 2, // px: a shown node engulfs the bot this close (the user, b4.22; was 12, a build's reach)
-  lootTame: 2, // px: a wild bug this close to a loot pixel eats it and is tamed (the user, b4.40)
+  nodesPerBug: 4, // built nodes per tamed bug (the user, b4.63); they come only from the network
   ejectTicks: 90, // a bulb lets the bot go after 1.5 s with nothing picked (the user, b4.52; 3 s since b4.26)
   holdOffTicks: 3, // the first 50 ms in a bulb, a drag or release picks nothing (the user, b4.52; main.js)
   ejectR: 5, // px from the bulb's centre it puts the bot (the user, b4.41)
@@ -160,6 +161,7 @@ export const CONFIG = {
  * @property {import('./worms.js').Worm[]} worms b4.12
  * @property {number} level bug upgrades bought (b4.13)
  * @property {number} lizardLevel lizard upgrades bought with loot (b4.56; the bot's since b4.15)
+ * @property {number} nodeBugs tamed bugs the network has given so far (b4.63): the most built nodes reached / nodesPerBug
  * @property {import('./lizards.js').Lizard[]} lizards b4.14
  * @property {import('./lichen.js').LichenState} lichen b4.15
  * @property {import('./flowers.js').Flower[]} flowers b4.25: on the ash
@@ -215,6 +217,7 @@ export function createGame(map, cfg) {
     worms: [],
     level: 0,
     lizardLevel: 0,
+    nodeBugs: 0,
     lizards: [],
     lichen: createLichen(world.w * world.h),
     flowers: [],
@@ -289,7 +292,7 @@ export function tick(g) {
   if (g.probe) spread(g, g.probe)
   pull(g)
   updateBugs(/** @type {any} */ (g))
-  lootTames(g)
+  nodeTames(g)
   updateSwarm(g)
   updateGarden(g)
   updateWorms(g)
@@ -485,28 +488,18 @@ export const near = (g, i) => dist2(g, g.map.nodes[i], g.ch) <= g.cfg.nodeReach 
 export const shown = (g, i) =>
   (g.firstBuilt ? !!g.railed[i] : !!g.net[i]) && g.ledger.ore >= g.cfg.price && g.links[i].some((k) => !g.built[k])
 
-/** A wild bug that finds loot is tamed (b4.40, the user: "when wild bugs find a loot, they become tame"): within
- * `lootTame` px of a loot pixel in the rock, it eats it (the pixel turns to rock, Claude's call: else one loot
- * would tame every bug that passes) and leaves the world as +1 on the ledger, as the ore-fed taming does
- * (D060, b4.3). @param {Game} g */
-function lootTames(g) {
-  const { w, h, tiles } = g.world
-  const r = Math.max(0, g.cfg.lootTame)
-  g.bugs = g.bugs.filter((bug) => {
-    if (bug.kind !== 'wild') return true
-    for (let dy = -r; dy <= r; dy++)
-      for (let dx = -r; dx <= r; dx++) {
-        const y = bug.y + dy
-        const x = wrap(bug.x + dx, w)
-        if (y < 0 || y >= h || dx * dx + dy * dy > r * r || tiles[y * w + x] !== Tile.Loot) continue
-        toRock(/** @type {any} */ (g), x, y) // the view reads loot specks from the tiles each frame
-        g.refill[bug.block] = g.tick + (g.cfg.bugs?.refillTicks ?? 300)
-        g.ledger.bugs++
-        g.events.push({ type: 'tamed', id: bug.id, x: bug.x, y: bug.y, slot: -1 })
-        return false
-      }
-    return true
-  })
+/** Tamed bugs from the network (b4.63, the user: "detach the tamed bug count from direct user actions, every 4
+ * [built nodes] automatically creates a new tamed bug, that acts exactly the current ones"; then: "let wild
+ * bugs get tamed by nibbling, I just wanted to make sure the player can not stop the progress by running away
+ * from bugs"): each `nodesPerBug` built nodes reached is +1 bug on the ledger (it starts near you, b4.49), on
+ * top of the nibbling. Claude's call: a node a beast eats takes no bug back; the count follows the most
+ * reached. @param {Game} g */
+function nodeTames(g) {
+  const due = Math.floor(builtNodes(g) / Math.max(1, g.cfg.nodesPerBug))
+  for (; g.nodeBugs < due; g.nodeBugs++) {
+    g.ledger.bugs++
+    g.events.push({ type: 'tamed', id: -1, x: g.ch.x, y: g.ch.y, slot: -1 })
+  }
 }
 
 /** Node i's bulb has something to offer (b4.41): a built root, or it shows (an unbuilt one, the price on the ledger). @param {Game} g @param {number} i */

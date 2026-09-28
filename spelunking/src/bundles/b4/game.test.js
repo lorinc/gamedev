@@ -622,7 +622,7 @@ test('a lichen by the cover sparks once: the fire eats all the connected cover, 
   }
 })
 
-test('no lizard spawns in a small enclosure: its cave holds at least `room` open px (b4.22)', () => {
+test('no lizard spawns in a small enclosure: its cave holds at least `room` open px (b4.22)', async () => {
   const { w, h, tiles } = MAP.world
   /** The open px 8-connected to (x, y). @param {number} x @param {number} y */
   const cave = (x, y) => {
@@ -639,12 +639,22 @@ test('no lizard spawns in a small enclosure: its cave holds at least `room` open
     return got.size
   }
   for (const room of [400, 1e6]) {
-    const g = fresh()
+    const g = createGame(pristine(), JSON.parse(JSON.stringify(CONFIG))) // not the map earlier tests changed
+    g.cfg.pull.ticks = 1e9
     g.cfg.worms.max = 0
     g.cfg.lizards.density = 3
     g.cfg.lizards.near = 64
     g.cfg.lizards.eat = 1e9 // they only mine: the rock stays as it is
     g.cfg.lizards.room = room
+    // ash round the bot (lizards spawn by ash since b4.54): it passed by chance before, on ash from fires that
+    // bugs tamed by the loot earlier tests left in MAP had started
+    const { ASH } = await import('./garden.js')
+    const { w: W } = g.world
+    for (let dy = -40; dy <= 40; dy++)
+      for (let dx = -40; dx <= 40; dx++) {
+        const i = (g.ch.y + dy) * W + ((g.ch.x + dx + W) % W)
+        if (g.ch.y + dy >= 0 && g.ch.y + dy < h && isOpen(tiles[i]) && (dx + dy) % 3 === 0) g.garden.wall[i] = ASH
+      }
     const sizes = []
     for (let t = 0; t < 60 * 60 * 5; t++) {
       tick(g)
@@ -999,28 +1009,48 @@ test('a tap while riding gets you off at the next open pixel, mid-root (b4.38)',
   if (p.slice(1, -1).some((c) => open(c))) assert.notDeepEqual([g.ch.x, g.ch.y], [far.x, far.y], 'before the far end')
 })
 
-test('a wild bug that finds loot eats it and is tamed: +1 bug on the ledger (b4.40)', () => {
+test('every 4 built nodes add a tamed bug; nodes eaten take none back; loot tames no wild bug (b4.63)', async () => {
+  const { extend } = await import('./game.js')
+  const { builtNodes } = await import('./beasts.js')
   const g = fresh()
+  g.ledger.ore = 10000
+  /** One more edge out from the network. */
+  const grow = () => {
+    const k = MAP.edges.findIndex((e, j) => !g.built[j] && g.net[e.a] !== g.net[e.b])
+    const e = MAP.edges[k]
+    extend(g, k, g.net[e.a] ? e.a : e.b)
+  }
+  while (builtNodes(g) < 11) grow()
+  tick(g)
+  assert.equal(g.ledger.bugs, 2, '11 nodes: 2 bugs')
+  const tamed = g.events.filter((e) => e.type === 'tamed').length
+  assert.equal(tamed, 2)
+  while (builtNodes(g) < 12) grow()
+  tick(g)
+  assert.equal(g.ledger.bugs, 3, '12 nodes: 3 bugs')
+  // unbuild a root at the rim (as a beast would): no bug back, none new until past 12 again
+  const k = g.built.findIndex((v) => v === 1)
+  g.built[k] = 0
+  const e = MAP.edges[k]
+  for (const n of [e.a, e.b]) g.railed[n] = g.links[n].some((j) => g.built[j]) ? 1 : 0
+  tick(g)
+  assert.ok(builtNodes(g) < 12)
+  assert.equal(g.ledger.bugs, 3)
+  // a wild bug by a loot pixel stays wild
   const { w } = MAP.world
-  // a wild bug in the open, loot in the rock beside it
   let at = -1
   for (let i = w * 200; i < MAP.world.tiles.length && at < 0; i++)
     if (isOpen(MAP.world.tiles[i]) && MAP.world.tiles[i + 1] === Tile.Soft) at = i
-  assert.ok(at >= 0)
-  const x = at % w
-  const y = Math.floor(at / w)
-  g.bugs.length = 0
-  addBug(/** @type {any} */ (g), x, y)
-  const bug = g.bugs[0]
-  bug.block = blockOf(/** @type {any} */ (g), x, y) // its own fog block, so b3's code keeps it
   const before = MAP.world.tiles[at + 1]
   MAP.world.tiles[at + 1] = Tile.Loot
-  const bugs0 = g.ledger.bugs
+  g.bugs.length = 0
+  addBug(/** @type {any} */ (g), at % w, Math.floor(at / w))
+  const bug = g.bugs[0]
+  bug.block = blockOf(/** @type {any} */ (g), at % w, Math.floor(at / w))
   g.cfg.bugs.moveTicks = 1e9
   tick(g)
-  assert.equal(g.ledger.bugs, bugs0 + 1, 'tamed')
-  assert.ok(!g.bugs.includes(bug), 'gone from the world')
-  assert.notEqual(MAP.world.tiles[at + 1], Tile.Loot, 'the loot eaten')
+  assert.ok(g.bugs.includes(bug), 'still wild')
+  assert.equal(MAP.world.tiles[at + 1], Tile.Loot, 'the loot stays')
   MAP.world.tiles[at + 1] = before
 })
 
