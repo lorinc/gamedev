@@ -225,6 +225,7 @@ Then (D112, the user): 1 flower per 8 ash discs, drawn dimmer.
 Fix (the user's crash in b4.28, there since b4.14): a lizard's ore flight named the lizard by its index, which
 went stale when one burrowed; the `licked` event now carries where its head was.
 Then (D113, the user): lichen sparks 4× rarer, 1 in 24 checks.
+Then (D114, the user): roots and still bulbs under the fog, bulbs a 5 px plus. Screenshots `gallery/p11/b4.32_*`.
 
 ## Feedback
 

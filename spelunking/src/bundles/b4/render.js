@@ -473,12 +473,14 @@ export function createRenderer(canvas, game, ui, view) {
     drawSpecks()
     drawLichen()
     drawLizards() // under the fog: they don't glow (the user, b4.28)
+    drawRails() // under the fog too (the user, b4.32: "network is still WAAAY too dominant")
+    drawNodes(now, false)
     for (let x = x0; x < W; x += w * T) ctx.drawImage(fog, 0, 0, w, h, x, sy(0), w * T, h * T)
     drawGarden()
     drawFire(now, dt) // over the fog: a fire is seen from afar (b4.25)
     drawFlowers()
-    drawRails(now) // over the fog: you built them, and a glowing edge shows where it would go
-    drawNodes(now)
+    drawAim(now) // over the fog: the bulb holding you and the edges it offers
+    drawNodes(now, true)
     drawFbots()
     drawBot(bot, now)
     drawRings(now)
@@ -568,8 +570,8 @@ export function createRenderer(canvas, game, ui, view) {
     ctx.fillRect(Math.round(sx(x)), Math.round(sy(y)), Math.ceil(T), Math.ceil(T))
   }
 
-  /** Roots (b4.22, the user): pixels, like everything else; two shades of orange, hashed per pixel. @param {number} now */
-  function drawRails(now) {
+  /** Roots (b4.22, the user): pixels, like everything else; two shades of orange, hashed per pixel; under the fog (b4.32). */
+  function drawRails() {
     map.edges.forEach((e, k) => {
       if (!game.built[k]) return
       for (const c of e.path) {
@@ -577,6 +579,10 @@ export function createRenderer(canvas, game, ui, view) {
         px(c.x, c.y)
       }
     })
+  }
+
+  /** @param {number} now */
+  function drawAim(now) {
     // held in a node: its unbuilt edges, faint; the one aimed at flashes green; refused, it pulses red (b4.3)
     const n = game.engulf
     if (n === null) return
@@ -593,20 +599,21 @@ export function createRenderer(canvas, game, ui, view) {
     for (const c of map.edges[aim].path) px(c.x, c.y)
   }
 
-  /** Nodes (b4.22, the user): an orange bulb of pixels, still and dim; the one holding the bot beats, bigger
-   * and bright (b4.27, the user). @param {number} now */
-  function drawNodes(now) {
+  /** Nodes (b4.22, the user): an orange bulb of pixels, still and dim, a 5 px plus under the fog (b4.32); the one
+   * holding the bot beats, r 2–3, bright, over the fog (b4.27, the user). @param {number} now @param {boolean} held only the one holding the bot, else only the rest */
+  function drawNodes(now, held) {
     map.nodes.forEach((n, i) => {
       const live = shown(game, i)
       if (!live && !game.railed[i]) return
-      const held = game.engulf === i
-      const r = held ? 3 + (Math.sin(now * 4) > 0.2 ? 1 : 0) : 2
+      if ((game.engulf === i) !== held) return
+      const r = held ? 2 + (Math.sin(now * 4) > 0.2 ? 1 : 0) : 1
       const [core, body, rim] = held ? BULB_HELD : BULB_DIM
       for (let dy = -r; dy <= r; dy++)
         for (let dx = -r; dx <= r; dx++) {
           const d = dx * dx + dy * dy
-          if (d > r * r + r) continue
-          ctx.fillStyle = d <= 1 && (live || held) ? core : d <= r * r - r ? body : rim
+          if (d > r * r + (held ? r : 0)) continue
+          if (held) ctx.fillStyle = d <= 1 ? core : d <= r * r - r ? body : rim
+          else ctx.fillStyle = d === 0 && live ? core : body // a buildable one keeps a lit heart
           px(n.x + dx, n.y + dy)
         }
     })
