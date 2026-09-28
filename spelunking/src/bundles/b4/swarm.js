@@ -41,7 +41,7 @@ export const SWARM = {
   tripTicks: 1800, // 30 s (the user, b4.7; was 2 min)
   moveTicks: 12, // b3.7's bugs: 5 px/s
   reach: 4, // px a bug mines and picks within (the user, b4.11; was 2)
-  pullTicks: 60, // a unit a second at most, like your pull
+  pullTicks: 120, // a unit every 2 s at most (the user, b4.58: "bugs outcompete every other animal", 2× slower; was 60)
   spawn: 12, // px round a network node (nodeReach)
   crowd: 32, // px round a node its bugs are counted within (b4.34)
   fruitCarry: 8, // fruit a bug holds at most (the user, b4.10)

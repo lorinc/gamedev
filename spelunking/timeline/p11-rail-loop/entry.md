@@ -284,6 +284,7 @@ Then (D136, the user): lizards spawn on ash, lick ash within 6 px bare, and burr
 Then (D137, the user): lizards dash off the wall for ash in the middle of a cave, then run straight back.
 Then (D138, the user): loot upgrades the lizards' reach; the bug level grows your light, mining radius and speed.
 Then (D139, the user): lizards lick 3× slower, zip on after every rest, and live ~40 s (5× longer).
+Then (D140, the user): tamed bugs pull 2× slower.
 
 ## Feedback
 
