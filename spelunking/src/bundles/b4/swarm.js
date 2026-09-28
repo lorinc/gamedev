@@ -8,13 +8,15 @@
 // and starts a new trip near another node. b4.10: where it goes it greens the back wall (garden.js), and it
 // picks fruit too, up to `fruitCarry` a trip. Randomness from the tick, like b3's bugs, so runs repeat.
 // b4.34 (the user: "tame bugs try to spawn in areas with the least amount of tame bugs"): a trip starts at
-// the network node with the fewest other bugs within `crowd` px, ties at random.
+// the network node with the fewest other bugs within `crowd` px, ties at random. b4.36 (the user: "prefer to
+// spawn the bugs in areas with no vine"): before that, nodes with no vine (or fruit) within about `crowd` px
+// come first; vines are counted per BLOCK px square, and a node looks at the blocks its circle overlaps.
 
 import { isOpen, Tile } from '../../sim/gen/world.js'
 import { toRock } from '../../sim/dig/pull.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
-import { fruitNear, greenAround, pick } from './garden.js'
+import { FRUIT, fruitNear, greenAround, pick, VINE } from './garden.js'
 import { dist2, gain } from './game.js'
 
 /** @typedef {import('./world.js').Cell} Cell */
@@ -47,6 +49,39 @@ export const SWARM = {
 /** @typedef {typeof SWARM} Swarm */
 
 const SALT = 0x5a4d
+const BLOCK = 16 // px: the vine count's grid (b4.36)
+/** @type {{ tick: number, game: object | null, bw: number, count: Int32Array }} the vine count per block, per tick */
+const vineGrid = { tick: -1, game: null, bw: 0, count: new Int32Array(0) }
+
+/** Vine or fruit pixels per BLOCK px block, counted once a tick. @param {import('./game.js').Game} g */
+function vines(g) {
+  if (vineGrid.tick === g.tick && vineGrid.game === g) return vineGrid
+  const { w, h } = g.world
+  const bw = Math.ceil(w / BLOCK)
+  const count = new Int32Array(bw * Math.ceil(h / BLOCK))
+  for (const i of g.garden.vines) {
+    const v = g.garden.wall[i]
+    if (v !== VINE && v !== FRUIT) continue
+    const x = i % w
+    count[Math.floor((i - x) / w / BLOCK) * bw + Math.floor(x / BLOCK)]++
+  }
+  return Object.assign(vineGrid, { tick: g.tick, game: g, bw, count })
+}
+
+/** Vine within about r px of `at` (the blocks the circle overlaps). @param {import('./game.js').Game} g @param {Cell} at @param {number} r */
+function vineNear(g, at, r) {
+  const { bw, count } = vines(g)
+  const bh = count.length / bw
+  const k = Math.ceil(r / BLOCK)
+  const bx = Math.floor(at.x / BLOCK)
+  const by = Math.floor(at.y / BLOCK)
+  for (let dy = -k; dy <= k; dy++)
+    for (let dx = -k; dx <= k; dx++) {
+      const y = by + dy
+      if (y >= 0 && y < bh && count[y * bw + ((((bx + dx) % bw) + bw) % bw)]) return true
+    }
+  return false
+}
 // the 8 neighbours, round the clock
 const STEPS = [
   [1, 0],
@@ -74,7 +109,7 @@ function spawnAt(g, s, rng, self) {
   g.net.forEach((on, i) => {
     if (!on) return
     const n = g.map.nodes[i]
-    let k = 0
+    let k = vineNear(g, n, s.crowd) ? 1e6 : 0 // no vine first (b4.36), then the fewest bugs (b4.34)
     for (const b of g.swarm) if (b !== self && dist2(g, b, n) <= c2) k++
     if (k < least) (least = k), (best = [i])
     else if (k === least) best.push(i)

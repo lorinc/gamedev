@@ -659,3 +659,31 @@ test('a tamed bug starts its trip at the network node with the fewest other bugs
     assert.ok(d2(g.swarm[11], MAP.nodes[B]) <= g.cfg.swarm.spawn ** 2, 'the new one starts at the empty node')
   }
 })
+
+test('a tamed bug prefers a network node with no vine round it, even over a less crowded one (b4.36)', async () => {
+  const { VINE } = await import('./garden.js')
+  const { w } = MAP.world
+  const d2 = (/** @type {{x: number, y: number}} */ a, /** @type {{x: number, y: number}} */ b) => {
+    const dx = Math.min(Math.abs(a.x - b.x), w - Math.abs(a.x - b.x))
+    return dx * dx + (a.y - b.y) ** 2
+  }
+  const A = MAP.podNodes[0]
+  const B = MAP.nodes.findIndex((n) => d2(n, MAP.nodes[A]) > 100 ** 2)
+  for (let run = 0; run < 8; run++) {
+    const g = fresh()
+    g.cfg.lichen.near = 0
+    g.net.fill(0)
+    g.net[A] = g.net[B] = 1
+    // a vine by A; the other bugs all at B
+    const v = MAP.nodes[A].y * w + MAP.nodes[A].x
+    g.garden.wall[v] = VINE
+    g.garden.vines.push(v)
+    g.ledger.bugs = 5
+    for (let k = 0; k < 5; k++)
+      g.swarm.push({ ...MAP.nodes[B], from: MAP.nodes[B], movedAt: 0, dir: 0, until: 1e9, target: null, pullFor: 0, ore: 0, loot: 0, fruit: 0 })
+    for (let t = 0; t < run; t++) tick(g)
+    g.ledger.bugs = 6
+    tick(g)
+    assert.ok(d2(g.swarm[5], MAP.nodes[B]) <= g.cfg.swarm.spawn ** 2, 'the new one starts away from the vine')
+  }
+})
