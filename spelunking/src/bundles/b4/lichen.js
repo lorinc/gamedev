@@ -6,7 +6,8 @@
 // from the patch's first pixel, away from the rock: pixels, like everything else (b4.18, the user). Randomness from the tick (rng.js).
 // b4.21 (the user): a lichen with the bugs' cover (garden.js) within `touch` px sometimes sparks an ember, 1 in
 // `spark` a check: the cover catches fire there (garden.js's fire). Its leaf withers and it never sparks
-// again; the purple patch stays.
+// again; the purple patch stays. b4.37 (the user): the ember lights `embers` (3) random cover pixels within
+// `emberR` px of the patch at once, so the fire starts ragged.
 
 import { isOpen } from '../../sim/gen/world.js'
 import { wrap } from '../../sim/dig/rules.js'
@@ -24,6 +25,8 @@ export const LICHEN = {
   gap: 10, // px from any other lichen
   spark: 24, // 1 in this many checks a lichen with cover near sparks (b4.21; the user, b4.31: 4× rarer, was 6)
   touch: 2, // px from the patch the cover must be
+  embers: 3, // cover pixels an ember lights (b4.37)
+  emberR: 6, // px round the patch's first pixel they're picked within
 }
 /** @typedef {typeof LICHEN} Lichen */
 
@@ -169,7 +172,20 @@ function sparks(g, rng) {
       L.on[i] = WITHERED_PX
       L.changed.push(i)
     }
-    ignite(g, at, rng)
+    // `embers` random cover pixels round the patch, the one found by it first
+    const R = Math.max(0, g.cfg.lichen.emberR)
+    const x0 = p.cells[0] % w
+    const y0 = (p.cells[0] - x0) / w
+    /** @type {number[]} */
+    const pool = []
+    for (let dy = -R; dy <= R; dy++)
+      for (let dx = -R; dx <= R; dx++) {
+        const j = (y0 + dy) * w + wrap(x0 + dx, w)
+        if (y0 + dy >= 0 && y0 + dy < h && dx * dx + dy * dy <= R * R && j !== at && cover(wall[j])) pool.push(j)
+      }
+    const lit = [at]
+    while (lit.length < Math.max(1, g.cfg.lichen.embers) && pool.length) lit.push(pool.splice(rng() % pool.length, 1)[0])
+    for (const i of lit) ignite(g, i, rng)
     g.events.push({ type: 'spark', x: at % w, y: Math.floor(at / w) })
   }
 }

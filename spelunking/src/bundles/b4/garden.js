@@ -14,8 +14,10 @@
 // whose bare pixels turn to ash at once and whose cover flares up and turns to ash as it goes out. Ash is
 // permanent: bugs don't green it, vines don't grow into it (the user: a function for it comes later).
 // b4.25 (the user: "flames can be brighter"): a pixel burns for `burnFor` steps before it goes out, so the
-// front is a band, not a line; it spreads once, the step after it caught. Each disc is kept in `discs` for
-// its flowers (flowers.js).
+// front is a band, not a line. Each disc is kept in `discs` for its flowers (flowers.js).
+// b4.37 (the user: "fire spreads in a square shape, looks silly"): a burning pixel sets each cover neighbour
+// burning by chance, every step it burns: `spread` % a step to the 4 beside it, `spreadDiag` % to the 4
+// corners, so the front is ragged and roundish, not the square an every-neighbour-every-step spread draws.
 // b4.33 (the user: "make vines that touch ash hyper-productive… now there's not enough ore"; fruit, asked):
 // a vine pixel with ash among its 8 neighbours makes fruit `hyper` (10) times as fast: it counts that many
 // times in the accumulator, and the next fruit lands on such a pixel with that weight. The list is rebuilt
@@ -34,6 +36,8 @@ export const GARDEN = {
   fruitTicks: 3600, // make a fruit every minute (the user)
   burnTicks: 6, // the fire spreads 1 px every 0.1 s
   burnFor: 4, // steps a pixel burns (b4.25): 0.4 s
+  spread: 50, // % a step a burning pixel sets a side neighbour's cover burning (b4.37): 94% over its 4 steps
+  spreadDiag: 25, // % for a corner one: 68% over 4 steps
   ash: 2, // an ash disc's radius, px: ash–ashMax (the user: 3–5; b4.35, the user: smaller, room for the vines)
   ashMax: 3,
   ashGap: 8, // px between ash centres: ashGap–ashGapMax (the user: 8–12)
@@ -269,22 +273,22 @@ function ashDisc(g, i, rng) {
     }
 }
 
-/** The fire's step: the cover round the pixels caught last step catches; pixels burning `burnFor` steps go out. @param {import('./game.js').Game} g @param {() => number} rng */
+/** The fire's step: the cover round each burning pixel catches by chance; pixels burning `burnFor` steps go out. @param {import('./game.js').Game} g @param {() => number} rng */
 function burn(g, rng) {
   const G = g.garden
   const { w, h } = g.world
   const was = G.burning
   G.burning = []
   G.step++
+  const c = g.cfg.garden
   for (const i of was) {
-    if (G.caught.get(i) !== G.step - 1) continue
     const x = i % w
     const y = (i - x) / w
     for (const [sx, sy] of STEPS) {
       const yy = y + sy
       if (yy < 0 || yy >= h) continue
       const j = yy * w + wrap(x + sx, w)
-      if (cover(G.wall[j])) ignite(g, j, rng)
+      if (cover(G.wall[j]) && rng() % 100 < (sx && sy ? c.spreadDiag : c.spread)) ignite(g, j, rng)
     }
   }
   for (const i of was) {

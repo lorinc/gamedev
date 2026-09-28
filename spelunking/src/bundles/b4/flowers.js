@@ -16,6 +16,7 @@ import { wrap } from '../../sim/dig/rules.js'
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
 import { ASH, BURN } from './garden.js'
 import { dist2, extend } from './game.js'
+import { spawnAshworm } from './ashworms.js'
 
 /** The flowers' numbers (the dev panel's). */
 export const FLOWERS = {
@@ -63,6 +64,7 @@ export function updateFlowers(g) {
       const px = disc(g, d)
       if (px.some((i) => G.wall[i] === BURN)) return true
       const ash = px.filter((i) => G.wall[i] === ASH)
+      spawnAshworm(g, d.i, rng) // b4.37
       const n = rng() % Math.max(1, c.per) === 0 ? 1 : 0
       /** @type {number[]} */
       const put = []

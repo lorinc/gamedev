@@ -56,6 +56,7 @@ import { updateWorms, WORMS } from './worms.js'
 import { LIZARDS, updateLizards } from './lizards.js'
 import { createLichen, LICHEN, updateLichen } from './lichen.js'
 import { FLOWERS, updateFlowers } from './flowers.js'
+import { ASHWORMS, updateAshworms } from './ashworms.js'
 import { OPEN, ROCK } from './world.js'
 
 /** @typedef {import('./world.js').Map} Map */
@@ -93,6 +94,7 @@ export const CONFIG = {
   lizards: { ...LIZARDS },
   lichen: { ...LICHEN },
   flowers: { ...FLOWERS },
+  ashworms: { ...ASHWORMS },
   price: 10, // ore per edge (user: 8–12, tuned later)
   botUpgradeCost: 16, // loot for the bot's first upgrade, doubling (the user, b4.15)
   upgradeGain: 0.2, // an upgrade: mining radius and speed +20% (the user, b4.15)
@@ -114,7 +116,7 @@ export const CONFIG = {
  *   | { type: 'dug', x: number, y: number, tile: number, by: number } | { type: 'haul', x: number, y: number, ore: number, loot: number, fruit: number }
  *   | { type: 'worm', x: number, y: number } | { type: 'eaten', x: number, y: number } | { type: 'deposit', cells: number[] }
  *   | { type: 'upgrade', level: number } | { type: 'botUpgrade', level: number }
- *   | { type: 'lizard', x: number, y: number } | { type: 'lichen', x: number, y: number } | { type: 'engulf' | 'eject', node: number } | { type: 'flower' | 'bloom' | 'poof', x: number, y: number } | { type: 'spark', x: number, y: number } | { type: 'licked', x: number, y: number, to: Cell }
+ *   | { type: 'lizard', x: number, y: number } | { type: 'lichen', x: number, y: number } | { type: 'engulf' | 'eject', node: number } | { type: 'flower' | 'bloom' | 'poof' | 'ashworm' | 'ashwormGone', x: number, y: number } | { type: 'spark', x: number, y: number } | { type: 'licked', x: number, y: number, to: Cell }
  *   | { type: 'board', node: number } | { type: 'exit', node: number }
  *   | { type: 'nibble', id: number, x: number, y: number, from: Cell } | { type: 'tamed', id: number, x: number, y: number, slot: number }
  *  } GameEvent bugs.js adds the wild bugs'; tamed has slot -1 (to the ledger); tile FRUIT_TILE is a fruit (b4.10)
@@ -148,6 +150,7 @@ export const CONFIG = {
  * @property {import('./lichen.js').LichenState} lichen b4.15
  * @property {import('./flowers.js').Flower[]} flowers b4.25: on the ash
  * @property {import('./flowers.js').FlowerBot[]} fbots b4.25: bloomed flowers, extending the network
+ * @property {import('./ashworms.js').AshWorm[]} ashworms b4.37: lifting the fog
  * @property {import('./swarm.js').Worker[]} swarm the ledger's bugs at work
  * @property {Uint8Array} seen
  * @property {number[]} lit
@@ -199,6 +202,7 @@ export function createGame(map, cfg) {
     lichen: createLichen(world.w * world.h),
     flowers: [],
     fbots: [],
+    ashworms: [],
     swarm: [],
     seen: new Uint8Array(world.w * world.h),
     lit: [],
@@ -275,6 +279,7 @@ export function tick(g) {
   updateLizards(g)
   updateLichen(g)
   updateFlowers(g)
+  updateAshworms(g)
   while (g.ledger.fruit >= nextCost(g)) {
     g.ledger.fruit -= nextCost(g)
     g.level++

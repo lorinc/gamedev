@@ -228,6 +228,7 @@ export function createRenderer(canvas, game, ui, view) {
       }
     else if (e.type === 'ring') rings.push({ x: e.x, y: e.y, r: e.r, s: now })
     else if (e.type === 'bloom') puff(e.x, e.y, now, 14, ['#ffffff', '#f4f0ff'], 8)
+    else if (e.type === 'ashwormGone') puff(e.x, e.y, now, 10, ['#9a9aa0', '#7c7c84'], 5)
     else if (e.type === 'poof') puff(e.x, e.y, now, 32, ['#ffffff', '#eef4ff', '#ffffff'], 14)
     else if (e.type === 'botUpgrade')
       for (let k = 0; k < 8; k++) fly(icon('loot'), icon('bot'), now + k * 0.05, 0.6, LOOT, 0)
@@ -482,6 +483,7 @@ export function createRenderer(canvas, game, ui, view) {
     drawAim(now) // over the fog: the bulb holding you and the edges it offers
     drawNodes(now, true)
     drawFbots()
+    drawAshworms(now)
     drawBot(bot, now)
     drawRings(now)
     drawStreams(now)
@@ -552,6 +554,35 @@ export function createRenderer(canvas, game, ui, view) {
       for (const [dx, dy] of PETALS) px(f.x + dx, f.y + dy)
       ctx.fillStyle = 'rgb(170,150,84)'
       px(f.x, f.y)
+    }
+  }
+
+  /** Ash worms (b4.37, the user): grey, with a row of small lights on both sides, over the fog. @param {number} now */
+  function drawAshworms(now) {
+    for (const z of game.ashworms) {
+      z.body.forEach((c, k) => {
+        ctx.fillStyle = k === 0 ? 'rgb(170,170,176)' : 'rgb(118,118,126)'
+        px(c.x, c.y)
+      })
+      // the lights: a small warm dot on each side of every other segment, across its heading, twinkling
+      const s = Math.max(1, Math.round(T * 0.45))
+      for (let k = 1; k < z.body.length; k += 2) {
+        const a = z.body[k - 1]
+        const b = z.body[k]
+        let dx = a.x - b.x
+        if (Math.abs(dx) > w / 2) dx -= Math.sign(dx) * w
+        const dy = a.y - b.y
+        const l = Math.hypot(dx, dy) || 1
+        const [x, y] = at(b)
+        ctx.globalAlpha = 0.65 + 0.35 * Math.sin(now * 9 + k)
+        ctx.fillStyle = 'rgb(255,236,150)'
+        for (const side of [-1, 1]) {
+          const ox = (-dy / l) * side * T * 0.8
+          const oy = (dx / l) * side * T * 0.8
+          ctx.fillRect(Math.round(x + ox - s / 2), Math.round(y + oy - s / 2), s, s)
+        }
+      }
+      ctx.globalAlpha = 1
     }
   }
 

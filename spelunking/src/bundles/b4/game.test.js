@@ -441,7 +441,9 @@ test('a lichen by the cover sparks once: the fire eats all the connected cover, 
   assert.equal(G.burning.length, 0, 'the fire went out')
   assert.ok(!G.wall.some((v) => v === BURN))
   assert.ok(linked.size > 300, `linked ${linked.size}`)
-  for (const i of linked) assert.ok(!cover(G.wall[i]), 'the connected cover burned')
+  // it spreads by chance (b4.37): a stray pixel may be left
+  const left = [...linked].filter((i) => cover(G.wall[i])).length
+  assert.ok(left <= linked.size / 50, `the connected cover burned: ${left} of ${linked.size} left`)
   assert.equal(G.fruit.size, [...G.wall].filter((v) => v === FRUIT).length)
   for (const i of G.vines) assert.ok(G.wall[i] === VINE || G.wall[i] === FRUIT)
   const centres = [...G.centres.values()].flat()
@@ -686,4 +688,45 @@ test('a tamed bug prefers a network node with no vine round it, even over a less
     tick(g)
     assert.ok(d2(g.swarm[5], MAP.nodes[B]) <= g.cfg.swarm.spawn ** 2, 'the new one starts away from the vine')
   }
+})
+
+test('ash sends out grey worms that snake towards the unexplored, lift the fog for good, and are gone after 12 s (b4.37)', async () => {
+  const { GREEN, ignite } = await import('./garden.js')
+  const { OPEN, ROCK } = await import('./world.js')
+  const g = fresh()
+  g.cfg.worms.max = 0
+  g.cfg.lizards.max = 0
+  g.cfg.lichen.near = 0
+  g.cfg.ashworms.chance = 1 // every disc, here
+  const { w } = MAP.world
+  const G = g.garden
+  for (let dy = -30; dy <= 30; dy++)
+    for (let dx = -30; dx <= 30; dx++) {
+      const i = (g.ch.y + dy) * w + g.ch.x + dx
+      if (isOpen(MAP.world.tiles[i])) G.wall[i] = GREEN
+    }
+  ignite(g, g.ch.y * w + g.ch.x, () => 0)
+  let spawned = 0
+  let gone = 0
+  let seen0 = -1
+  for (let k = 0; k < 3600 && (spawned === 0 || g.ashworms.length); k++) {
+    tick(g)
+    for (const e of g.events) {
+      if (e.type === 'ashworm') {
+        spawned++
+        if (seen0 < 0) seen0 = g.seen.reduce((a, b) => a + b, 0)
+      }
+      if (e.type === 'ashwormGone') gone++
+    }
+    g.events.length = 0
+    for (const z of g.ashworms) {
+      const k2 = MAP.kind[z.body[0].y * w + z.body[0].x]
+      assert.ok(k2 === ROCK || k2 === OPEN, 'in rock or cave, never the sheet, the sea or space')
+      assert.ok(g.tick - z.born <= 720)
+    }
+  }
+  assert.ok(spawned > 0, 'worms came out')
+  assert.equal(gone, spawned, 'all gone')
+  const seen1 = g.seen.reduce((a, b) => a + b, 0)
+  assert.ok(seen1 - seen0 > 500 * Math.min(spawned, 1), `the fog lifted: ${seen1 - seen0} px more seen`)
 })
