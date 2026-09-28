@@ -350,5 +350,26 @@ replaces it, fire leaves it: a meal's gas now lasts while bugs visit.
 - **b4.2 (user, 2026-09-27, `feedback/2026-09-27_lorinc_b4.2.md`):** the light far too big and lighting 4 px into
   rock; wants line of sight; then the incremental turn: one ledger, abstract tamed bugs, a simpler build, a
   fixed light. The plan: `next-b4.3.md`; built as b4.3 (D083).
+- **b4.77 (user, 2026-09-28, `feedback/2026-09-28_lorinc_b4.77.md`):** the ecosystem idle game works and can be
+  made resilient (push it out of balance for a reward, it restores itself); left running, b4.77 ran away (3,000+
+  moths). A young player: "Where do I go? Why is this following me? I'm lost! What just happened?" The user: the
+  simulation felt flat, "like an open world game that looks the same everywhere you go".
 
 ## Conclusion → next
+
+The Question (does a scan-mine-build rail loop pull you into the next cavern?) was overtaken by the incremental
+turn (b4.3) and then by the ecosystem (b4.10 onwards: moss, vines, fire, ash, lizards, worms, beasts, gas, moths,
+predators, slime). What p11 found instead, in the user's words: **"It is possible to build a very enjoyable and
+engaging cave ecosystem idle game, that both feels very involved, but at the same time, does not really need the
+player to run. It is possible to engineer it to make time spent rewarding - e.g. taming a lot of moths and pushing
+the game out of balance temporarily for a big fat resource reward, but the system can be designed to be
+resilient, and restore balance after the push."**
+
+Found on the way:
+- **Stability needs rules, not hope:** b4.77 left running ran away (3,000+ moths): free hatching wherever gas is,
+  slime keeping the gas forever, no carrying capacity. How an architecture keeps a big sim fast and bounded, and a
+  scenario engine that searches knobs for goals: `guides/engineering/ideal_sw_architecture.md`.
+- **It isn't a game yet.** A young player: "Where do I go? Why is this following me? I'm lost! What just
+  happened?" The user: the simulation felt flat, "like an open world game that looks the same everywhere you go".
+
+**Next (user):** how to turn this into a game.
