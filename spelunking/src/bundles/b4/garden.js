@@ -6,6 +6,12 @@
 // pixel with no fruit gets one). Fruit doesn't glow (b4.12); it's a resource: if it exists, it can be harvested (the user),
 // seen or not, by you (your pull, within the light) and by bugs (within reach, up to swarm.fruitCarry each).
 // Randomness from the tick (rng.js), like the bugs.
+// b4.21's fire (the user): a lichen's ember (lichen.js) sets the cover (green, vine, fruit) burning; every
+// `burnTicks` each burning pixel sets the cover in its 8 neighbours burning and goes out, so the fire runs
+// through the whole connected cover like a cellular automaton and leaves bare back wall. Where a pixel catches
+// with no ash centre within 8–12 px (`ashGap`–`ashGapMax`), it becomes one: a disc of r 3–5 (`ash`–`ashMax`)
+// whose bare pixels turn to ash at once and whose cover flares up and turns to ash as it goes out. Ash is
+// permanent: bugs don't green it, vines don't grow into it (the user: a function for it comes later).
 
 import { isOpen } from '../../sim/gen/world.js'
 import { wrap } from '../../sim/dig/rules.js'
@@ -18,6 +24,11 @@ export const GARDEN = {
   growTicks: 300, // a vine's tip grows 1 px every 5 s
   perFruit: 12, // px of vine (the user)
   fruitTicks: 3600, // make a fruit every minute (the user)
+  burnTicks: 6, // the fire spreads 1 px every 0.1 s
+  ash: 3, // an ash disc's radius, px: ash–ashMax (the user: 3–5)
+  ashMax: 5,
+  ashGap: 8, // px between ash centres: ashGap–ashGapMax (the user: 8–12)
+  ashGapMax: 12,
 }
 /** @typedef {typeof GARDEN} Garden */
 
@@ -25,6 +36,11 @@ export const GARDEN = {
 export const GREEN = 1
 export const VINE = 2
 export const FRUIT = 3
+export const BURN = 4
+export const ASH = 5
+/** @param {number} v a g.wall state @returns {boolean} cover the fire eats */
+export const cover = (v) => v === GREEN || v === VINE || v === FRUIT
+const BLOCK = 16 // the ash centres' lookup grid, px
 
 const SALT = 0x6a4d
 // the 8 neighbours, round the clock (a vine grows 8-way)
@@ -48,11 +64,25 @@ const STEPS = [
  * @property {number} acc the fruit accumulator: vine px × ticks
  * @property {number} sown pixels turned green so far (for `sprout`)
  * @property {number[]} changed pixels whose look changed since the view last drew them
+ * @property {number[]} burning pixels on fire (b4.21)
+ * @property {Set<number>} toAsh burning pixels inside an ash disc: ash when they go out
+ * @property {Map<number, number[]>} centres ash centres (pixel indices) by BLOCK × BLOCK block
  */
 
 /** @param {number} n pixels @returns {GardenState} */
 export function createGarden(n) {
-  return { wall: new Uint8Array(n), tips: [], vines: [], fruit: new Set(), acc: 0, sown: 0, changed: [] }
+  return {
+    wall: new Uint8Array(n),
+    tips: [],
+    vines: [],
+    fruit: new Set(),
+    acc: 0,
+    sown: 0,
+    changed: [],
+    burning: [],
+    toAsh: new Set(),
+    centres: new Map(),
+  }
 }
 
 /** @param {import('./game.js').Game} g @param {number} i */
@@ -109,6 +139,7 @@ export function updateGarden(g) {
       return true
     })
   }
+  if (G.burning.length && g.tick % Math.max(1, c.burnTicks) === 0) burn(g, rng)
   // every perFruit px of vine: a fruit per fruitTicks, on average
   G.acc += G.vines.length
   const per = Math.max(1, c.perFruit) * Math.max(1, c.fruitTicks)
@@ -151,4 +182,81 @@ export function pick(g, x, y) {
   g.garden.wall[i] = VINE
   g.garden.fruit.delete(i)
   g.garden.changed.push(i)
+}
+
+/** Sets pixel i burning (b4.21): the lichen's ember, or the fire spreading. @param {import('./game.js').Game} g @param {number} i @param {() => number} rng */
+export function ignite(g, i, rng) {
+  const G = g.garden
+  if (G.wall[i] === FRUIT) G.fruit.delete(i)
+  G.wall[i] = BURN
+  G.burning.push(i)
+  G.changed.push(i)
+  ashDisc(g, i, rng)
+}
+
+/** A new ash centre at i if none is within ashGap–ashGapMax: its disc. @param {import('./game.js').Game} g @param {number} i @param {() => number} rng */
+function ashDisc(g, i, rng) {
+  const G = g.garden
+  const c = g.cfg.garden
+  const { w, h, tiles } = g.world
+  const x = i % w
+  const y = (i - x) / w
+  const gap = c.ashGap + (rng() % Math.max(1, c.ashGapMax - c.ashGap + 1))
+  const bw = Math.ceil(w / BLOCK)
+  const bx = Math.floor(x / BLOCK)
+  const by = Math.floor(y / BLOCK)
+  const reach = Math.ceil(gap / BLOCK)
+  for (let dy = -reach; dy <= reach; dy++)
+    for (let dx = -reach; dx <= reach; dx++)
+      for (const j of G.centres.get((by + dy) * bw + ((((bx + dx) % bw) + bw) % bw)) ?? []) {
+        const cx = j % w
+        const ddx = Math.min(Math.abs(cx - x), w - Math.abs(cx - x))
+        const ddy = (j - cx) / w - y
+        if (ddx * ddx + ddy * ddy < gap * gap) return
+      }
+  const key = by * bw + bx
+  G.centres.set(key, [...(G.centres.get(key) ?? []), i])
+  const r = c.ash + (rng() % Math.max(1, c.ashMax - c.ash + 1))
+  for (let dy = -r; dy <= r; dy++)
+    for (let dx = -r; dx <= r; dx++) {
+      const yy = y + dy
+      if (dx * dx + dy * dy > r * r || yy < 0 || yy >= h) continue
+      const j = yy * w + wrap(x + dx, w)
+      if (!isOpen(tiles[j]) || G.wall[j] === ASH) continue
+      if (G.wall[j] === BURN) G.toAsh.add(j)
+      else if (cover(G.wall[j])) {
+        G.toAsh.add(j)
+        if (G.wall[j] === FRUIT) G.fruit.delete(j)
+        G.wall[j] = BURN // the disc flares up
+        G.burning.push(j)
+        G.changed.push(j)
+      } else {
+        G.wall[j] = ASH
+        G.changed.push(j)
+      }
+    }
+}
+
+/** The fire's step: the cover round each burning pixel catches, the burning ones go out. @param {import('./game.js').Game} g @param {() => number} rng */
+function burn(g, rng) {
+  const G = g.garden
+  const { w, h } = g.world
+  const was = G.burning
+  G.burning = []
+  for (const i of was) {
+    const x = i % w
+    const y = (i - x) / w
+    for (const [sx, sy] of STEPS) {
+      const yy = y + sy
+      if (yy < 0 || yy >= h) continue
+      const j = yy * w + wrap(x + sx, w)
+      if (cover(G.wall[j])) ignite(g, j, rng)
+    }
+  }
+  for (const i of was) {
+    G.wall[i] = G.toAsh.delete(i) ? ASH : 0
+    G.changed.push(i)
+  }
+  G.vines = G.vines.filter((i) => G.wall[i] === VINE || G.wall[i] === FRUIT)
+  G.tips = G.tips.filter((t) => G.wall[t.i] === VINE)
 }

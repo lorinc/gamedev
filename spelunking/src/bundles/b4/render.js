@@ -18,8 +18,8 @@
 import { cellRgb } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
 import { botAt, botCost, FRUIT_TILE, nextCost, shown } from './game.js'
-import { FRUIT, GREEN as MOSS, VINE } from './garden.js'
-import { LEAF_PX } from './lichen.js'
+import { ASH, BURN, FRUIT, GREEN as MOSS, VINE } from './garden.js'
+import { LEAF_PX, WITHERED_PX } from './lichen.js'
 import { OPEN, ROCK, SHEET, SPACE } from './world.js'
 import { ledgerKinds } from './ledger.js'
 
@@ -49,12 +49,13 @@ const OPEN_RGB = [36, 44, 62] // the cave's back wall: dark grey-blue, not the u
 const ROCK_RGB = { [Tile.Soft]: [40, 30, 24], [Tile.Hard]: [22, 23, 28] }
 /** A tile's colour in b4: its rock, else b3's palette. @param {number} t */
 const rgb = (t) => ROCK_RGB[t] ?? cellRgb(/** @type {any} */ (t))
-const LEAF_RGB = [176, 104, 220]
 const RING_TRAIL = 4
 const EDGE = 3 // px over which the light fades out
 const FRUIT_C = [235, 40, 50]
 /** @type {Record<number, number[]>} */
-const WALL_RGB = { [MOSS]: [22, 58, 30], [VINE]: [60, 140, 55], [FRUIT]: FRUIT_C }
+const WALL_RGB = { [MOSS]: [22, 58, 30], [VINE]: [60, 140, 55], [FRUIT]: FRUIT_C, [BURN]: [255, 140, 30], [ASH]: [96, 94, 92] }
+/** @type {Record<number, number[]>} */
+const LICHEN_PX_RGB = { [LEAF_PX]: [176, 104, 220], [WITHERED_PX]: [112, 84, 56] } // b4.21: a sparked lichen's leaf, withered brown
 
 /** @param {HTMLCanvasElement} canvas @param {Game} game @param {Ui} ui @param {{ zoom: number }} view */
 export function createRenderer(canvas, game, ui, view) {
@@ -77,7 +78,7 @@ export function createRenderer(canvas, game, ui, view) {
   /** @param {number} i */
   const paintTile = (i) => {
     const wall = game.garden.wall[i]
-    if (game.lichen.on[i] && world.tiles[i] === Tile.Open) timg.data.set([...(game.lichen.on[i] === LEAF_PX ? LEAF_RGB : LICHEN_RGB), 255], i * 4)
+    if (game.lichen.on[i] && world.tiles[i] === Tile.Open) timg.data.set([...(LICHEN_PX_RGB[game.lichen.on[i]] ?? LICHEN_RGB), 255], i * 4)
     else if (scenic(i)) timg.data.set(map.scenery.subarray(i * 4, i * 4 + 4), i * 4)
     else if (wall && world.tiles[i] === Tile.Open) timg.data.set([.../** @type {number[]} */ (WALL_RGB[wall]), 255], i * 4)
     else if (world.tiles[i] === Tile.Ore || world.tiles[i] === Tile.Loot) timg.data.set([...rgb(rockUnder(i)), 255], i * 4)
@@ -278,7 +279,6 @@ export function createRenderer(canvas, game, ui, view) {
     }
   }
 
-
   /** A stream's colour: the unit at c. @param {Cell} c */
   function unitColor(c) {
     const i = c.y * w + c.x
@@ -326,7 +326,6 @@ export function createRenderer(canvas, game, ui, view) {
     }
     Lc.changed.length = 0
   }
-
 
   /** Hearts rising from a bug being tamed (b4.14). @param {number} now */
   function drawHearts(now) {
@@ -571,7 +570,6 @@ export function createRenderer(canvas, game, ui, view) {
       ctx.stroke()
     })
   }
-
 
   /** @param {{ x: number, y: number }} bot */
   function drawCars(bot) {

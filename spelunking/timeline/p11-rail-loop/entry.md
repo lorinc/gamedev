@@ -193,6 +193,9 @@ Then (D099, the user): soft and hard rock much darker, under the back wall's gre
 Then (D100, the user): the lichen's leaf is world pixels, not a smooth curve.
 Then (D101, the user): lizards spawn only with 24 reachable ore within 16 px, and route along the surface to
 ore they can reach (a 32-step flood); 163 of 176 retired in a 20-minute measurement (was 1 of 20).
+Then (D102, the user): a lichen next to the bugs' cover sparks once and its leaf withers; the fire spreads
+through all the connected cover like a cellular automaton, leaves bare wall, and burns permanent round ash
+discs (r 3–5, 8–12 px apart). Screenshots `gallery/p11/b4.21_fire_*`.
 
 ## Feedback
 

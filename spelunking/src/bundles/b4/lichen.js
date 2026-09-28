@@ -4,10 +4,14 @@
 // within `radius` px starts a patch on the nearest surface pixel (open, 8-bordering solid) with no lichen
 // within `gap` px; the patch grows along surface pixels to `min`–`max` pixels at once; its leaf curls out
 // from the patch's first pixel, away from the rock: pixels, like everything else (b4.18, the user). Randomness from the tick (rng.js).
+// b4.21 (the user): a lichen with the bugs' cover (garden.js) within `touch` px sometimes sparks an ember, 1 in
+// `spark` a check: the cover catches fire there (garden.js's fire). Its leaf withers and it never sparks
+// again; the purple patch stays.
 
 import { isOpen, Tile } from '../../sim/gen/world.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
+import { cover, ignite } from './garden.js'
 
 /** The lichen's numbers (the dev panel's). */
 export const LICHEN = {
@@ -18,18 +22,21 @@ export const LICHEN = {
   min: 6, // px a patch covers (the user: 6–8)
   max: 8,
   gap: 10, // px from any other lichen
+  spark: 6, // 1 in this many checks a lichen with cover near sparks (b4.21)
+  touch: 2, // px from the patch the cover must be
 }
 /** @typedef {typeof LICHEN} Lichen */
 
 /**
  * @typedef {object} LichenState
  * @property {Uint8Array} on per pixel: LICHEN or LEAF
- * @property {{ cells: number[], leaf: number[] }[]} patches the leaf's pixels (open ones, in the air)
+ * @property {{ cells: number[], leaf: number[], sparked: boolean }[]} patches the leaf's pixels (open ones, in the air)
  * @property {number[]} changed pixels the view hasn't painted yet
  */
 
 export const LICHEN_PX = 1
 export const LEAF_PX = 2
+export const WITHERED_PX = 3 // a leaf after its spark (b4.21)
 
 /** @param {number} n pixels @returns {LichenState} */
 export const createLichen = (n) => ({ on: new Uint8Array(n), patches: [], changed: [] })
@@ -61,6 +68,7 @@ export function updateLichen(g) {
   const { w, h, tiles } = g.world
   const L = g.lichen
   const rng = mulberry32(hashSeed(SALT, g.tick))
+  sparks(g, rng)
   const n = Math.max(1, c.near)
   const p = { x: wrap(g.ch.x + (rng() % (2 * n + 1)) - n, w), y: g.ch.y + (rng() % (2 * n + 1)) - n }
   if (p.y < 0 || p.y >= h) return
@@ -74,7 +82,7 @@ export function updateLichen(g) {
       const d = dx * dx + dy * dy
       if (y < 0 || y >= h || d > r * r) continue
       if (tiles[y * w + wrap(p.x + dx, w)] === Tile.Loot) loot++
-      if (d < bd && surface(g, p.x + dx, y)) (bd = d), (best = { x: wrap(p.x + dx, w), y })
+      if (d < bd && surface(g, p.x + dx, y)) ((bd = d), (best = { x: wrap(p.x + dx, w), y }))
     }
   if (loot < c.density || !best) return
   const start = /** @type {{ x: number, y: number }} */ (best)
@@ -132,6 +140,36 @@ export function updateLichen(g) {
     L.on[i] = LEAF_PX
     L.changed.push(i)
   }
-  L.patches.push({ cells, leaf })
+  L.patches.push({ cells, leaf, sparked: false })
   g.events.push({ type: 'lichen', x: start.x, y: start.y })
+}
+
+/** Lichens with cover within `touch` px spark, 1 in `spark` (b4.21). @param {import('./game.js').Game} g @param {() => number} rng */
+function sparks(g, rng) {
+  const { w, h } = g.world
+  const L = g.lichen
+  const wall = g.garden.wall
+  const t = Math.max(0, g.cfg.lichen.touch)
+  for (const p of L.patches) {
+    if (p.sparked) continue
+    let at = -1
+    for (const i of p.cells) {
+      const x = i % w
+      const y = (i - x) / w
+      for (let dy = -t; dy <= t && at < 0; dy++)
+        for (let dx = -t; dx <= t && at < 0; dx++) {
+          const j = (y + dy) * w + wrap(x + dx, w)
+          if (y + dy >= 0 && y + dy < h && dx * dx + dy * dy <= t * t && cover(wall[j])) at = j
+        }
+      if (at >= 0) break
+    }
+    if (at < 0 || rng() % Math.max(1, g.cfg.lichen.spark) !== 0) continue
+    p.sparked = true
+    for (const i of p.leaf) {
+      L.on[i] = WITHERED_PX
+      L.changed.push(i)
+    }
+    ignite(g, at, rng)
+    g.events.push({ type: 'spark', x: at % w, y: Math.floor(at / w) })
+  }
 }

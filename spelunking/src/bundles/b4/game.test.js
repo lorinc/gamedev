@@ -345,3 +345,79 @@ test('plentiful loot grows a purple lichen patch of 6–8 surface pixels with a 
   assert.ok(p.leaf.length <= 4)
   for (const i of p.leaf) assert.ok(isOpen(MAP.world.tiles[i]) && !p.cells.includes(i), 'the leaf: its own pixels, in the air')
 })
+
+test('a lichen by the cover sparks once: the fire eats all the connected cover, leaving r 3–5 ash discs 8–12 px apart (b4.21)', async () => {
+  const { ASH, BURN, FRUIT, GREEN, VINE, cover, greenAround } = await import('./garden.js')
+  const { WITHERED_PX } = await import('./lichen.js')
+  const g = fresh()
+  g.cfg.worms.max = 0
+  g.cfg.lizards.max = 0
+  g.cfg.lichen.spark = 1
+  g.cfg.lichen.checkTicks = 1
+  const { w } = MAP.world
+  const G = g.garden
+  // green the open pixels within 30 px of the bot, a vine and a fruit in every 10th
+  let n = 0
+  for (let dy = -30; dy <= 30; dy++)
+    for (let dx = -30; dx <= 30; dx++) {
+      const i = (g.ch.y + dy) * w + g.ch.x + dx
+      if (!isOpen(MAP.world.tiles[i])) continue
+      G.wall[i] = n % 10 === 0 ? VINE : n % 10 === 5 ? FRUIT : GREEN
+      if (G.wall[i] !== GREEN) G.vines.push(i)
+      if (G.wall[i] === FRUIT) G.fruit.add(i)
+      n++
+    }
+  assert.ok(n > 300, `cover ${n}`)
+  const at = g.ch.y * w + g.ch.x
+  // the cover 8-connected to the lichen: all of it burns
+  const linked = new Set([at])
+  for (const i of linked)
+    for (const [sx, sy] of [
+      [1, 0],
+      [1, 1],
+      [0, 1],
+      [-1, 1],
+      [-1, 0],
+      [-1, -1],
+      [0, -1],
+      [1, -1],
+    ]) {
+      const j = i + sy * w + sx
+      if (G.wall[j] && !linked.has(j)) linked.add(j)
+    }
+  const leaf = at + 1
+  g.lichen.on[at] = 1
+  g.lichen.on[leaf] = 2
+  g.lichen.patches.push({ cells: [at], leaf: [leaf], sparked: false })
+  tick(g)
+  assert.ok(g.lichen.patches[0].sparked, 'sparked')
+  assert.equal(g.lichen.on[leaf], WITHERED_PX, 'the leaf withers')
+  assert.equal(g.lichen.on[at], 1, 'the purple stays')
+  for (let k = 0; k < 3600 && G.burning.length; k++) tick(g)
+  assert.equal(G.burning.length, 0, 'the fire went out')
+  assert.ok(!G.wall.some((v) => v === BURN))
+  assert.ok(linked.size > 300, `linked ${linked.size}`)
+  for (const i of linked) assert.ok(!cover(G.wall[i]), 'the connected cover burned')
+  assert.equal(G.fruit.size, [...G.wall].filter((v) => v === FRUIT).length)
+  for (const i of G.vines) assert.ok(G.wall[i] === VINE || G.wall[i] === FRUIT)
+  const centres = [...G.centres.values()].flat()
+  assert.ok(centres.length >= 4, `discs ${centres.length}`)
+  const d = (/** @type {number} */ a, /** @type {number} */ b) => Math.hypot((a % w) - (b % w), Math.floor(a / w) - Math.floor(b / w))
+  for (const a of centres) for (const b of centres) if (a !== b) assert.ok(d(a, b) >= 8, 'discs 8+ apart')
+  const ash = [...G.wall.keys()].filter((i) => G.wall[i] === ASH)
+  assert.ok(ash.length > 3 * centres.length)
+  for (const i of ash)
+    assert.ok(
+      centres.some((c) => d(i, c) <= 5),
+      'ash only in a disc',
+    )
+  // ash is permanent; the lichen never sparks again
+  greenAround(g, ash[0] % w, Math.floor(ash[0] / w))
+  assert.equal(G.wall[ash[0]], ASH)
+  const bare = [...G.wall.keys()].find((i) => i !== at && isOpen(MAP.world.tiles[i]) && !G.wall[i] && d(i, at) <= 1)
+  if (bare !== undefined) {
+    G.wall[bare] = GREEN
+    for (let k = 0; k < 60; k++) tick(g)
+    assert.equal(G.wall[bare], GREEN, 'no second spark')
+  }
+})

@@ -81,6 +81,11 @@ const panel = createPanel(
     'sim.garden.growTicks': [10, 1800, 10],
     'sim.garden.perFruit': [1, 60, 1],
     'sim.garden.fruitTicks': [600, 18000, 600],
+    'sim.garden.burnTicks': [1, 60, 1],
+    'sim.garden.ash': [1, 12, 1],
+    'sim.garden.ashMax': [1, 12, 1],
+    'sim.garden.ashGap': [2, 40, 1],
+    'sim.garden.ashGapMax': [2, 40, 1],
     'sim.worms.density': [1, 40, 1],
     'sim.worms.radius': [2, 48, 1],
     'sim.worms.max': [0, 60, 1],
@@ -91,6 +96,7 @@ const panel = createPanel(
     'sim.lizards.zipTicks': [1, 20, 1],
     'sim.lizards.eat': [1, 64, 1],
     'sim.lichen.density': [1, 60, 1],
+    'sim.lichen.spark': [1, 60, 1],
     'sim.botUpgradeCost': [1, 256, 1],
     'sim.upgradeGain': [0, 1, 0.05],
     'view.zoom': [-1, ZOOM_PX.length - 1, 1],
@@ -183,7 +189,8 @@ createInput(canvas, {
   build: () => {
     const s = ui.select
     if (!s) return
-    if (buildable(game, s.edge, s.node)) ui.refusedAt = now // short of ore: the red pulse, nothing built
+    if (buildable(game, s.edge, s.node))
+      ui.refusedAt = now // short of ore: the red pulse, nothing built
     else command(game, { type: 'build', edge: s.edge, from: s.node })
   },
   zoom: (steps) => {
