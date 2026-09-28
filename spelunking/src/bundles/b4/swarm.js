@@ -21,6 +21,12 @@
 // no more trips: a bug with no unit for `idleTicks` (30 s) fades away and comes back near a node (the crowd and
 // vine rules above). No carry limit on fruit any more. b4.51's pull towards bare wall is gone (the crawl
 // replaces the random walk). They green the wall where they crawl and land (b4.69: where there's gas).
+// b4.71 (the user: "When a bug comes in contact of gas, it starts to behave like a moth - flies in circles with
+// an element of random walk. Still sends everything to the ledger immediately, still lives for 30s"): a bug on a
+// pixel whose station holds gas (in the air too) becomes a moth until it fades (bounce.js `mothTick`): it flies
+// circles through open air, never stopping for a unit; it still pulls what's in reach as it passes, each unit to
+// the ledger at once, greens the wall it flies over (where there's gas), and fades after `idleTicks` with no
+// unit, to come back a jumper. The view draws moths amber, jumpers paler (the user: "a bit less warm").
 
 import { isOpen, Tile } from '../../sim/gen/world.js'
 import { CRYSTAL } from './world.js'
@@ -29,7 +35,8 @@ import { wrap } from '../../sim/dig/rules.js'
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
 import { FRUIT, fruitNear, greenAround, pick, VINE } from './garden.js'
 import { dist2, gain } from './game.js'
-import { crawl, fall, flyTick, jump } from './bounce.js'
+import { becomeMoth, crawl, fall, flyTick, jump, mothTick } from './bounce.js'
+import { stationOf } from './gas.js'
 
 /** @typedef {import('./world.js').Cell} Cell */
 /**
@@ -45,6 +52,7 @@ import { crawl, fall, flyTick, jump } from './bounce.js'
  * @property {number} [pace] ticks its last move takes to draw
  * @property {import('./bounce.js').Flight | null} [fly] in the air (bounce.js)
  * @property {number} [landedAt]
+ * @property {import('./bounce.js').Moth | null} [moth] it met gas: it flies like a moth until it fades (b4.71)
  */
 
 /** The swarm's numbers (the dev panel's). */
@@ -149,6 +157,7 @@ function arrive(g, b, at, rng) {
   b.target = null
   b.pullFor = 0
   b.landedAt = g.tick
+  b.moth = null
   fall(b)
 }
 
@@ -168,8 +177,14 @@ export function updateSwarm(g) {
   g.swarm.forEach((b, k) => {
     b.lastOre ??= g.tick // a save from before b4.70
     if (g.tick - b.lastOre >= Math.max(1, s.idleTicks)) {
-      g.events.push({ type: 'faded', x: b.x, y: b.y })
+      g.events.push({ type: 'faded', x: b.x, y: b.y, moth: !!b.moth })
       arrive(g, b, spawnAt(g, s, rng, b) ?? b, rng)
+      return
+    }
+    if (!b.moth && g.gas[stationOf(g, b.y * g.world.w + b.x)] > 0) becomeMoth(b, rng)
+    if (b.moth) {
+      if (!fireNear(g, b, s.fireStop) && mothTick(g, b, rng)) greenAround(g, b.x, b.y)
+      pull(g, s, b, k)
       return
     }
     if (b.fly) {

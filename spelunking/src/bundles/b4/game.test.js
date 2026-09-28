@@ -1458,3 +1458,41 @@ test('wild bugs crawl the wall and sometimes jump (b4.70)', async () => {
   assert.ok(air > 0, 'some jump')
   assert.ok(wall + air > n * 0.9, `${wall} on the wall, ${air} in the air of ${n}`)
 })
+
+test('a tamed bug that meets gas turns moth: it circles through open air, still sends units at once, and comes back a jumper after it fades (b4.71)', async () => {
+  const { stationOf } = await import('./gas.js')
+  const g = fresh()
+  g.cfg.lichen.near = 0
+  g.cfg.worms.max = 0
+  g.cfg.gas.spreadTicks = 1e9
+  g.ledger.bugs = 1
+  tick(g)
+  const b = g.swarm[0]
+  assert.ok(!b.moth, 'a jumper at first')
+  g.gas[stationOf(g, b.y * g.world.w + b.x)] = 1000
+  tick(g)
+  assert.ok(b.moth, 'a moth once it met gas')
+  let moves = 0
+  let dug = 0
+  let hauled = 0
+  let faded = 0
+  for (let i = 0; i < g.cfg.swarm.idleTicks + 60; i++) {
+    const at = `${b.x},${b.y}`
+    tick(g)
+    assert.ok(open(b), 'never in rock')
+    if (`${b.x},${b.y}` !== at && !faded) moves++
+    for (const e of g.events) {
+      if (e.type === 'dug') dug++
+      if (e.type === 'haul') hauled += e.ore + e.crystals + e.fruit
+      if (e.type === 'faded') faded++
+    }
+    g.events.length = 0
+  }
+  assert.ok(moves > 100, `${moves} pixels flown`)
+  assert.equal(hauled, dug, 'units to the ledger at once')
+  if (!dug) {
+    assert.equal(faded, 1, 'no unit in 30 s: it fades')
+    const gas = g.gas[stationOf(g, b.y * g.world.w + b.x)]
+    if (!gas) assert.ok(!b.moth, 'back at a node without gas: a jumper')
+  }
+})

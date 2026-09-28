@@ -49,6 +49,7 @@ const ORE = 'rgb(236,164,40)'
 const RED = '#ff2828'
 const CRYSTAL_C = 'rgb(240,240,240)' // white (the user, b4.28; was b3's teal)
 const BUG = [255, 190, 90] // tamed: amber (D059)
+const JUMPER = [245, 222, 160] // a tamed bug that hasn't met gas: paler, less warm (the user, b4.71)
 const WILD = [90, 170, 255] // wild: blue (D059)
 const LICHEN_RGB = [96, 44, 128]
 const OPEN_RGB = [36, 44, 62] // the cave's back wall: dark grey-blue, not the unexplored black (the user, b4.16)
@@ -300,7 +301,7 @@ export function createRenderer(canvas, game, ui, view) {
       // (the user's crash in b4.28)
       fly(cell(e), cell(e.to), now, 0.3, `rgb(${WALL_RGB[ASH]})`, 0.3) // ash since b4.54
     }
-    else if (e.type === 'faded') faded.push({ x: e.x, y: e.y, s: now })
+    else if (e.type === 'faded') faded.push({ x: e.x, y: e.y, s: now, moth: e.moth })
     else if (e.type === 'haul') {
       for (let k = 0; k < Math.min(e.ore, 12); k++) fly(cell(e), icon('ore'), now + k * 0.06, 0.9, ORE, 0)
       for (let k = 0; k < Math.min(e.crystals, 6); k++) fly(cell(e), icon('crystals'), now + k * 0.08, 0.9, CRYSTAL_C, 0)
@@ -756,9 +757,10 @@ export function createRenderer(canvas, game, ui, view) {
   }
 
   /** A bug between its last pixel and this one, over its last move's pace; in the air, where its flight is
-   * (b4.70). @param {{ x: number, y: number, from: Cell, movedAt: number, pace?: number, fly?: import('./bounce.js').Flight | null }} b @param {number} alpha @param {number} pace */
+   * (b4.70). @param {{ x: number, y: number, from: Cell, movedAt: number, pace?: number, fly?: import('./bounce.js').Flight | null, moth?: import('./bounce.js').Moth | null }} b @param {number} alpha @param {number} pace */
   function bugAt(b, alpha, pace) {
     if (b.fly) return { x: (b.fly.x + b.fly.vx * alpha) / 1000 - 0.5, y: (b.fly.y + b.fly.vy * alpha) / 1000 - 0.5 }
+    if (b.moth) return { x: b.moth.x / 1000 - 0.5, y: b.moth.y / 1000 - 0.5 } // a moth's sub-pixel spot (b4.71)
     const f = Math.min(1, (game.tick - b.movedAt + alpha) / Math.max(1, b.pace || pace))
     let dx = b.x - b.from.x
     if (Math.abs(dx) > 1) dx = -Math.sign(dx)
@@ -790,7 +792,7 @@ export function createRenderer(canvas, game, ui, view) {
   }
 
   const FADE_S = 1.5
-  /** @type {{ x: number, y: number, s: number }[]} bugs fading away (b4.70) */
+  /** @type {{ x: number, y: number, s: number, moth: boolean }[]} bugs fading away (b4.70) */
   const faded = []
 
   /** Tamed bugs at work (b4.3): warm dots with a small halo, drawn over the fog (they're yours). @param {number} alpha @param {number} now */
@@ -806,20 +808,21 @@ export function createRenderer(canvas, game, ui, view) {
       }
       const [x, y] = at(faded[k])
       ctx.globalAlpha = 1 - t
-      dot(x, y, s, hr * (1 + t), BUG)
+      dot(x, y, s, hr * (1 + t), faded[k].moth ? BUG : JUMPER)
       ctx.globalAlpha = 1
     }
     for (const b of game.swarm) {
       const p = workerAt(b, alpha)
+      const rgb = b.moth ? BUG : JUMPER
       const [x, y] = at(p)
       if (x < -hr || y < -hr || x > W + hr || y > H + hr) continue
       if (b.target && b.pullFor > 20) specks(b.target, p, now, unitColor(b.target)) // your dust stream (b4.7)
       const halo = ctx.createRadialGradient(x, y, 0, x, y, hr)
-      halo.addColorStop(0, `rgba(${BUG},0.5)`)
-      halo.addColorStop(1, `rgba(${BUG},0)`)
+      halo.addColorStop(0, `rgba(${rgb},0.5)`)
+      halo.addColorStop(1, `rgba(${rgb},0)`)
       ctx.fillStyle = halo
       ctx.fillRect(x - hr, y - hr, hr * 2, hr * 2)
-      ctx.fillStyle = `rgb(${BUG})`
+      ctx.fillStyle = `rgb(${rgb})`
       ctx.fillRect(Math.round(x - s / 2), Math.round(y - s / 2), Math.round(s), Math.round(s))
     }
   }

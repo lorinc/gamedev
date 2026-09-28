@@ -321,6 +321,8 @@ holds gas, one gas a pixel (`gas.perMoss`).
 Then (D153, the user): bugs are wall-bouncers (`bounce.js`): they crawl along the rock and jump in random
 low-gravity arcs; tamed ones stay to mine, send each unit to the ledger at once, and fade after 30 s with none
 to come back at a node; wild ones wander the same way. One nibble tames a wild bug.
+Then (D154, the user): a tamed bug that meets gas turns into a moth, circling through open air (moss where it
+flies), still sending units at once and fading after 30 s; jumpers are drawn paler, moths amber.
 
 ## Feedback
 

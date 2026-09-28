@@ -131,7 +131,7 @@ export const CONFIG = {
  *   | { type: 'pulled', x: number, y: number, tile: number, to: Cell }
  *   | { type: 'built', edge: number, from: number, price: number }
  *   | { type: 'refused', edge: number, reason: 'ore' | 'off' | 'far' | 'built' }
- *   | { type: 'dug', x: number, y: number, tile: number, by: number } | { type: 'haul', x: number, y: number, ore: number, crystals: number, fruit: number } | { type: 'faded', x: number, y: number }
+ *   | { type: 'dug', x: number, y: number, tile: number, by: number } | { type: 'haul', x: number, y: number, ore: number, crystals: number, fruit: number } | { type: 'faded', x: number, y: number, moth: boolean }
  *   | { type: 'worm', x: number, y: number } | { type: 'eaten', x: number, y: number } | { type: 'deposit', cells: number[] }
  *   | { type: 'upgrade', level: number } | { type: 'lizardUpgrade', level: number }
  *   | { type: 'lizard', x: number, y: number } | { type: 'lichen', x: number, y: number } | { type: 'engulf' | 'eject', node: number } | { type: 'flower' | 'bloom' | 'poof' | 'ashworm' | 'ashwormGone' | 'ashwormBurst', x: number, y: number } | { type: 'spark', x: number, y: number } | { type: 'licked', x: number, y: number, to: Cell }
