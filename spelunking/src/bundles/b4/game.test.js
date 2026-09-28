@@ -356,19 +356,30 @@ test('loot buys the bot upgrades by itself: 16, 32, 64…, each mining radius an
   assert.equal(Math.round(CONFIG.light.base * gain(g, 2)), 12) // 8 px → 12
 })
 
-test('plentiful loot grows a purple lichen patch of 6–8 surface pixels with a leaf (b4.15)', () => {
+test('a large area of cover grows a purple lichen patch of 6–8 surface pixels with a leaf (b4.23)', async () => {
+  const { GREEN } = await import('./garden.js')
   const g = fresh()
   g.cfg.worms.max = 0
   g.cfg.lizards.max = 0
-  g.cfg.lichen.density = 1
   g.cfg.lichen.near = 20
-  // the world has no loot (b4.17): some in the rock round the bot, as lizards would leave it
+  g.cfg.lichen.spark = 1e9 // no fire here
   const { w } = MAP.world
+  // loot alone no longer does it (b4.15's trigger)
   for (let dy = -20; dy <= 20; dy += 3)
     for (let dx = -20; dx <= 20; dx += 3) {
       const i = (g.ch.y + dy) * w + g.ch.x + dx
       if (!isOpen(MAP.world.tiles[i])) MAP.world.tiles[i] = Tile.Loot
     }
+  for (let t = 0; t < 60 * 60; t++) tick(g)
+  assert.equal(g.lichen.patches.length, 0, 'loot: nothing')
+  // the cave round the bot green, as the bugs would leave it
+  let n = 0
+  for (let dy = -30; dy <= 30; dy++)
+    for (let dx = -30; dx <= 30; dx++) {
+      const i = (g.ch.y + dy) * w + g.ch.x + dx
+      if (isOpen(MAP.world.tiles[i])) (g.garden.wall[i] = GREEN), n++
+    }
+  assert.ok(n > 300)
   for (let t = 0; t < 60 * 60 && !g.lichen.patches.length; t++) tick(g)
   assert.ok(g.lichen.patches.length > 0, 'a patch')
   const p = g.lichen.patches[0]

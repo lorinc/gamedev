@@ -1,22 +1,22 @@
-// b4.15's lichen (the user): where loot is plentiful, purple lichen covers the cave wall, a patch of 6–8
-// pixels, and grows a single curly short leaf. Decoration for now: it takes nothing and gives nothing.
-// Cheats, like the lizards: every `checkTicks` a random pixel within `near` px of the bot with `density` loot
-// within `radius` px starts a patch on the nearest surface pixel (open, 8-bordering solid) with no lichen
+// b4.15's lichen (the user): purple lichen covers the cave wall, a patch of 6–8 pixels, and grows a single
+// curly short leaf. b4.23 (the user): it's triggered by a large area of the bugs' cover (green, vine, fruit;
+// garden.js), no longer by loot. Cheats, like the lizards: every `checkTicks` a random pixel within `near` px
+// of the bot with `density` px of cover within `radius` px starts a patch on the nearest surface pixel (open, 8-bordering solid) with no lichen
 // within `gap` px; the patch grows along surface pixels to `min`–`max` pixels at once; its leaf curls out
 // from the patch's first pixel, away from the rock: pixels, like everything else (b4.18, the user). Randomness from the tick (rng.js).
 // b4.21 (the user): a lichen with the bugs' cover (garden.js) within `touch` px sometimes sparks an ember, 1 in
 // `spark` a check: the cover catches fire there (garden.js's fire). Its leaf withers and it never sparks
 // again; the purple patch stays.
 
-import { isOpen, Tile } from '../../sim/gen/world.js'
+import { isOpen } from '../../sim/gen/world.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
 import { cover, ignite } from './garden.js'
 
 /** The lichen's numbers (the dev panel's). */
 export const LICHEN = {
-  density: 8, // loot within radius that start a patch
-  radius: 8,
+  density: 150, // px of cover within radius that start a patch (b4.23; was 8 loot within 8)
+  radius: 12,
   near: 64,
   checkTicks: 300,
   min: 6, // px a patch covers (the user: 6–8)
@@ -73,7 +73,7 @@ export function updateLichen(g) {
   const p = { x: wrap(g.ch.x + (rng() % (2 * n + 1)) - n, w), y: g.ch.y + (rng() % (2 * n + 1)) - n }
   if (p.y < 0 || p.y >= h) return
   const r = c.radius
-  let loot = 0
+  let area = 0
   let best = null
   let bd = Infinity
   for (let dy = -r; dy <= r; dy++)
@@ -81,10 +81,10 @@ export function updateLichen(g) {
       const y = p.y + dy
       const d = dx * dx + dy * dy
       if (y < 0 || y >= h || d > r * r) continue
-      if (tiles[y * w + wrap(p.x + dx, w)] === Tile.Loot) loot++
+      if (cover(g.garden.wall[y * w + wrap(p.x + dx, w)])) area++
       if (d < bd && surface(g, p.x + dx, y)) ((bd = d), (best = { x: wrap(p.x + dx, w), y }))
     }
-  if (loot < c.density || !best) return
+  if (area < c.density || !best) return
   const start = /** @type {{ x: number, y: number }} */ (best)
   // no other lichen within gap
   const G = c.gap
