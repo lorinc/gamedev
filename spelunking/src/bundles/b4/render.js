@@ -43,6 +43,11 @@ const BUG = [255, 190, 90] // tamed: amber (D059)
 const WILD = [90, 170, 255] // wild: blue (D059)
 const LICHEN_RGB = [96, 44, 128]
 const OPEN_RGB = [36, 44, 62] // the cave's back wall: dark grey-blue, not the unexplored black (the user, b4.16)
+// the rock, much darker than b3's (the user, b4.18): under the back wall, so the caves read as the lit part
+/** @type {Record<number, number[]>} */
+const ROCK_RGB = { [Tile.Soft]: [40, 30, 24], [Tile.Hard]: [22, 23, 28] }
+/** A tile's colour in b4: its rock, else b3's palette. @param {number} t */
+const rgb = (t) => ROCK_RGB[t] ?? cellRgb(/** @type {any} */ (t))
 const LEAF = 'rgb(176,104,220)'
 const RING_TRAIL = 4
 const EDGE = 3 // px over which the light fades out
@@ -74,9 +79,9 @@ export function createRenderer(canvas, game, ui, view) {
     if (game.lichen.on[i] && world.tiles[i] === Tile.Open) timg.data.set([...LICHEN_RGB, 255], i * 4)
     else if (scenic(i)) timg.data.set(map.scenery.subarray(i * 4, i * 4 + 4), i * 4)
     else if (wall && world.tiles[i] === Tile.Open) timg.data.set([.../** @type {number[]} */ (WALL_RGB[wall]), 255], i * 4)
-    else if (world.tiles[i] === Tile.Ore || world.tiles[i] === Tile.Loot) timg.data.set([...cellRgb(/** @type {any} */ (rockUnder(i))), 255], i * 4)
+    else if (world.tiles[i] === Tile.Ore || world.tiles[i] === Tile.Loot) timg.data.set([...rgb(rockUnder(i)), 255], i * 4)
     else if (world.tiles[i] === Tile.Open) timg.data.set([...OPEN_RGB, 255], i * 4)
-    else timg.data.set([...cellRgb(/** @type {any} */ (world.tiles[i])), 255], i * 4)
+    else timg.data.set([...rgb(world.tiles[i]), 255], i * 4)
   }
   /** The rock an ore or loot pixel sits in: its 8 neighbours' majority, soft on a tie (pull.js's toRock). @param {number} i */
   function rockUnder(i) {
