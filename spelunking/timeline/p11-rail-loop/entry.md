@@ -68,6 +68,7 @@ build b4.59: 2026-09-28 · p11: b4.59, mega beasts eat bulbs; their drops fill c
 build b4.60: 2026-09-28 · p11: b4.60, worms tunnel to fruit (D142)
 build b4.61: 2026-09-28 · p11: b4.61, the mega beast in crawling dark pixels (D143)
 build b4.62: 2026-09-28 · p11: b4.62, the game saves itself and comes back on the next visit (D144)
+build b4.63: 2026-09-28 · p11: b4.63, every 4 built nodes add a tamed bug; loot no longer tames (D145)
 ---
 
 # p11 · b4 · Rail Loop
