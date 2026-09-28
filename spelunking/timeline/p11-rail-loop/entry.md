@@ -53,6 +53,7 @@ build b4.44: 2026-09-28 · p11: b4.44, the bot row counts you plus the flower bo
 build b4.45: 2026-09-28 · p11: b4.45, burst light worms give pink; ledger rows earned with theatrics (D127)
 build b4.46: 2026-09-28 · p11: b4.46, scans no longer scare wild bugs (D128)
 build b4.47: 2026-09-28 · p11: b4.47, pinch zoom, zoom in CSS px, brighter on touch screens (D129)
+build b4.48: 2026-09-28 · p11: b4.48, loot triple-pings now and then (D130)
 ---
 
 # p11 · b4 · Rail Loop
