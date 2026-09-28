@@ -51,6 +51,7 @@ build b4.42: 2026-09-28 · p11: b4.42, hearts half the bites, a "?" when the led
 build b4.43: 2026-09-28 · p11: b4.43, the ledger: resources, a gap, then levels; fruit a pixel (D125)
 build b4.44: 2026-09-28 · p11: b4.44, the bot row counts you plus the flower bots (D126)
 build b4.45: 2026-09-28 · p11: b4.45, burst light worms give pink; ledger rows earned with theatrics (D127)
+build b4.46: 2026-09-28 · p11: b4.46, scans no longer scare wild bugs (D128)
 ---
 
 # p11 · b4 · Rail Loop
