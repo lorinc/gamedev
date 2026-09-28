@@ -65,6 +65,7 @@ build b4.56: 2026-09-28 · p11: b4.56, loot upgrades lizards; the bug level grow
 build b4.57: 2026-09-28 · p11: b4.57, lizards linger: 3x slower licks, zip after every rest, 5x longer life (D139)
 build b4.58: 2026-09-28 · p11: b4.58, tamed bugs eat 2x slower (D140)
 build b4.59: 2026-09-28 · p11: b4.59, mega beasts eat bulbs; their drops fill cave pools (D141)
+build b4.60: 2026-09-28 · p11: b4.60, worms tunnel to fruit (D142)
 ---
 
 # p11 · b4 · Rail Loop
