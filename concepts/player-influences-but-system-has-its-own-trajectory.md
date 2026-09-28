@@ -58,7 +58,8 @@ flowchart LR
 | **Crystals** (ledger) | lizard burrows (5 px in the rock, then pulled by you or bugs) | lizard upgrades (16, 32, 64…) | pulling |
 | **Fruit** (ledger) | your pull (within the light, seen or not), bug hauls (≤ 8 a trip) | bug upgrades (16, 32, 64…); in the world: worms eat it, fire burns it | pulling |
 | **Pink** (ledger) | ash worms bursting with nothing left to reveal | **none** | none |
-| **Liquid** (ledger + pools) | mega beast meals, 24 drops each | **none** ("I will want to use these pools", D141) | standing near bulbs (beasts eat only near you) |
+| **Liquid** (ledger + pools) | mega beast meals, 24 drops each | evaporation: each drop's 8 particles, one per pool surface pixel every 5 s (D149) | standing near bulbs (beasts eat only near you) |
+| **Gas** (per node, every node a climate station) | evaporating pools: each particle to the nearest node through open pixels (never across rock) | **none** yet, no cap ("we will do something with the gas levels", D149) | none directly |
 | **Tamed bugs** (ledger) | 16 nibbles by wild bugs (D060), 1 per 4 built nodes reached (D145) | **none**: bugs never die | feeding wild bugs, building |
 | **Bug level** | fruit spent automatically | never goes down | pulling fruit |
 | **Lizard level** | crystals spent automatically | never goes down | pulling crystals |
@@ -110,7 +111,8 @@ Each row is one tunable interaction. **P?** = does the player's position or acti
 | L08 | Wild bugs → Ore | − | the nibbles drain the ledger; empty ledger: they ask ("?") | `bugs.nibbleTicks` | yes | bugs.js |
 | L09 | Network → Beasts | + | 16, 32, 64… built nodes: +1 beast, forever | `beasts.first` | no | beasts.js |
 | L10 | Beasts → Network | − | every 5 min each eats a bulb near you: ~1.4 nodes and ~2 roots per meal (≈ 20 ore), may strand pieces | `beasts.everyTicks`, `beasts.near` | yes | beasts.js `eat` |
-| L11 | Beasts → Liquid | + | 24 drops a meal, permanent pools | `beasts.drops` | yes | beasts.js |
+| L11 | Beasts → Liquid | + | 24 drops a meal; pools shrink from the top as they evaporate (a 24-drop pool in ~2–4 min) | `beasts.drops` | yes | beasts.js |
+| L12 | Liquid → Gas | + | 8 particles a drop, one per surface pixel every 5 s, to the station in the same cave | `gas.per`, `gas.everyTicks` | yes (clouds round the nodes, wisps from the pools) | gas.js |
 
 ### Garden: cover, fruit, worms
 
@@ -219,8 +221,8 @@ matters). Stranded, still counted as built: 1 node at 16, 7 at 128.
    that scale, so the beasts' tax (≈ 20 ore a meal) never bites.
 2. **Automatic growth is fire-limited, and fires are player-gated.** Flowers: 27 in the first 20 minutes, 3 in
    the last 10; the network plateaus around 100 nodes while the beasts keep eating.
-3. **Three dead ends:** pink, liquid and (by design) tamed bugs have no sink. Pink and liquid collect with no
-   effect on anything.
+3. **Three dead ends:** pink, gas and (by design) tamed bugs have no sink. Pink and gas collect with no
+   effect on anything (liquid now drains into gas, D149).
 4. **The beast ratchet:** beasts stay after the network shrinks back below their threshold.
 5. **Stranded pieces count:** eaten inner bulbs leave islands that count toward built nodes (so toward
    L04's bugs and L09's beasts) but can't be ridden to from the pod.

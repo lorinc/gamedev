@@ -66,6 +66,8 @@ const LICHEN_A = 0.55
 const FRUIT_C = [235, 40, 50]
 const LIQUID = [120, 225, 255] // b4.59: the beasts' shimmery liquid
 const DROP_PX_S = 40 // how fast a drop runs down to its pool, px/s
+const GAS_RGB = [200, 245, 255] // b4.66: the liquid's vapour, paler
+const WISP_PX_S = 10 // how fast an evaporated particle drifts to its station, px/s
 const PINK = [255, 120, 210] // b4.45: a burst ash worm's resource
 const RAINBOW = ['#ff4040', '#ff9a2a', '#ffe840', '#5cff6a', '#40d8ff', '#6a70ff', '#d860ff', '#ffffff']
 /** @type {Record<number, number[]>} */
@@ -274,6 +276,13 @@ export function createRenderer(canvas, game, ui, view) {
         drops.push({ path: p, s })
         wetAt.set(p[p.length - 1], s + p.length / DROP_PX_S)
       })
+    } else if (e.type === 'evaporated') {
+      // b4.66: a particle leaves the pool some time within the step and drifts to its station
+      const to = map.nodes[e.node]
+      let dx = to.x - e.x
+      if (Math.abs(dx) > w / 2) dx -= Math.sign(dx) * w
+      const dur = Math.max(1.5, Math.hypot(dx, to.y - e.y) / WISP_PX_S)
+      wisps.push({ x: e.x + 0.5, y: e.y + 0.5, dx, dy: to.y - e.y, s: now + (Math.random() * game.cfg.gas.everyTicks) / 60, dur })
     } else if (e.type === 'poof') puff(e.x, e.y, now, 32, ['#ffffff', '#eef4ff', '#ffffff'], 14)
     else if (e.type === 'lizardUpgrade')
       // crystals to every lizard: they're what it upgrades (b4.56)
@@ -458,9 +467,10 @@ export function createRenderer(canvas, game, ui, view) {
         const x = (((tx0 + k) % w) + w) % w
         const i = ty * w + x
         if (game.liquid[i] && now >= (wetAt.get(i) ?? 0)) {
-          // a settled drop (b4.59): shimmering, hashed per pixel
+          // a settled drop (b4.59): shimmering, hashed per pixel; thinner as it evaporates (b4.66)
           const f = 0.75 + 0.25 * Math.sin(now * 3 + (Math.imul(i, 2654435761) >>> 24) / 40)
-          ctx.fillStyle = `rgb(${LIQUID.map((v) => Math.round(v * f))})`
+          const a = 0.35 + (0.65 * Math.min(1, game.liquid[i] / Math.max(1, game.cfg.gas.per)))
+          ctx.fillStyle = `rgba(${LIQUID.map((v) => Math.round(v * f))},${a})`
           ctx.fillRect(Math.round(sx(tx0 + k)), Math.round(sy(ty)), Math.ceil(T), Math.ceil(T))
         }
         const t = world.tiles[i]
@@ -482,6 +492,48 @@ export function createRenderer(canvas, game, ui, view) {
           if (p.f <= 4 && p.f % 2 === 0) pingsNow.push([Math.round(sx(tx0 + k)) + ox + s / 2, Math.round(sy(ty)) + oy + s / 2])
         }
       }
+  }
+
+  // b4.66's gas: drawn from the stations' counts, nothing per particle in the sim
+  /** @type {{ x: number, y: number, dx: number, dy: number, s: number, dur: number }[]} evaporated particles on their way, world px */
+  const wisps = []
+  /** A cloud round each station with gas: a speck per particle (up to 48), wider as it holds more, each on its
+   * own slow hashed drift; and the wisps rising from the pools to their stations. Under the fog. @param {number} now */
+  function drawGas(now) {
+    const s = Math.max(1, Math.round(T * 0.6))
+    const G = game.gas
+    for (let n = 0; n < G.length; n++) {
+      if (!G[n]) continue
+      const c = map.nodes[n]
+      const X = sx(c.x + 0.5)
+      const Y = sy(c.y + 0.5)
+      const R = Math.min(14, 2 + Math.sqrt(G[n])) // px
+      if (X < -R * T || X > W + R * T || Y < -R * T || Y > H + R * T) continue
+      for (let k = 0; k < Math.min(G[n], 48); k++) {
+        const hsh = Math.imul(n * 64 + k + 1, 2654435761) >>> 0
+        const u = (hsh & 1023) / 1024
+        const v = ((hsh >>> 10) & 1023) / 1024
+        const a = u * Math.PI * 2 + now * (0.15 + 0.35 * v) * (hsh & 0x100000 ? 1 : -1)
+        const r = R * (0.25 + 0.75 * Math.sqrt(v))
+        const bob = Math.sin(now * 0.8 + u * 9) * 0.8
+        ctx.fillStyle = `rgba(${GAS_RGB},${0.35 + 0.25 * Math.sin(now * 2 + v * 11)})`
+        ctx.fillRect(Math.round(X + Math.cos(a) * r * T - s / 2), Math.round(Y + (Math.sin(a) * r * 0.6 + bob) * T - s / 2), s, s)
+      }
+    }
+    for (let k = wisps.length - 1; k >= 0; k--) {
+      const p = wisps[k]
+      const t = (now - p.s) / p.dur
+      if (t < 0) continue
+      if (t >= 1) {
+        wisps.splice(k, 1)
+        continue
+      }
+      const e = t * t * (3 - 2 * t)
+      const x = p.x + p.dx * e + Math.sin(t * 7 + k) * 0.7
+      const y = p.y + p.dy * e - Math.sin(t * Math.PI) * 4 // rises before it settles
+      ctx.fillStyle = `rgba(${GAS_RGB},${0.8 * Math.sin(t * Math.PI) + 0.2})`
+      ctx.fillRect(Math.round(sx(x) - s / 2), Math.round(sy(y) - s / 2), s, s)
+    }
   }
 
   // b4.59's mega beasts: their shadows, the sinking bulbs, the drops
@@ -780,6 +832,7 @@ export function createRenderer(canvas, game, ui, view) {
     drawLichen()
     drawRails() // under the fog too (the user, b4.32: "network is still WAAAY too dominant")
     drawNodes(now, false)
+    drawGas(now) // under the fog, like the liquid (b4.66)
     for (let x = x0; x < W; x += w * T) ctx.drawImage(fog, 0, 0, w, h, x, sy(0), w * T, h * T)
     drawGarden()
     drawPings()

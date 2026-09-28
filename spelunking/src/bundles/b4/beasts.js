@@ -140,6 +140,6 @@ function drop(g, at, rng) {
     path.push(y * w + x)
   }
   const i = y * w + x
-  if (!g.liquid[i] && isOpen(tiles[i])) g.liquid[i] = 1
+  if (!g.liquid[i] && isOpen(tiles[i])) g.liquid[i] = Math.min(255, Math.max(1, g.cfg.gas.per)) // its particles (b4.66)
   return path
 }

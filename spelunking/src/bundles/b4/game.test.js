@@ -1147,6 +1147,7 @@ test('a save loaded into a fresh game goes on exactly like the game it was saved
     const c = JSON.parse(JSON.stringify(CONFIG))
     c.lichen.spark = 1
     c.beasts.everyTicks = 600
+    c.gas.everyTicks = 60
     c.garden.fruitTicks = 600
     return c
   }
@@ -1185,6 +1186,7 @@ test('a save loaded into a fresh game goes on exactly like the game it was saved
   assert.ok(g.swarm.length > 0, 'bugs at work')
   assert.ok(g.garden.wall.some((v) => v === 5), 'ash')
   assert.ok(g.beasts.length > 0, 'a beast')
+  assert.ok(g.gas.some((v) => v > 0), 'gas at a station (b4.66)')
   const s = save(g, TILES)
   assert.ok(s.length < 60000, `save ${s.length} chars`)
   const h = createGame(pristine(), cfg())
@@ -1239,4 +1241,68 @@ test('no cover within a tamed bug\'s 3×3 catches fire; round it, the fire burns
       if (isOpen(MAP.world.tiles[i]) && !cover(G.wall[i])) burned++
     }
   assert.ok(burned > 300, `the rest burned: ${burned} px`)
+})
+
+test('a pool evaporates from the top, 8 particles a drop, each to the nearest station through open pixels (b4.66)', async () => {
+  const { stationOf } = await import('./gas.js')
+  const g = createGame(pristine(), JSON.parse(JSON.stringify(CONFIG)))
+  g.cfg.pull.ticks = 1e9
+  g.cfg.worms.max = 0
+  g.cfg.lizards.max = 0
+  g.cfg.lichen.near = 0
+  const { w, h, tiles } = g.world
+  // the open pixels' 4-way components: a station must be in its pixel's
+  const comp = new Int32Array(w * h).fill(-1)
+  for (let i = 0, c = 0; i < w * h; i++) {
+    if (comp[i] >= 0 || !isOpen(tiles[i])) continue
+    const q = [i]
+    comp[i] = c
+    for (let k = 0; k < q.length; k++) {
+      const x = q[k] % w
+      const y = (q[k] - x) / w
+      for (const [nx, ny] of [[(x + w - 1) % w, y], [(x + 1) % w, y], [x, y - 1], [x, y + 1]]) {
+        const n = ny * w + nx
+        if (ny < 0 || ny >= h || comp[n] >= 0 || !isOpen(tiles[n])) continue
+        comp[n] = c
+        q.push(n)
+      }
+    }
+    c++
+  }
+  const nodeComps = new Set(MAP.nodes.map((n) => comp[n.y * w + n.x]))
+  let checked = 0
+  let crossed = 0 // pixels whose straight-line nearest node is in another cave
+  for (let i = 0; i < w * h; i += 97) {
+    if (!isOpen(tiles[i]) || !nodeComps.has(comp[i])) continue
+    const s = stationOf(g, i)
+    const n = MAP.nodes[s]
+    assert.equal(comp[n.y * w + n.x], comp[i], `pixel ${i}: its station is in its cave`)
+    const p = { x: i % w, y: Math.floor(i / w) }
+    const d2 = (/** @type {{ x: number, y: number }} */ a) => Math.min(Math.abs(a.x - p.x), w - Math.abs(a.x - p.x)) ** 2 + (a.y - p.y) ** 2
+    const near = MAP.nodes.reduce((b, m) => (d2(m) < d2(b) ? m : b))
+    if (comp[near.y * w + near.x] !== comp[i]) crossed++
+    checked++
+  }
+  assert.ok(checked > 100 && crossed > 0, `${checked} checked, ${crossed} across rock`)
+  // a 3-deep column of liquid, resting on rock
+  let col = -1
+  for (let i = 3 * w; i < (h - 1) * w && col < 0; i++)
+    if (isOpen(tiles[i]) && isOpen(tiles[i - w]) && isOpen(tiles[i - 2 * w]) && !isOpen(tiles[i + w])) col = i
+  assert.ok(col >= 0)
+  const cells = [col - 2 * w, col - w, col]
+  for (const i of cells) g.liquid[i] = g.cfg.gas.per
+  g.ledger.liquid = 3
+  const st = stationOf(g, cells[0])
+  const every = g.cfg.gas.everyTicks
+  const step = () => {
+    for (let t = 0; t < every; t++) tick(g)
+  }
+  for (let k = 0; k < 8; k++) step()
+  assert.deepEqual([...cells].map((i) => g.liquid[i]), [0, 8, 8], 'the top dries first')
+  assert.equal(g.ledger.liquid, 2)
+  for (let k = 0; k < 16; k++) step()
+  assert.deepEqual([...cells].map((i) => g.liquid[i]), [0, 0, 0])
+  assert.equal(g.ledger.liquid, 0)
+  assert.equal(g.gas.reduce((a, b) => a + b, 0), 24, '8 particles a drop')
+  assert.ok(g.gas[st] > 0)
 })

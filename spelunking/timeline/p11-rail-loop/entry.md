@@ -304,6 +304,9 @@ Then (D145, the user): every 4 built nodes add a tamed bug, on top of the nibbli
 Then (D146, the user): loot is called crystals in b4's code and docs. Then (D147, the user): no cover within a
 tamed bug's 3×3 catches fire.
 Then (D148, the user): worms glide between pixels like the bot, not a pixel jump a step (view only).
+Then (D149, the user): the beasts' pools evaporate from the top, 8 particles a drop, each to its climate
+station (every node) in the same cave; the stations' gas counts are saved and drawn as pale clouds round the
+nodes. Screenshot `gallery/p11/b4.66_gas_b.png`.
 
 ## Feedback
 
