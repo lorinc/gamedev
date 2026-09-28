@@ -79,6 +79,7 @@ build b4.70: 2026-09-28 · p11: b4.70, bugs are wall-bouncers, units to the ledg
 build b4.71: 2026-09-28 · p11: b4.71, tamed bugs that meet gas fly as moths, jumpers paler (D154)
 build b4.72: 2026-09-28 · p11: b4.72, pink predators eat crowded bugs and leave ore (D155)
 build b4.73: 2026-09-28 · p11: b4.73, predators haul their catch, hives hatch moths, 5x gas, bugs leave fruit (D156-D159)
+build b4.74: 2026-09-28 · p11: b4.74, hives twice as often (D160)
 ---
 
 # p11 · b4 · Rail Loop
