@@ -365,6 +365,8 @@ player to run. It is possible to engineer it to make time spent rewarding - e.g.
 the game out of balance temporarily for a big fat resource reward, but the system can be designed to be
 resilient, and restore balance after the push."**
 
+And, the user: **"This kind of game, this kind of complexity CAN be made fun with no menus, no instructions, and VERY simple swipe controls."**
+
 Found on the way:
 - **Stability needs rules, not hope:** b4.77 left running ran away (3,000+ moths): free hatching wherever gas is,
   slime keeping the gas forever, no carrying capacity. How an architecture keeps a big sim fast and bounded, and a
