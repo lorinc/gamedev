@@ -241,6 +241,8 @@ Then (D118, the user): a tamed bug starts where there's no vine first, then wher
 Then (D119, the user): the fire starts at 3 points and spreads by chance, ragged; ash sends out grey worms
 with side lights that snake 12 s towards the unexplored and lift the fog. Screenshots `gallery/p11/b4.37_*`.
 Then (D120, the user): riding at half the speed, 40 px/s; a tap gets you off at the next open pixel.
+Then (D121, the user): lizards over the fog like every animal; a round, soft-edged mask as wide as the map
+hides its repeat. Screenshots `gallery/p11/b4.39_*`.
 
 ## Feedback
 

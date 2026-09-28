@@ -368,7 +368,7 @@ export function createRenderer(canvas, game, ui, view) {
     }
   }
 
-  /** Lizards (b4.14): 3 px of bright green, the head brighter. */
+  /** Lizards (b4.14): 3 px of green, the head lighter; dull since b4.28, over the fog since b4.39. */
   function drawLizards() {
     const s = Math.max(T, 2 * dpr)
     for (const z of game.lizards)
@@ -473,7 +473,6 @@ export function createRenderer(canvas, game, ui, view) {
     }
     drawSpecks()
     drawLichen()
-    drawLizards() // under the fog: they don't glow (the user, b4.28)
     drawRails() // under the fog too (the user, b4.32: "network is still WAAAY too dominant")
     drawNodes(now, false)
     for (let x = x0; x < W; x += w * T) ctx.drawImage(fog, 0, 0, w, h, x, sy(0), w * T, h * T)
@@ -490,9 +489,11 @@ export function createRenderer(canvas, game, ui, view) {
     drawWild(alpha) // b3.7's wild bugs (D056–D061), drawn like the tamed ones, in blue (b4.13)
     drawSwarm(alpha, now)
     drawWorms()
+    drawLizards() // over the fog, like every moving animal (the user, b4.39), in b4.28's dull greens: no glow
     drawHearts(now)
-    drawFlights(now)
     drawEmbers(now, dt)
+    drawMask()
+    drawFlights(now)
     drawLedger(now)
   }
 
@@ -555,6 +556,19 @@ export function createRenderer(canvas, game, ui, view) {
       ctx.fillStyle = 'rgb(170,150,84)'
       px(f.x, f.y)
     }
+  }
+
+  /** A round mask over the world (b4.39, the user): a circle round the screen's middle as wide as the map,
+   * fading out over its outer fifth, so the map's repeat across x never shows. Flights and the ledger are
+   * drawn over it. */
+  function drawMask() {
+    const R = (w * T) / 2
+    if (R * R > (W * W + H * H) / 4) return // it'd lie off the screen
+    const g = ctx.createRadialGradient(W / 2, H / 2, R * 0.8, W / 2, H / 2, R)
+    g.addColorStop(0, `rgba(${BG_RGB},0)`)
+    g.addColorStop(1, `rgb(${BG_RGB})`)
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, W, H)
   }
 
   /** Ash worms (b4.37, the user): grey, with a row of small lights on both sides, over the fog. @param {number} now */
