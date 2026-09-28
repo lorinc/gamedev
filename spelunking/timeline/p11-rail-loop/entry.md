@@ -286,6 +286,8 @@ Then (D137, the user): lizards dash off the wall for ash in the middle of a cave
 Then (D138, the user): loot upgrades the lizards' reach; the bug level grows your light, mining radius and speed.
 Then (D139, the user): lizards lick 3× slower, zip on after every rest, and live ~40 s (5× longer).
 Then (D140, the user): tamed bugs pull 2× slower.
+Then (D141, the user): mega beasts join at 16, 32, 64… built nodes; every 5 min each tunnels in (a shadow, a
+tremor), eats a bulb near you and its roots, and 24 drops run down into lasting pools. Screenshots `gallery/p11/b4.59_*`.
 
 ## Feedback
 

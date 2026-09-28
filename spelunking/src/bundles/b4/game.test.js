@@ -1023,3 +1023,58 @@ test('a wild bug that finds loot eats it and is tamed: +1 bug on the ledger (b4.
   assert.notEqual(MAP.world.tiles[at + 1], Tile.Loot, 'the loot eaten')
   MAP.world.tiles[at + 1] = before
 })
+
+test('16 built nodes bring a mega beast: 5 s after its warning it eats a bulb near you, its roots go, 24 drops settle in pools (b4.59)', async () => {
+  const { extend } = await import('./game.js')
+  const { builtNodes } = await import('./beasts.js')
+  const g = createGame(pristine(), JSON.parse(JSON.stringify(CONFIG)))
+  g.cfg.pull.ticks = 1e9
+  g.cfg.worms.max = 0
+  g.cfg.lizards.max = 0
+  g.cfg.lichen.near = 0
+  g.cfg.beasts.everyTicks = 600
+  const { w } = g.world
+  // grow the network from the pod, nearest edges first, to 17 built nodes
+  g.ledger.ore = 10000
+  while (builtNodes(g) < 17) {
+    let best = -1
+    let bd = Infinity
+    MAP.edges.forEach((e, k) => {
+      if (g.built[k] || (!g.net[e.a] && !g.net[e.b]) || (g.net[e.a] && g.net[e.b])) return
+      const n = MAP.nodes[g.net[e.a] ? e.b : e.a]
+      const d = (n.x - g.ch.x) ** 2 + (n.y - g.ch.y) ** 2
+      if (d < bd) ((bd = d), (best = k))
+    })
+    assert.ok(best >= 0)
+    const e = MAP.edges[best]
+    extend(g, best, g.net[e.a] ? e.a : e.b)
+  }
+  /** @type {any[]} */
+  const seen = []
+  for (let t = 0; t < 1200 && !seen.some((e) => e.type === 'beastAte'); t++) {
+    tick(g)
+    for (const e of g.events) if (e.type.startsWith('beast')) seen.push({ ...e, tick: g.tick })
+    g.events.length = 0
+  }
+  const joined = seen.find((e) => e.type === 'beast')
+  const coming = seen.find((e) => e.type === 'beastComing')
+  const ate = seen.find((e) => e.type === 'beastAte')
+  assert.ok(joined && coming && ate, seen.map((e) => e.type).join(' '))
+  assert.equal(g.beasts.length, 1)
+  assert.equal(ate.tick - coming.tick, g.cfg.beasts.warnTicks, '5 s of warning')
+  assert.equal(ate.node, coming.node)
+  assert.ok((MAP.nodes[ate.node].x - g.ch.x) ** 2 + (MAP.nodes[ate.node].y - g.ch.y) ** 2 <= 50 ** 2, 'near you')
+  assert.ok(!MAP.podNodes.includes(ate.node), 'not a pod node')
+  assert.equal(g.railed[ate.node], 0, 'the bulb is gone')
+  for (const k of g.links[ate.node]) assert.equal(g.built[k], 0, 'and its roots')
+  // the drops: 24, each resting on rock or on another drop
+  assert.equal(g.ledger.liquid, 24)
+  const wet = [...g.liquid.keys()].filter((i) => g.liquid[i])
+  assert.equal(wet.length, 24)
+  for (const i of wet) {
+    assert.ok(isOpen(g.world.tiles[i]), 'in the air')
+    const below = i + w
+    assert.ok(!isOpen(g.world.tiles[below]) || g.liquid[below], 'resting')
+  }
+  assert.equal(ate.paths.length, 24)
+})

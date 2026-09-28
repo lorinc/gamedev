@@ -66,6 +66,7 @@ import { LIZARDS, updateLizards } from './lizards.js'
 import { createLichen, LICHEN, updateLichen } from './lichen.js'
 import { FLOWERS, updateFlowers } from './flowers.js'
 import { ASHWORMS, updateAshworms } from './ashworms.js'
+import { BEASTS, updateBeasts } from './beasts.js'
 import { OPEN, ROCK } from './world.js'
 
 /** @typedef {import('./world.js').Map} Map */
@@ -106,6 +107,7 @@ export const CONFIG = {
   lichen: { ...LICHEN },
   flowers: { ...FLOWERS },
   ashworms: { ...ASHWORMS },
+  beasts: { ...BEASTS },
   price: 10, // ore per edge (user: 8–12, tuned later)
   lizardUpgradeCost: 16, // loot for the lizards' first upgrade, doubling (the bot's b4.15–b4.55; the user, b4.56)
   upgradeGain: 0.2, // an upgrade: mining radius and speed +20% (the user, b4.15)
@@ -129,6 +131,7 @@ export const CONFIG = {
  *   | { type: 'upgrade', level: number } | { type: 'lizardUpgrade', level: number }
  *   | { type: 'lizard', x: number, y: number } | { type: 'lichen', x: number, y: number } | { type: 'engulf' | 'eject', node: number } | { type: 'flower' | 'bloom' | 'poof' | 'ashworm' | 'ashwormGone' | 'ashwormBurst', x: number, y: number } | { type: 'spark', x: number, y: number } | { type: 'licked', x: number, y: number, to: Cell }
  *   | { type: 'board', node: number } | { type: 'exit', node: number }
+ *   | { type: 'beast', count: number } | { type: 'beastComing', beast: number, node: number, from: Cell, x: number, y: number } | { type: 'beastAte', node: number, x: number, y: number, paths: number[][] }
  *   | { type: 'nibble', id: number, x: number, y: number, from: Cell } | { type: 'hungry', id: number, x: number, y: number } | { type: 'tamed', id: number, x: number, y: number, slot: number }
  *  } GameEvent bugs.js adds the wild bugs'; tamed has slot -1 (to the ledger); tile FRUIT_TILE is a fruit (b4.10)
  */
@@ -152,7 +155,7 @@ export const CONFIG = {
  * @property {{ x: number, y: number, px: number, py: number }} pos the bot's position in thousandths of a px (x
  *   wraps at w × 1000), this tick's and the last's (for drawing); always inside ch
  * @property {{ dx: number, dy: number } | null} move the direction pointed, as heading() gives it
- * @property {{ ore: number, loot: number, bugs: number, fruit: number, pink: number }} ledger b4.3; fruit b4.10; pink b4.45 (burst ash worms)
+ * @property {{ ore: number, loot: number, bugs: number, fruit: number, pink: number, liquid: number }} ledger b4.3; fruit b4.10; pink b4.45 (burst ash worms)
  * @property {import('./garden.js').GardenState} garden b4.10
  * @property {import('./worms.js').Worm[]} worms b4.12
  * @property {number} level bug upgrades bought (b4.13)
@@ -162,6 +165,8 @@ export const CONFIG = {
  * @property {import('./flowers.js').Flower[]} flowers b4.25: on the ash
  * @property {import('./flowers.js').FlowerBot[]} fbots b4.25: bloomed flowers, extending the network
  * @property {import('./ashworms.js').AshWorm[]} ashworms b4.37: lifting the fog
+ * @property {import('./beasts.js').Beast[]} beasts b4.59: the mega beasts
+ * @property {Uint8Array} liquid per pixel: a settled drop of the beasts' liquid (b4.59)
  * @property {import('./swarm.js').Worker[]} swarm the ledger's bugs at work
  * @property {Uint8Array} seen
  * @property {number[]} lit
@@ -205,7 +210,7 @@ export function createGame(map, cfg) {
     ch: { x: map.start.x, y: map.start.y, facing: 1 },
     pos: { x: map.start.x * 1000 + 500, y: map.start.y * 1000 + 500, px: map.start.x * 1000 + 500, py: map.start.y * 1000 + 500 },
     move: null,
-    ledger: { ore: 0, loot: 0, bugs: 0, fruit: 0, pink: 0 },
+    ledger: { ore: 0, loot: 0, bugs: 0, fruit: 0, pink: 0, liquid: 0 },
     garden: createGarden(world.w * world.h),
     worms: [],
     level: 0,
@@ -215,6 +220,8 @@ export function createGame(map, cfg) {
     flowers: [],
     fbots: [],
     ashworms: [],
+    beasts: [],
+    liquid: new Uint8Array(map.world.w * map.world.h),
     swarm: [],
     seen: new Uint8Array(world.w * world.h),
     lit: [],
@@ -290,6 +297,7 @@ export function tick(g) {
   updateLichen(g)
   updateFlowers(g)
   updateAshworms(g)
+  updateBeasts(g)
   while (g.ledger.fruit >= nextCost(g)) {
     g.ledger.fruit -= nextCost(g)
     g.level++

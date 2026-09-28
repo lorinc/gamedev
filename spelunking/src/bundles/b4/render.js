@@ -64,6 +64,8 @@ const PLUS = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]] // a still bulb's 5 px (
 const LICHEN_R = 24
 const LICHEN_A = 0.55
 const FRUIT_C = [235, 40, 50]
+const LIQUID = [120, 225, 255] // b4.59: the beasts' shimmery liquid
+const DROP_PX_S = 40 // how fast a drop runs down to its pool, px/s
 const PINK = [255, 120, 210] // b4.45: a burst ash worm's resource
 const RAINBOW = ['#ff4040', '#ff9a2a', '#ffe840', '#5cff6a', '#40d8ff', '#6a70ff', '#d860ff', '#ffffff']
 /** @type {Record<number, number[]>} */
@@ -257,7 +259,22 @@ export function createRenderer(canvas, game, ui, view) {
       puff(e.x, e.y, now, 48, RAINBOW, 18)
       fly(cell(e), icon('pink'), now + 0.2, 0.9, `rgb(${PINK})`, 0)
     }
-    else if (e.type === 'poof') puff(e.x, e.y, now, 32, ['#ffffff', '#eef4ff', '#ffffff'], 14)
+    else if (e.type === 'beastComing') {
+      // b4.59: the shadow slides in under the rock over the warning, and the ground trembles, growing
+      const dur = game.cfg.beasts.warnTicks / 60
+      shadows.set(e.beast, { from: e.from, to: { x: e.x, y: e.y }, s: now, dur })
+      shakeOf(now, dur, 3 * dpr, true)
+    } else if (e.type === 'beastAte') {
+      // the bite: a jolt, the bulb sinks into the back wall, the drops run down to the pools
+      for (const [k, v] of shadows) if (v.to.x === e.x && v.to.y === e.y) shadows.delete(k)
+      shakeOf(now, 1.4, 16 * dpr, false)
+      sinks.push({ x: e.x, y: e.y, s: now })
+      e.paths.forEach((p, k) => {
+        const s = now + 0.3 + k * 0.06
+        drops.push({ path: p, s })
+        wetAt.set(p[p.length - 1], s + p.length / DROP_PX_S)
+      })
+    } else if (e.type === 'poof') puff(e.x, e.y, now, 32, ['#ffffff', '#eef4ff', '#ffffff'], 14)
     else if (e.type === 'lizardUpgrade')
       // loot to every lizard: they're what it upgrades (b4.56)
       for (const z of game.lizards) for (let k = 0; k < 4; k++) fly(icon('loot'), cell({ ...z.body[0] }), now + k * 0.05, 0.6, LOOT, 0)
@@ -300,15 +317,17 @@ export function createRenderer(canvas, game, ui, view) {
   const builtNodes = () => game.railed.reduce((a, b) => a + b, 0)
   /** @type {Set<string>} rows shown */
   const known = new Set(ledgerKinds.filter((k) => k && count(k) > 0)) // no theatrics for what's there at the start
-  /** @type {{ s: number }[]} screen shakes (b4.45) */
+  /** @type {{ s: number, dur: number, amp: number, grow: boolean }[]} screen shakes (b4.45; b4.59's beasts too) */
   const shakes = []
   const REVEAL_S = 2 // s of shaking
+  /** A shake: from s for dur s, amp device px at its peak; `grow` rises to its peak at the end, else it fades. @param {number} s @param {number} dur @param {number} amp @param {boolean} grow */
+  const shakeOf = (s, dur, amp, grow) => shakes.push({ s, dur, amp, grow })
   /** A row's first show (b4.45, the user): the screen shakes, and 8 streams of its colour, 0.4 s each, one every
    * 0.2 s (so they overlap by 0.2 s), flow from random spots on the screen to its icon: about 2 s. Drawing only.
    * @param {string} kind @param {number} now */
   function reveal(kind, now) {
     known.add(kind)
-    shakes.push({ s: now })
+    shakeOf(now, REVEAL_S, 6 * dpr, false)
     const color = ledgerColor(kind)
     for (let k = 0; k < 8; k++) {
       /** @type {[number, number]} */
@@ -319,14 +338,17 @@ export function createRenderer(canvas, game, ui, view) {
   /** @param {string} kind */
   function ledgerColor(kind) {
     if (kind === 'nodes') return BULB_HELD[1]
+    if (kind === 'liquid') return `rgb(${LIQUID})`
     return kind === 'ore' ? ORE : kind === 'fruit' ? `rgb(${FRUIT_C})` : kind === 'pink' ? `rgb(${PINK})` : kind === 'bugs' ? `rgb(${BUG})` : kind === 'bot' ? CHAR : LOOT
   }
   /** The screen's shake now, device px. @param {number} now @returns {[number, number]} */
   function shake(now) {
-    while (shakes.length && now - shakes[0].s > REVEAL_S) shakes.shift()
-    let a = 0
-    for (const s of shakes) a = Math.max(a, 1 - (now - s.s) / REVEAL_S)
-    const m = 6 * dpr * a * a
+    for (let k = shakes.length - 1; k >= 0; k--) if (now - shakes[k].s > shakes[k].dur) shakes.splice(k, 1)
+    let m = 0
+    for (const s of shakes) {
+      const t = Math.min(1, Math.max(0, (now - s.s) / s.dur))
+      m = Math.max(m, s.amp * (s.grow ? t * t : (1 - t) * (1 - t)))
+    }
     return [Math.round((Math.random() * 2 - 1) * m), Math.round((Math.random() * 2 - 1) * m)]
   }
   /** An icon's centre, device px: its row among the shown ones (a row about to show counts as shown). @param {string} kind @returns {[number, number]} */
@@ -358,6 +380,7 @@ export function createRenderer(canvas, game, ui, view) {
       bot: `${count('bot')}`,
       bugs: `${L.bugs}`,
       nodes: `${count('nodes')}`,
+      liquid: `${L.liquid}`,
       fruit: `${L.fruit}/${nextCost(game)}`,
       pink: `${L.pink}`,
     }
@@ -434,6 +457,12 @@ export function createRenderer(canvas, game, ui, view) {
       for (let k = 0; k < cols; k++) {
         const x = (((tx0 + k) % w) + w) % w
         const i = ty * w + x
+        if (game.liquid[i] && now >= (wetAt.get(i) ?? 0)) {
+          // a settled drop (b4.59): shimmering, hashed per pixel
+          const f = 0.75 + 0.25 * Math.sin(now * 3 + (Math.imul(i, 2654435761) >>> 24) / 40)
+          ctx.fillStyle = `rgb(${LIQUID.map((v) => Math.round(v * f))})`
+          ctx.fillRect(Math.round(sx(tx0 + k)), Math.round(sy(ty)), Math.ceil(T), Math.ceil(T))
+        }
         const t = world.tiles[i]
         if (t !== Tile.Ore && t !== Tile.Loot) continue
         if (!game.seen[i]) continue
@@ -453,6 +482,95 @@ export function createRenderer(canvas, game, ui, view) {
           if (p.f <= 4 && p.f % 2 === 0) pingsNow.push([Math.round(sx(tx0 + k)) + ox + s / 2, Math.round(sy(ty)) + oy + s / 2])
         }
       }
+  }
+
+  // b4.59's mega beasts: their shadows, the sinking bulbs, the drops
+  /** @type {Map<number, { from: Cell, to: Cell, s: number, dur: number }>} */
+  const shadows = new Map()
+  /** @type {{ x: number, y: number, s: number }[]} */
+  const sinks = []
+  /** @type {{ path: number[], s: number }[]} */
+  const drops = []
+  /** @type {Map<number, number>} a settled drop's pixel: when its drop gets there (drawn from then on) */
+  const wetAt = new Map()
+  /** A dark, soft, long shadow sliding in under the rock, over the fog. @param {number} now */
+  function drawBeasts(now) {
+    for (const [k, v] of shadows) {
+      const t = (now - v.s) / v.dur
+      if (t > 1.2) {
+        shadows.delete(k)
+        continue
+      }
+      let dx = v.to.x - v.from.x
+      if (Math.abs(dx) > w / 2) dx -= Math.sign(dx) * w
+      const dy = v.to.y - v.from.y
+      const u = Math.min(1, t) ** 0.7
+      const R = Math.max(T * 9, 24 * dpr)
+      ctx.globalAlpha = Math.min(1, t * 3) * 0.75
+      // one long body: 8 blobs, head first, trailing back along its way; all the dusty rims first, then the dark
+      // cores over them, so it reads as one mass, not a chain of rings
+      /** @type {[number, number, number][]} */
+      const body = []
+      for (let j = 0; j < 8; j++) {
+        const b = Math.max(0, u - j * 0.05)
+        const [x, y] = at({ x: v.from.x + dx * b, y: v.from.y + dy * b })
+        body.push([x, y, R * (1 - j * 0.07)])
+      }
+      for (const [x, y, r] of body) {
+        const gr = ctx.createRadialGradient(x, y, r * 0.5, x, y, r * 1.25)
+        gr.addColorStop(0, 'rgba(120,100,80,0.18)')
+        gr.addColorStop(1, 'rgba(120,100,80,0)')
+        ctx.fillStyle = gr
+        ctx.fillRect(x - r * 1.25, y - r * 1.25, r * 2.5, r * 2.5)
+      }
+      for (const [x, y, r] of body) {
+        const gr = ctx.createRadialGradient(x, y, 0, x, y, r)
+        gr.addColorStop(0, 'rgba(0,0,0,0.8)')
+        gr.addColorStop(0.7, 'rgba(0,0,0,0.5)')
+        gr.addColorStop(1, 'rgba(0,0,0,0)')
+        ctx.fillStyle = gr
+        ctx.fillRect(x - r, y - r, 2 * r, 2 * r)
+      }
+      ctx.globalAlpha = 1
+    }
+    // the bulb pulled into the back wall: shrinking, darkening
+    for (let k = sinks.length - 1; k >= 0; k--) {
+      const p = sinks[k]
+      const t = (now - p.s) / 0.7
+      if (t >= 1) {
+        sinks.splice(k, 1)
+        continue
+      }
+      const r = Math.round(3 * (1 - t))
+      ctx.globalAlpha = 1 - t
+      for (let dy = -r; dy <= r; dy++)
+        for (let dx = -r; dx <= r; dx++) {
+          if (dx * dx + dy * dy > r * r + r) continue
+          ctx.fillStyle = BULB_HELD[dx * dx + dy * dy <= 1 ? 0 : 1]
+          px(p.x + dx, p.y + dy)
+        }
+      ctx.globalAlpha = 1
+    }
+    // the drops, running along their paths, over the fog
+    for (let k = drops.length - 1; k >= 0; k--) {
+      const d = drops[k]
+      const f = (now - d.s) * DROP_PX_S
+      if (f < 0) continue
+      if (f >= d.path.length - 1) {
+        drops.splice(k, 1)
+        continue
+      }
+      const a = d.path[Math.floor(f)]
+      const b = d.path[Math.floor(f) + 1]
+      const fr = f - Math.floor(f)
+      const ax = a % w
+      let bx = b % w
+      if (Math.abs(bx - ax) > 1) bx = ax - Math.sign(bx - ax)
+      const [x, y] = at({ x: ax + (bx - ax) * fr, y: Math.floor(a / w) + (Math.floor(b / w) - Math.floor(a / w)) * fr })
+      const s = Math.max(T, 3 * dpr)
+      ctx.fillStyle = `rgba(${LIQUID},${0.7 + 0.3 * Math.sin(now * 20 + k)})`
+      ctx.fillRect(Math.round(x - s / 2), Math.round(y - s / 2), Math.round(s), Math.round(s))
+    }
   }
 
   // Loot's triple ping (b4.48, the user: "loot ore should rarely 'triple-ping': 5ms halo, 10ms gaps"): a
@@ -627,6 +745,7 @@ export function createRenderer(canvas, game, ui, view) {
     for (let x = x0; x < W; x += w * T) ctx.drawImage(fog, 0, 0, w, h, x, sy(0), w * T, h * T)
     drawGarden()
     drawPings()
+    drawBeasts(now)
     drawFire(now, dt) // over the fog: a fire is seen from afar (b4.25)
     drawFlowers()
     drawAim(now) // over the fog: the bulb holding you and the edges it offers
