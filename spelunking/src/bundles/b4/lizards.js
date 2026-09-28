@@ -133,7 +133,7 @@ export function updateLizards(g) {
   const { w } = g.world
   const rng = mulberry32(hashSeed(SALT, g.tick))
   if (g.tick % Math.max(1, c.checkTicks) === 0 && g.lizards.length < c.max) spawn(g, c, rng)
-  g.lizards = g.lizards.filter((z, k) => {
+  g.lizards = g.lizards.filter((z) => {
     const head = z.body[0]
     if (z.eaten >= c.eat) {
       if (!z.site && g.tick - z.lookedAt >= c.checkTicks) {
@@ -162,7 +162,7 @@ export function updateLizards(g) {
           toRock(/** @type {any} */ (g), o.x, o.y)
           z.eaten++
           z.mineAt = g.tick + c.mineTicks
-          g.events.push({ type: 'licked', x: o.x, y: o.y, by: k })
+          g.events.push({ type: 'licked', x: o.x, y: o.y, to: { x: head.x, y: head.y } }) // where it is: an index goes stale (b4.29)
         }
       }
       return true

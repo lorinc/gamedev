@@ -220,6 +220,8 @@ Then (D109, the user): a bulb lets the bot go after 3 s with nothing built.
 Then (D110, the user): the roots and bulbs much dimmer; only the bulb holding the bot beats, bright.
 Then (D111, the user): loot white; lizards under the fog, duller; 1 flower per 4 ash discs.
 Then (D112, the user): 1 flower per 8 ash discs, drawn dimmer.
+Fix (the user's crash in b4.28, there since b4.14): a lizard's ore flight named the lizard by its index, which
+went stale when one burrowed; the `licked` event now carries where its head was.
 
 ## Feedback
 

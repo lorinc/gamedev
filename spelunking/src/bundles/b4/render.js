@@ -237,8 +237,9 @@ export function createRenderer(canvas, game, ui, view) {
       fly(cell(e), icon('bugs'), now, 0.9, `rgb(${BUG})`, 0)
       for (let k = 0; k < 6; k++) hearts.push({ x: e.x + 0.5, y: e.y + 0.5, s: now + k * 0.07, k }) // b4.14
     } else if (e.type === 'licked') {
-      const z = game.lizards[e.by]
-      fly(cell(e), () => /** @type {[number, number]} */ (at(z.body[0])), now, 0.3, ORE, 0.3)
+      // to the lizard's head as it licked: g.lizards is refiltered, so an index could name another one, or none
+      // (the user's crash in b4.28)
+      fly(cell(e), cell(e.to), now, 0.3, ORE, 0.3)
     }
     else if (e.type === 'haul') {
       for (let k = 0; k < Math.min(e.ore, 12); k++) fly(cell(e), icon('ore'), now + k * 0.06, 0.9, ORE, 0)
