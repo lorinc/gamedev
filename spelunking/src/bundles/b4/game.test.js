@@ -3,7 +3,7 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { addBug } from '../../sim/dig/bugs.js'
+import { addBug, blockOf } from '../../sim/dig/bugs.js'
 import { isOpen, Tile } from '../../sim/gen/world.js'
 import { buildable, command, CONFIG, createGame, HEADING, heading, shown, tick } from './game.js'
 import { makeMap } from './world.js'
@@ -364,6 +364,7 @@ test('a large area of cover grows a purple lichen patch of 6–8 surface pixels 
   g.cfg.lizards.max = 0
   g.cfg.lichen.near = 20
   g.cfg.lichen.spark = 1e9 // no fire here
+  g.cfg.lootTame = 0 // no bugs tamed by the loot (b4.40): they'd green the wall
   const { w } = MAP.world
   // loot alone no longer does it (b4.15's trigger)
   for (let dy = -20; dy <= 20; dy += 3)
@@ -765,4 +766,29 @@ test('a tap while riding gets you off at the next open pixel, mid-root (b4.38)',
   const k = p.findIndex((c) => c.x === g.ch.x && c.y === g.ch.y)
   assert.ok(k > 0, 'on the root')
   if (p.slice(1, -1).some((c) => open(c))) assert.notDeepEqual([g.ch.x, g.ch.y], [far.x, far.y], 'before the far end')
+})
+
+test('a wild bug that finds loot eats it and is tamed: +1 bug on the ledger (b4.40)', () => {
+  const g = fresh()
+  const { w } = MAP.world
+  // a wild bug in the open, loot in the rock beside it
+  let at = -1
+  for (let i = w * 200; i < MAP.world.tiles.length && at < 0; i++)
+    if (isOpen(MAP.world.tiles[i]) && MAP.world.tiles[i + 1] === Tile.Soft) at = i
+  assert.ok(at >= 0)
+  const x = at % w
+  const y = Math.floor(at / w)
+  g.bugs.length = 0
+  addBug(/** @type {any} */ (g), x, y)
+  const bug = g.bugs[0]
+  bug.block = blockOf(/** @type {any} */ (g), x, y) // its own fog block, so b3's code keeps it
+  const before = MAP.world.tiles[at + 1]
+  MAP.world.tiles[at + 1] = Tile.Loot
+  const bugs0 = g.ledger.bugs
+  g.cfg.bugs.moveTicks = 1e9
+  tick(g)
+  assert.equal(g.ledger.bugs, bugs0 + 1, 'tamed')
+  assert.ok(!g.bugs.includes(bug), 'gone from the world')
+  assert.notEqual(MAP.world.tiles[at + 1], Tile.Loot, 'the loot eaten')
+  MAP.world.tiles[at + 1] = before
 })

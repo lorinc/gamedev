@@ -73,6 +73,7 @@ export const CONFIG = {
   pull: { ticks: 60 }, // b3's pull was 300 (5 s a unit); 1 s here, or an edge is a minute of standing still
   light: { base: 8 },
   nodeReach: 2, // px: a shown node engulfs the bot this close (the user, b4.22; was 12, a build's reach)
+  lootTame: 2, // px: a wild bug this close to a loot pixel eats it and is tamed (the user, b4.40)
   ejectTicks: 180, // a bulb lets the bot go after 3 s with nothing built (the user, b4.26)
   bugs: {
     block: 32,
@@ -274,6 +275,7 @@ export function tick(g) {
   if (g.probe) spread(g, g.probe)
   pull(g)
   updateBugs(/** @type {any} */ (g))
+  lootTames(g)
   updateSwarm(g)
   updateGarden(g)
   updateWorms(g)
@@ -482,6 +484,30 @@ function board(g) {
     g.events.push({ type: 'board', node: i })
     return
   }
+}
+
+/** A wild bug that finds loot is tamed (b4.40, the user: "when wild bugs find a loot, they become tame"): within
+ * `lootTame` px of a loot pixel in the rock, it eats it (the pixel turns to rock, Claude's call: else one loot
+ * would tame every bug that passes) and leaves the world as +1 on the ledger, as the ore-fed taming does
+ * (D060, b4.3). @param {Game} g */
+function lootTames(g) {
+  const { w, h, tiles } = g.world
+  const r = Math.max(0, g.cfg.lootTame)
+  g.bugs = g.bugs.filter((bug) => {
+    if (bug.kind !== 'wild') return true
+    for (let dy = -r; dy <= r; dy++)
+      for (let dx = -r; dx <= r; dx++) {
+        const y = bug.y + dy
+        const x = wrap(bug.x + dx, w)
+        if (y < 0 || y >= h || dx * dx + dy * dy > r * r || tiles[y * w + x] !== Tile.Loot) continue
+        toRock(/** @type {any} */ (g), x, y) // the view reads loot specks from the tiles each frame
+        g.refill[bug.block] = g.tick + (g.cfg.bugs?.refillTicks ?? 300)
+        g.ledger.bugs++
+        g.events.push({ type: 'tamed', id: bug.id, x: bug.x, y: bug.y, slot: -1 })
+        return false
+      }
+    return true
+  })
 }
 
 /** A shown node within reach takes the bot in (b4.22): it sits on the node, pointing nowhere. @param {Game} g */

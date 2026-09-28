@@ -244,6 +244,7 @@ with side lights that snake 12 s towards the unexplored and lift the fog. Screen
 Then (D120, the user): riding at half the speed, 40 px/s; a tap gets you off at the next open pixel.
 Then (D121, the user): lizards over the fog like every animal; a round, soft-edged mask as wide as the map
 hides its repeat. Screenshots `gallery/p11/b4.39_*`.
+Then (D122, the user): a wild bug that finds loot eats it and is tamed.
 
 ## Feedback
 
