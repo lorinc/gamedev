@@ -411,7 +411,7 @@ Decided after p11 (b4, the cave ecosystem). This frames everything below it that
 
 **The genre:** "an intelligent, complex, systematically beautiful cookie clicker." Idle games retain about 10× the
 next genre (the user's research), "and I need that now". Vampire Survivors counts too: "You grind, unlock, grind
-better, unlock in n different dimensions, grind elegantly and masterfully." Not a puzzle game: Terra Nil "feels
+better, unlock in n different dimensions, grind elegantly and masterfully." Forager is one too (user: "do not look down on cookie clickers. Forager is a cookie clicker"). Not a puzzle game: Terra Nil "feels
 good", but "it is NOT a simulation, it is a puzzle game. I want this game to be fundamentally different."
 
 **What p11 proved (user):**
