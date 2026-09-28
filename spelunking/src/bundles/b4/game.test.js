@@ -559,11 +559,19 @@ test('1 in 8 ash discs grows a flower; after 2 minutes it becomes a bot that cle
   let poof = 0
   let built = 0
   for (let k = 0; k < 7200 + 60 * 60 && !poof; k++) {
+    const railed = g.railed.slice()
+    const firstBuilt = g.firstBuilt
     tick(g)
     for (const e of g.events) {
       if (e.type === 'bloom') bloom++
       if (e.type === 'poof') poof++
-      if (e.type === 'built') built++
+      if (e.type === 'built') {
+        built++
+        // into new nodes only, at the network's rim (b4.33)
+        const ed = MAP.edges[e.edge]
+        const far = ed.a === e.from ? ed.b : ed.a
+        if (firstBuilt) assert.equal(railed[far], 0, 'a new node')
+      }
     }
     g.events.length = 0
     if (bloom && k < 7300) assert.notEqual(G.wall[f0.y * w + f0.x], ASH, 'its ash went')
@@ -601,4 +609,31 @@ test('a bulb lets the bot go after 3 s with nothing built; it takes it again onl
   g.ch.x = node.x + 1
   tick(g)
   assert.equal(g.engulf, from)
+})
+
+test('a vine touching ash makes fruit 10 times as fast (b4.33)', async () => {
+  const { ASH, VINE } = await import('./garden.js')
+  /** Fruit made in a minute by 60 px of vine, with or without ash beside each. @param {boolean} ash */
+  const fruit = (ash) => {
+    const g = fresh()
+    g.cfg.worms.max = 0
+    g.cfg.lizards.max = 0
+    g.cfg.lichen.near = 0
+    const { w } = MAP.world
+    let n = 0
+    for (let i = w; i < g.garden.wall.length - 1 && n < 60; i++) {
+      if (!isOpen(MAP.world.tiles[i]) || !isOpen(MAP.world.tiles[i + 1]) || g.garden.wall[i] || g.garden.wall[i + 1]) continue
+      g.garden.wall[i] = VINE
+      g.garden.vines.push(i)
+      if (ash) g.garden.wall[i + 1] = ASH
+      n++
+      i++
+    }
+    for (let t = 0; t < 3600; t++) tick(g)
+    return g.garden.fruit.size
+  }
+  const plain = fruit(false)
+  const hyper = fruit(true)
+  assert.ok(plain >= 3 && plain <= 7, `plain ${plain}`) // 60 px / 12 = 5 a minute
+  assert.ok(hyper >= 38 && hyper <= 52, `next to ash ${hyper}`) // ×10, less the pixels already holding one
 })

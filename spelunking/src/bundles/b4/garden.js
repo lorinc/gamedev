@@ -15,6 +15,10 @@
 // b4.25 (the user: "flames can be brighter"): a pixel burns for `burnFor` steps before it goes out, so the
 // front is a band, not a line; it spreads once, the step after it caught. Each disc is kept in `discs` for
 // its flowers (flowers.js).
+// b4.33 (the user: "make vines that touch ash hyper-productive… now there's not enough ore"; fruit, asked):
+// a vine pixel with ash among its 8 neighbours makes fruit `hyper` (10) times as fast: it counts that many
+// times in the accumulator, and the next fruit lands on such a pixel with that weight. The list is rebuilt
+// every `HYPER_TICKS`.
 
 import { isOpen } from '../../sim/gen/world.js'
 import { wrap } from '../../sim/dig/rules.js'
@@ -33,6 +37,7 @@ export const GARDEN = {
   ashMax: 5,
   ashGap: 8, // px between ash centres: ashGap–ashGapMax (the user: 8–12)
   ashGapMax: 12,
+  hyper: 10, // a vine pixel touching ash makes fruit this many times as fast (the user, b4.33)
 }
 /** @typedef {typeof GARDEN} Garden */
 
@@ -45,6 +50,7 @@ export const ASH = 5
 /** @param {number} v a g.wall state @returns {boolean} cover the fire eats */
 export const cover = (v) => v === GREEN || v === VINE || v === FRUIT
 const BLOCK = 16 // the ash centres' lookup grid, px
+const HYPER_TICKS = 60
 
 const SALT = 0x6a4d
 // the 8 neighbours, round the clock (a vine grows 8-way)
@@ -74,6 +80,7 @@ const STEPS = [
  * @property {Map<number, number>} caught burning pixel → the fire step it caught at (b4.25)
  * @property {number} step the fire's steps so far
  * @property {{ i: number, r: number }[]} discs ash discs whose flowers aren't placed yet (flowers.js)
+ * @property {number[]} hyper vine pixels touching ash (b4.33)
  */
 
 /** @param {number} n pixels @returns {GardenState} */
@@ -92,6 +99,7 @@ export function createGarden(n) {
     caught: new Map(),
     step: 0,
     discs: [],
+    hyper: [],
   }
 }
 
@@ -150,13 +158,23 @@ export function updateGarden(g) {
     })
   }
   if (G.burning.length && g.tick % Math.max(1, c.burnTicks) === 0) burn(g, rng)
-  // every perFruit px of vine: a fruit per fruitTicks, on average
-  G.acc += G.vines.length
+  // vines touching ash (b4.33)
+  if (g.tick % HYPER_TICKS === 0)
+    G.hyper = G.vines.filter((i) => {
+      const x = i % w
+      const y = (i - x) / w
+      return STEPS.some(([sx, sy]) => y + sy >= 0 && y + sy < h && G.wall[(y + sy) * w + wrap(x + sx, w)] === ASH)
+    })
+  // every perFruit px of vine: a fruit per fruitTicks, on average; a hyper pixel counts `hyper` times
+  const boost = Math.max(1, c.hyper) - 1
+  G.acc += G.vines.length + boost * G.hyper.length
   const per = Math.max(1, c.perFruit) * Math.max(1, c.fruitTicks)
   while (G.acc >= per) {
     G.acc -= per
+    const onHyper = G.hyper.length && rng() % (G.vines.length + boost * G.hyper.length) < (boost + 1) * G.hyper.length
+    const from = onHyper ? G.hyper : G.vines
     for (let tries = 0; tries < 8; tries++) {
-      const i = G.vines[rng() % G.vines.length]
+      const i = from[rng() % from.length]
       if (G.wall[i] !== VINE) continue
       G.wall[i] = FRUIT
       G.fruit.add(i)

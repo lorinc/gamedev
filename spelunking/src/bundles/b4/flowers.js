@@ -8,7 +8,9 @@
 // `flyTicks`; then it lives on the network: at a node it rests 0.5–1.5 s, then zips along a random built root
 // from it, a px every `zipTicks`. At a node with an unbuilt edge, when the ledger holds the price and its last
 // extension was `buildGap` ago (60 s), it builds a random one of them from your ledger, 1 in `chance` stops
-// ("randomly extends the network"). After `builds` (3) it pops (event `poof`). Randomness from the tick.
+// ("randomly extends the network"). b4.33 (the user: "grow edges into new nodes in the network edge, not
+// just increasing edge density in the centre"): it builds only edges to nodes not on the network yet, heads
+// along built roots for the nearest node that has one (in hops), and waits there for the ore. After `builds` (3) it pops (event `poof`). Randomness from the tick.
 
 import { wrap } from '../../sim/dig/rules.js'
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
@@ -132,15 +134,20 @@ export function updateFlowers(g) {
       return true
     }
     if (g.tick < b.restUntil) return true
-    // at a node: maybe extend the network, then zip along a built root
+    // at a node: at the network's rim, maybe grow it outwards; else zip along a built root towards the rim
     const links = g.links[b.node]
-    const open = links.filter((k) => !g.built[k])
-    if (open.length && g.ledger.ore >= g.cfg.price && g.tick - b.builtAt >= c.buildGap && rng() % Math.max(1, c.chance) === 0) {
-      extend(g, open[rng() % open.length], b.node)
-      b.builtAt = g.tick
-      if (++b.builds >= c.builds) {
-        g.events.push({ type: 'poof', x: b.x, y: b.y })
-        return false
+    const out = frontier(g, b.node)
+    if (out.length) {
+      if (g.ledger.ore >= g.cfg.price && g.tick - b.builtAt >= c.buildGap && rng() % Math.max(1, c.chance) === 0) {
+        extend(g, out[rng() % out.length], b.node)
+        b.builtAt = g.tick
+        if (++b.builds >= c.builds) {
+          g.events.push({ type: 'poof', x: b.x, y: b.y })
+          return false
+        }
+      } else {
+        b.restUntil = g.tick + 60 // at the rim: it waits here for the ore, or its 60 s
+        return true
       }
     }
     const built = links.filter((k) => g.built[k])
@@ -148,11 +155,47 @@ export function updateFlowers(g) {
       b.restUntil = g.tick + 60 // nowhere to go yet
       return true
     }
-    const edge = built[rng() % built.length]
+    const toward = towardRim(g, b.node, rng)
+    const edge = toward >= 0 ? toward : built[rng() % built.length]
     const e = g.map.edges[edge]
     b.run = e.a === b.node ? { edge, i: 0, dir: 1 } : { edge, i: e.path.length - 1, dir: -1 }
     return true
   })
+}
+
+/** Node n's unbuilt edges to nodes not on the network yet: the rim, where it grows (b4.33). @param {import('./game.js').Game} g @param {number} n */
+function frontier(g, n) {
+  return g.links[n].filter((k) => {
+    const e = g.map.edges[k]
+    return !g.built[k] && !g.railed[e.a === n ? e.b : e.a]
+  })
+}
+
+/** The first built edge on a shortest (in hops) way from n to the nearest rim node, ties at random; -1: none.
+ * @param {import('./game.js').Game} g @param {number} n @param {() => number} rng */
+function towardRim(g, n, rng) {
+  /** @type {Map<number, number>} node → the first edge taken from n to reach it */
+  const first = new Map([[n, -1]])
+  let front = [n]
+  while (front.length) {
+    /** @type {number[]} */
+    const next = []
+    /** @type {number[]} */
+    const found = []
+    for (const v of front)
+      for (const k of g.links[v]) {
+        if (!g.built[k]) continue
+        const e = g.map.edges[k]
+        const u = e.a === v ? e.b : e.a
+        if (first.has(u)) continue
+        first.set(u, v === n ? k : /** @type {number} */ (first.get(v)))
+        next.push(u)
+        if (frontier(g, u).length) found.push(u)
+      }
+    if (found.length) return /** @type {number} */ (first.get(found[rng() % found.length]))
+    front = next
+  }
+  return -1
 }
 
 /** @param {number} i @param {number} w */

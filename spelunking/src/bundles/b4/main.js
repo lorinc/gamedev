@@ -84,6 +84,7 @@ const panel = createPanel(
     'sim.garden.fruitTicks': [600, 18000, 600],
     'sim.garden.burnTicks': [1, 60, 1],
     'sim.garden.burnFor': [1, 20, 1],
+    'sim.garden.hyper': [1, 40, 1],
     'sim.flowers.per': [1, 40, 1],
     'sim.flowers.bloomTicks': [600, 36000, 600],
     'sim.flowers.buildGap': [60, 18000, 60],
