@@ -45,6 +45,7 @@ build b4.36: 2026-09-28 · p11: b4.36, tamed bugs start their trips away from vi
 build b4.37: 2026-09-28 · p11: b4.37, a ragged fire from 3 embers; ash worms that lift the fog (D119)
 build b4.38: 2026-09-28 · p11: b4.38, ride at 40 px/s; a tap gets you off mid-root (D120)
 build b4.39: 2026-09-28 · p11: b4.39, lizards over the fog; a round mask hides the map's repeat (D121)
+build b4.40: 2026-09-28 · p11: b4.40, a wild bug that finds loot eats it and is tamed (D122)
 ---
 
 # p11 · b4 · Rail Loop
