@@ -62,6 +62,7 @@ build b4.53: 2026-09-28 · p11: b4.53, bulbs light up within the light's radius 
 build b4.54: 2026-09-28 · p11: b4.54, lizards eat ash and burrow into 5 loot (D136)
 build b4.55: 2026-09-28 · p11: b4.55, lizards dash off the wall for ash and back (D137)
 build b4.56: 2026-09-28 · p11: b4.56, loot upgrades lizards; the bug level grows you (D138)
+build b4.57: 2026-09-28 · p11: b4.57, lizards linger: 3x slower licks, zip after every rest, 5x longer life (D139)
 ---
 
 # p11 · b4 · Rail Loop
