@@ -19,6 +19,7 @@ import { cellRgb } from '../../render/palette.js'
 import { Tile } from '../../sim/gen/world.js'
 import { botAt, botCost, FRUIT_TILE, nextCost, shown } from './game.js'
 import { FRUIT, GREEN as MOSS, VINE } from './garden.js'
+import { LEAF_PX } from './lichen.js'
 import { OPEN, ROCK, SHEET, SPACE } from './world.js'
 import { ledgerKinds } from './ledger.js'
 
@@ -48,7 +49,7 @@ const OPEN_RGB = [36, 44, 62] // the cave's back wall: dark grey-blue, not the u
 const ROCK_RGB = { [Tile.Soft]: [40, 30, 24], [Tile.Hard]: [22, 23, 28] }
 /** A tile's colour in b4: its rock, else b3's palette. @param {number} t */
 const rgb = (t) => ROCK_RGB[t] ?? cellRgb(/** @type {any} */ (t))
-const LEAF = 'rgb(176,104,220)'
+const LEAF_RGB = [176, 104, 220]
 const RING_TRAIL = 4
 const EDGE = 3 // px over which the light fades out
 const FRUIT_C = [235, 40, 50]
@@ -76,7 +77,7 @@ export function createRenderer(canvas, game, ui, view) {
   /** @param {number} i */
   const paintTile = (i) => {
     const wall = game.garden.wall[i]
-    if (game.lichen.on[i] && world.tiles[i] === Tile.Open) timg.data.set([...LICHEN_RGB, 255], i * 4)
+    if (game.lichen.on[i] && world.tiles[i] === Tile.Open) timg.data.set([...(game.lichen.on[i] === LEAF_PX ? LEAF_RGB : LICHEN_RGB), 255], i * 4)
     else if (scenic(i)) timg.data.set(map.scenery.subarray(i * 4, i * 4 + 4), i * 4)
     else if (wall && world.tiles[i] === Tile.Open) timg.data.set([.../** @type {number[]} */ (WALL_RGB[wall]), 255], i * 4)
     else if (world.tiles[i] === Tile.Ore || world.tiles[i] === Tile.Loot) timg.data.set([...rgb(rockUnder(i)), 255], i * 4)
@@ -316,7 +317,7 @@ export function createRenderer(canvas, game, ui, view) {
       }
   }
 
-  /** Lichen (b4.15): the texture's changed pixels, and each patch's leaf, a short curl out of the wall, under the fog. */
+  /** Lichen (b4.15): its changed pixels (patch and leaf, b4.18) into the texture. */
   function drawLichen() {
     const Lc = game.lichen
     for (const i of Lc.changed) {
@@ -324,29 +325,8 @@ export function createRenderer(canvas, game, ui, view) {
       tctx.putImageData(timg, 0, 0, i % w, Math.floor(i / w), 1, 1)
     }
     Lc.changed.length = 0
-    ctx.strokeStyle = LEAF
-    ctx.lineWidth = Math.max(1, T * 0.35)
-    ctx.lineCap = 'round'
-    for (const p of Lc.patches) {
-      const f = p.leaf
-      const [x, y] = at(f)
-      if (x < -4 * T || y < -4 * T || x > W + 4 * T || y > H + 4 * T) continue
-      // 2 px out, then a curl of about 1 px radius to one side
-      const ex = x + f.dx * 2 * T
-      const ey = y + f.dy * 2 * T
-      const nx = -f.dy * f.turn
-      const ny = f.dx * f.turn
-      const rr = T * 0.9
-      const cx = ex + nx * rr
-      const cy = ey + ny * rr
-      const a0 = Math.atan2(ey - cy, ex - cx)
-      ctx.beginPath()
-      ctx.moveTo(x, y)
-      ctx.lineTo(ex, ey)
-      ctx.arc(cx, cy, rr, a0, a0 + Math.PI * 1.4 * f.turn, f.turn < 0)
-      ctx.stroke()
-    }
   }
+
 
   /** Hearts rising from a bug being tamed (b4.14). @param {number} now */
   function drawHearts(now) {

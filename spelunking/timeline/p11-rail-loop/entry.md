@@ -188,6 +188,7 @@ speed, the bot on the ledger; purple lichen (`lichen.js`) with a curly leaf wher
 Then (D097, the user): the cave's back wall is dark grey-blue, apart from the unexplored black.
 Then (D098, the user): no loot in the generated world; lizards are its only source.
 Then (D099, the user): soft and hard rock much darker, under the back wall's grey-blue.
+Then (D100, the user): the lichen's leaf is world pixels, not a smooth curve.
 
 ## Feedback
 

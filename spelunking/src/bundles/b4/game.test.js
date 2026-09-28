@@ -342,5 +342,6 @@ test('plentiful loot grows a purple lichen patch of 6–8 surface pixels with a 
   const p = g.lichen.patches[0]
   assert.ok(p.cells.length >= 6 && p.cells.length <= 8, `${p.cells.length} px`)
   for (const i of p.cells) assert.ok(isOpen(MAP.world.tiles[i]), 'on the cave wall (open pixels)')
-  assert.ok(Math.abs(Math.hypot(p.leaf.dx, p.leaf.dy) - 1) < 1e-9)
+  assert.ok(p.leaf.length <= 4)
+  for (const i of p.leaf) assert.ok(isOpen(MAP.world.tiles[i]) && !p.cells.includes(i), 'the leaf: its own pixels, in the air')
 })

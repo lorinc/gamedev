@@ -3,7 +3,7 @@
 // Cheats, like the lizards: every `checkTicks` a random pixel within `near` px of the bot with `density` loot
 // within `radius` px starts a patch on the nearest surface pixel (open, 8-bordering solid) with no lichen
 // within `gap` px; the patch grows along surface pixels to `min`–`max` pixels at once; its leaf curls out
-// from the patch's first pixel, away from the rock. Randomness from the tick (rng.js).
+// from the patch's first pixel, away from the rock: pixels, like everything else (b4.18, the user). Randomness from the tick (rng.js).
 
 import { isOpen, Tile } from '../../sim/gen/world.js'
 import { wrap } from '../../sim/dig/rules.js'
@@ -23,11 +23,13 @@ export const LICHEN = {
 
 /**
  * @typedef {object} LichenState
- * @property {Uint8Array} on per pixel: 1 where lichen is
- * @property {{ cells: number[], leaf: { x: number, y: number, dx: number, dy: number, turn: number } }[]} patches
- *   leaf: from pixel (x, y), heading (dx, dy) away from the rock, curling `turn` (1 or -1) at its end
+ * @property {Uint8Array} on per pixel: LICHEN or LEAF
+ * @property {{ cells: number[], leaf: number[] }[]} patches the leaf's pixels (open ones, in the air)
  * @property {number[]} changed pixels the view hasn't painted yet
  */
+
+export const LICHEN_PX = 1
+export const LEAF_PX = 2
 
 /** @param {number} n pixels @returns {LichenState} */
 export const createLichen = (n) => ({ on: new Uint8Array(n), patches: [], changed: [] })
@@ -99,10 +101,10 @@ export function updateLichen(g) {
     cells.push(i)
   }
   for (const i of cells) {
-    L.on[i] = 1
+    L.on[i] = LICHEN_PX
     L.changed.push(i)
   }
-  // the leaf: away from the rock round its pixel
+  // the leaf: away from the rock round its pixel (the nearest of 8 ways), 2 px out, then curling to a side
   let ax = 0
   let ay = 0
   for (const [sx, sy] of AROUND)
@@ -110,7 +112,26 @@ export function updateLichen(g) {
       ax += sx
       ay += sy
     }
-  const len = Math.hypot(ax, ay) || 1
-  L.patches.push({ cells, leaf: { x: start.x, y: start.y, dx: ax / len, dy: ay / len, turn: rng() % 2 ? 1 : -1 } })
+  const k = Math.round(Math.atan2(ay, ax) / (Math.PI / 4)) & 7
+  const [ox, oy] = AROUND[k]
+  const [px, py] = AROUND[(k + (rng() % 2 ? 2 : 6)) & 7] // a side, 90° off
+  /** @type {number[]} */
+  const leaf = []
+  for (const [a, b] of [
+    [1, 0],
+    [2, 0],
+    [3, 1],
+    [2, 2],
+  ]) {
+    const x = wrap(start.x + ox * a + px * b, w)
+    const y = start.y + oy * a + py * b
+    if (y < 0 || y >= h) break
+    const i = y * w + x
+    if (!isOpen(tiles[i]) || L.on[i]) break // a leaf stops at the rock
+    leaf.push(i)
+    L.on[i] = LEAF_PX
+    L.changed.push(i)
+  }
+  L.patches.push({ cells, leaf })
   g.events.push({ type: 'lichen', x: start.x, y: start.y })
 }
