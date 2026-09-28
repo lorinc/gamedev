@@ -629,7 +629,7 @@ test('1 in 8 ash discs grows a flower; after 2 minutes it becomes a bot that cle
   assert.equal(g.ledger.ore, 1000 - built * g.cfg.price)
 })
 
-test('a bulb lets the bot go after 3 s with nothing built; it takes it again only after it left (b4.26)', () => {
+test('a bulb lets the bot go after 1.5 s with nothing built; it takes it again only after it left (b4.26)', () => {
   const g = fresh()
   const from = MAP.podNodes.find((n) => MAP.edges.some((e) => e.a === n || e.b === n))
   assert.ok(from !== undefined)
@@ -646,7 +646,7 @@ test('a bulb lets the bot go after 3 s with nothing built; it takes it again onl
     if (g.events.some((e) => e.type === 'eject')) eject = g.tick
     g.events.length = 0
   }
-  assert.equal(eject - at, 180, 'after 3 s')
+  assert.equal(eject - at, 90, 'after 1.5 s')
   assert.equal(g.engulf, null)
   // put on an open pixel 5 px out (b4.41)
   assert.ok(open(g.ch), 'open')

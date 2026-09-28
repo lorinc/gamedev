@@ -69,6 +69,7 @@ const panel = createPanel(
     'sim.price': [1, 40, 1],
     'sim.nodeReach': [2, 40, 1],
     'sim.ejectTicks': [30, 1200, 30],
+    'sim.holdOffTicks': [0, 60, 1],
     'sim.light.base': [2, 48, 1],
     'sim.rideSpeed': [10, 400, 5],
     'sim.bugs.seek': [4, 160, 1],
@@ -178,9 +179,11 @@ function aimEdge(node, dx, dy) {
 const held = { dx: 0, dy: 0 }
 
 /** Held in a bulb, the direction pointed picks one of its edges (b4.41). */
+/** The first `holdOffTicks` (50 ms) in a bulb: nothing is picked or confirmed (b4.52, the user). */
+const holdOff = () => game.engulf !== null && game.tick - game.engulfAt < game.cfg.holdOffTicks
 function aim() {
   const n = game.engulf
-  if (n === null || (!held.dx && !held.dy)) return
+  if (n === null || (!held.dx && !held.dy) || holdOff()) return
   const edge = aimEdge(n, held.dx, held.dy)
   ui.select = edge >= 0 ? { node: n, edge } : null
 }
@@ -188,7 +191,7 @@ function aim() {
 function confirm() {
   const s = ui.select
   ui.select = null
-  if (!s || game.engulf !== s.node) return
+  if (!s || game.engulf !== s.node || holdOff()) return
   if (game.built[s.edge]) command(game, { type: 'ride', edge: s.edge, from: s.node, dx: aimed.dx, dy: aimed.dy })
   else command(game, { type: 'build', edge: s.edge, from: s.node })
 }
@@ -244,12 +247,7 @@ function frame(t) {
   for (const e of game.events) {
     renderer.onEvent(e, now)
     if (e.type === 'refused') ui.refusedAt = now
-    if (e.type === 'engulf') {
-      // taken in while still pointing: that direction picks (b4.41)
-      aimed.dx = held.dx
-      aimed.dy = held.dy
-      aim()
-    }
+    if (e.type === 'engulf') ui.select = null
     if (e.type === 'eject') {
       ui.select = null
       if (held.dx || held.dy) command(game, { type: 'move', dx: held.dx, dy: held.dy }) // still pointing: walk on
@@ -257,6 +255,12 @@ function frame(t) {
     if (e.type === 'built') ui.select = null
   }
   game.events.length = 0
+  // held in a bulb, past the hold-off, still pointing (the drag you walked in with, b4.52): it picks
+  if (game.engulf !== null && !ui.select && (held.dx || held.dy) && !holdOff()) {
+    aimed.dx = held.dx
+    aimed.dy = held.dy
+    aim()
+  }
   renderer.draw(acc / TICK_MS, Math.min(ms, 100) / 1000, now)
   if (panel.isOpen() && t - lastReadout > 250) {
     lastReadout = t

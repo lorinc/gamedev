@@ -25,7 +25,7 @@
 // b4.41 (the user: "bulb-entry-exit is still not great UX"): a node on the network takes the bot in
 // (`engulf`) when it offers something: a built root, or an unbuilt one with the price on the ledger. Held, a drag picks one of its roots (`aim`, within 67.5°): a built
 // one, or an unbuilt one while the ledger holds the price; release confirms: `ride` a built one, `build` an
-// unbuilt one and ride it. After `ejectTicks` (3 s) the bulb puts the bot on an open pixel `ejectR` (5) px out
+// unbuilt one and ride it. After `ejectTicks` (1.5 s since b4.52) the bulb puts the bot on an open pixel `ejectR` (5) px out
 // (`eject`), the way it came in if it can. A ride that stops at a node stops in its bulb. Pointing along a
 // root to board it (b4.23) is gone: the bulb is the one way on.
 // Riding (before b4.41): pointing along a built root (within 67.5°) within `nodeReach` of one of its nodes gets you riding
@@ -80,7 +80,8 @@ export const CONFIG = {
   light: { base: 8 },
   nodeReach: 2, // px: a shown node engulfs the bot this close (the user, b4.22; was 12, a build's reach)
   lootTame: 2, // px: a wild bug this close to a loot pixel eats it and is tamed (the user, b4.40)
-  ejectTicks: 180, // a bulb lets the bot go after 3 s with nothing built (the user, b4.26)
+  ejectTicks: 90, // a bulb lets the bot go after 1.5 s with nothing picked (the user, b4.52; 3 s since b4.26)
+  holdOffTicks: 3, // the first 50 ms in a bulb, a drag or release picks nothing (the user, b4.52; main.js)
   ejectR: 5, // px from the bulb's centre it puts the bot (the user, b4.41)
   bugs: {
     block: 32,
