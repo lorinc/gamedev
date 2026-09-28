@@ -55,6 +55,7 @@ build b4.46: 2026-09-28 · p11: b4.46, scans no longer scare wild bugs (D128)
 build b4.47: 2026-09-28 · p11: b4.47, pinch zoom, zoom in CSS px, brighter on touch screens (D129)
 build b4.48: 2026-09-28 · p11: b4.48, loot triple-pings now and then (D130)
 build b4.49: 2026-09-28 · p11: b4.49, a just-tamed bug starts near you (D131)
+build b4.50: 2026-09-28 · p11: b4.50, built nodes on the ledger (D132)
 ---
 
 # p11 · b4 · Rail Loop
