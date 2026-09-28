@@ -272,7 +272,7 @@ export function createRenderer(canvas, game, ui, view) {
     } else if (e.type === 'licked') {
       // to the lizard's head as it licked: g.lizards is refiltered, so an index could name another one, or none
       // (the user's crash in b4.28)
-      fly(cell(e), cell(e.to), now, 0.3, ORE, 0.3)
+      fly(cell(e), cell(e.to), now, 0.3, `rgb(${WALL_RGB[ASH]})`, 0.3) // ash since b4.54
     }
     else if (e.type === 'haul') {
       for (let k = 0; k < Math.min(e.ore, 12); k++) fly(cell(e), icon('ore'), now + k * 0.06, 0.9, ORE, 0)

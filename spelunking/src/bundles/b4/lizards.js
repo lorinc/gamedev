@@ -13,25 +13,31 @@
 // tick (rng.js).
 // b4.22 (the user: "lizards must not spawn in small enclosures"): the spawn pixel's cave must hold at least
 // `room` open pixels (an 8-way flood that stops once it has counted them).
+// b4.54 (the user: "change lizard mechanics. it should spawn in areas with ash, have a 6 mining radius, eat up
+// ash tiles, and when burrows, creates 5 loot resources"): everything above that said ore now means ash (the
+// burned back wall, garden.js): `density` ash pixels within `radius` spawn one, it goes for and licks ash
+// within `reach` 6, a licked ash pixel is bare back wall again (bugs can green it); full, it burrows into a
+// 5 px site (`lootPx`) that turns to loot.
 
 import { isOpen, Tile } from '../../sim/gen/world.js'
-import { toRock } from '../../sim/dig/pull.js'
 import { wrap } from '../../sim/dig/rules.js'
 import { hashSeed, mulberry32 } from '../../sim/rng.js'
+import { ASH } from './garden.js'
 import { findSite } from './worms.js'
 
 /** The lizards' numbers (the dev panel's). */
 export const LIZARDS = {
-  density: 24, // reachable ore within radius that spawn a lizard: 1.5× eat (b4.20; was 16 ore of any depth within 8)
+  density: 24, // ash px within radius that spawn a lizard (b4.54; reachable ore since b4.20)
   radius: 16, // the lizard's sense
   near: 64, // px from the bot a spawn is tried
   checkTicks: 300,
   max: 6,
   zipTicks: 3, // 20 px/s while zipping
   sense: 16,
-  reach: 3,
+  reach: 6, // px it licks ash within (the user, b4.54; 3 for ore)
   mineTicks: 30,
-  eat: 16, // ore, then it burrows (the user)
+  eat: 16, // ash px, then it burrows (the user; ore until b4.54)
+  lootPx: 5, // loot px it burrows into (the user, b4.54; was 1)
   site: 24,
   room: 400, // open px the cave must hold for a spawn (b4.22)
 }
@@ -71,9 +77,10 @@ function surface(g, x, y) {
   return false
 }
 
-/** The nearest ore pixel within r of `at`, or null. @param {import('./game.js').Game} g @param {{ x: number, y: number }} at @param {number} r */
-function oreNear(g, at, r) {
-  const { w, h, tiles } = g.world
+/** The nearest ash pixel within r of `at`, or null (b4.54; ore before). @param {import('./game.js').Game} g @param {{ x: number, y: number }} at @param {number} r */
+function ashNear(g, at, r) {
+  const { w, h } = g.world
+  const wall = g.garden.wall
   let best = null
   let bd = Infinity
   for (let dy = -r; dy <= r; dy++) {
@@ -83,7 +90,7 @@ function oreNear(g, at, r) {
       const d = dx * dx + dy * dy
       if (d > r * r || d >= bd) continue
       const x = wrap(at.x + dx, w)
-      if (tiles[y * w + x] !== Tile.Ore) continue
+      if (wall[y * w + x] !== ASH) continue
       best = { x, y }
       bd = d
     }
@@ -108,7 +115,7 @@ function routeFor(g, c, at) {
     for (const i of front) {
       const x = i % w
       const y = (i - x) / w
-      if (oreNear(g, { x, y }, c.reach)) {
+      if (ashNear(g, { x, y }, c.reach)) {
         /** @type {{ x: number, y: number }[]} */
         const route = []
         for (let j = i; j !== start; j = /** @type {number} */ (from.get(j))) route.unshift({ x: j % w, y: Math.floor(j / w) })
@@ -138,14 +145,14 @@ export function updateLizards(g) {
     if (z.eaten >= c.eat) {
       if (!z.site && g.tick - z.lookedAt >= c.checkTicks) {
         z.lookedAt = g.tick
-        z.site = findSite(g, { site: c.site, length: 1 }, head, rng)
+        z.site = findSite(g, { site: c.site, length: Math.max(1, c.lootPx) }, head, rng)
       }
       if (!z.site) return true // nowhere to burrow yet: it waits, and looks again checkTicks later
       if (g.tick - z.movedAt < c.zipTicks) return true
       z.movedAt = g.tick
       const s = z.site
       if (head.x === s.x && head.y === s.y) {
-        g.world.tiles[s.cells[0]] = Tile.Loot
+        for (const i of s.cells) g.world.tiles[i] = Tile.Loot
         g.events.push({ type: 'deposit', cells: s.cells })
         return false
       }
@@ -157,9 +164,11 @@ export function updateLizards(g) {
     if (g.tick < z.restUntil) {
       // stopped: it mines
       if (g.tick >= z.mineAt) {
-        const o = oreNear(g, head, c.reach)
+        const o = ashNear(g, head, c.reach)
         if (o) {
-          toRock(/** @type {any} */ (g), o.x, o.y)
+          const i = o.y * w + o.x
+          g.garden.wall[i] = 0 // bare back wall again
+          g.garden.changed.push(i)
           z.eaten++
           z.mineAt = g.tick + c.mineTicks
           g.events.push({ type: 'licked', x: o.x, y: o.y, to: { x: head.x, y: head.y } }) // where it is: an index goes stale (b4.29)
@@ -168,7 +177,7 @@ export function updateLizards(g) {
       return true
     }
     if (!z.zip) {
-      if (oreNear(g, head, c.reach)) {
+      if (ashNear(g, head, c.reach)) {
         z.restUntil = g.tick + 40 + (rng() % 80) // ore in reach: it stays and mines
         return true
       }
@@ -188,24 +197,20 @@ export function updateLizards(g) {
 
 /** @param {import('./game.js').Game} g @param {Lizards} c @param {() => number} rng */
 function spawn(g, c, rng) {
-  const { w, h, tiles } = g.world
+  const { w, h } = g.world
   const n = Math.max(1, c.near)
   const p = { x: wrap(g.ch.x + (rng() % (2 * n + 1)) - n, w), y: g.ch.y + (rng() % (2 * n + 1)) - n }
   if (p.y < 0 || p.y >= h) return
-  // reachable ore: within `reach` of a surface pixel
-  let ore = 0
+  // ash round there (b4.54): it's on the back wall, so always within reach of a cave surface
+  let ash = 0
   const r = c.radius
-  const re = c.reach
-  for (let dy = -r; dy <= r && ore < c.density; dy++)
+  const wall = g.garden.wall
+  for (let dy = -r; dy <= r && ash < c.density; dy++)
     for (let dx = -r; dx <= r; dx++) {
       const y = p.y + dy
-      if (y < 0 || y >= h || dx * dx + dy * dy > r * r || tiles[y * w + wrap(p.x + dx, w)] !== Tile.Ore) continue
-      let reach = false
-      for (let ey = -re; ey <= re && !reach; ey++)
-        for (let ex = -re; ex <= re && !reach; ex++) reach = ex * ex + ey * ey <= re * re && surface(g, p.x + dx + ex, y + ey)
-      if (reach) ore++
+      if (y >= 0 && y < h && dx * dx + dy * dy <= r * r && wall[y * w + wrap(p.x + dx, w)] === ASH) ash++
     }
-  if (ore < c.density) return
+  if (ash < c.density) return
   // the nearest surface pixel within the radius
   let best = null
   let bd = Infinity

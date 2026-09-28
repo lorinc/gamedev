@@ -357,14 +357,24 @@ test('fruit buys the bugs upgrades by itself: 16, 32, 64… (b4.13)', async () =
   assert.equal(nextCost(g), 64)
 })
 
-test('plentiful ore spawns a lizard; it mines on the surface, burrows, and makes one loot inside the rock (b4.14)', () => {
+test('ash spawns a lizard; it licks the ash within 6 px bare, burrows, and makes 5 loot inside the rock (b4.54)', async () => {
+  const { ASH } = await import('./garden.js')
   const g = fresh()
   g.cfg.worms.max = 0
-  g.cfg.lizards.density = 3 // seed 1's start has little ore: a low bar, the rest as it plays
+  g.cfg.lichen.near = 0
   g.cfg.lizards.eat = 4
-  g.cfg.lizards.near = 40
+  g.cfg.lizards.near = 20
   const { w } = MAP.world
   const tiles = MAP.world.tiles
+  const G = g.garden
+  // ash on the back wall round the bot
+  let ash = 0
+  for (let dy = -20; dy <= 20; dy++)
+    for (let dx = -20; dx <= 20; dx++) {
+      const i = (g.ch.y + dy) * w + g.ch.x + dx
+      if (isOpen(tiles[i])) ((G.wall[i] = ASH), ash++)
+    }
+  assert.ok(ash > 100, `ash ${ash}`)
   let spawned = 0
   let licked = 0
   /** @type {number[] | null} */
@@ -374,7 +384,13 @@ test('plentiful ore spawns a lizard; it mines on the surface, burrows, and makes
     tick(g)
     for (const e of g.events) {
       if (e.type === 'lizard') spawned++
-      if (e.type === 'licked') licked++
+      if (e.type === 'licked') {
+        licked++
+        assert.equal(G.wall[e.y * w + e.x], 0, 'the ash it licked is bare wall')
+        let dx = Math.abs(e.x - e.to.x)
+        dx = Math.min(dx, w - dx)
+        assert.ok(dx * dx + (e.y - e.to.y) ** 2 <= 36, 'within 6 px')
+      }
       if (e.type === 'deposit' && tiles[e.cells[0]] === Tile.Loot) loot = e.cells
     }
     g.events.length = 0
@@ -382,12 +398,14 @@ test('plentiful ore spawns a lizard; it mines on the surface, burrows, and makes
   }
   assert.ok(spawned > 0 && licked >= 4, `spawned ${spawned}, licked ${licked}`)
   assert.ok(loot, 'burrowed')
-  assert.equal(loot.length, 1)
-  const x = loot[0] % w
-  const y = (loot[0] - x) / w
-  for (let dy = -1; dy <= 1; dy++)
-    for (let dx = -1; dx <= 1; dx++) assert.ok(!isOpen(tiles[(y + dy) * w + ((x + dx + w) % w)]), 'inside the rock')
-  assert.equal(tiles.filter((t) => t === Tile.Loot).length, before + 1)
+  assert.equal(loot.length, 5)
+  for (const c of loot) {
+    const x = c % w
+    const y = (c - x) / w
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) assert.ok(!isOpen(tiles[(y + dy) * w + ((x + dx + w) % w)]), 'inside the rock')
+  }
+  assert.equal(tiles.filter((t) => t === Tile.Loot).length, before + 5)
 })
 
 test('loot buys the bot upgrades by itself: 16, 32, 64…, each mining radius and speed +20% (b4.15)', async () => {
