@@ -1,0 +1,345 @@
+{
+  "format": "spelunking-ruleset",
+  "version": 1,
+  "name": "b3.2",
+  "note": "b3.1 + wild moon bugs (D056, D059). Fireflies with no physics: they appear in dark cave cells you could reach (never within den tiles of a tamed bug), drift one cell every moveTicks toward you through open cells (planks count as open), and next to you nibble one ore from the pack every nibbleTicks, never loot. One that has eaten tame ore is tamed on the spot, and turns warm. A probe ring scares the wild bugs it passes for scareTicks. b3.1 is b2.1 + the probe centred on the probed block, and no teleport home (D055). ↓ on a floor (not a plank, not at a ledge edge, where it still climbs over) probes around the block under you; ↑ into rock probes the ceiling around the block above you, replacing mining it (D043). You stand still while the rings spread, one every ringTicks, revealing everything they cross for good; a flick reaches light radius + flick rings, a hold grows on until radius + hold or until released. You build planks to reach a ceiling. Nothing teleports you home: a deep fall just lands, and stepping onto the home cell with something in the pack counts it in, which empties the pack and resets the light. The rest is b2.1: light from the pack through open cells (D051), the seen map (D052); and b1.7: flick and hold (D046), planks paid 1 rock (D038, D039), stops at a wall or a plank crossing (D040, D045), clinging and gravity (D035).",
+  "swipes": {
+    "swipePx": 24,
+    "horizontalDeg": 30,
+    "verticalDeg": 25
+  },
+  "situations": {
+    "always": [],
+    "onFloor": [
+      "standing"
+    ],
+    "noFooting": [
+      "!standing"
+    ],
+    "walkable": [
+      "fwdOpen",
+      "fwdFloor"
+    ],
+    "gap": [
+      "standing",
+      "fwdOpen"
+    ],
+    "clingGap": [
+      "fwdOpen"
+    ],
+    "stepUpAhead": [
+      "standing",
+      "!fwdOpen",
+      "fwdAboveOpen",
+      "aboveOpen"
+    ],
+    "rockAhead": [
+      "!fwdOpen"
+    ],
+    "ledgeAhead": [
+      "standing",
+      "fwdOpen",
+      "fwdBelowOpen",
+      "!fwdBelowFloor"
+    ],
+    "plankDrop": [
+      "onPlank",
+      "belowDrop"
+    ],
+    "onPlank": [
+      "onPlank"
+    ],
+    "wallBelow": [
+      "belowClimbable"
+    ],
+    "overhang": [
+      "overhangStep"
+    ],
+    "dropBelow": [
+      "belowDrop"
+    ],
+    "rockAbove": [
+      "!aboveOpen"
+    ],
+    "underTread": [
+      "inPlank"
+    ],
+    "wallAhead": [
+      "!standing",
+      "!fwdOpen"
+    ],
+    "rockOverhead": [
+      "!upAheadOpen",
+      "!upAheadFloor"
+    ],
+    "noStep": [
+      "!upAheadFloor"
+    ],
+    "rockDownAhead": [
+      "!fwdBelowOpen"
+    ],
+    "noFloorDown": [
+      "!fwdBelowFloor"
+    ],
+    "rampFollow": [
+      "onPlank",
+      "fwdPlank",
+      "fwdAboveOpen",
+      "!held"
+    ],
+    "stepDownFollow": [
+      "standing",
+      "fwdOpen",
+      "fwdBelowOpen",
+      "fwdBelowFloor",
+      "!held"
+    ],
+    "gapHeld": [
+      "standing",
+      "fwdOpen",
+      "held"
+    ],
+    "stepUpHeld": [
+      "standing",
+      "!fwdOpen",
+      "fwdAboveOpen",
+      "aboveOpen",
+      "held"
+    ],
+    "onPlankHeld": [
+      "onPlank",
+      "held"
+    ],
+    "held": [
+      "held"
+    ],
+    "noStepHeld": [
+      "!upAheadFloor",
+      "held"
+    ],
+    "noFloorDownHeld": [
+      "!fwdBelowFloor",
+      "held"
+    ]
+  },
+  "table": {
+    "side": [
+      {
+        "if": "walkable",
+        "do": "walk"
+      },
+      {
+        "if": "rampFollow",
+        "do": "stepUp"
+      },
+      {
+        "if": "stepDownFollow",
+        "do": "stepDown"
+      },
+      {
+        "if": "gapHeld",
+        "do": "bridge",
+        "place": "plank"
+      },
+      {
+        "if": "gap",
+        "do": "refuse",
+        "reason": "hold"
+      },
+      {
+        "if": "clingGap",
+        "do": "refuse",
+        "reason": "ledge"
+      },
+      {
+        "if": "stepUpHeld",
+        "do": "tunnel"
+      },
+      {
+        "if": "stepUpAhead",
+        "do": "stepUp"
+      },
+      {
+        "if": "rockAhead",
+        "do": "tunnel"
+      }
+    ],
+    "down": [
+      {
+        "if": "plankDrop",
+        "do": "climbDrop"
+      },
+      {
+        "if": "onPlankHeld",
+        "do": "ladderDown",
+        "place": "plank"
+      },
+      {
+        "if": "onPlank",
+        "do": "refuse",
+        "reason": "hold"
+      },
+      {
+        "if": "ledgeAhead",
+        "do": "climbOver"
+      },
+      {
+        "if": "onFloor",
+        "do": "probeBelow"
+      },
+      {
+        "if": "wallBelow",
+        "do": "climbDown"
+      },
+      {
+        "if": "overhang",
+        "do": "followOverhang"
+      },
+      {
+        "if": "dropBelow",
+        "do": "climbDrop"
+      },
+      {
+        "if": "always",
+        "do": "refuse",
+        "reason": "overhang"
+      }
+    ],
+    "up": [
+      {
+        "if": "rockAbove",
+        "do": "probeAbove"
+      },
+      {
+        "if": "underTread",
+        "do": "climbUp"
+      },
+      {
+        "if": "held",
+        "do": "ladderUp",
+        "place": "plank"
+      },
+      {
+        "if": "always",
+        "do": "refuse",
+        "reason": "hold"
+      }
+    ],
+    "upSide": [
+      {
+        "if": "wallAhead",
+        "do": "stairUp",
+        "place": "plank"
+      },
+      {
+        "if": "noFooting",
+        "do": "refuse",
+        "reason": "noFooting"
+      },
+      {
+        "if": "rockOverhead",
+        "do": "mineUp"
+      },
+      {
+        "if": "noStepHeld",
+        "do": "stairUp",
+        "place": "plank"
+      },
+      {
+        "if": "noStep",
+        "do": "refuse",
+        "reason": "hold"
+      },
+      {
+        "if": "onFloor",
+        "do": "stairUp",
+        "place": "plank"
+      }
+    ],
+    "downSide": [
+      {
+        "if": "rockDownAhead",
+        "do": "mineDown"
+      },
+      {
+        "if": "noFooting",
+        "do": "refuse",
+        "reason": "noFooting"
+      },
+      {
+        "if": "noFloorDownHeld",
+        "do": "buildDown",
+        "place": "plank"
+      },
+      {
+        "if": "noFloorDown",
+        "do": "refuse",
+        "reason": "hold"
+      },
+      {
+        "if": "onFloor",
+        "do": "buildDown",
+        "place": "plank"
+      }
+    ]
+  },
+  "reasons": {
+    "hold": "none",
+    "ledge": "none",
+    "down": "none",
+    "overhang": "none",
+    "up": "none",
+    "noFooting": "none",
+    "bedrock": "none",
+    "noRule": "none",
+    "noRock": "flash",
+    "packFull": "flash"
+  },
+  "stops": {
+    "wall": true,
+    "open": false,
+    "loot": false,
+    "harder": false,
+    "junction": false,
+    "crossing": true
+  },
+  "numbers": {
+    "walkTicks": 7,
+    "climbTicks": 10,
+    "fallTicks": 3,
+    "buildTicks": 14,
+    "digTicks": {
+      "soft": 14,
+      "hard": 42,
+      "ore": 21,
+      "loot": 14,
+      "built": 7
+    },
+    "harmlessDrop": 4,
+    "packSlots": 6,
+    "holdPauseTicks": 18,
+    "gravity": true,
+    "light": {
+      "base": 4,
+      "orePer": 16,
+      "lootPer": 8
+    },
+    "probe": {
+      "flick": 2,
+      "hold": 4,
+      "ringTicks": 5
+    },
+    "teleport": false,
+    "bugs": {
+      "max": 3,
+      "spawnTicks": 300,
+      "moveTicks": 12,
+      "seek": 20,
+      "nibbleTicks": 40,
+      "tame": 16,
+      "scareTicks": 240,
+      "den": 12,
+      "despawn": 28
+    }
+  }
+}
