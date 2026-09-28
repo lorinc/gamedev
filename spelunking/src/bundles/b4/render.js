@@ -286,7 +286,8 @@ export function createRenderer(canvas, game, ui, view) {
     const refused = now - ui.refusedAt < 0.7 && Math.sin((now - ui.refusedAt) * Math.PI * 8) > 0
     const L = game.ledger
     // fruit shows the next upgrade's target; bugs a bug icon per upgrade, next to the first (b4.13)
-    const text = { ore: `${L.ore}`, loot: `${L.loot}/${botCost(game)}`, bot: '', bugs: `${L.bugs}`, fruit: `${L.fruit}/${nextCost(game)}` }
+    // the bot's count: you, and the flower bots at work on the network (b4.44, the user)
+    const text = { ore: `${L.ore}`, loot: `${L.loot}/${botCost(game)}`, bot: `${1 + game.fbots.length}`, bugs: `${L.bugs}`, fruit: `${L.fruit}/${nextCost(game)}` }
     ctx.font = `bold ${Math.round(16 * dpr)}px monospace`
     ctx.textAlign = 'right'
     ctx.textBaseline = 'middle'
