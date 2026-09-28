@@ -274,6 +274,7 @@ Then (D131, the user): a just-tamed bug starts its first trip near you.
 Then (D132, the user): the ledger counts built nodes below ore, with a small bulb icon.
 Then (D133, the user): tamed bugs head for back wall that isn't green yet, looking 8 px along each way.
 Then (D134, the user): a bulb ignores picks for its first 50 ms and lets you go after 1.5 s.
+Then (D135, the user): bulbs within the light's radius are drawn bright and bigger.
 
 ## Feedback
 

@@ -814,13 +814,18 @@ export function createRenderer(canvas, game, ui, view) {
       const live = shown(game, i)
       if (!live && !game.railed[i]) return
       if ((game.engulf === i) !== held) return
-      const r = held ? 2 + (Math.sin(now * 4) > 0.2 ? 1 : 0) : 1
-      const [core, body, rim] = held ? BULB_HELD : BULB_DIM
+      // b4.53 (the user: "highlight a bulb when in the light radius"): within it, a still bulb is drawn bright, r 2
+      let ddx = Math.abs(n.x - game.ch.x)
+      ddx = Math.min(ddx, w - ddx)
+      const lit = !held && ddx * ddx + (n.y - game.ch.y) ** 2 <= game.radius * game.radius
+      const big = held || lit
+      const r = held ? 2 + (Math.sin(now * 4) > 0.2 ? 1 : 0) : lit ? 2 : 1
+      const [core, body, rim] = big ? BULB_HELD : BULB_DIM
       for (let dy = -r; dy <= r; dy++)
         for (let dx = -r; dx <= r; dx++) {
           const d = dx * dx + dy * dy
-          if (d > r * r + (held ? r : 0)) continue
-          if (held) ctx.fillStyle = d <= 1 ? core : d <= r * r - r ? body : rim
+          if (d > r * r + (big ? r : 0)) continue
+          if (big) ctx.fillStyle = d <= 1 ? core : d <= r * r - r ? body : rim
           else ctx.fillStyle = d === 0 && live ? core : body // a buildable one keeps a lit heart
           px(n.x + dx, n.y + dy)
         }
