@@ -61,6 +61,8 @@ const PLUS = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]] // a still bulb's 5 px (
 const LICHEN_R = 24
 const LICHEN_A = 0.55
 const FRUIT_C = [235, 40, 50]
+const PINK = [255, 120, 210] // b4.45: a burst ash worm's resource
+const RAINBOW = ['#ff4040', '#ff9a2a', '#ffe840', '#5cff6a', '#40d8ff', '#6a70ff', '#d860ff', '#ffffff']
 /** @type {Record<number, number[]>} */
 const WALL_RGB = { [MOSS]: [22, 58, 30], [VINE]: [60, 140, 55], [FRUIT]: FRUIT_C, [BURN]: [120, 28, 8], [ASH]: [96, 94, 92] }
 /** @type {Record<number, number[]>} */
@@ -247,6 +249,11 @@ export function createRenderer(canvas, game, ui, view) {
       }
     else if (e.type === 'bloom') puff(e.x, e.y, now, 14, ['#ffffff', '#f4f0ff'], 8)
     else if (e.type === 'ashwormGone') puff(e.x, e.y, now, 10, ['#9a9aa0', '#7c7c84'], 5)
+    else if (e.type === 'ashwormBurst') {
+      // b4.45 (the user): nothing left to light, a bright rainbow burst, and its pink pixel to the ledger
+      puff(e.x, e.y, now, 48, RAINBOW, 18)
+      fly(cell(e), icon('pink'), now + 0.2, 0.9, `rgb(${PINK})`, 0)
+    }
     else if (e.type === 'poof') puff(e.x, e.y, now, 32, ['#ffffff', '#eef4ff', '#ffffff'], 14)
     else if (e.type === 'botUpgrade')
       for (let k = 0; k < 8; k++) fly(icon('loot'), icon('bot'), now + k * 0.05, 0.6, LOOT, 0)
@@ -274,30 +281,83 @@ export function createRenderer(canvas, game, ui, view) {
     }
   }
 
-  // The ledger (b4.3): a column in the top-right corner, an icon and its count a row
+  // The ledger (b4.3): a column in the top-right corner, an icon and its count a row. b4.45 (the user): a row
+  // shows once its count first reaches 1, with theatrics (`reveal`); the shown rows stack, the gap only between
+  // a shown resource and a shown level.
   const ROW = 30
-  /** An icon's centre, device px. @param {string} kind @returns {[number, number]} */
+  /** @param {string} kind the ledger's count for the row: the bot's is you + the flower bots (b4.44) */
+  const count = (kind) => (kind === 'bot' ? 1 + game.fbots.length : /** @type {Record<string, number>} */ (game.ledger)[kind] ?? 0)
+  /** @type {Set<string>} rows shown */
+  const known = new Set(ledgerKinds.filter((k) => k && count(k) > 0)) // no theatrics for what's there at the start
+  /** @type {{ s: number }[]} screen shakes (b4.45) */
+  const shakes = []
+  const REVEAL_S = 2 // s of shaking
+  /** A row's first show (b4.45, the user): the screen shakes, and 8 streams of its colour, 0.4 s each, one every
+   * 0.2 s (so they overlap by 0.2 s), flow from random spots on the screen to its icon: about 2 s. Drawing only.
+   * @param {string} kind @param {number} now */
+  function reveal(kind, now) {
+    known.add(kind)
+    shakes.push({ s: now })
+    const color = ledgerColor(kind)
+    for (let k = 0; k < 8; k++) {
+      /** @type {[number, number]} */
+      const from = [W * (0.1 + 0.8 * Math.random()), H * (0.1 + 0.8 * Math.random())]
+      for (let j = 0; j < 12; j++) fly(() => from, icon(kind), now + k * 0.2 + (j * 0.4) / 12, 0.3, color, 0.4)
+    }
+  }
+  /** @param {string} kind */
+  function ledgerColor(kind) {
+    return kind === 'ore' ? ORE : kind === 'fruit' ? `rgb(${FRUIT_C})` : kind === 'pink' ? `rgb(${PINK})` : kind === 'bugs' ? `rgb(${BUG})` : kind === 'bot' ? CHAR : LOOT
+  }
+  /** The screen's shake now, device px. @param {number} now @returns {[number, number]} */
+  function shake(now) {
+    while (shakes.length && now - shakes[0].s > REVEAL_S) shakes.shift()
+    let a = 0
+    for (const s of shakes) a = Math.max(a, 1 - (now - s.s) / REVEAL_S)
+    const m = 6 * dpr * a * a
+    return [Math.round((Math.random() * 2 - 1) * m), Math.round((Math.random() * 2 - 1) * m)]
+  }
+  /** An icon's centre, device px: its row among the shown ones (a row about to show counts as shown). @param {string} kind @returns {[number, number]} */
   function ledgerIcon(kind) {
-    const k = Math.max(0, ledgerKinds.indexOf(kind))
-    return [W - 22 * dpr, (22 + k * ROW) * dpr]
+    let row = 0
+    let res = false
+    let gapped = false
+    for (const k of ledgerKinds) {
+      if (!k) continue
+      if (k !== kind && !known.has(k)) continue
+      const level = ledgerKinds.indexOf(k) > ledgerKinds.indexOf('')
+      if (!level) res = true
+      else if (res && !gapped) ((gapped = true), row++)
+      if (k === kind) break
+      row++
+    }
+    return [W - 22 * dpr, (22 + row * ROW) * dpr]
   }
   /** @param {number} now */
   function drawLedger(now) {
     const refused = now - ui.refusedAt < 0.7 && Math.sin((now - ui.refusedAt) * Math.PI * 8) > 0
     const L = game.ledger
+    for (const kind of ledgerKinds) if (kind && !known.has(kind) && count(kind) > 0) reveal(kind, now)
     // fruit shows the next upgrade's target; bugs a bug icon per upgrade, next to the first (b4.13)
     // the bot's count: you, and the flower bots at work on the network (b4.44, the user)
-    const text = { ore: `${L.ore}`, loot: `${L.loot}/${botCost(game)}`, bot: `${1 + game.fbots.length}`, bugs: `${L.bugs}`, fruit: `${L.fruit}/${nextCost(game)}` }
+    const text = {
+      ore: `${L.ore}`,
+      loot: `${L.loot}/${botCost(game)}`,
+      bot: `${count('bot')}`,
+      bugs: `${L.bugs}`,
+      fruit: `${L.fruit}/${nextCost(game)}`,
+      pink: `${L.pink}`,
+    }
     ctx.font = `bold ${Math.round(16 * dpr)}px monospace`
     ctx.textAlign = 'right'
     ctx.textBaseline = 'middle'
     for (const kind of ledgerKinds) {
-      if (!kind) continue // the gap
+      if (!kind || !known.has(kind)) continue // the gap, a row not shown yet
       const [x, y] = ledgerIcon(kind)
       const r = 7 * dpr
       const icons = kind === 'bugs' ? 1 + game.level : kind === 'bot' ? 1 + game.botLevel : 1
       const gap = 16 * dpr
-      const label = text[/** @type {'ore' | 'loot' | 'bot' | 'bugs' | 'fruit'} */ (kind)]
+      const label = text[/** @type {keyof typeof text} */ (kind)]
       const tx = x - 14 * dpr - (icons - 1) * gap
       const bw = ctx.measureText(label).width + (tx - x) * -1 + 26 * dpr
       ctx.fillStyle = 'rgba(0,0,0,0.55)'
@@ -308,7 +368,7 @@ export function createRenderer(canvas, game, ui, view) {
         else if (kind === 'bot') dot(ix, y, r, r * 1.8, [244, 241, 222])
         else {
           // a pixel, like the resources (fruit too since b4.43, the user)
-          ctx.fillStyle = kind === 'ore' ? ORE : kind === 'fruit' ? `rgb(${FRUIT_C})` : LOOT
+          ctx.fillStyle = ledgerColor(kind)
           ctx.fillRect(ix - r, y - r, 2 * r, 2 * r)
         }
       }
@@ -494,6 +554,8 @@ export function createRenderer(canvas, game, ui, view) {
     ctx.imageSmoothingEnabled = false
     ctx.fillStyle = `rgb(${BG_RGB})`
     ctx.fillRect(0, 0, W, H)
+    const [shx, shy] = shake(now) // a new ledger row shakes it all (b4.45)
+    ctx.setTransform(1, 0, 0, 1, shx, shy)
     // the world and the fog, as many copies across as the screen needs
     const x0 = sx(0) - Math.ceil(sx(0) / (w * T)) * w * T
     for (let x = x0; x < W; x += w * T) {
@@ -522,6 +584,7 @@ export function createRenderer(canvas, game, ui, view) {
     drawMask()
     drawFlights(now)
     drawLedger(now)
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
   }
 
   // the flame's colours, hot to cool (b4.25, the user: "brighter, more colorful")

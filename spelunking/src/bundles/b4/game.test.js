@@ -804,6 +804,16 @@ test('ash sends out grey worms that snake towards the unexplored, lift the fog f
   assert.ok(seen1 - seen0 > 500 * Math.min(spawned, 1), `the fog lifted: ${seen1 - seen0} px more seen`)
 })
 
+test('an ash worm with nothing unseen near bursts into a pink on the ledger (b4.45)', () => {
+  const g = fresh()
+  g.seen.fill(1)
+  g.ashworms.push({ body: [{ x: g.ch.x, y: g.ch.y }], target: null, born: g.tick + 1, steps: 0 })
+  tick(g)
+  assert.equal(g.ashworms.length, 0)
+  assert.equal(g.ledger.pink, 1)
+  assert.ok(g.events.some((e) => e.type === 'ashwormBurst'))
+})
+
 test('a tap while riding gets you off at the next open pixel, mid-root (b4.38)', () => {
   const g = fresh()
   const from = MAP.podNodes.find((n) => MAP.edges.some((e) => e.a === n || e.b === n))

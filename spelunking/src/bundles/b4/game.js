@@ -125,7 +125,7 @@ export const CONFIG = {
  *   | { type: 'dug', x: number, y: number, tile: number, by: number } | { type: 'haul', x: number, y: number, ore: number, loot: number, fruit: number }
  *   | { type: 'worm', x: number, y: number } | { type: 'eaten', x: number, y: number } | { type: 'deposit', cells: number[] }
  *   | { type: 'upgrade', level: number } | { type: 'botUpgrade', level: number }
- *   | { type: 'lizard', x: number, y: number } | { type: 'lichen', x: number, y: number } | { type: 'engulf' | 'eject', node: number } | { type: 'flower' | 'bloom' | 'poof' | 'ashworm' | 'ashwormGone', x: number, y: number } | { type: 'spark', x: number, y: number } | { type: 'licked', x: number, y: number, to: Cell }
+ *   | { type: 'lizard', x: number, y: number } | { type: 'lichen', x: number, y: number } | { type: 'engulf' | 'eject', node: number } | { type: 'flower' | 'bloom' | 'poof' | 'ashworm' | 'ashwormGone' | 'ashwormBurst', x: number, y: number } | { type: 'spark', x: number, y: number } | { type: 'licked', x: number, y: number, to: Cell }
  *   | { type: 'board', node: number } | { type: 'exit', node: number }
  *   | { type: 'nibble', id: number, x: number, y: number, from: Cell } | { type: 'hungry', id: number, x: number, y: number } | { type: 'tamed', id: number, x: number, y: number, slot: number }
  *  } GameEvent bugs.js adds the wild bugs'; tamed has slot -1 (to the ledger); tile FRUIT_TILE is a fruit (b4.10)
@@ -150,7 +150,7 @@ export const CONFIG = {
  * @property {{ x: number, y: number, px: number, py: number }} pos the bot's position in thousandths of a px (x
  *   wraps at w × 1000), this tick's and the last's (for drawing); always inside ch
  * @property {{ dx: number, dy: number } | null} move the direction pointed, as heading() gives it
- * @property {{ ore: number, loot: number, bugs: number, fruit: number }} ledger b4.3; fruit b4.10
+ * @property {{ ore: number, loot: number, bugs: number, fruit: number, pink: number }} ledger b4.3; fruit b4.10; pink b4.45 (burst ash worms)
  * @property {import('./garden.js').GardenState} garden b4.10
  * @property {import('./worms.js').Worm[]} worms b4.12
  * @property {number} level bug upgrades bought (b4.13)
@@ -203,7 +203,7 @@ export function createGame(map, cfg) {
     ch: { x: map.start.x, y: map.start.y, facing: 1 },
     pos: { x: map.start.x * 1000 + 500, y: map.start.y * 1000 + 500, px: map.start.x * 1000 + 500, py: map.start.y * 1000 + 500 },
     move: null,
-    ledger: { ore: 0, loot: 0, bugs: 0, fruit: 0 },
+    ledger: { ore: 0, loot: 0, bugs: 0, fruit: 0, pink: 0 },
     garden: createGarden(world.w * world.h),
     worms: [],
     level: 0,

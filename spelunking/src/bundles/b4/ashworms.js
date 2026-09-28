@@ -5,6 +5,8 @@
 // into the sheet, the sea or space; the rock stays as it is) towards the nearest unseen pixel within `sense`
 // (sought again once that one is seen), swinging a step to either side in turn: a snake. Everything within
 // `light` px of its head becomes seen for good. After `life` ticks it's gone. Randomness from the tick.
+// b4.45 (the user: "if light worms have no FOW to lift, they instead explode into bright rainbow particles and
+// give a new pink pixel resource"): nothing unseen within `sense`, it bursts: +1 pink on the ledger.
 
 import { reveal } from '../../sim/dig/game.js'
 import { wrap } from '../../sim/dig/rules.js'
@@ -70,12 +72,14 @@ export function updateAshworms(g) {
     if ((g.tick - z.born) % Math.max(1, c.moveTicks) !== 0) return true
     const head = z.body[0]
     if (!z.target || g.seen[z.target.y * w + z.target.x]) z.target = unseenNear(g, head, c.sense)
-    let dir = z.steps % 8 // nothing unseen near: it circles
-    if (z.target) {
-      let dx = z.target.x - head.x
-      if (Math.abs(dx) > w / 2) dx -= Math.sign(dx) * w
-      dir = Math.round(Math.atan2(z.target.y - head.y, dx) / (Math.PI / 4)) & 7
+    if (!z.target) {
+      g.ledger.pink++
+      g.events.push({ type: 'ashwormBurst', x: head.x, y: head.y })
+      return false
     }
+    let dx = z.target.x - head.x
+    if (Math.abs(dx) > w / 2) dx -= Math.sign(dx) * w
+    const dir = Math.round(Math.atan2(z.target.y - head.y, dx) / (Math.PI / 4)) & 7
     z.steps++
     for (const turn of [SWING[z.steps % 8], 0, 1, -1, 2, -2, 3, -3, 4]) {
       const [sx, sy] = STEPS[(dir + turn + 8) & 7]
