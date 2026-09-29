@@ -535,7 +535,23 @@ player isn't.
   leaving and keep it. It should come from the patch's counts (steady state), not from the last seconds, or a patch
   left mid-fire keeps "producing" ash forever.
 - **Claude's note:** "local" should mean a radius round the player, not what the camera shows; zoomed out to the
-  whole world, the real sim can't run everywhere.
+  whole world, the real sim can't run everywhere. (Answered by the map switch below.)
+
+**The map switch (user, 2026-09-29):** "Probably we should use a certain zoom level as a switch-over to a
+static/symbolic/frozen map. When zoomed out that much, the simulation stops (production does not) and the world is
+displayed in a simplified, highly readable way, like a subway map, showing biomes, zones, climates clearly."
+
+- **Claude's note:** the usual name is *semantic zoom*: past a threshold, what is drawn changes kind, not just size.
+  The switch needs a little hysteresis (switch at one zoom, switch back at a slightly different one) so it doesn't
+  flicker at the edge.
+- **Claude's note:** the map is the stage for D168's round trip: a freeze zooms out into the map, where the event's
+  place reads clearly, then back into the real world at the action.
+- **Claude's note:** the quests belong on it. A ledger recipe's conditions can light up the map zones where they
+  hold (heat here, water here), so the map answers "where do I take this spore?" without text or arrows. D164's
+  transition zones between two restored biomes read best here too.
+- **Claude's note:** the map is cheap to draw from the sim's model: each patch's few discrete states (the simple
+  local model) map to a colour or glyph. Coming back after being away could open on the map, showing what piled up
+  while away, before zooming in (D164: visuals on arrival).
 - **Claude's note:** with remote areas frozen, the far events a freeze zooms to (D168) are those that come from
   ledger totals: a tipping point such as *nodes+ = megabeast* reached by passive production appears somewhere, and
   the camera flies there. No replay history is needed for frozen areas; the genesis story of a tipping point is its
