@@ -552,6 +552,12 @@ displayed in a simplified, highly readable way, like a subway map, showing biome
 - **Claude's note:** the map is cheap to draw from the sim's model: each patch's few discrete states (the simple
   local model) map to a colour or glyph. Coming back after being away could open on the map, showing what piled up
   while away, before zooming in (D164: visuals on arrival).
+- **The data is there anyway (user):** "We need a chunk-level simulation of gases, temperature, radiation, spore
+  presence, etc. anyway, so it will be easy to show on the map." These are the architecture guide's shared fields
+  (§1); the map is a readout of them.
+- **Claude's note:** the map should show classes, not raw gradients. Each chunk's field values fall into a few named
+  states by threshold (warm / cold, wet / dry, spores yes / no), each with one colour or glyph. Five overlaid heat
+  maps would be the opposite of a subway map.
 - **Claude's note:** with remote areas frozen, the far events a freeze zooms to (D168) are those that come from
   ledger totals: a tipping point such as *nodes+ = megabeast* reached by passive production appears somewhere, and
   the camera flies there. No replay history is needed for frozen areas; the genesis story of a tipping point is its
