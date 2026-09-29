@@ -441,6 +441,65 @@ good", but "it is NOT a simulation, it is a puzzle game. I want this game to be 
 **Setting and audience (user):** the Callisto setting stays ("unfortunately I love the setting"). A 6-year-old is
 not the target audience, but the floor: the lowest complexity tolerance and system thinking to design for.
 
+## The genesis freeze: how new things explain themselves (user, 2026-09-29)
+
+The answer to D164's first rule (unlock moments must explain themselves). The game leans on "design under creative
+constraints": no menus, no text, no buttons, all design and art procedural, for an audience with very low tolerance
+for ambiguity and complexity.
+
+**The vocabulary (user):** "When something happens that the player needs to pay attention to, I freeze the game,
+highlight the element, probably even do a sped-up genesis story for that thing, in situ, the actual history of that
+thing, then I show the player picking it up, and it showing up on the ledger or inventory. Every time something new
+is introduced. It's weird the first time, but if done well, it will take 1–2 seconds early game, because the
+causality chain to early game stuff is short, and by the time it's long, players will be cozy with this
+explanation."
+
+**No ghost fingers (user):** the freeze doesn't demonstrate gestures; "I'll do my best to not need it." At worst a
+hold-drag picks from a circular inventory, but preferably "I'll just make decisions for the player or the situation
+will be the decision."
+
+**The situation is the decision (user):** the worked example is a new spore.
+1. **Pickup:** the player enters the isolated cavern that has the spore. Freeze: the spore is shown, then the
+   player covered with it.
+2. **The recipe (user):** the first freeze also shows the conditions the spore needs to sprout, as a ledger entry:
+   *spore + heat + water + soil = sprout*. It stays on the ledger as a quest marker.
+3. **Carrying:** nothing to manage; the player just walks around coated.
+4. **Release:** the next time the player is somewhere the spore likes, freeze again: it detaches and sprouts into the
+   world. "No menus, no buttons, but the player's actions changed the world."
+
+The player carries the spore the way a burr rides on fur (seed dispersal by animals, *epizoochory*). The choice is
+the route, which fits "location is the mode". The release is a one-way change the player understood beforehand,
+D164's "real level-up".
+
+### Claude's notes (draft, not decided)
+
+- **Introduce links, not things.** "New" is defined per link of the control panel (`player-influences-…md`). The
+  replay plays only the links the player hasn't seen, at readable speed; known links flash by as a short glyph. A
+  late chain of 8 links with 1 new one stays ~2 s: the vocabulary compresses as the player learns it.
+- **The recipe needs no text:** icons joined by `+` and `=`. On the ledger, a condition not met yet is dim and lights
+  up when the player stands where it holds (heat here, water here). The marker points the way without a map or an
+  arrow, and at release the lit recipe *is* the "why here".
+- **The body is the inventory:** what the player carries is always visible on the character (the coat of spores, its
+  colour, how much), so the release freeze is never a surprise.
+- **The release shows why here:** the spore visibly reacts to what made the place suitable, the same conditions as
+  on its ledger entry. If it can't be shown, it's cut (painfully obvious, or out of the graph).
+- **One-way, but no dead ends:** the player can't stop a release, so no release may break the system for good (*No
+  dead ends, no unrecoverable collapse*). Spreading a spore opens doors, never traps the player.
+- **Pacing:** one freeze at a time, queued, never mid-gesture; a tap skips it; only at the first sight of a link,
+  after that just the ledger particle. Otherwise it becomes the interruption idle games avoid.
+- **"The actual history" without per-entity tracking:** a short ring buffer of sim events per block (most already
+  carry a position). The replay walks the links table backwards through that area's recent events (fruit ← vine ←
+  green ← bug ← node). Memory per block, bounded. The alternative, replaying the deterministic sim from a snapshot,
+  is exact but heavier.
+- **Freeze the view, not the sim:** the replay plays from the log; the sim never runs special code for it, so
+  determinism (P2P, replays) holds. Holding the sim while a freeze plays is fine in solo play.
+- **Cost in the sim:** one small count per spore kind on the player, and a check of the local patch's state against
+  the spore's recipe. Deterministic, no state per spore.
+
+**Open:** does a freeze trigger the first time a link fires anywhere, or the first time the player sees it? The
+near-you design suggests the second: explain only what the player witnessed or picked up. Can the player carry
+several spore kinds at once, and does a new one replace the old?
+
 ## Geological layers (user, 2026-09-26)
 The user: "We need more variety and probably more depth. We need different geological layers playing
 different roles." Each layer must change what you *do*, not just its colour (Claude's test). The stack
