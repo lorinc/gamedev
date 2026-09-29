@@ -11,6 +11,9 @@ Status: exploration, 2026-09-26. The system comes first; numbers, build steps an
   Game" (user). Balancing isn't their game. The **data room** with charts is for nerd players only.
 - **No numbers competition** (user: "the most boring kind of user interaction").
 - Casual: nothing punishing, and a reached milestone stays reached.
+- **No killing, no enemies** (user, 2026-09-29): "In this game, problems are not solved by killing. And there are
+  no enemies. This is a surprisingly restrictive limit, most people equate excitement with punching something
+  scary in the face, and I can not do that." (D171)
 
 ## Painfully obvious, or out of the graph (user, 2026-09-26)
 "Hidden game mechanics with major consequences is NOT fun." And further: **anything that can have a
