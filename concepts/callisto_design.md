@@ -570,6 +570,41 @@ displayed in a simplified, highly readable way, like a subway map, showing biome
   the camera flies there. No replay history is needed for frozen areas; the genesis story of a tipping point is its
   ledger recipe.
 
+## Nature, not enemies: storms and tipping points (user, 2026-09-29)
+
+What the game has instead of fights (D171: no killing, no enemies). "This game is an alien fish tank / powder game
+[…] Otherwise, this is a beautiful casual particle-factorio."
+
+- **Design storms.** Earthquakes, firestorms, heatwaves, toxic runaways: the scary things are forces of nature.
+- **The punch is nature's non-linear moment:** "the occasional non-linear manifestation of nature — a major,
+  elementally strong event". The game needs catharsis, clarity and some orientation, a reference system.
+- **Tipping points are the boss fights, and they are storms.** A boss needs **pressure** (gas accumulating) and a
+  **climax** (the gas explodes at a fire event). If the player meets a quest before the climax (humidity raised to a
+  threshold), **that** is the tipping point and the beaten boss: the fire happens and the gas explodes, but with
+  enough water in the air it kickstarts the water cycle, and from then on water condenses in cold, humid areas.
+- **There are no problems.** "Everything always works, but you can always push it to a new state, where new things
+  start to happen, new systems appear, new areas, new climates, new toys unlock." The player's verbs: adding
+  systems, and redefining what one system does to another.
+- **Every runaway triggers its own brake.** Each positive feedback loop sets off a negative one: a new predator
+  appears; excess gas is absorbed and changes a liquid's pH, which some life forms dislike and others thrive in.
+- **Nature kills:** "because nature has no morals, just survival and evolution." Death between creatures is fine;
+  D171 is about the player and about enemies.
+- **Symbiosis (the user's note to self):** make sure symbiosis between species is well represented. "Major
+  evolutionary events on Earth happened through cooperation, not competition (endosymbiosis!!)."
+
+### Claude's notes (draft, not decided)
+
+- **Missing the quest isn't failing.** "Everything always works" and "nothing punishing" mean the un-beaten storm
+  must also end in a working state, and the pressure builds again, so the player gets another go. The beaten
+  storm opens a new state; the un-beaten one just doesn't open it yet.
+- **Storms must be announced.** Pressure is visible as it builds (the gas cloud thickens), and the climax's recipe
+  is on the ledger before it comes (*gas+ + fire = explosion*, next to the quest *humidity+ → water cycle*). A storm
+  that arrives unannounced is the "farm exploded out of the blue" the design rules out.
+- **Storm timing is a scenario-engine goal:** "the fire comes 3–6 minutes after the gas passes X" is exactly the
+  kind of goal the engine searches knobs for (architecture guide §8).
+- **Symbiosis fits the verbs:** "redefining what one system does to another" is what symbiosis is, turning an
+  eats-link into a feeds-link. It can be the main way the player redefines links.
+
 ## Geological layers (user, 2026-09-26)
 The user: "We need more variety and probably more depth. We need different geological layers playing
 different roles." Each layer must change what you *do*, not just its colour (Claude's test). The stack
