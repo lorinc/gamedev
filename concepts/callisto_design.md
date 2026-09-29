@@ -504,9 +504,18 @@ already on it: *moth+ = ore+* and *nodes+ = megabeast*.
 - **Claude's note:** `+` means two things in these recipes: "and" (*spore + heat*) and "more of" (*moth+*). For
   this audience they need two different glyphs, for example a stack of icons or a rising arrow for "more of".
 
+**The loop, and carrying (user, 2026-09-29):** "Let the player carry anything. This is an open world incremental
+game, where the player keeps adding living systems to the ecosystem, and then gets quests to push certain elements
+into a tipping point (nodes+ → megabeast)."
+
+- **Claude's note:** "carry anything" makes the coat a legend. With many kinds on the body at once, each kind needs
+  its own readable mark (colour, shape, where on the body), or the body stops working as the inventory.
+- **Claude's note:** a quest is a threshold on a stock (nodes ≥ 16 → a megabeast). That's the shape of a goal in
+  the scenario engine (`guides/engineering/ideal_sw_architecture.md` §8), so tuning when quests tip is a search the
+  engine can run.
+
 **Open:** does a freeze trigger the first time a link fires anywhere, or the first time the player sees it? The
-near-you design suggests the second: explain only what the player witnessed or picked up. Can the player carry
-several spore kinds at once, and does a new one replace the old?
+near-you design suggests the second: explain only what the player witnessed or picked up.
 
 ## Geological layers (user, 2026-09-26)
 The user: "We need more variety and probably more depth. We need different geological layers playing
