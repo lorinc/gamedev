@@ -94,6 +94,9 @@ instead of entities", **is this.**
 - **Level of detail in time too:** far areas update once a second, not 60 times.
 - **Invariant:** both representations obey the same flows (section 6), so an area simulated as numbers ends up
   where it would have as individuals, on average.
+- **Superseded by the user's simpler model (D169, 2026-09-29):** off-screen areas don't evolve at all. Their state
+  freezes and only passive resource production is calculated; the real simulation runs only where the player is.
+  See `concepts/callisto_design.md` → *The genesis freeze*.
 
 b4's tamed swarm is already halfway there: abstract workers, no pathfinding, cheating freely (see the
 incremental-not-deep-sim direction in the project notes).

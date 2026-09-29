@@ -521,9 +521,25 @@ happens, not only near the player: the camera zooms out and flies in to it.
 - **Claude's note:** the round trip is also a "where" beat. Zoom out from the player, into the event, and back out
   and into the player by the same path, so the player sees where it happened relative to themselves and ends where
   they started. p11's young player said "I'm lost! What just happened?": the trip must never leave them lost.
-- **Claude's note:** far from the player the sim may run as numbers (architecture guide §3). Zooming in on a far
-  event means materialising individuals there, and the genesis replay needs the numbers mode to emit the same
-  positioned events as the individual mode.
+
+**Local sim, remote numbers (user, 2026-09-29):** "Simulation runs differently locally than remotely. When offloaded
+into simple calculation, simulation could just freeze world state and calculate passive resource production. And
+when player comes into view, real simulation happens (liquid > evaporation > gas > slime), so player gets a guttural
+understanding of how the world works." This extends D164's offline rule (stable while away) to every place the
+player isn't.
+
+- **Claude's note:** every change of state then happens in front of the player, which is the strongest form of "no
+  hidden consequences". Far away only stock accumulates, which is the genre's retention hook ("stuff accumulating
+  that I could invest right now") and shows on return as piled-up resources.
+- **Claude's note:** the cheapest passive rate is the one the patch had while the player watched it: measure it on
+  leaving and keep it. It should come from the patch's counts (steady state), not from the last seconds, or a patch
+  left mid-fire keeps "producing" ash forever.
+- **Claude's note:** "local" should mean a radius round the player, not what the camera shows; zoomed out to the
+  whole world, the real sim can't run everywhere.
+- **Claude's note:** with remote areas frozen, the far events a freeze zooms to (D168) are those that come from
+  ledger totals: a tipping point such as *nodes+ = megabeast* reached by passive production appears somewhere, and
+  the camera flies there. No replay history is needed for frozen areas; the genesis story of a tipping point is its
+  ledger recipe.
 
 ## Geological layers (user, 2026-09-26)
 The user: "We need more variety and probably more depth. We need different geological layers playing
