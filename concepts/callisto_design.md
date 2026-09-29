@@ -558,6 +558,10 @@ displayed in a simplified, highly readable way, like a subway map, showing biome
 - **Claude's note:** the map should show classes, not raw gradients. Each chunk's field values fall into a few named
   states by threshold (warm / cold, wet / dry, spores yes / no), each with one colour or glyph. Five overlaid heat
   maps would be the opposite of a subway map.
+- **Reference (user):** SimCity's coverage views (power, water, police, pollution).
+- **Claude's note:** SimCity shows one view at a time, picked from buttons. With no buttons here, the situation picks
+  the layer (D165): what the player carries and the quests on the ledger decide what lights up, e.g. carrying a
+  spore shows the chunks that meet its recipe.
 - **Claude's note:** with remote areas frozen, the far events a freeze zooms to (D168) are those that come from
   ledger totals: a tipping point such as *nodes+ = megabeast* reached by passive production appears somewhere, and
   the camera flies there. No replay history is needed for frozen areas; the genesis story of a tipping point is its
