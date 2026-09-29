@@ -514,8 +514,16 @@ into a tipping point (nodes+ → megabeast)."
   the scenario engine (`guides/engineering/ideal_sw_architecture.md` §8), so tuning when quests tip is a search the
   engine can run.
 
-**Open:** does a freeze trigger the first time a link fires anywhere, or the first time the player sees it? The
-near-you design suggests the second: explain only what the player witnessed or picked up.
+**Where a freeze looks (user, 2026-09-29):** "The world is fairly small atm, and zoom range is massive... anything
+meaningful happening could trigger a zoom out, zoom-in-on-action." So a freeze can trigger wherever the new thing
+happens, not only near the player: the camera zooms out and flies in to it.
+
+- **Claude's note:** the round trip is also a "where" beat. Zoom out from the player, into the event, and back out
+  and into the player by the same path, so the player sees where it happened relative to themselves and ends where
+  they started. p11's young player said "I'm lost! What just happened?": the trip must never leave them lost.
+- **Claude's note:** far from the player the sim may run as numbers (architecture guide §3). Zooming in on a far
+  event means materialising individuals there, and the genesis replay needs the numbers mode to emit the same
+  positioned events as the individual mode.
 
 ## Geological layers (user, 2026-09-26)
 The user: "We need more variety and probably more depth. We need different geological layers playing
