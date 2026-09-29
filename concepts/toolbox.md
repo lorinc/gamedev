@@ -37,6 +37,18 @@ Frameworks, libraries, SDKs, and tools for the platform and its games. Design pr
 * Test on a cheap Android phone and in all three aspect ratios from week one.
 
 
+* **Device and Input Detection (2026-09-29)**
+* Detect **input and screen**, not "PC vs phone". What to do with the answer: *Any Screen, Any Aspect Ratio* in [opinionated_games.md](opinionated_games.md) (presentation only, never rules).
+* `matchMedia('(pointer: coarse)')`: the main pointer is a finger. Good; b4 uses it to start phones brighter (`spelunking/src/bundles/b4/main.js`, b4.47).
+* `matchMedia('(hover: hover)')`: the main pointer can hover (a mouse). Good.
+* `matchMedia('(any-pointer: coarse)')`: some touch input exists even if the main pointer is a mouse (touchscreen laptops).
+* `navigator.maxTouchPoints > 0`: a touchscreen exists. The only way to tell an iPad from a Mac (iPadOS says "Macintosh" in its user agent).
+* `pointerdown` → `e.pointerType` (`'mouse'`, `'touch'`, `'pen'`): what the player actually used just now. The most honest signal; b1/b2 input already reads it.
+* Screen size, orientation, `devicePixelRatio`: phone portrait vs tablet vs monitor; changes when the device rotates.
+* User-agent sniffing: unreliable, don't. Device speed: no reliable signal (`navigator.deviceMemory` is Chromium-only); measure frame time in the first seconds instead.
+* **Hybrids exist** (Surface, touchscreen laptops, Chromebooks, iPads with keyboards): guess from the media queries at load, then switch to the last `pointerType` used during play.
+
+
 * **Storage**
 * Browser storage (localStorage / IndexedDB) through the publisher SDK's storage abstraction where a platform requires it (e.g., YouTube Playables).
 * String export / import as a backup and for sharing.

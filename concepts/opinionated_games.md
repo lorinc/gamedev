@@ -174,6 +174,10 @@
 * Every game must run in **portrait, landscape, and square** (9:16, 16:9, 1:1), with **touch and mouse / keyboard** (a YouTube Playables requirement, and the norm across aggregators).
 * Critical one-screen play areas are designed **roughly square** so they fit every ratio; elsewhere the camera adapts (e.g., portrait shows deeper, landscape shows wider).
 * Touch and keyboard / mouse may use different input schemes (e.g., swipes vs. WASD + click), but both must map to **the same simulation commands**, with no precision or speed advantage for either in competitive play.
+* **Detected device adapts presentation, never the game** (2026-09-29; how to detect: *Device and Input Detection* in [toolbox.md](toolbox.md)):
+  * Adapt freely: hint glyphs (finger swipe vs mouse drag / WASD; with no instructions, the few hints shown must match the hand on the device), touch target and UI size (~44 CSS px for a finger), camera zoom, brightness and contrast, the effects tier (from measured frame time, not device type), keyboard shortcuts for gestures that exist on touch too.
+  * Hover is a bonus only: never put information behind hover alone, or touch players lose it.
+  * Never split rules, content or mechanics by device: it's a mode split, doubles design and testing, and breaks sharing between players on different devices.
 
 
 
