@@ -496,6 +496,14 @@ D164's "real level-up".
 - **Cost in the sim:** one small count per spore kind on the player, and a check of the local patch's state against
   the spore's recipe. Deterministic, no state per spore.
 
+**Several quests at once (user, 2026-09-29):** the ledger holds more than one recipe. The game starts with two
+already on it: *moth+ = ore+* and *nodes+ = megabeast*.
+
+- **Claude's note:** a quest isn't only a reward to chase. *nodes+ = megabeast* announces a consequence before it
+  happens, so the point of no return is understood when the player crosses it (D164).
+- **Claude's note:** `+` means two things in these recipes: "and" (*spore + heat*) and "more of" (*moth+*). For
+  this audience they need two different glyphs, for example a stack of icons or a rising arrow for "more of".
+
 **Open:** does a freeze trigger the first time a link fires anywhere, or the first time the player sees it? The
 near-you design suggests the second: explain only what the player witnessed or picked up. Can the player carry
 several spore kinds at once, and does a new one replace the old?
