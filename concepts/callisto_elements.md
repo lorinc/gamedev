@@ -105,6 +105,9 @@ Tags: **R** real (on Earth or measured on Callisto) · **P** plausible for Calli
 
 ## Native life (Callisto)
 
+How these are represented and drawn (one record per species, grammars, procedural animation):
+[callisto_lifeforms.md](callisto_lifeforms.md).
+
 ### Germs
 - Radiotroph mats (live on radiolysis hydrogen) P
 - Methanogens (hydrogen + CO₂ → methane) P
