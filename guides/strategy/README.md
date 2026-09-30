@@ -10,3 +10,4 @@ parallel on 2026-09-30. Each guide cites its sources inline and marks what could
 | 03 | [Funding and link rules](03-funding-and-link-rules.md) | Steam, Kickstarter, Patreon and the rest for a solo dev, and which portals allow asking for support |
 | 04 | [Launch plan](04-launch-plan.md) | What to do besides content from the end of systems prototyping to launch: week-by-week beats, working back from the launch week (pasted advice marked unvalidated) |
 | 05 | [Features by cost and return](05-feature-roi.md) | Which features pay back in a small game (demo, achievements, difficulty, comfort settings) and which sink it (multiplayer, branching story, mods); unvalidated summary of a BiteMe Games video |
+| 06 | [Creator outreach](06-creator-outreach.md) | How to cold-email YouTubers for coverage on no budget: lookalike game, qualified creators, short first-person email, and what it returned; unvalidated summary of an Acrylic Pixel Games video |

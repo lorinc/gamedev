@@ -57,3 +57,8 @@ refer to that video.
    shared discoveries, King of Thieves' raids on other players' dungeons) avoids almost all of its problems (the
    user). The optimum is in the details, not in blanket rules. Features that change how the game holds its state (networking, mods, branching) are
    foundations, decided at the start or never ([strategy/05](strategy/05-feature-roi.md)).
+10. **Pitch creators one by one, and don't expect coverage to pay the bills.** *(Unvalidated: a video summary the user
+    shared, 2026-09-30.)* Find a recent game like yours, list only the creators who play several indie games and
+    uploaded in the last 3 months, and send a very short first-person email with the link. Never script what they say.
+    If nobody plays it, suspect the game. Even good coverage gave one dev about 2,000 wishlists
+    ([strategy/06](strategy/06-creator-outreach.md)).
