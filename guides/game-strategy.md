@@ -51,3 +51,7 @@ refer to that video.
    a game leaves systems prototyping, start the launch plan: announce 4–6 months before launch, keep beats 2–3 weeks
    apart, grow a mailing list, and run a Steam page, a demo and Next Fest
    ([strategy/04](strategy/04-launch-plan.md)).
+9. **Weigh every feature by cost and return.** *(Unvalidated: a video summary the user shared, 2026-09-30.)* Cheap
+   wins: a demo, achievements, difficulty settings, basic comfort settings. Traps for a solo dev: multiplayer,
+   branching stories, modding. Features that change how the game holds its state (networking, mods, branching) are
+   foundations, decided at the start or never ([strategy/05](strategy/05-feature-roi.md)).
