@@ -62,3 +62,7 @@ refer to that video.
     uploaded in the last 3 months, and send a very short first-person email with the link. Never script what they say.
     If nobody plays it, suspect the game. Even good coverage gave one dev about 2,000 wishlists
     ([strategy/06](strategy/06-creator-outreach.md)).
+11. **A devlog is a video production job; price it before starting.** *(Unvalidated: a video summary the user shared,
+    2026-09-30.)* If you make one: script it (outline, flow, spoken draft), choose showcase or story, and record the
+    footage from Git history after the script is final. It competes with shipping for the same hours
+    ([strategy/07](strategy/07-devlogs.md)).
