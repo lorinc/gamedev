@@ -138,6 +138,8 @@ Doing neither, with a monthly cadence on paper and a year of scope in the doc, i
 
 ## 3. A monthly cadence (4 weeks, ~120–160 h full-time)
 
+> Superseded 2026-09-30: the user adopted a 4–8 month cycle per game ([game-strategy.md](../game-strategy.md)). The shape below still applies, stretched over the longer cycle.
+
 This synthesises Gabler (toy in hours, idea in under a week), Tyroller (about 8% of time on prototyping, 1–2 days per prototype), Kaitila (20–50 h core, MVP first, always-working builds), Brown (freeze and polish) and the portal test pipelines. Adjust the hours, not the shape.
 
 **Week 0 (last 2 days of the previous month, overlapping).** Pick 3 candidate toys from the "next game" list. Each one gets a one-line question and a kill criterion. No docs longer than a page.

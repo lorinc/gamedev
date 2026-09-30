@@ -59,9 +59,11 @@ Everything else in the guides is for when the topic comes up.
 9. Kate Compton, *So you want to build a generator*, 20 min ([03](03-levels-onboarding-difficulty.md))
 10. Poki developer docs: testing, player fit test, easy access. 20 min ([04](04-motivation-and-audience.md))
 
-## Open decision (for the user)
+## Decided: 4 to 8 months per game (user, 2026-09-30)
 
-**Flagship or monthly?** Guides 01, 04 and 05 each flag this on their own. The Spelunking Base concept is a multi-month game, but the goal is one game a month. Pick one:
+The user adopted the 4–8 month cycle from [game-strategy.md](../game-strategy.md) ("this guy knows better than I do, and I want to be successful, not right"). The monthly cadence in 01, 04 and 05 is superseded. Their research still stands, but read "a month" as "a cycle". The question below was settled by that choice.
+
+**Flagship or monthly? (settled, see above)** Guides 01, 04 and 05 each flag this on their own. The Spelunking Base concept is a multi-month game, but the goal is one game a month. Pick one:
 
 - **(a)** Spelunking Base is the flagship. Accept a multi-month timeline, and the monthly practice pauses or runs as small spin-offs.
 - **(b)** The monthly practice wins. Month 1 ships the smallest game inside Spelunking Base (roughly b1 + b2: dig, loot, recall, greed vs. darkness), and the rest becomes later months or never happens.
