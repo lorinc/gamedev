@@ -71,3 +71,8 @@ refer to that video.
     until the game is shelved. The games people keep playing are built around one or two session-length loops (a full
     pack, nightfall, a research gate forces the turn), with a fun core loop under them and a long goal over them.
     Choose the session length first ([game-design/06](game-design/06-gameplay-loops.md)).
+13. **Keep them engaged, not hooked.** *(One designer's opinion, from a video transcript the user shared,
+    2026-09-30.)* The video's factors: swap between kinds of play and vary the intensity, keep introducing new things,
+    tease what's coming, give a long-term goal with short ones on the way, and tune the challenge. Short runs where the
+    player improves and the next session differs also keep people returning. He excludes daily rewards, resource decay
+    and loss aversion on principle ([game-design/07](game-design/07-keeping-players-engaged.md)).
