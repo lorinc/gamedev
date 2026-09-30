@@ -41,5 +41,9 @@ refer to that video.
    - Reddit games can't link out to a full version (Reddit's app rules name "demo" apps). On Reddit, make a small
      game built for the feed (daily or player-made content) and use it to build the following
      ([01](strategy/01-reddit-games.md)).
+   - *Unvalidated:* Reddit judges intent, not wording, so a name that hints at a full version is still read as
+     promotion. On Reddit, the funnel runs through posting, not the game: value-first GIFs, dev insights, niche
+     subreddits and sanctioned promotion windows, with the Steam link in the comments when someone asks
+     ([01 §3](strategy/01-reddit-games.md)).
    - Old fragments stay up and point to the newest game. Audiences carry over best between games in one world or
      series.

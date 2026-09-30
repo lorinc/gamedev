@@ -189,8 +189,34 @@ submissions should be your own content" (9:1). Reddit doesn't enforce reddiquett
 moderators set their own rules. *Secondary sources only
 ([redship.io](https://redship.io/blog/reddit-self-promotion-rules)). reddit.com/wiki/reddiquette could not be
 fetched.* Ordinary link posts about a web or Steam version in game subreddits (r/WebGames, r/incremental_games,
-r/IndieGaming and the like) have nothing to do with Devvit. Each follows its own subreddit's rules. This guide doesn't
-cover them.
+r/IndieGaming and the like) have nothing to do with Devvit. Each follows its own subreddit's rules. The section
+below covers them, from an unvalidated source.
+
+### Posting on Reddit: intent, not wording (unvalidated)
+
+*Unvalidated: from a summary the user pasted on 2026-09-30. It cites "conversations across subreddits like r/gamedev
+and r/gamemarketing" and a "Reddit Marketing for Indie Games" breakdown, but gives no links. Nothing here was checked
+against sources; only the 9:1 figure matches the research above.*
+
+- **Reddit judges intent and behaviour, not the text of the rules.** A "brand loophole" (a name or account whose real
+  job is to funnel players to something you sell) is still read as spam. Moderators and players ban for it. This
+  applies to a Devvit game named so it points to a full game elsewhere, too: the app reviewers and the featuring team
+  judge intent as well.
+- **Post-history audits.** Before a post rises in a big subreddit, users and moderators look at the poster's profile.
+  If most of it promotes one game, it breaks the 9:1 guideline (9 community interactions per promotional post).
+- **Stealth marketing backfires.** An open developer showing a good mechanic is welcome. Posing as a casual fan or a
+  detached brand is not.
+- **The value check.** A post must be cool, funny or educational on its own. If it only works for someone who already
+  cares about the brand, it dies at zero upvotes.
+
+What works, per the same source:
+
+| Strategy | How | Why Reddit accepts it |
+|---|---|---|
+| Value-first showcase | A 15-second, high-quality GIF of one mechanic, shader or funny physics bug. No wishlist ask in the title | It entertains on its own. People ask "what game is this?" in the comments, and the Steam link goes there |
+| Dev insights | A detailed post-mortem, or how you solved a hard technical problem | It treats the community as peers, not customers. Moderators favour it |
+| Niche subreddits | Small, specific genre communities (e.g. r/tycoon, r/basebuildinggames), not the huge ones | They welcome new games made for their taste, if you take part genuinely |
+| Sanctioned windows | Events like "Indie Sunday" on r/Games, or a subreddit's promotion stickies | Entirely within the rules: no risk to the account or the game's name |
 
 ## 4. What kind of game fits
 
