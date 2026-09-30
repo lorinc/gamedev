@@ -11,3 +11,4 @@ Three guides, researched in parallel on 2026-09-25 for the build check (R16 in [
 | Doc | Answers |
 |---|---|
 | [Ideal software architecture](ideal_sw_architecture.md) | What a living-cave sim needs to stay fast and bounded with huge entity counts: shared fields, arrays not objects, simulation level of detail, sim/view split, stability rules, a scenario engine that searches knobs for goals (2026-09-28, from a p11 conversation; not researched yet) |
+| [Hosting on Cloudflare](hosting-cloudflare.md) | How Cloudflare's free static hosting would serve this repo under nobutt.org: current GitHub Pages + Porkbun setup, Pages vs Workers, custom domain (apex = nameservers to Cloudflare), `_headers` for COOP/COEP (2026-09-30, from a conversation; Cloudflare facts not verified yet) |
