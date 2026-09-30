@@ -1,6 +1,6 @@
 # Game design library: index
 
-Five guides researched in parallel on 2026-09-24, starting from GMTK. Each has a TL;DR, principles in depth with an "apply to spelunking" note, an overengineering-traps section, and a source list ranked by value per hour.
+Five guides researched in parallel on 2026-09-24 (a sixth, on loops, was added 2026-09-30 from a pasted transcript), starting from GMTK. Each has a TL;DR, principles in depth with an "apply to spelunking" note, an overengineering-traps section, and a source list ranked by value per hour.
 
 | # | Guide | Answers |
 |---|---|---|
@@ -9,6 +9,7 @@ Five guides researched in parallel on 2026-09-24, starting from GMTK. Each has a
 | 03 | [Levels, onboarding, difficulty](03-levels-onboarding-difficulty.md) | How to teach without text, how much procgen to build, how to pace a dive |
 | 04 | [Motivation and audience](04-motivation-and-audience.md) | What holds portal players, the portals' own numbers, social play without text |
 | 05 | [Process and scope](05-process-and-scope.md) | How to find the fun, finish, and not overengineer. Has a 4-week cycle and tripwires |
+| 06 | [Gameplay loops](06-gameplay-loops.md) | Core, medium and meta loops, and why one medium loop with a forcing limit keeps players returning; built from a video transcript, added later than the other five (opinion, not measured) |
 
 ---
 

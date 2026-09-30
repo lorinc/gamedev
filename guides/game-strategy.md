@@ -66,3 +66,8 @@ refer to that video.
     2026-09-30.)* If you make one: script it (outline, flow, spoken draft), choose showcase or story, and record the
     footage from Git history after the script is final. It competes with shipping for the same hours
     ([strategy/07](strategy/07-devlogs.md)).
+12. **Build around one medium loop with a forcing limit.** *(One designer's opinion, from a video transcript the user
+    shared, 2026-09-30. Not measured.)* Short loops are fun but give no reason to return; long loops delay the fun
+    until the game is shelved. The games people keep playing are built around one or two session-length loops (a full
+    pack, nightfall, a research gate forces the turn), with a fun core loop under them and a long goal over them.
+    Choose the session length first ([game-design/06](game-design/06-gameplay-loops.md)).
