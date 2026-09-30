@@ -1,6 +1,6 @@
 # Game strategy
 
-A standing list of what game to make, how long to spend on it, and why, for any game, not only this one. Keep it
+A standing list of what game to make, how long to spend on it, how to find its players, and why, for any game, not only this one. Keep it
 general. Project-specific notes go in the project, not here. The companion list for day-to-day work is
 [working-habits.md](working-habits.md).
 
@@ -26,3 +26,20 @@ refer to that video.
 6. **Count on compounding, not hits.** [14:17] The first small game won't make a fortune. The goal is a back
    catalogue: a game every six months becomes 5 or 6 games after a few years, each earning a trickle, and together
    they fund a studio.
+7. **Release lite web versions to build a following.** *(The user's angle, 2026-09-30.)* Publish free, partial web
+   versions, clearly marked as fragments of a bigger game in progress. Players who like the fragment can help make
+   the real game on Patreon, Kickstarter or Steam. Web games, especially Reddit games, can build a massive
+   following when done well. How to do it, from the research in [strategy/](strategy/):
+   - The fragment ends at a wall the player can see, with "demo" or "part of X" in the title. One call to action on
+     the end screen and the main menu: a mailing list before the Steam page exists, the wishlist after
+     ([02](strategy/02-web-lite-funnel.md)).
+   - The full game must be a visible jump from the fragment. Giving everything away leaves nothing to sell.
+   - Where the ask is allowed differs by platform. Your own site and itch.io allow it. CrazyGames allows a Steam
+     link only on desktop demos. Poki, GameDistribution, Playgama and YouTube Playables don't allow it. So make
+     two builds from one codebase: a clean portal build and a home build with the ask
+     ([03](strategy/03-funding-and-link-rules.md)).
+   - Reddit games can't link out to a full version (Reddit's app rules name "demo" apps). On Reddit, make a small
+     game built for the feed (daily or player-made content) and use it to build the following
+     ([01](strategy/01-reddit-games.md)).
+   - Old fragments stay up and point to the newest game. Audiences carry over best between games in one world or
+     series.
