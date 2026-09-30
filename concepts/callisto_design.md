@@ -685,6 +685,44 @@ locally, so the world is a patchwork of acts, and progress shows as how far the 
    intent (hold or a graph endpoint), ghost then tap, building the whole structure, revert.
 The ecology (the 32, the cavity states) comes after these.
 
+## A direction being played with: deck-building eco-restoration (user, 2026-10-01)
+
+**Not decided.** The user: "let's play with the idea." It would replace the walking idle game ("then it's not an idle
+game anymore"), so it touches the D164 frame above.
+
+**The idea (user):**
+- Cards are the creatures and agents: bugs, pods, worms. No character is present, so all the "how do I move, where's
+  home, where's my inventory" questions go away. The user: movement "is not fun, it just enables the fun, the living,
+  changing system around you."
+- It plays "with EASE on any platform, including a phone".
+- **Two stable loops:** one run, and meta-progression.
+- A run starts easy. Played well, the cards reach a tipping point, and the simulation blooms: moss, then lichen
+  spawning from the moss, then a fire event.
+- Alchemy-game feel: combining things to find more things. A procedural creature vocabulary would make each run
+  different (melt an ice cave and cover it in slime mold one time; spread radiation in a lava cavern to feed
+  radiation-feeding fungus the next). The user isn't sure that is fun for anyone.
+- The user's belief, unchecked: deck-building roguelikes are "the most profitable, least competitive genre".
+
+**Open (user):** how a run is lost.
+
+### Claude's notes (draft, not decided)
+
+- A run is a finishable medium loop and meta-progression is the long loop
+  ([guides/game-design/06](../guides/game-design/06-gameplay-loops.md)). Short runs with a visible improvement and a
+  different next run are the pattern the engagement video names
+  ([07](../guides/game-design/07-keeping-players-engaged.md)).
+- The core loop becomes playing cards. It has to be enjoyable before the bloom, or the bloom can't carry it.
+- Cards must read without text (no text, no menus): the creature is the card, a recipe is icons, like the spore entry
+  (*spore + heat + water + soil = sprout*). New cards could arrive through the genesis freeze.
+- A variant is only replay value if it changes what the player does (route, levers), not just how things look.
+  The fixed part of the structure has to be big enough for mastery to carry over.
+- The simulation as numbers with pixels only drawing it carries over unchanged.
+- "Most profitable, least competitive" can't be confirmed; the genre is often described as crowded. It is a number to
+  check, like the web numbers ([guides/strategy/02](../guides/strategy/02-web-lite-funnel.md)).
+- On losing: no loss state, the run ends on a visible clock (a season, an arriving storm) and failure means a poorer
+  restoration. A real collapse (a wrong-way tipping point, understood beforehand) would be a second mechanism, only if
+  the game lacks tension.
+
 ## Open
 The player's identity · what the ocean taps are · the element list and the interaction matrix · patches
 vs per-cell rules for the ecology · hybrids: what they are, how they breed, what "racing" means · how the
