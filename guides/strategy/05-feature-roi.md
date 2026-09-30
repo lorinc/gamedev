@@ -31,6 +31,16 @@ These features are often misjudged as small, and they sink projects:
 
 - **Multiplayer.** The biggest pitfall for solo devs and first games: networking, server costs, latency and testing
   add huge technical debt. Only for experienced developers or inherently social genres such as party games [21:28].
+  - **The user's counterpoint (2026-09-30): this is a blanket statement, and the optimum is in the details.**
+    Asynchronous, gradual multiplayer avoids almost all of those problems.
+  - **No Man's Sky** started with little more than shared discoveries: names others gave to planets and species showed
+    up in your game. Real co-op came in later updates, step by step.
+  - **King of Thieves** is asynchronous: you build a trap-filled dungeon, and other players try to rob it while you're
+    not there. You watch the replays.
+  - The trap is *real-time* multiplayer: latency, sync, servers. Asynchronous traces (discoveries, ghosts, built
+    things others visit) skip most of that. The game design guide
+    [04](../game-design/04-motivation-and-audience.md) says the same: "Asynchronous traces beat synchronous presence".
+  - *These examples are from Claude's knowledge, not researched here.*
 - **Branching narratives.** Unless the game is a visual novel, tracking choices and writing diverging stories costs
   more writing and assets than a small team can sustain. A linear story is tighter and better polished [23:43].
 - **Modding support (Workshop).** Adding it mid-project fails. Modding also only thrives with a huge player base,

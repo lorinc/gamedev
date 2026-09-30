@@ -52,6 +52,8 @@ refer to that video.
    apart, grow a mailing list, and run a Steam page, a demo and Next Fest
    ([strategy/04](strategy/04-launch-plan.md)).
 9. **Weigh every feature by cost and return.** *(Unvalidated: a video summary the user shared, 2026-09-30.)* Cheap
-   wins: a demo, achievements, difficulty settings, basic comfort settings. Traps for a solo dev: multiplayer,
-   branching stories, modding. Features that change how the game holds its state (networking, mods, branching) are
+   wins: a demo, achievements, difficulty settings, basic comfort settings. Traps for a solo dev: real-time
+   multiplayer, branching stories, modding. Not multiplayer as such: asynchronous, gradual multiplayer (No Man's Sky's
+   shared discoveries, King of Thieves' raids on other players' dungeons) avoids almost all of its problems (the
+   user). The optimum is in the details, not in blanket rules. Features that change how the game holds its state (networking, mods, branching) are
    foundations, decided at the start or never ([strategy/05](strategy/05-feature-roi.md)).
