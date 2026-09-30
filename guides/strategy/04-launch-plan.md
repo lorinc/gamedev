@@ -92,6 +92,23 @@ compress the middle.
 - Benchmarks: games entering with under 1,000 wishlists gain a median of 322. With 1,000–9,999, the median gain is
   1,006. About 20% of demo players wishlisting is healthy **[R, 02]**.
 
+**Why Next Fest is the big beat** (a second summary the user pasted on 2026-09-30, **unvalidated [P]**):
+
+- **The biggest burst of attention before launch.** It multiplies wishlists: games that enter with momentum (often
+  thousands of wishlists already) can double or triple them in days. *This clashes with the benchmarks above: a
+  median gain of about 1,006 for games entering with 1,000–9,999 wishlists means most don't double. Doubling or
+  tripling is the good case, not the typical one.*
+- **The algorithm rewards momentum.** Fast wishlist growth, many demo downloads and active play in the **first 48
+  hours** push the game onto the front page and the "Trending" lists.
+- **The demo does the convincing.** A strong demo proves the core loop in one short session.
+- **Creators and press hunt for games there.** Coverage brings outside traffic, which feeds the algorithm and the
+  festival's rankings.
+- **The demo feeds the community.** Players of an early playable version can be funnelled to the mailing list (or
+  Discord), so a core of supporters is ready to buy and review on launch day.
+
+So, for this plan: enter with as many wishlists as the earlier beats can gather, have the demo polished before the
+fest, send creators the demo ahead of it, and put the mailing list sign-up in the demo **[C]**.
+
 ### L: launch
 
 - Email the mailing list. Steam emails every wishlister **[R, 03]**.
