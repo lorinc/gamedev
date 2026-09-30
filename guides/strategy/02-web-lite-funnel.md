@@ -156,6 +156,21 @@ For Patreon and Kickstarter, the pattern is the same: the free fragment builds t
 - Unrelated games each cycle: audiences carried best within one world or series (Failbetter, Crashlands). A shared world, style or genre across the 4-8 month games helps the back catalogue work.
 - Crowdfunding too big a promise: Friday Night Funkin' raised $2M+ and is still unreleased five years on. Scope any campaign to what one cycle can deliver.
 
+## Hypotheses to put a number on
+
+*Unvalidated. The user's, 2026-09-30, from a conversation with their son (a pre-teen's opinion, nothing more).*
+
+- **Web-portal players mostly don't remember or follow.** Players aged about 10 to 17 play on web platforms to switch
+  off, and forget the game afterwards. If true, the conversion from portal play to a mailing list, a community or a
+  wishlist is very low. The plan needs a measured figure for this, not the assumption.
+- **Familiarity is a payoff of its own.** Much advertising isn't meant to convert at once. It makes the name familiar,
+  so the next sighting feels trusted. If web play works like this, the return shows up later, at the Steam launch, and
+  a conversion count on the day of play undercounts it.
+
+The two pull apart: measuring only direct conversion would kill a brand-awareness effect that can't be seen that way.
+Deciding what counts as "viable" for the web direction has to allow for both: web as the product, or web as a seed for
+a later Steam launch.
+
 ## Sources, ranked by value
 
 1. GameDiscoverCo, shapez.io deep dive (only published web-to-paid conversion numbers): https://newsletter.gamediscover.co/p/deep-dive-how-shapezio-went-from
