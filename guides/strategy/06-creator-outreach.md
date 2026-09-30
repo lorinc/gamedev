@@ -46,8 +46,10 @@ The speaker treats outreach like B2B lead generation: few, well-qualified leads 
 
 ## For this project **[C]**
 
-- The method assumes a Steam page and Steam keys. For a browser game, the same email works with a playable link
-  instead of a key, which is cheaper for the creator. *Verify* with a real send.
+- The method assumes a Steam page and Steam keys. Whether the final product is a Steam game or a browser game isn't
+  decided: the user may use web platforms only to seed a genre brand and community before a Steam launch, and wants
+  real web numbers first. Until then, a playable link works in the same email in place of a key (cheaper for the
+  creator), and the creator list built now carries over to a later Steam launch. *Verify* with a real send.
 - It slots into the launch plan's beats: the small-creator email at the web fragment, the demo-to-creators send
   before Next Fest, keys at launch ([04](04-launch-plan.md)).
 - Step 2's filter (plays several indie games, active within 3 months) is the useful, cheap part. It applies to any
