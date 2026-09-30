@@ -47,3 +47,7 @@ refer to that video.
      ([01 §3](strategy/01-reddit-games.md)).
    - Old fragments stay up and point to the newest game. Audiences carry over best between games in one world or
      series.
+8. **"I just have to make a good game" is not a plan.** *(The user, 2026-09-30.)* Many first games flop on it. When
+   a game leaves systems prototyping, start the launch plan: announce 4–6 months before launch, keep beats 2–3 weeks
+   apart, grow a mailing list, and run a Steam page, a demo and Next Fest
+   ([strategy/04](strategy/04-launch-plan.md)).
