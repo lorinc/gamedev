@@ -92,6 +92,12 @@ compress the middle.
 - Benchmarks: games entering with under 1,000 wishlists gain a median of 322. With 1,000–9,999, the median gain is
   1,006. About 20% of demo players wishlisting is healthy **[R, 02]**.
 
+**It's online, with no travel.** Next Fest runs on the Steam store: for about a week, a festival hub lists the
+demos, and players play them from home. Before it, you register the game in Steamworks and upload the demo. During
+it, you can optionally livestream on your Steam page (pre-recorded streams on a loop are common) and answer comments.
+In-person shows (PAX, Gamescom) are a separate kind of event, and this plan doesn't need them **[C]**, *verify* the
+current rules on Steamworks.
+
 **Why Next Fest is the big beat** (a second summary the user pasted on 2026-09-30, **unvalidated [P]**):
 
 - **The biggest burst of attention before launch.** It multiplies wishlists: games that enter with momentum (often
