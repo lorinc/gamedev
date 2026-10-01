@@ -81,3 +81,9 @@ refer to that video.
     and interesting decisions). A game can be strong in one and weak in the other. Appeal can be tested from the start
     with images, before anything is built; engagement needs playtests
     ([game-design/08](game-design/08-engagement-vs-appeal.md)).
+15. **Repeat a tested core, then vary it, in that order.** *(One educator's opinion, from a video transcript the user
+    shared, 2026-10-01. Not measured.)* The repeated core makes it a game; variety makes it a better one, and it has to
+    vary the skill used, not just enemy health or time limits. Test the core with people first, then run a separate
+    messy round on where variety comes from and what tools it needs, and only then go into production. Match the
+    amount of variety to what the genre's players expect
+    ([game-design/09](game-design/09-repetition-and-variety.md)).
