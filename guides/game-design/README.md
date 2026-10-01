@@ -1,6 +1,6 @@
 # Game design library: index
 
-Five guides researched in parallel on 2026-09-24 (four more, on loops, engagement, appeal and repetition with variety, were added 2026-09-30 from a pasted transcript), starting from GMTK. Each has a TL;DR, principles in depth with an "apply to spelunking" note, an overengineering-traps section, and a source list ranked by value per hour.
+Five guides researched in parallel on 2026-09-24 (five more, on loops, engagement, appeal, repetition with variety, and depth versus complexity, were added 2026-09-30 and 2026-10-01 from pasted transcripts), starting from GMTK. Each has a TL;DR, principles in depth with an "apply to spelunking" note, an overengineering-traps section, and a source list ranked by value per hour.
 
 | # | Guide | Answers |
 |---|---|---|
@@ -13,6 +13,7 @@ Five guides researched in parallel on 2026-09-24 (four more, on loops, engagemen
 | 07 | [Keeping players engaged](07-keeping-players-engaged.md) | GMTK's factors for why players finish a game or drop it: pacing, novelty, anticipation, goals, challenge; from a pasted transcript (one designer's opinion) |
 | 08 | [Engagement versus appeal](08-engagement-vs-appeal.md) | Two separate jobs, making people look and making them stay: toys vs games, interesting decisions, central fantasy, testing appeal early; from a pasted transcript (one educator's opinion, much overlaps 01, 02, 05, 06) |
 | 09 | [Repetition with variety](09-repetition-and-variety.md) | Why a repeated core needs varied content, stacked loops, the wobbly flow line, and the order: core prototype, then a separate variety round, then production; from a pasted transcript (one educator's opinion, overlaps 03, 05, 06, 07, 08) |
+| 10 | [Depth versus complexity](10-depth-vs-complexity.md) | Depth = viable options, complexity = systems; aim for the most depth per system, and add depth underneath (a second use for an existing thing) rather than on top; from a pasted transcript (one indie developer's opinion, much overlaps 01 and 03) |
 
 ---
 
