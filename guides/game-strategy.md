@@ -87,3 +87,8 @@ refer to that video.
     messy round on where variety comes from and what tools it needs, and only then go into production. Match the
     amount of variety to what the genre's players expect
     ([game-design/09](game-design/09-repetition-and-variety.md)).
+16. **Mobile publishers test with a few hundred dollars, and plan the meta from day one.** *(Unvalidated: one commentator's
+    video, shared by the user 2026-10-01.)* Prototype in about a week, buy a few hundred installs, read cost per
+    install, playtime and day-1 retention against targets set beforehand, and drop most prototypes. The economics
+    (buying installs, LTV over CPI, LiveOps) don't apply to portals, and the retention targets aren't comparable
+    with portal ones ([strategy/08](strategy/08-mobile-publisher-pipeline.md)).
