@@ -76,3 +76,8 @@ refer to that video.
     tease what's coming, give a long-term goal with short ones on the way, and tune the challenge. Short runs where the
     player improves and the next session differs also keep people returning. He excludes daily rewards, resource decay
     and loss aversion on principle ([game-design/07](game-design/07-keeping-players-engaged.md)).
+14. **A game has two jobs: appeal and engagement.** *(One educator's opinion, from a video transcript the user shared,
+    2026-09-30.)* Appeal gets someone to look (the fantasy, the style, the premise); engagement keeps them playing (feel
+    and interesting decisions). A game can be strong in one and weak in the other. Appeal can be tested from the start
+    with images, before anything is built; engagement needs playtests
+    ([game-design/08](game-design/08-engagement-vs-appeal.md)).

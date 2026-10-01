@@ -1,6 +1,6 @@
 # Game design library: index
 
-Five guides researched in parallel on 2026-09-24 (two more, on loops and engagement, were added 2026-09-30 from a pasted transcript), starting from GMTK. Each has a TL;DR, principles in depth with an "apply to spelunking" note, an overengineering-traps section, and a source list ranked by value per hour.
+Five guides researched in parallel on 2026-09-24 (three more, on loops, engagement and appeal, were added 2026-09-30 from a pasted transcript), starting from GMTK. Each has a TL;DR, principles in depth with an "apply to spelunking" note, an overengineering-traps section, and a source list ranked by value per hour.
 
 | # | Guide | Answers |
 |---|---|---|
@@ -11,6 +11,7 @@ Five guides researched in parallel on 2026-09-24 (two more, on loops and engagem
 | 05 | [Process and scope](05-process-and-scope.md) | How to find the fun, finish, and not overengineer. Has a 4-week cycle and tripwires |
 | 06 | [Gameplay loops](06-gameplay-loops.md) | Core, medium and meta loops, and why one medium loop with a forcing limit keeps players returning; built from a video transcript, added later than the other five (opinion, not measured) |
 | 07 | [Keeping players engaged](07-keeping-players-engaged.md) | GMTK's factors for why players finish a game or drop it: pacing, novelty, anticipation, goals, challenge; from a pasted transcript (one designer's opinion) |
+| 08 | [Engagement versus appeal](08-engagement-vs-appeal.md) | Two separate jobs, making people look and making them stay: toys vs games, interesting decisions, central fantasy, testing appeal early; from a pasted transcript (one educator's opinion, much overlaps 01, 02, 05, 06) |
 
 ---
 
