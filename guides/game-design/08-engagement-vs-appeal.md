@@ -3,8 +3,9 @@
 Scope: a game must do two different jobs, make people want to look at it and make them want to keep playing. General,
 for any game.
 
-**Source.** A video transcript pasted by the user on 2026-09-30. The title, channel and link weren't recorded. The
-transcript has no timestamps. It is one developer-educator's opinion from games he sees on his channel; "80% of the
+**Source.** "Your Game Must Do These 2 Things", Indie Game Clinic, <https://www.youtube.com/watch?v=rTxKsBclbxk>
+(source supplied by the user on 2026-10-01). The transcript was pasted by the user on 2026-09-30 and has no
+timestamps. It is one developer-educator's opinion from games he sees on his channel; "80% of the
 games I see" is his impression, not a count. He says the split isn't a textbook definition and some things fall
 outside it. Much of it overlaps earlier guides, noted below. Everything here is from the transcript unless marked.
 
