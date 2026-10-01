@@ -152,6 +152,9 @@ export function renderPage(entries, opts) {
   const count = (/** @type {string} */ k) => entries.reduce((n, e) => n + e.assumptions.filter((a) => a.mark === k).length, 0)
   const builds = entries.reduce((n, e) => n + e.builds.length, 0)
   const constraints = entries.reduce((n, e) => n + e.limitations.filter((l) => l.kind === 'constraint').length, 0)
+  // The newest bundle (bN) that a prototype played: its live page is the latest unfrozen build.
+  const latest = sorted.flatMap((e) => [...e.builds].reverse()).find((b) => /^b\d/.test(b.id))
+  const liveBtn = latest ? `<a class="play dev latest" href="${opts.devBase}${latest.id.split('.')[0]}.html">▶ latest, live</a>` : ''
   const active = decisions.filter((d) => d.status === 'active').length
   const ledger = decisions.length
     ? `<details class="ledger"><summary>Decision ledger · ${active} active · ${decisions.length - active} superseded</summary>
@@ -170,7 +173,7 @@ ${decisions.map((d) => `<tr id="${d.id}" class="${d.status === 'active' ? '' : '
 </head>
 <body>
 <header class="top">
-  <h1>${escapeHtml(opts.game)} <span>· prototype timeline</span></h1>
+  <h1>${escapeHtml(opts.game)} <span>· prototype timeline</span> ${liveBtn}</h1>
   <p>Every prototype: what we believed, what we built, how it played, what we decided. Newest first. Each ▶ plays the build exactly as it was tested.</p>
   <p class="legend"><span class="a held">✓ ${count('held')} held</span> <span class="a broken">✗ ${count('broken')} broken</span> <span class="a open">? ${count('open')} open</span> · ${constraints} constraints · ${entries.length} prototypes · ${builds} builds · <a href="#ledger">${active} decisions</a></p>
 </header>
@@ -222,7 +225,8 @@ function card(e, byId, devBase, decided) {
   const dec = decided
     .map((d) => `<li class="${d.status === 'active' ? '' : 'sup'}"><a href="#${d.id}">${d.id}</a> ${inline(d.text, url)}</li>`)
     .join('')
-  const play = e.builds
+  const play = [...e.builds]
+    .reverse() // newest release first
     .filter((b) => b.exists)
     .map((b) => `<a class="play" href="${e.dir}/builds/${b.id}/index.html">▶ ${escapeHtml(b.id)}</a><span class="bt">${inline(b.text, url)}</span>`)
     .join('')
@@ -246,7 +250,7 @@ function card(e, byId, devBase, decided) {
   <p class="q">${lead(e.parts['Question'], url)}</p>
   ${chips ? `<ul class="chips">${chips}</ul>` : ''}
   ${limits ? `<ul class="limits">${limits}</ul>` : ''}
-  ${play || dev ? `<div class="builds">${play}${dev}</div>` : ''}
+  ${play || dev ? `<div class="builds">${dev}${play}</div>` : ''}
   <p class="next"><b>→</b> ${lead(e.parts['Conclusion → next'], url) || '<i>open</i>'}</p>
   ${dec ? `<ul class="decided">${dec}</ul>` : ''}
   ${RULES in e.parts ? `<details class="rules"><summary>${RULES}</summary><div class="doc">${mdToHtml(e.parts[RULES], url)}</div></details>` : ''}
@@ -308,6 +312,7 @@ time { color:var(--dim); font-size:12px; }
 .builds { display:grid; grid-template-columns:auto 1fr; gap:6px 10px; align-items:center; margin:12px 0; }
 .play { display:inline-block; text-decoration:none; background:var(--acc); color:#111; font-weight:bold; padding:3px 10px; border-radius:3px; text-align:center; }
 .play.dev { background:transparent; color:var(--acc); border:1px dashed var(--acc); }
+.top .play { font-size:13px; margin-left:8px; vertical-align:middle; }
 .bt { color:var(--dim); font-size:12px; }
 .next { margin:10px 0 6px; } .next b { color:var(--acc); }
 details { margin-top:8px; } summary { cursor:pointer; color:var(--dim); }
