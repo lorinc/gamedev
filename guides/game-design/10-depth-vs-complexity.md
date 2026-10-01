@@ -95,3 +95,11 @@ Said while discussing the video; recorded as leanings, to be weighed when a buil
 - **In a simulation, everything is a number, and the tipping points are where it gets interesting:** a breakthrough is
   when some numbers overwhelm others, or trigger a feedback loop (01 §2.7). So an upgrade can be judged by which
   tipping point it moves the player toward or through.
+- **Different genres' audiences expect different numbers of viable choices at any moment.** Someone who wants to
+  disassociate from their life and not think at all, in a hyper-casual game, does not want to deal with the complexity
+  of a deck builder. So expectations management is critical there: very clear, show-don't-tell communication. Appeal
+  must match the retention, i.e. what the game promises when people look at it must be what they get when they stay.
+  Related in the library: appeal versus engagement as two separate jobs ([08](08-engagement-vs-appeal.md)), genre
+  expectation as the measure of how much variety is enough (09), and the audience and portal notes in
+  [04](04-motivation-and-audience.md). The video touches it only in passing (roguelike players tolerate a learning
+  hour; Steam and mobile players do not).
