@@ -519,7 +519,11 @@
 
       // Each game is a set of marks on the same axes. The first is this game's pool; the rest are small indie
       // successes, each split into its loops (reference-games.md). Mark size there = how much of the play the loop is.
-      const WEIGHT = { 3: { name: 'Core loop', r: 9 }, 2: { name: 'Supporting loop', r: 6.5 }, 1: { name: 'Side loop', r: 4.5 } }
+      const WEIGHT = {
+        3: { name: 'Core loop', r: 9, color: '#e34948' },
+        2: { name: 'Supporting loop', r: 6.5, color: '#2a78d6' },
+        1: { name: 'Side loop', r: 4.5, color: '#52514e' },
+      }
       const INK = '#0b0b0b'
       const REF = [
         {"key": "hike", "title": "A Short Hike", "metric": "22,778 Steam reviews", "meta": "solo · 4 months to the first release", "marks": [["roam", "Roam the island", 3, -0.8, -0.3, "Being somewhere else, at your own pace: close to Fantasy.", "Walking, climbing and gliding are the play, but nothing hurries you.", "Walk, climb and glide anywhere on a small island. There is a summit to reach and no pressure to reach it."], ["feathers", "Collect golden feathers", 2, -0.3, 0.45, "Things hidden in the world, found by looking around.", "A light checklist: each feather lets you climb higher.", "Golden feathers are hidden and sold around the island. Each one adds stamina, which opens more of the mountain."], ["help", "Help the islanders", 2, -0.86, 0.08, "Characters and their small stories: close to Story.", "Short errands, taken at your own pace.", "Islanders ask for small favours and reward them with tools, feathers or a chat."], ["side games", "Side activities", 1, -0.35, -0.45, "Small games inside the world.", "The most kinetic part: fishing, a boat, races, a ball game.", "Optional mini-games dotted around the island."]]},
@@ -585,7 +589,7 @@
           el('circle', { class: 'hit', cx, cy, r: 16 }, g)
           el('circle', { class: 'ring', cx, cy, r: r + 5 }, g)
           if (game.pool) glyph(GROUPS[s.g].shape, cx, cy, r, GROUPS[s.g].color, g)
-          else glyph('circle', cx, cy, r, INK, g)
+          else glyph('circle', cx, cy, r, WEIGHT[s.w].color, g)
           const left = game.pool ? LEFT.has(s.id) : s.left
           const off = game.pool ? 9 : r + 5
           const t = el('text', { x: cx + (left ? -off : off), y: cy + 4, 'text-anchor': left ? 'end' : 'start' }, g)
@@ -599,14 +603,14 @@
         filter(shown)
       }
 
-      const dot = (r) => {
+      const dot = (r, color) => {
         const s = document.createElementNS(NS, 'svg')
         s.setAttribute('width', 20)
         s.setAttribute('height', 20)
         s.setAttribute('viewBox', '0 0 20 20')
         s.setAttribute('class', 'sw')
         s.setAttribute('aria-hidden', 'true')
-        el('circle', { cx: 10, cy: 10, r, fill: 'currentColor' }, s)
+        el('circle', { cx: 10, cy: 10, r, fill: color || 'currentColor' }, s)
         return s
       }
 
@@ -623,7 +627,7 @@
             if (i === 1) {
               const w = document.createElement('span')
               w.style.cssText = 'display:inline-flex;align-items:center;gap:6px'
-              w.appendChild(game.pool ? swatch(s.g, 14) : dot(WEIGHT[s.w].r * 0.8))
+              w.appendChild(game.pool ? swatch(s.g, 14) : dot(WEIGHT[s.w].r * 0.8, WEIGHT[s.w].color))
               w.appendChild(document.createTextNode(s.name))
               td.appendChild(w)
             } else td.textContent = c
@@ -657,7 +661,7 @@
         for (const w of [3, 2, 1]) {
           const s = document.createElement('span')
           s.className = 'key'
-          s.appendChild(dot(WEIGHT[w].r * 0.9))
+          s.appendChild(dot(WEIGHT[w].r * 0.9, WEIGHT[w].color))
           s.appendChild(document.createTextNode(WEIGHT[w].name))
           legend.appendChild(s)
         }
@@ -702,7 +706,7 @@
           grp.appendChild(swatch(s.g, 16))
           grp.appendChild(document.createTextNode(GROUPS[s.g].name))
         } else {
-          grp.appendChild(dot(WEIGHT[s.w].r * 0.9))
+          grp.appendChild(dot(WEIGHT[s.w].r * 0.9, WEIGHT[s.w].color))
           grp.appendChild(document.createTextNode(WEIGHT[s.w].name + ' of ' + game.title))
         }
         const what = document.createElement('p')
