@@ -163,6 +163,10 @@
         color: var(--ink2);
         margin-bottom: 10px;
       }
+      .panel .what {
+        color: var(--ink);
+        margin: 0 0 4px;
+      }
       .panel dl {
         margin: 0;
       }
@@ -383,6 +387,46 @@
         ['27', 'op', 'Other players: same start', 0.56, 0.42, 'Compared with every other player.', 'One considered attempt a day.'],
       ].map(([id, g, name, x, y, whyX, whyY]) => ({ id, g, name, x, y, whyX, whyY }))
 
+      // What each shape is: the loop, as recorded in 01-broaden.md and 02-deepen.md.
+      const DESC = {
+        3: 'Gather ingredients, combine them in isolation, see how that plays out, then bring the change to the big system.',
+        16: 'A cavern is doing something strange. Observe, form a guess, test it in a small space, then fix it or reproduce it.',
+        '2b': 'What is removed and what is left to seed decides what grows next. The take is the tool.',
+        '4b': 'A creature does a job inside the ecosystem that the player can’t do.',
+        '4c': 'The player sets standing rules (eat this, avoid that, nest here). The creature follows them unattended.',
+        17: 'One known event is coming (fire season, storm, flood). Prepare, then watch it hit. Enough preparation makes it a world-changing event; too little, and the player tries again at the next one.',
+        13: 'Someone asks for an output that only a particular balance produces. Steer a cavern to it and deliver.',
+        '1a': 'A deck grows during one outing. Each moment a random hand is drawn from it and played.',
+        22: 'The environment is given and the character goes along a pre-calculated path. The player reacts to the environmental threats with the deck.',
+        23: 'Something spreads all the time along known paths. The base grows, the environment pushes back.',
+        15: 'Upkeep and decoration of one place that is yours.',
+        5: 'A home base that makes the game personal. It is there for long-term emotional connection, not as a loop.',
+        '4a': 'A creature is won and kept because it is cute or rare.',
+        11: 'Every distinct balance, creature and reaction found gets recorded. The pull is the empty slots.',
+        25: 'Rare moments happen in the ecosystem. The player raises the chance of one at a place, then is there to record it.',
+        '29a': 'Creatures are characters with wishes about their habitat. Requests come and go beside the main progress.',
+        21: 'Two creatures or plants combine into a third with mixed traits; or one seed is built from trait parts in a few slots, then planted to see what it does to the cavern.',
+        28: 'Caverns are built as displays. Visitors arrive and react, and their interest pays for new species.',
+        8: 'Pass a point of no return and the cave settles into a different balance, which needs different actions.',
+        14: 'Walk a chain of caverns with different climates and carry something from each into the next.',
+        24: 'Arrange a cavern, then set off a single event and watch the chain reaction run.',
+        26: 'The same cave restarts on a fixed cycle. Nothing is kept but what the player has learned.',
+        '1b': 'A few slots are filled between outings from what the player owns. During the outing the loadout is just used.',
+        '1c': 'Cards are owned for good and gathered over weeks. Decks are built from the collection.',
+        '2a': 'Take what the cave produces. The take is the reward.',
+        7: 'The ecosystem is also a production chain.',
+        '10b': 'A fresh cave each run, with random offers along the way. Each run leaves a permanent gain.',
+        '10a': 'A fresh cave each run, with random offers along the way. Each run starts from zero; only the player’s knowledge grows.',
+        '29b': 'The requests are the progress: granting one opens the next creature, and with it the next step of the game. Which creature asks next is random.',
+        '5b': 'The character is what grows, and the progress is theirs.',
+        '20p': 'Between runs, the player shapes the environment so that it supports the next run.',
+        '20r': 'The character is pushed through the prepared environment towards breaching a cave that has a new element, mechanic or biosphere.',
+        19: 'Walk through another player’s cave as a guest, take a cutting or a creature home, leave one behind. No contest.',
+        T: 'Players never meet. A rare tamed creature shows up in someone else’s world for a few days if the conditions are met.',
+        9: 'Another player’s cave is an obstacle course built by them. Get through it and take something, while they are away.',
+        27: 'Each day all players get one identical cave. Afterwards they compare which balance they reached.',
+      }
+
       // Pixel positions measured on the 1200 px source picture, scaled to the 760 viewBox.
       let K = 760 / 1200
       const LEFT = new Set(['4c', '7']) // labels drawn to the left, off the axis and the picture's own labels
@@ -530,6 +574,9 @@
         grp.className = 'grp'
         grp.appendChild(swatch(s.g, 16))
         grp.appendChild(document.createTextNode(GROUPS[s.g].name))
+        const what = document.createElement('p')
+        what.className = 'what'
+        what.textContent = DESC[s.id]
         const dl = document.createElement('dl')
         const add = (title, v, left, right, why) => {
           const dt = document.createElement('dt')
@@ -546,6 +593,7 @@
         add('Cerebral ↔ Kinetic: ' + side(s.y, 'Kinetic', 'Cerebral'), -s.y, 'Cerebral', 'Kinetic', s.whyY)
         panel.appendChild(h)
         panel.appendChild(grp)
+        panel.appendChild(what)
         panel.appendChild(dl)
       }
 
