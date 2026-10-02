@@ -151,6 +151,9 @@ correction below:
     mark is at 0.54 World, 0.20 Cerebral. The gap to the centre of the loops is now 0.36 (it was 0.12 with the mix
     above), the nearest loop is 0.46 away, and Minami Lane's and A Short Hike's centres (0.19, 0.26) are nearer to
     this audience than Kabuto Park's own. The audience is still inside the area the loops span.
+  - **Catch moved back west (user):** "catch is way too east, move back towards discovery." It is now at 0.34 World,
+    0.20 Cerebral: next to Discovery, still below the Discovery–Power line. The gap is 0.29, and catching is the
+    nearest loop to the audience, 0.20 away.
   - **Not yet applied to the other nine games:** reading atmosphere tags as Story on every store page. Measured, it
     would bring Kabuto Park's store-page reading to 0.13 without any reading from play, improve Minami Lane,
     SUMMERHOUSE and Stacklands, and worsen Islanders and Super Auto Pets.

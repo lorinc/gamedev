@@ -33,8 +33,8 @@ axis from Cerebral to Kinetic is 2.
 | Forager | gather | craft and build the base | 0.84 |
 | A Short Hike | roam the island | collect golden feathers | 0.75 |
 | Minami Lane | arrange the street | finish the missions | 0.72 |
-| Kabuto Park | catch bugs | fill the collection | 0.68 |
 | Islanders | place a building | end up with a pretty island | 0.66 |
+| Kabuto Park | catch bugs | fill the collection | 0.62 |
 | Stacklands | stack cards | feed everyone before the moon ends | 0.20 |
 | SUMMERHOUSE | place pieces | soak in the mood | 0.28 |
 
