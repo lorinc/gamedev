@@ -31,6 +31,7 @@ Quotes are the user's, with spelling lightly fixed.
 | [map.html](map.html) | A picture of the assessment: every shape and variant placed on the map's two axes (World ↔ Player, Cerebral ↔ Kinetic), with the reason for each position, and ten small indie successes to compare on the same axes. Open it in a browser. Uses `Nick_axes.webp`, the axes picture saved by the user |
 | [findings.md](findings.md) | What the exploration has shown so far, graded: confident, likely, or an assumption |
 | [reference-games.md](reference-games.md) | Small indie successes to show on the map page for comparison: the ten on the page and the four dropped, with team, development time, Steam reviews and sources |
+| [audience-from-tags.md](audience-from-tags.md) | The audience of each reference game, read from its Steam tags and pitch without the loops, and how far it lands from the loops on the map |
 
 ## Ground rules the user set
 

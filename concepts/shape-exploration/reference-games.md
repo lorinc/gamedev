@@ -16,6 +16,9 @@ play it is. The split, the sizes and the positions are Claude's judgement from w
 play sessions. A game opens directly with `map.html?game=` and one of: `hike`, `islanders`, `minami`, `kabuto`,
 `stacklands`, `summerhouse`, `dawn`, `brotato`, `forager`, `pets`.
 
+Each game also has an audience mark on the page, read from its Steam tags and pitch and not from its loops:
+[audience-from-tags.md](audience-from-tags.md).
+
 ## Candidates
 
 Steam review counts and the share positive were read from Steam's own data on 2026-10-02. "Time" is the development
@@ -36,7 +39,7 @@ time up to the first release that was sold. A list of successes shows what succe
 
 | Game | What the player does | Team | What is known | Steam reviews |
 |---|---|---|---|---|
-| Stacklands | stack cards on each other to make a village run | 3 (Sokpop Collective) | Sokpop's 90th game, made inside its one-game-a-month model | 30,383 (96%) |
+| Stacklands | stack cards on each other to make a village run | 2 to 3 of a 4-person collective (Sokpop) | Sokpop's 90th game. Each Sokpop developer makes one game every 4 months, which is the nearest thing to a sourced time. 450,000 copies on Steam by July 2022, three months after release, at $4.99; 32% of units in China | 30,383 (96%) |
 | SUMMERHOUSE | place building pieces to make a pretty scene; no goals | solo | by one of the three who made Islanders; 120,000 copies within three weeks, by a headline | 3,382 (93%) |
 | Rusty's Retirement | a small farm runs at the bottom of the screen while you do other things | solo | released April 2024 | 14,877 (97%) |
 | Nodebuster | click nodes, buy upgrades, numbers grow, finish in a few hours | solo | released August 2024 | 14,085 (97%) |
@@ -72,6 +75,19 @@ where it stands."
 - **Selection.** All games here are successes picked by Claude and the user. The picture shows what success can look
   like, not what causes it.
 
+## Stacklands in more detail
+
+Looked up 2026-10-02 at the user's request (money, marketing, where it was released).
+
+| Question | What was found |
+|---|---|
+| Copies | 450,000 on Steam by July 2022, plus about 50,000 in a bundle with Simmiland and 1,200 of a full Sokpop bundle at about $200 (GameDiscoverCo, 2022-07-11). A third-party estimate for July 2026: about 670,000 copies on Steam |
+| Money | No figure from Sokpop. GameDiscoverCo: "grossing millions of dollars". The third-party estimate: about $4.5 million gross on Steam by July 2026. Launch price $4.99, now $7.99 |
+| Where the buyers were | China 32%, USA 24%, France and Germany 5% each, UK 4% |
+| Marketing | No campaign is described in the source. What it does name: Sokpop's standing audience (a Patreon at $3 a month, about 90 earlier games on Steam) and localisation, "especially Chinese was really important". A video by the designer on why it worked exists and was not read |
+| Released on | Windows and macOS: Sokpop's own channels (Patreon, itch.io) and Steam. Wikipedia gives both 31 March and 8 April 2022; Claude's reading, unconfirmed, is subscribers first and Steam a week later. Two paid expansions: Cursed Worlds (July 2023) and Stacklands 2000 (October 2024). Mobile or console releases were not confirmed |
+| After the hit | Sokpop's Patreon rose from $5,000–6,000 to $8,500 a month |
+
 ## Notes
 
 - **Short to first sale, long afterwards.** Brotato, 20 Minutes Till Dawn and Luck be a Landlord were sold after a few
@@ -94,7 +110,9 @@ where it stands."
 - Brotato: [Wikipedia](https://en.wikipedia.org/wiki/Brotato); [press kit](https://thomasgervraud.com/press/brotato/)
 - Forager: [Wikipedia](https://en.wikipedia.org/wiki/Forager_(video_game))
 - Super Auto Pets: [Wikipedia](https://en.wikipedia.org/wiki/Super_Auto_Pets)
-- Stacklands: [Wikipedia](https://en.wikipedia.org/wiki/Stacklands)
+- Stacklands: [Wikipedia](https://en.wikipedia.org/wiki/Stacklands);
+  [GameDiscoverCo, 2022-07-11](https://newsletter.gamediscover.co/p/how-one-of-sokpops-almost-100-steam);
+  [raijin.gg estimate](https://raijin.gg/app/1948280/Stacklands) (seen only as a search summary)
 - SUMMERHOUSE: [Wikipedia](https://en.wikipedia.org/wiki/Summerhouse_(video_game));
   [Game World Observer](https://gameworldobserver.com/2024/03/29/summerhouse-sales-120k-copies-solo-dev-friedemann)
   (headline only, article not read)
