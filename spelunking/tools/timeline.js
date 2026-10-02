@@ -142,7 +142,7 @@ function lead(/** @type {string | undefined} */ md, /** @type {(h: string) => st
 
 /**
  * @param {Entry[]} entries
- * @param {{ game: string, devBase: string, decisions?: Decision[] }} opts
+ * @param {{ game: string, devBase: string, decisions?: Decision[], links?: { label: string, href: string }[] }} opts
  */
 export function renderPage(entries, opts) {
   const decisions = opts.decisions ?? []
@@ -155,6 +155,8 @@ export function renderPage(entries, opts) {
   // The newest bundle (bN) that a prototype played: its live page is the latest unfrozen build.
   const latest = sorted.flatMap((e) => [...e.builds].reverse()).find((b) => /^b\d/.test(b.id))
   const liveBtn = latest ? `<a class="play dev latest" href="${opts.devBase}${latest.id.split('.')[0]}.html">▶ latest, live</a>` : ''
+  // Extra header buttons: pages that belong beside the timeline but aren't a prototype's build.
+  const linkBtns = (opts.links ?? []).map((l) => `<a class="play dev latest" href="${escapeHtml(l.href)}">${escapeHtml(l.label)}</a>`).join('')
   const active = decisions.filter((d) => d.status === 'active').length
   const ledger = decisions.length
     ? `<details class="ledger"><summary>Decision ledger · ${active} active · ${decisions.length - active} superseded</summary>
@@ -173,7 +175,7 @@ ${decisions.map((d) => `<tr id="${d.id}" class="${d.status === 'active' ? '' : '
 </head>
 <body>
 <header class="top">
-  <h1>${escapeHtml(opts.game)} <span>· prototype timeline</span> ${liveBtn}</h1>
+  <h1>${escapeHtml(opts.game)} <span>· prototype timeline</span> ${liveBtn}${linkBtns}</h1>
   <p>Every prototype: what we believed, what we built, how it played, what we decided. Newest first. Each ▶ plays the build exactly as it was tested.</p>
   <p class="legend"><span class="a held">✓ ${count('held')} held</span> <span class="a broken">✗ ${count('broken')} broken</span> <span class="a open">? ${count('open')} open</span> · ${constraints} constraints · ${entries.length} prototypes · ${builds} builds · <a href="#ledger">${active} decisions</a></p>
 </header>
@@ -378,7 +380,9 @@ function main() {
   problems.push(...dp)
   const game = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).name
   const title = game.charAt(0).toUpperCase() + game.slice(1)
-  writeFileSync(out, renderPage(entries, { game: title, devBase, decisions }))
+  // The shape exploration (concepts/shape-exploration) is design work between prototypes: no build, so no card.
+  const links = [{ label: '◆ shape map', href: '../../concepts/shape-exploration/map.html' }]
+  writeFileSync(out, renderPage(entries, { game: title, devBase, decisions, links }))
   for (const p of problems) console.warn('⚠', p)
   console.log(`timeline: ${entries.length} entries → ${relative(process.cwd(), out) || out}`)
   if (problems.length && args.includes('--strict')) process.exit(1)

@@ -177,3 +177,8 @@ describe('expandRulesets', () => {
     assert.deepEqual(problems, ['ruleset nope.json not found'])
   })
 })
+
+test('extra header links become buttons next to the title', () => {
+  const html = renderPage([], { game: 'G', devBase: '../', links: [{ label: 'map', href: '../x/map.html' }] })
+  assert.match(html, /<h1>G .*<a class="play dev latest" href="\.\.\/x\/map\.html">map<\/a><\/h1>/)
+})
