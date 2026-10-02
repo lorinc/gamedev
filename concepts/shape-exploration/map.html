@@ -585,7 +585,6 @@
           const off = game.pool ? 9 : r + 5
           const t = el('text', { x: cx + (left ? -off : off), y: cy + 4, 'text-anchor': left ? 'end' : 'start' }, g)
           t.textContent = s.id
-          el('title', {}, g).textContent = s.name
           g.addEventListener('mouseenter', () => show(s.id))
           g.addEventListener('mouseleave', () => (pinned ? show(pinned) : hide()))
           g.addEventListener('focus', () => show(s.id))
