@@ -135,7 +135,21 @@ correction below:
     other games' centres (Stacklands, Islanders, Forager) are nearer to this audience than Kabuto Park's own.
   - **What the store page missed.** It gave no Design at all. The playground look is carried by the mood tags (Cute,
     Cozy, Nature), which have no motivation in the model. For this game the user reads them as Design.
-  - The loops were not changed. The user's loop matches the marks already there, with two differences left open:
+  - **Corrected by the user the same day:** "I was wrong, it's not design, it's story… Atmosphere is story for me,
+    design is building stuff, my mistake." Story here is visual storytelling: "despite not having a lot of story in
+    the game. Let's call it visual storytelling." The mix is now Story 40, Strategy 40, Completion 20, Power 20, and
+    the mark is at 0.23 World, 0.37 Cerebral. The user also compared it with Stacklands: "Same audience, this one is a
+    bit more childlike, but the game feel is similar", a bit less strategic and more atmospheric.
+  - **The catch loop was moved (user):** "move 'catch' NE, below the discovery-power line, that's where it sits. You
+    are excited to find new species, then you are happy to see their stats." It went from 0.52 World, 0.14 Kinetic to
+    0.08 World, 0.14 Cerebral.
+  - **After both changes** the gap is 0.12, the nearest single loop is 0.28 away, and Kabuto Park's own centre is the
+    nearest of the ten to its audience (Stacklands' is next, at 0.13). The figures in the three points above this
+    correction describe the Design mix and are superseded.
+  - **Not yet applied to the other nine games:** reading atmosphere tags as Story on every store page. Measured, it
+    would bring Kabuto Park's store-page reading to 0.13 without any reading from play, improve Minami Lane,
+    SUMMERHOUSE and Stacklands, and worsen Islanders and Super Auto Pets.
+  - Apart from the catch loop, the loops were not changed. The user's loop matches the marks already there, with two differences left open:
     browsing the collection is described as casual strategy more than as completing a list, and buying cute
     equipment has no mark of its own.
 

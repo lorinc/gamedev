@@ -29,11 +29,11 @@ axis from Cerebral to Kinetic is 2.
 | Game | One pillar | The other pillar | Gap |
 |---|---|---|---|
 | 20 Minutes Till Dawn | move and shoot | pick an upgrade | 1.12 |
-| Kabuto Park | catch bugs | fill the collection | 0.96 |
 | Brotato | dodge while the weapons fire | shop between waves | 0.88 |
 | Forager | gather | craft and build the base | 0.84 |
 | A Short Hike | roam the island | collect golden feathers | 0.75 |
 | Minami Lane | arrange the street | finish the missions | 0.72 |
+| Kabuto Park | catch bugs | fill the collection | 0.68 |
 | Islanders | place a building | end up with a pretty island | 0.66 |
 | Stacklands | stack cards | feed everyone before the moon ends | 0.20 |
 | SUMMERHOUSE | place pieces | soak in the mood | 0.28 |
@@ -69,7 +69,7 @@ Claude's notes on it:
   simulation; the casual, hands-on pillar was never collected.
 - **What the sample shows is a hands pillar, which is not the same as Excitement.** On Quantic Foundry's chart
   Excitement means fast-paced action and thrills. The peaceful games on the list get their swing from something
-  milder: roaming (A Short Hike), catching (Kabuto Park), gathering (Forager). These sit between 0.14 and 0.40 toward
+  milder: roaming (A Short Hike), gathering (Forager). These sit between 0.30 and 0.40 toward
   Kinetic, with no violence and no time pressure. So the leaning can be followed without leaving "peaceful" or the
   user's doubt about high-tension play.
 - **Which pillar is the rest depends on the game.** In Brotato the shop is the rest from dodging. In a game whose
