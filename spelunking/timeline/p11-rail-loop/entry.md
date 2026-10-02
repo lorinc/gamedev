@@ -379,3 +379,9 @@ intelligent, complex, systematically beautiful cookie clicker": endless, biomes 
 transition zones between restored pairs, levers beyond building and taming, unlocks that explain themselves,
 level-ups as understood points of no return; Callisto stays; a 6-year-old is the complexity floor. Full text in
 `concepts/callisto_design.md`.
+
+**Since then (2026-10-02):** before more is built, the shape of the game around the simulation is being matched to
+an audience. The simulation is kept as the toy; 29 candidate shapes were collected and placed on Quantic Foundry's
+map of gaming motivations. Nothing is decided yet. See the
+[map of the shapes](../../../concepts/shape-exploration/map.html) and the
+[shape exploration](../../../concepts/shape-exploration/README.md) it belongs to.
