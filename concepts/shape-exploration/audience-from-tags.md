@@ -30,10 +30,10 @@ Sorted by the gap. Motivations under 5% are left out.
 | Game | Motivations (share) | Mood tags, outside the model | Mood share of the tag weight | Audience mark | Gap to the loops |
 |---|---|---|---|---|---|
 | A Short Hike | Fantasy 45%, Discovery 44%, Excitement 7% | Relaxing, Cute, Casual, Nature, Family Friendly, Beautiful, Cozy, Funny | 53% | 0.57 World, 0.09 Kinetic | 0.08 |
+| Super Auto Pets | Strategy 34%, Community 25%, Competition 24%, Power 11% | Cute, Casual, Colorful, Family Friendly, Dogs, Horses | 32% | 0.42 Player, 0.06 Cerebral | 0.09 |
 | Forager | Discovery 30%, Design 25%, Challenge 13%, Power 11%, Strategy 9%, Fantasy 7% | Casual | 2% | 0.22 World, 0.17 Cerebral | 0.11 |
 | 20 Minutes Till Dawn | Challenge 29%, Excitement 19%, Power 19%, Destruction 18%, Fantasy 11% | Casual | 5% | 0.34 Player, 0.11 Kinetic | 0.12 |
 | Islanders | Strategy 57%, Design 31%, Fantasy 7% | Relaxing, Beautiful, Colorful, Addictive | 32% | 0.19 World, 0.32 Cerebral | 0.13 |
-| Super Auto Pets | Strategy 34%, Community 25%, Competition 24%, Power 11% | Cute, Casual, Colorful, Family Friendly, Dogs, Horses | 32% | 0.42 Player, 0.06 Cerebral | 0.15 |
 | Minami Lane | Strategy 48%, Design 35%, Completion 16% | Cute, Casual, Relaxing, Colorful, Cozy, Cats | 56% | 0.20 World, 0.42 Cerebral | 0.22 |
 | Stacklands | Strategy 59%, Challenge 17%, Design 15%, Power 8% | Cute, Casual, Colorful | 7% | 0.10 Player, 0.48 Cerebral | 0.23 |
 | SUMMERHOUSE | Design 53%, Strategy 24%, Fantasy 13%, Discovery 11% | Relaxing, Casual, Colorful, Cozy, Cute | 44% | 0.51 World, 0.05 Cerebral | 0.24 |
@@ -72,6 +72,14 @@ Sorted by the gap. Motivations under 5% are left out.
    no motivation for nurturing, cuteness or relaxing"), now with a size.
 5. **For four games a mood tag is first or second, ahead of most genre tags:** Relaxing is first for Islanders and
    Cute for Minami Lane; Relaxing is second for A Short Hike and SUMMERHOUSE.
+
+## Corrections to the loops that came out of this
+
+- **Super Auto Pets, the shop (user, 2026-10-02):** "you misread the shop motivation. The shop is where your team gets
+  really good… aka powerful." The shop loop was at 0.30 Player, 0.55 Cerebral, next to Strategy; it is now at 0.34
+  Player, 0.30 Cerebral, next to Power. The core loop's distance to the audience mark fell from 0.51 to 0.26, and the
+  game's gap from 0.15 to 0.09. Note that the store page itself puts Strategy first (34%) and Power at 11%: the
+  audience mark sits low because of Community and Competition, not because of Power.
 
 ## How far it can be trusted
 
