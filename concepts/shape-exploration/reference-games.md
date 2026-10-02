@@ -7,14 +7,14 @@ Supporting document for the [shape exploration](README.md). Started 2026-10-02.
 wants "indie-sized 4–8 months projects that got successful". Violent games may stay: "I think I can learn from violent
 games too."
 
-**Status: agreed 2026-10-02.** Nine games are on the map page: the six with a confirmed development time, Stacklands
+**Status: agreed 2026-10-02.** Ten games are on the map page (nine at first, Super Auto Pets added later the same day): the six with a confirmed development time, Stacklands
 and SUMMERHOUSE (short by every indication, but unsourced), and Forager (the user's addition). Rusty's Retirement,
 Nodebuster, Luck be a Landlord and Tiny Aquarium were dropped because their times could not be confirmed.
 
 On the page each game is split into its loops, and each loop is placed on the two axes with a size for how much of the
 play it is. The split, the sizes and the positions are Claude's judgement from what it knows of each game, not from
 play sessions. A game opens directly with `map.html?game=` and one of: `hike`, `islanders`, `minami`, `kabuto`,
-`stacklands`, `summerhouse`, `dawn`, `brotato`, `forager`.
+`stacklands`, `summerhouse`, `dawn`, `brotato`, `forager`, `pets`.
 
 ## Candidates
 
@@ -49,8 +49,28 @@ time up to the first release that was sold. A list of successes shows what succe
 |---|---|---|---|---|---|
 | Forager | gather, craft and build on a small island, buy the next island, level up; idle-game growth played by hand | solo developer, with a publisher | started at a game jam, released April 2019; the length is not in the source (Claude's memory, unchecked: about two years) | 44,155 (89%) | 600,000 copies a year after release; $19.99 |
 
+| Super Auto Pets | buy and order a team of pets in a shop, then watch it fight a team another player built earlier | Team Wood Games; size not found | not found; released September 2021 | 36,229 (90%) | free to play; all battles are asynchronous |
+
+Super Auto Pets was added by the user on 2026-10-02 ("please add Super Auto Pets to the analysis"). It is the one game
+on the list built on asynchronous play against other players, which is the kind the user named for this game.
+
 The user: "I know, it stands out, but pls put Forager on the list. It is a unique blend of casual, and I'd like to see
 where it stands."
+
+## How far the picture can be trusted
+
+- **The user's check (2026-10-02).** The user has played several of these games: "I can not find anything I would not
+  agree with… after evaluating them, I trust your judgements on the games I do not know."
+- **What the user saw in the maps:** games are more spread out than expected, even small ones; and the typical shape
+  is one core loop, two supporting, one side loop.
+- **Claude's caution on both.** Splitting a game into loops and placing each near the motivation it resembles spreads
+  any game by construction, and how finely a game is cut was a free choice, so the count of loops says more about the
+  cut than about the games. What holds regardless of the cut: each game has one dominant activity, and a small game
+  often pairs a fast loop with a slow one on purpose (Brotato's dodging and its shop).
+- **Time per loop is left coarse on purpose.** The user: it "depends on playstyle too much, and less so on the game
+  itself". So mark size stays at three levels (core, supporting, side) and is not turned into a share of play time.
+- **Selection.** All games here are successes picked by Claude and the user. The picture shows what success can look
+  like, not what causes it.
 
 ## Notes
 
@@ -73,6 +93,7 @@ where it stands."
   [Wikipedia](https://en.wikipedia.org/wiki/20_Minutes_Till_Dawn)
 - Brotato: [Wikipedia](https://en.wikipedia.org/wiki/Brotato); [press kit](https://thomasgervraud.com/press/brotato/)
 - Forager: [Wikipedia](https://en.wikipedia.org/wiki/Forager_(video_game))
+- Super Auto Pets: [Wikipedia](https://en.wikipedia.org/wiki/Super_Auto_Pets)
 - Stacklands: [Wikipedia](https://en.wikipedia.org/wiki/Stacklands)
 - SUMMERHOUSE: [Wikipedia](https://en.wikipedia.org/wiki/Summerhouse_(video_game));
   [Game World Observer](https://gameworldobserver.com/2024/03/29/summerhouse-sales-120k-copies-solo-dev-friedemann)

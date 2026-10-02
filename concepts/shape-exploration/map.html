@@ -75,8 +75,8 @@
         overflow: hidden;
         aspect-ratio: 1;
       }
-      #chart img,
-      #chart svg {
+      #chart > img,
+      #chart > svg {
         position: absolute;
         inset: 0;
         width: 100%;
@@ -146,25 +146,43 @@
       .legend button[aria-pressed='true'] {
         border-color: var(--ink);
       }
-      .panel {
+      .gh {
+        margin: 0 0 2px;
+      }
+      /* the hover card: what a mark is and why it sits there */
+      #tip {
+        position: absolute;
+        z-index: 2;
+        pointer-events: none;
         background: var(--surface);
+        color: var(--ink);
         border: 1px solid var(--line);
         border-radius: 8px;
-        padding: 14px 16px;
+        padding: 10px 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+        font-size: 14px;
+        line-height: 1.4;
       }
-      .panel h3 {
-        margin: 0 0 2px;
-        font-size: 17px;
+      #tip .th {
+        display: block;
+        font-size: 15px;
       }
-      .panel .grp {
+      #tip .grp {
         display: flex;
         align-items: center;
         gap: 6px;
         color: var(--ink2);
-        margin-bottom: 10px;
+        font-size: 13px;
+        margin: 1px 0 6px;
       }
-      .gh {
-        margin: 18px 0 2px;
+      #tip p {
+        margin: 0;
+        color: var(--ink);
+        max-width: none;
+      }
+      #tip p + p {
+        margin-top: 6px;
+        color: var(--ink2);
       }
       .gnote {
         font-size: 13px;
@@ -204,52 +222,6 @@
         gap: 4px;
         padding: 4px 10px 4px 4px;
         color: var(--ink2);
-      }
-      .panel .what {
-        color: var(--ink);
-        margin: 0 0 4px;
-      }
-      .panel dl {
-        margin: 0;
-      }
-      .panel dt {
-        font-weight: 600;
-        margin-top: 10px;
-      }
-      .panel dd {
-        margin: 2px 0 0;
-        color: var(--ink2);
-      }
-      .bar {
-        position: relative;
-        height: 6px;
-        border-radius: 3px;
-        background: var(--line);
-        margin: 6px 0 2px;
-      }
-      .bar i {
-        position: absolute;
-        top: -3px;
-        width: 12px;
-        height: 12px;
-        margin-left: -6px;
-        border-radius: 50%;
-        background: var(--ink);
-        border: 2px solid var(--surface);
-      }
-      .bar b {
-        position: absolute;
-        left: 50%;
-        top: -2px;
-        width: 1px;
-        height: 10px;
-        background: var(--muted);
-      }
-      .ends {
-        display: flex;
-        justify-content: space-between;
-        font-size: 12px;
-        color: var(--muted);
       }
       .scroll {
         overflow-x: auto;
@@ -303,8 +275,8 @@
         Each mark is one shape or variant from the <a href="01-broaden.md">pool</a>, placed on the two axes of Quantic
         Foundry's map: who or what the player acts on (the world, or other players), and how the play feels (cerebral:
         careful and long-term; kinetic: dynamic and fast-paced). The grey dots and labels are the 12 motivations from
-        the original picture. Tap a mark or a table row to see why it sits where it does. Under the detail card, pick
-        another game to see a small indie success on the same axes.
+        the original picture. Point at a mark, or tap it or its table row, to see what it is and why it sits there. Pick
+        another game on the right to see a small indie success on the same axes.
       </p>
 
       <div class="cols">
@@ -312,11 +284,11 @@
           <div id="chart">
             <img src="Nick_axes.webp" alt="Quantic Foundry's motivation map with the axes World to Player and Cerebral to Kinetic" />
             <svg id="plot" viewBox="0 0 760 760" role="img" aria-label="The shapes of the pool placed on the two axes"></svg>
+            <div id="tip" role="tooltip" hidden></div>
           </div>
           <div class="legend" id="legend" role="group" aria-label="Show one group"></div>
         </div>
         <div>
-          <div class="panel" id="panel" aria-live="polite"></div>
           <h2 class="gh">Games</h2>
           <p class="gnote">The first row is this game. The others are small indie successes, each split into its loops on the same axes; a bigger mark is a bigger part of the play.</p>
           <div id="games" role="group" aria-label="Show a game"></div>
@@ -535,6 +507,7 @@
         {"key": "dawn", "title": "20 Minutes Till Dawn", "metric": "29,163 Steam reviews", "meta": "solo · 2 months", "marks": [["move and shoot", "Move and shoot", 3, 0.5, -0.78, "Against a swarm, not a place.", "Constant dodging and aiming: close to Excitement.", "Dodge an endless swarm and shoot it, for twenty minutes."], ["upgrades", "Pick an upgrade", 2, 0.22, 0.34, "Your own character getting stronger: close to Power.", "A quick choice among a few, with synergies to spot.", "On each level-up choose one of a few upgrades; the right ones combine into something absurd.", "l"], ["survive", "Survive the clock", 2, 0.62, 0.38, "A test of you: close to Challenge.", "Knowing the escalation and preparing for it.", "The swarm thickens on a fixed schedule; lasting the full twenty minutes is the win."], ["unlocks", "Unlock characters and weapons", 1, 0.3, 0.62, "A roster that grows.", "A list to fill over many runs.", "Runs earn currency that unlocks new characters, weapons and permanent bonuses."]]},
         {"key": "brotato", "title": "Brotato", "metric": "119,375 Steam reviews", "meta": "solo · 3 months to early access", "marks": [["dodge", "Dodge while the weapons fire", 3, 0.52, -0.42, "Against waves of enemies.", "Movement only: the weapons aim and fire by themselves.", "Survive short waves. You only move; up to six weapons fire on their own."], ["shop", "Shop between waves", 3, 0.24, 0.46, "Your own build: close to Power.", "A pause to weigh items, stats and money.", "After each wave spend what you collected on weapons and items, or reroll the offer.", "l"], ["character", "Build around a character", 2, 0.16, 0.7, "Each character bends the rules of the build.", "Planning a whole run around one twist: close to Strategy.", "Dozens of characters, each with a rule that changes which builds work."], ["danger", "Beat a higher danger level", 2, 0.52, 0.24, "A test of your skill: toward Challenge.", "Each level asks for a tighter build.", "Several danger levels per character, each harder than the last."]]},
         {"key": "forager", "title": "Forager", "metric": "44,155 Steam reviews", "meta": "solo with a publisher · about 2 years (unchecked)", "marks": [["gather", "Gather", 3, -0.24, -0.4, "Hitting what the land grows.", "Constant moving and striking, lightly.", "Hit trees, rocks and plants that keep growing back, and pick up what drops."], ["craft", "Craft and build the base", 3, -0.22, 0.44, "A base that turns materials into better ones.", "What to build next, and where.", "Furnaces, forges and dozens of other structures turn materials into tools, coins and more structures."], ["lands", "Buy the next land", 2, -0.56, 0.42, "New biomes with new things in them: close to Discovery.", "Saving up and choosing where to expand.", "Spend coins to add a neighbouring piece of land, each with new resources, creatures or a secret.", "l"], ["skills", "Level up, pick skills", 2, 0.24, 0.36, "Your character getting stronger: close to Power.", "One choice per level from a big grid.", "Every action gives experience; each level unlocks one more skill, which opens new structures and bonuses."], ["automate", "Automate the work", 2, 0.06, 0.7, "A system that works without you.", "Setting the base up so it runs itself.", "Mining rods, droids and other late structures collect and craft for you."], ["fight", "Fight", 2, 0.44, -0.44, "Enemies and a few bosses.", "Fast, simple hitting.", "Slimes, skeletons and bosses attack; the same swing that gathers also fights."], ["dungeons", "Solve puzzles and dungeons", 1, -0.48, 0.06, "Secrets built into the lands.", "Small puzzles, some fighting.", "Some lands hold a puzzle or a small dungeon with a reward."], ["museum", "Fill the museum", 1, -0.34, 0.82, "One of everything.", "A long list: close to Completion.", "A museum asks for bundles of items and pays out for each one completed.", "l"]]},
+        {"key": "pets", "title": "Super Auto Pets", "metric": "36,229 Steam reviews", "meta": "free to play · team and time not found", "marks": [["shop", "Buy and arrange the team", 3, 0.3, 0.55, "Your own team, built to meet other players’ teams.", "All the thinking happens here, with no timer in the main mode.", "Spend ten gold a turn on pets and food, put the pets in order, and merge three of a kind to level one up."], ["battle", "Watch the battle", 2, 0.62, -0.3, "Against a team another player built earlier; the two never meet live.", "Automatic and over in seconds: nothing to do but watch.", "The two teams fight on their own, front pet against front pet, with every ability firing in order."], ["ten wins", "Reach ten wins", 2, 0.74, 0.2, "A run measured against other players’ teams.", "Each loss costs a life, so the run is nursed along turn by turn.", "A run ends at ten wins or when the lives run out."], ["synergies", "Learn what combines", 2, -0.14, 0.4, "Finding out what the pets do to each other.", "Trying a combination and seeing it work, or not.", "Every pet has one ability with a trigger; the fun is the chain you get when several fire together."], ["versus", "Play a live lobby", 1, 0.9, -0.1, "Other players, at the same time.", "Turns are timed here.", "A versus mode puts up to eight players in one lobby, live or asynchronous."], ["hats", "Unlock packs and hats", 1, -0.45, -0.1, "A bit of dressing up.", "Nothing to work out.", "Extra pet packs and cosmetics are the paid part of the game."]]},
       ]
       const GAMES = [
         { key: 'this', pool: true, title: 'This game', metric: 'the shape pool', meta: '29 candidate shapes, split into variants; nothing chosen', marks: SHAPES.map((s) => ({ ...s, desc: DESC[s.id] })) },
@@ -545,12 +518,13 @@
       ]
 
       const plot = document.getElementById('plot')
-      const panel = document.getElementById('panel')
+      const tip = document.getElementById('tip')
+      const chart = document.getElementById('chart')
       const rows = document.getElementById('rows')
       const legend = document.getElementById('legend')
       const games = document.getElementById('games')
       let game = GAMES[0]
-      let picked = null
+      let pinned = null // the mark whose card stays open after a tap or click
       let shown = null
       let link = null
       let marks = {}
@@ -592,11 +566,15 @@
           const t = el('text', { x: cx + (left ? -off : off), y: cy + 4, 'text-anchor': left ? 'end' : 'start' }, g)
           t.textContent = s.id
           el('title', {}, g).textContent = s.name
-          g.addEventListener('click', () => pick(s.id))
-          g.addEventListener('keydown', (e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), pick(s.id)))
+          g.addEventListener('mouseenter', () => show(s.id))
+          g.addEventListener('mouseleave', () => (pinned ? show(pinned) : hide()))
+          g.addEventListener('focus', () => show(s.id))
+          g.addEventListener('blur', () => (pinned ? show(pinned) : hide()))
+          g.addEventListener('click', (e) => (e.stopPropagation(), pin(pinned === s.id ? null : s.id)))
+          g.addEventListener('keydown', (e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), pin(pinned === s.id ? null : s.id)))
           marks[s.id] = g
         }
-        if (picked && marks[picked]) marks[picked].classList.add('on')
+        pinned ? show(pinned) : hide()
         filter(shown)
       }
 
@@ -631,8 +609,9 @@
             if (i > 2 || i === 0) td.className = 'n'
             tr.appendChild(td)
           })
-          tr.addEventListener('click', () => {
-            pick(s.id)
+          tr.addEventListener('click', (e) => {
+            e.stopPropagation()
+            pin(s.id)
             document.getElementById('chart').scrollIntoView({ block: 'nearest', behavior: 'smooth' })
           })
           rows.appendChild(tr)
@@ -672,68 +651,75 @@
         for (const b of legend.children) b.setAttribute('aria-pressed', String(b.dataset.g === k))
       }
 
-      function bar(v, left, right) {
-        const d = document.createElement('div')
-        d.innerHTML = '<div class="bar"><b></b><i></i></div><div class="ends"><span></span><span></span></div>'
-        d.querySelector('i').style.left = 50 + v * 50 + '%'
-        const [a, b] = d.querySelectorAll('.ends span')
-        a.textContent = left
-        b.textContent = right
-        return d
-      }
-
-      function pick(id) {
-        picked = id
+      function show(id) {
         for (const k in marks) {
           marks[k].classList.toggle('on', k === id)
           trs[k].classList.toggle('on', k === id)
         }
         const s = game.marks.find((q) => q.id === id)
-        panel.textContent = ''
-        const h = document.createElement('h3')
+        tip.textContent = ''
+        const h = document.createElement('b')
+        h.className = 'th'
         h.textContent = game.pool ? s.id + ' · ' + s.name : s.name
         const grp = document.createElement('div')
         grp.className = 'grp'
         if (game.pool) {
-          grp.appendChild(swatch(s.g, 16))
+          grp.appendChild(swatch(s.g, 14))
           grp.appendChild(document.createTextNode(GROUPS[s.g].name))
         } else {
-          grp.appendChild(dot(WEIGHT[s.w].r * 0.9, WEIGHT[s.w].color))
+          grp.appendChild(dot(WEIGHT[s.w].r * 0.8, WEIGHT[s.w].color))
           grp.appendChild(document.createTextNode(WEIGHT[s.w].name + ' of ' + game.title))
         }
         const what = document.createElement('p')
-        what.className = 'what'
         what.textContent = s.desc
-        const dl = document.createElement('dl')
-        const add = (title, v, left, right, why) => {
-          const dt = document.createElement('dt')
-          dt.textContent = title
-          const dd = document.createElement('dd')
-          dd.appendChild(bar(v, left, right))
-          const p = document.createElement('div')
-          p.textContent = why
-          dd.appendChild(p)
-          dl.appendChild(dt)
-          dl.appendChild(dd)
+        const why = document.createElement('p')
+        why.textContent = s.whyX + ' ' + s.whyY
+        tip.append(h, grp, what, why)
+        tip.hidden = false
+
+        // beside the mark where there is room, else under or over it; always inside the chart
+        const W = chart.clientWidth
+        const w = Math.min(290, W - 16)
+        tip.style.width = w + 'px'
+        const th = tip.offsetHeight
+        const cx = px(s.x)
+        const cy = py(s.y)
+        let left = cx + 18
+        let top = cy - th / 2
+        if (left + w > W - 8) left = cx - 18 - w
+        if (left < 8) {
+          left = Math.max(8, Math.min(W - w - 8, cx - w / 2))
+          top = cy + 18
+          if (top + th > W - 8) top = cy - 18 - th
         }
-        add('World ↔ Player: ' + side(s.x, 'World', 'Player'), s.x, 'World', 'Player', s.whyX)
-        add('Cerebral ↔ Kinetic: ' + side(s.y, 'Kinetic', 'Cerebral'), -s.y, 'Cerebral', 'Kinetic', s.whyY)
-        panel.appendChild(h)
-        panel.appendChild(grp)
-        panel.appendChild(what)
-        panel.appendChild(dl)
+        tip.style.left = left + 'px'
+        tip.style.top = Math.max(8, Math.min(W - th - 8, top)) + 'px'
       }
+
+      function hide() {
+        tip.hidden = true
+        for (const k in marks) {
+          marks[k].classList.remove('on')
+          trs[k].classList.remove('on')
+        }
+      }
+
+      function pin(id) {
+        pinned = id
+        id ? show(id) : hide()
+      }
+
+      document.addEventListener('click', () => pin(null))
 
       function play(g) {
         game = g
         shown = null
-        picked = null
+        pinned = null
         for (const b of games.children) b.setAttribute('aria-pressed', String(b.dataset.key === g.key))
         document.getElementById('poolnotes').hidden = !g.pool
         key()
         table()
         draw()
-        pick(g.pool ? '16' : g.marks[0].id)
         try {
           history.replaceState(null, '', g.pool ? location.pathname : '?game=' + g.key)
         } catch (e) {}
@@ -759,7 +745,9 @@
       }
 
       // ?game=forager opens straight on that game, so a view can be shared as a link
-      play(GAMES.find((g) => g.key === new URLSearchParams(location.search).get('game')) || GAMES[0])
+      const asked = new URLSearchParams(location.search)
+      play(GAMES.find((g) => g.key === asked.get('game')) || GAMES[0])
+      if (marks[asked.get('pin')]) pin(asked.get('pin')) // &pin=shop opens that mark's card too
       let lastW = 0
       new ResizeObserver(() => {
         const w = document.getElementById('chart').clientWidth
