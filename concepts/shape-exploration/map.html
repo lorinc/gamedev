@@ -566,12 +566,12 @@
         marks = {}
         link = null
 
-        // the toy, at Discovery
-        el('circle', { cx: 402 * K, cy: 470 * K, r: 11, fill: 'none', stroke: INK, 'stroke-width': 2 }, plot)
-        const toy = el('text', { x: 402 * K - 15, y: 470 * K + 4, 'text-anchor': 'end', class: 'toy' }, plot)
-        toy.textContent = 'the toy'
-
         if (game.pool) {
+          // the toy, at Discovery
+          el('circle', { cx: 402 * K, cy: 470 * K, r: 11, fill: 'none', stroke: INK, 'stroke-width': 2 }, plot)
+          const toy = el('text', { x: 402 * K - 15, y: 470 * K + 4, 'text-anchor': 'end', class: 'toy' }, plot)
+          toy.textContent = 'the toy'
+
           // prep-and-run: one shape, two marks
           const P = SHAPES.find((s) => s.id === '20p')
           const R = SHAPES.find((s) => s.id === '20r')
