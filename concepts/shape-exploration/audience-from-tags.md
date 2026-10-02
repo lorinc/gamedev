@@ -122,6 +122,23 @@ correction below:
   game's gap from 0.15 to 0.09. Note that the store page itself puts Strategy first (34%) and Power at 11%: the
   audience mark sits low because of Community and Competition, not because of Power.
 
+- **Kabuto Park, the audience (user, 2026-10-02):** "you've misread Kabuto. It is heavy on lore (super cute) and
+  discovery (finding cool bugs). It is practically a strategy game, but it does not look like a strategy game, it
+  looks like a playground with bugs. This is a 40% design, 40% strategy, 20% completion, 20% power, and the loop looks
+  like: you go out, catch bugs in a simple minigame, you browse your collection a lot, thinking about them, but
+  casual strategy, not 10-steps-ahead, and you get better, win pocket money, buy cute equipment, iterate."
+  - The four shares add up to 120; on the page they are scaled to 33, 33, 17 and 17.
+  - The audience mark on the page is now this mix, at 0.14 World, 0.37 Cerebral, and its card says it is the user's
+    reading from play. The store-page reading stays in the results table above.
+  - With it the gap to the loops falls from 0.62 to 0.26, and the audience is inside the area the loops span, no
+    nearer to any single loop (0.29) than to their centre. Kabuto Park now fits the pattern, as its loosest case: three
+    other games' centres (Stacklands, Islanders, Forager) are nearer to this audience than Kabuto Park's own.
+  - **What the store page missed.** It gave no Design at all. The playground look is carried by the mood tags (Cute,
+    Cozy, Nature), which have no motivation in the model. For this game the user reads them as Design.
+  - The loops were not changed. The user's loop matches the marks already there, with two differences left open:
+    browsing the collection is described as casual strategy more than as completing a list, and buying cute
+    equipment has no mark of its own.
+
 ## How far it can be trusted
 
 - **It is independent of the loops only in its input.** Claude made both the tag table and the loop positions, with
