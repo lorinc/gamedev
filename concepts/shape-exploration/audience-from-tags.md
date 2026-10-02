@@ -108,6 +108,10 @@ correction below:
   same person using the same motivations as rulers. The plainest reading is that a store page names the same
   motivations the loops serve, in about the same proportions. Whether developers aim for this, or tags simply
   describe what is in the game, the data can't say. "Always" is nine of ten in a sample of ten successes.
+- **What the tool covers (user, 2026-10-02):** "a game can fail for a million of reasons, we can find games that fit
+  or not fit this pattern and failed. This tool only works in the 'game mechanics and loop expectations met'
+  dimension of a game." So failed games would not test the pattern, and the pattern does not predict success. It
+  describes one dimension: whether the loops deliver what the store page leads its audience to expect.
 
 ## Corrections to the loops that came out of this
 
