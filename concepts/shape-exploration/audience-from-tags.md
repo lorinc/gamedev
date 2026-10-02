@@ -76,7 +76,8 @@ Sorted by the gap. Motivations under 5% are left out.
 ## Corrections to the loops that came out of this
 
 - **Super Auto Pets, the shop (user, 2026-10-02):** "you misread the shop motivation. The shop is where your team gets
-  really good… aka powerful." The shop loop was at 0.30 Player, 0.55 Cerebral, next to Strategy; it is now at 0.34
+  really good… aka powerful." And: "the shop is power by strategy and grind." So Power is what the loop is for,
+  and strategy and grind are the means. The shop loop was at 0.30 Player, 0.55 Cerebral, next to Strategy; it is now at 0.34
   Player, 0.30 Cerebral, next to Power. The core loop's distance to the audience mark fell from 0.51 to 0.26, and the
   game's gap from 0.15 to 0.09. Note that the store page itself puts Strategy first (34%) and Power at 11%: the
   audience mark sits low because of Community and Competition, not because of Power.
