@@ -28,7 +28,8 @@ Quotes are the user's, with spelling lightly fixed.
 | [brief.md](brief.md) | What is given: the toy that is kept, the limits the user fixed, the user's reference loops and trophies |
 | [audience-factors.md](audience-factors.md) | The factors that the chosen audience decides; all TBD until the audience is chosen |
 | [motivation-map.md](motivation-map.md) | Quantic Foundry's motivation model as reference: the 12 motivations, the map measured, the games behind each motivation |
-| [map.html](map.html) | A picture of the assessment: every shape and variant placed on the map's two axes (World ↔ Player, Cerebral ↔ Kinetic), with the reason for each position. Open it in a browser. Uses `Nick_axes.webp`, the axes picture saved by the user |
+| [map.html](map.html) | A picture of the assessment: every shape and variant placed on the map's two axes (World ↔ Player, Cerebral ↔ Kinetic), with the reason for each position, and nine small indie successes to compare on the same axes. Open it in a browser. Uses `Nick_axes.webp`, the axes picture saved by the user |
+| [reference-games.md](reference-games.md) | Small indie successes to show on the map page for comparison: the nine on the page and the four dropped, with team, development time, Steam reviews and sources |
 
 ## Ground rules the user set
 
