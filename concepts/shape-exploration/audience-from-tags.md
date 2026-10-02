@@ -73,6 +73,42 @@ Sorted by the gap. Motivations under 5% are left out.
 5. **For four games a mood tag is first or second, ahead of most genre tags:** Relaxing is first for Islanders and
    Cute for Minami Lane; Relaxing is second for A Short Hike and SUMMERHOUSE.
 
+## The user's pattern: the audience sits at the centre of the loops
+
+**The user (2026-10-02):** "There might be another pattern here: the audience somehow always sits at the center of the
+gameplay loops."
+
+**Grade: likely**, in the sense of [findings.md](findings.md). Checked the same day, after the Super Auto Pets
+correction below:
+
+| Game | Audience to the centre of its own loops | To the centres of the other nine games (mean) | Own game's rank among the ten | To its nearest loop | Inside the area the loops span |
+|---|---|---|---|---|---|
+| A Short Hike | 0.08 | 0.64 | 1st | 0.31 | yes |
+| Super Auto Pets | 0.08 | 0.64 | 1st | 0.25 | yes |
+| Forager | 0.10 | 0.41 | 2nd | 0.27 | yes |
+| 20 Minutes Till Dawn | 0.12 | 0.66 | 1st | 0.47 | yes |
+| Islanders | 0.13 | 0.42 | 2nd | 0.29 | yes |
+| Minami Lane | 0.22 | 0.46 | 3rd | 0.16 | no |
+| Stacklands | 0.22 | 0.55 | 2nd | 0.13 | no |
+| SUMMERHOUSE | 0.23 | 0.54 | 3rd | 0.14 | no |
+| Brotato | 0.33 | 0.74 | 3rd | 0.32 | yes |
+| Kabuto Park | 0.62 | 0.61 | 7th | 0.16 | no |
+
+- **It is not just everything drifting to the middle.** For nine games the audience is two to eight times nearer its
+  own game's centre than the centres of the other games, and its own game is among the three nearest of ten.
+- **For five games the audience is at the centre and on no loop:** A Short Hike, Super Auto Pets, Forager, 20 Minutes
+  Till Dawn and Islanders. The audience is two to four times nearer the centre than the nearest loop, and the loops
+  surround it. 20 Minutes Till Dawn is the sharpest case: no loop is within 0.47 of its audience, and the centre is
+  0.12 away. Brotato is surrounded too, but no nearer the centre than its nearest loop.
+- **For three it sits beside one loop, at the edge:** Minami Lane, Stacklands, SUMMERHOUSE.
+- **Kabuto Park does not fit.**
+- **What it may mean.** No single loop serves the audience; the loops stand on different sides of it. This fits the
+  main finding in findings.md, the swing between pillars: the pillars are apart, and the audience is between them.
+- **What limits it.** The audience mark is itself a middle of several motivations, and the loops were placed by the
+  same person using the same motivations as rulers. The plainest reading is that a store page names the same
+  motivations the loops serve, in about the same proportions. Whether developers aim for this, or tags simply
+  describe what is in the game, the data can't say. "Always" is nine of ten in a sample of ten successes.
+
 ## Corrections to the loops that came out of this
 
 - **Super Auto Pets, the shop (user, 2026-10-02):** "you misread the shop motivation. The shop is where your team gets
