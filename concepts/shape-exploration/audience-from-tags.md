@@ -157,6 +157,11 @@ correction below:
   - **Power added back to the audience (user):** "There is power in this game, you can not progress without beating
     other teams." The mix is now Story 40, Discovery 40, Strategy 20, Power 20 (scaled to 33, 33, 17, 17; the shares
     are Claude's). The mark is at 0.39 World, 0.21 Cerebral, 0.15 from the centre of the loops.
+  - **Final mix, given by the user in full:** "Okay, let's clear this up. 20% story, 40% Discovery, 20% completion,
+    20% power." On power: "There is power in this game, you can not progress without beating other teams." This
+    replaces every mix above. The mark is at 0.32 World, 0.33 Cerebral. It is 0.08 from the centre of Kabuto Park's
+    loops, its own game is the nearest of the ten (Minami Lane's centre is next, at 0.09), and the nearest loop is
+    catching, 0.13 away.
   - **Not yet applied to the other nine games:** reading atmosphere tags as Story on every store page. Measured, it
     would bring Kabuto Park's store-page reading to 0.13 without any reading from play, improve Minami Lane,
     SUMMERHOUSE and Stacklands, and worsen Islanders and Super Auto Pets.
