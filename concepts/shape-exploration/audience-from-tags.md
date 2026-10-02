@@ -154,6 +154,9 @@ correction below:
   - **Catch moved back west (user):** "catch is way too east, move back towards discovery." It is now at 0.34 World,
     0.20 Cerebral: next to Discovery, still below the Discovery–Power line. The gap is 0.29, and catching is the
     nearest loop to the audience, 0.20 away.
+  - **Power added back to the audience (user):** "There is power in this game, you can not progress without beating
+    other teams." The mix is now Story 40, Discovery 40, Strategy 20, Power 20 (scaled to 33, 33, 17, 17; the shares
+    are Claude's). The mark is at 0.39 World, 0.21 Cerebral, 0.15 from the centre of the loops.
   - **Not yet applied to the other nine games:** reading atmosphere tags as Story on every store page. Measured, it
     would bring Kabuto Park's store-page reading to 0.13 without any reading from play, improve Minami Lane,
     SUMMERHOUSE and Stacklands, and worsen Islanders and Super Auto Pets.
