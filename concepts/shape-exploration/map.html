@@ -576,9 +576,6 @@
           const P = SHAPES.find((s) => s.id === '20p')
           const R = SHAPES.find((s) => s.id === '20r')
           link = el('line', { x1: px(P.x), y1: py(P.y), x2: px(R.x), y2: py(R.y), stroke: GROUPS.pw.color, 'stroke-width': 2, 'stroke-dasharray': '5 4', opacity: 0.7 }, plot)
-        } else {
-          // this game's pool stays behind as faint dots, for comparison
-          for (const s of SHAPES) el('circle', { cx: px(s.x), cy: py(s.y), r: 3, fill: '#52514e', opacity: 0.3 }, plot)
         }
 
         for (const s of game.marks) {
@@ -665,11 +662,6 @@
           s.appendChild(document.createTextNode(WEIGHT[w].name))
           legend.appendChild(s)
         }
-        const s = document.createElement('span')
-        s.className = 'key'
-        s.appendChild(dot(2.5)).style.opacity = 0.4
-        s.appendChild(document.createTextNode('this game’s pool'))
-        legend.appendChild(s)
       }
 
       function filter(k) {
