@@ -134,7 +134,8 @@ Claude's notes on it:
    affected is unknown.
 7. **Exact distances and left–right positions.** Differences under about 0.1 on the axes, or 0.3 squares on the map,
    mean nothing. The World–Player position of a loop is the softest judgement of all.
-8. **Development times that have no source:** Stacklands, SUMMERHOUSE, and Forager's "about two years".
+8. **Development times that have no source:** SUMMERHOUSE, and Forager's "about two years". Stacklands is under 4
+   months by the user's word (2026-10-02), with no written source on file.
 9. **Time spent per loop.** Not estimated, on purpose. The user: it "depends on playstyle too much, and less so on the
    game itself".
 

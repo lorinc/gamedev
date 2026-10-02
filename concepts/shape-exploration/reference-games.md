@@ -35,11 +35,12 @@ time up to the first release that was sold. A list of successes shows what succe
 | Brotato | survive waves, buy upgrades between them | solo | 3 months to the demo and early access | 119,375 (96%) | 9 more months in early access to 1.0 |
 | Kabuto Park | catch bugs, build a team of them, win a summer tournament | the programmer of Minami Lane | 9 months (just outside the window) | 4,684 (99%) | cost about €65,000; 35,000 copies in the first month; break-even at about 30,000 |
 
-**Development time not found** (the first two are on the page, the other four were dropped):
+**Development time not found in a source** (the first two are on the page, the other four were dropped; Stacklands'
+time is given by the user):
 
 | Game | What the player does | Team | What is known | Steam reviews |
 |---|---|---|---|---|
-| Stacklands | stack cards on each other to make a village run | 2 to 3 of a 4-person collective (Sokpop) | Sokpop's 90th game. Each Sokpop developer makes one game every 4 months, which is the nearest thing to a sourced time. 450,000 copies on Steam by July 2022, three months after release, at $4.99; 32% of units in China | 30,383 (96%) |
+| Stacklands | stack cards on each other to make a village run | one developer in a 4-developer co-op (Sokpop) | Development time strictly under 4 months, and one developer (the user, 2026-10-02; this replaces Claude's "2 to 3 people, time not found"). Sokpop's 90th game; each Sokpop developer makes one game every 4 months. 450,000 copies on Steam by July 2022, three months after release, at $4.99; 32% of units in China | 30,383 (96%) |
 | SUMMERHOUSE | place building pieces to make a pretty scene; no goals | solo | by one of the three who made Islanders; 120,000 copies within three weeks, by a headline | 3,382 (93%) |
 | Rusty's Retirement | a small farm runs at the bottom of the screen while you do other things | solo | released April 2024 | 14,877 (97%) |
 | Nodebuster | click nodes, buy upgrades, numbers grow, finish in a few hours | solo | released August 2024 | 14,085 (97%) |
