@@ -129,7 +129,7 @@ They differ inside (one core loop, or two supporting loops, plus one or two side
 
 | Pillar | Where | Role |
 |---|---|---|
-| P1 Expanse (working name) | around 1a, 2a, 1b, toward Challenge | Strategy, Power, Challenge: the team breaches a cavern never entered before, opens it for exploration and finds new fauna to tame. Difficulty scales with progress, at steps the player chooses |
+| P1 The Unseen | around 1a, 2a, 1b, toward Challenge | Strategy, Power, Challenge: the team breaches a cavern never entered before, opens it for exploration and finds new fauna to tame. Difficulty scales with progress, at steps the player chooses |
 | P2 Caverns | 14's height, 25's column, on the line from the audience to Story | Discovery and Story, the most kinetic pillar: exploring the world, flagging new areas to breach, spending time in breached caverns to collect intel, and bringing flora and fauna home |
 | P3 Colony | around 2b, 17, 8, 3 | The simulation: natural enclosures for the living things, to farm resources, or to tame and level them for excursions |
 

@@ -66,3 +66,4 @@ Quotes are the user's, with spelling lightly fixed.
   P1 -> P3: does not exist, this goes through the P1 > P2 > P3 route."
 - **Pillar names.** The user: "P3 is 'Colony'. P2 is 'Caverns'. P1 is 'Expanse' -- but I need options for this now."
   They replace Breach, Expedition and Enclosures.
+- **P1 named The Unseen,** from a list of options for "uncharted" and "mystery" (Outlands was the runner-up).
