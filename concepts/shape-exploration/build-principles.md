@@ -115,6 +115,17 @@ different number than for a Challenge player.
   Discovery-and-Strategy audience, delayed consequences are where strategy comes from, as long as they are traceable.
 - New rules arrive one at a time, after the previous one is understood.
 
+## Pillars (user)
+
+Three pillars, drawn on [map.html](map.html) as equal circles. They differ inside (one core loop, or two supporting
+loops, plus one or two side loops) but weigh the same. Roles: open.
+
+| Pillar | Where | Shapes inside |
+|---|---|---|
+| P1 | around 1a, 2a, 1b, a bit toward Challenge | 1a Cards: hand, 2a Harvest: yield, 1b Cards: loadout |
+| P2 | 14's height, 25's column, on the line from the audience to Story | 14 Expedition, 15 Caretaker |
+| P3 | around 2b, 17, 8, 3 | 2b Harvest: steering, 17 Pressure: deadline, 8 Tipping point, 3 Alchemy, 4b Pet: worker |
+
 ## Candidate A: the short run that keeps only knowledge (candidate)
 
 A short run where complexity does not carry over, only knowledge: Noita, Super Auto Pets. It follows from "picking the

@@ -613,6 +613,14 @@
         whyX: 'Near the centre: Discovery and Story pull toward World, Strategy, Power and Challenge toward Player.',
         whyY: 'Toward Cerebral, between Discovery and Strategy.',
       }
+      // Pillars of this game (user, 2026-10-03): equal weight, so equal size. Radius in pixels of the 1200 px picture.
+      // No card yet; they don't take clicks, so the shapes inside still open theirs.
+      const PILLARS = [
+        { id: 'P1', x: 0.155, y: 0.414 }, // around 1a, 2a, 1b, nudged toward Challenge
+        { id: 'P2', x: -0.56, y: 0.11 }, // 14's height, 25's column, on the line from the audience to Story
+        { id: 'P3', x: -0.3, y: 0.52 }, // around 2b, 17, 8, 3
+      ]
+      const PILLAR_R = 82
       const GAMES = [
         { key: 'this', pool: true, title: 'This game', metric: 'the shape pool', meta: '29 candidate shapes, split into variants; nothing chosen', marks: SHAPES.map((s) => ({ ...s, desc: DESC[s.id] })).concat(AUDIENCE), aud: [['Discovery', 30], ['Strategy', 30], ['Power', 20], ['Story', 10], ['Challenge', 10]] },
         ...REF.map((g) => ({
@@ -649,6 +657,12 @@
           el('circle', { cx: 402 * K, cy: 470 * K, r: 11, fill: 'none', stroke: INK, 'stroke-width': 2 }, plot)
           const toy = el('text', { x: 402 * K - 15, y: 470 * K + 4, 'text-anchor': 'end', class: 'toy' }, plot)
           toy.textContent = 'the toy'
+
+          for (const p of PILLARS) {
+            el('circle', { cx: px(p.x), cy: py(p.y), r: PILLAR_R * K, fill: '#c98a00', 'fill-opacity': 0.08, stroke: '#c98a00', 'stroke-width': 2, 'pointer-events': 'none' }, plot)
+            const t = el('text', { x: px(p.x) + PILLAR_R * K * 0.72, y: py(p.y) - PILLAR_R * K * 0.72, class: 'toy', 'pointer-events': 'none' }, plot)
+            t.textContent = p.id
+          }
 
           // prep-and-run: one shape, two marks
           const P = SHAPES.find((s) => s.id === '20p')
