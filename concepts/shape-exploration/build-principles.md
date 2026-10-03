@@ -145,13 +145,18 @@ Flows between the pillars (P3 is the hub):
 
 - **P2 → P1:** new areas to wake.
 - **P1 → P2:** the woken area, now part of the caverns and the foragers' domain.
-- **P2 → P3:** flora (environmental and economic) and fauna (economic and exploration). Nothing goes straight from
-  P1 to P3: what a waking finds reaches the colony through the foragers.
+- **P2 → P3:** flora, collected by the foragers on their trips.
+- **P1 → P3:** fauna, won by the pioneers.
 - **P3 → P3:** resources to host and level the flora and fauna.
-- **P3 → P2:** foragers, the pets that catalogue a woken cavern and bring its flora and fauna home.
+- **P3 → P2:** foragers, the pets that catalogue a woken cavern and bring its flora home.
 - **P3 → P1:** pioneers, the pets that go first and wake an area.
 
 **Three categories of pets:** economic, forager and pioneer.
+
+**Flora:** all of it plays a systemic role; the economic plants also generate resources.
+
+**Fauna is won by a peaceful pull, not a violent push.** The pioneers face an animal in a kind of battle; a win means
+the animal follows them back to the colony, a loss means it decided to stay.
 
 **Areas are asleep until woken.** Under the fog of war the simulation is suspended; an area looks alive only through
 ambience, particle effects and shaders crossing the fog, never text or a symbol. Once woken, the foragers spend

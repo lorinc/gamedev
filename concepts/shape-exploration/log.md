@@ -75,3 +75,7 @@ Quotes are the user's, with spelling lightly fixed.
   push opens up the unseen that becomes part of the cavern, that is now the Naturalist's domain."
 - **Foragers; three categories.** The user: "So, we have 3 categories now. Economic, naturalist and pioneer. Let's call
   the naturalists foragers."
+- **Flora and fauna.** The user: "All flora plays a systemic role, but some generate resources - these are the economic
+  plants. All flora is collected by foragers during trips. All fauna is collected by pioneers through some kind of
+  battle, that is not violent push, but peaceful pull, and success results the animal following the pioneers back
+  into the colony, loss means that the animal decided to stay." Fauna now goes P1 → P3, flora P2 → P3.
