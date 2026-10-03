@@ -127,3 +127,5 @@ Quotes are the user's, with spelling lightly fixed.
   area self-harvests both crop and prey". Studying and foraging are automatic.
 - **Fauna is tamed, not foraged.** The user: "Fauna does not get automatically foraged, it needs the pioneers to tame
   them with active player participation."
+- **Cultivation is triggered.** The user: "Cultivate is not an active process, it is a triggered outcome of active fauna
+  taming."

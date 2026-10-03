@@ -232,8 +232,8 @@
       edge('area', 'unseen', 'wild', 'active')
       decision((X.unseen + X.wild) / 2, Y.area, 'Open up')
       who((X.unseen + X.wild) / 2, Y.area + 22, 'pioneers')
-      edge('area', 'wild', 'cultivated', 'active')
-      decision((X.studied + X.foraged) / 2, Y.area, 'Cultivate', ['its top predator is tamed'])
+      // not a decision: taming the top predator triggers it
+      edge('area', 'wild', 'cultivated', 'idle')
       harvest('area')
 
       // flora: unseen > wild > studied > foraged > cultivated
@@ -268,7 +268,7 @@
       dep(`M${X.wild - 40},${Y.area + H / 2} C${X.wild - 110},${Y.flora - 40} ${X.wild - 110},${Y.flora + 60} ${X.wild - 40},${Y.fauna - H / 2 - 2}`, 'opens', X.wild - 98, Y.flora + 50, 'end')
       dep(`M${X.foraged + 20},${Y.flora + H / 2} C${X.foraged + 40},${Y.flora + 80} ${(X.foraged + X.tamed) / 2},${Y.fauna - 80} ${(X.foraged + X.tamed) / 2},${Y.fauna - 28}`, 'diet', X.foraged + 50, Y.flora + 60)
       dep(`M${X.tamed},${Y.fauna + H / 2} C${X.tamed},${Y.fauna + 100} ${(X.foraged + X.tamed) / 2 + 40},${Y.fauna + 100} ${(X.foraged + X.tamed) / 2 + 30},${Y.fauna + 64}`, 'prey', X.tamed + 8, Y.fauna + 90)
-      dep(`M${X.tamed},${Y.fauna - H / 2} L${X.tamed},${Y.area + 34}`, 'top predator', X.tamed + 8, Y.flora - 30)
+      dep(`M${X.tamed},${Y.fauna - H / 2} L${X.tamed},${Y.area + 34}`, 'top predator tamed', X.tamed + 8, Y.flora - 30)
       dep(`M${X.cultivated - 40},${Y.area + H / 2} L${X.cultivated - 40},${Y.flora - H / 2 - 2}`, 'cultivates', X.cultivated - 32, (Y.area + Y.flora) / 2)
       harvest('flora')
       harvest('fauna')

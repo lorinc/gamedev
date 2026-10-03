@@ -199,7 +199,7 @@ tamed → cultivated.
 4. **What is foraged can be used in taming.** A creature can't be tamed until its natural diet is foraged.
 5. **Tamed animals are used to tame predators:** the pioneers must tame enough prey to capture a predator. A deep food
    chain needs exponentially more prey.
-6. **Once the top predator is tamed,** the area can be cultivated.
+6. **Taming the top predator cultivates the area:** a triggered outcome, not a decision.
 7. **A cultivated area harvests itself,** both crops and prey.
 
 **Only what needs a player decision gets a name:**
@@ -209,7 +209,6 @@ tamed → cultivated.
 | Send pioneers to open up an Unseen area | |
 | Tame a creature | its natural diet is foraged |
 | Tame a predator | enough of its prey tamed; a deep food chain needs exponentially more |
-| Cultivate an area | its top predator is tamed |
 
 Studying and foraging run on their own, and a cultivated area harvests itself, so none of them needs a name.
 
