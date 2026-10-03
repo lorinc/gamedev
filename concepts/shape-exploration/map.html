@@ -197,7 +197,17 @@
         opacity: 0.85;
       }
       .credit {
-        font-size: 13px;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 16px;
+      }
+      .credit a {
+        color: #0645ad;
+      }
+      @media (prefers-color-scheme: dark) {
+        .credit a {
+          color: #6ea8fe;
+        }
       }
       .gnote {
         font-size: 13px;
@@ -313,14 +323,6 @@
         expects, and then to choose my own mechanics from what was learned. Point at a mark to see what it is and why
         it sits there, or at a motivation dot to see what it means; pick a game on the right.
       </p>
-      <p class="credit">
-        The map, its two axes and its 12 motivations are Nick Yee's, from
-        <a href="https://quanticfoundry.com/">Quantic Foundry</a>: “Gaming Motivations Group Into 3 High-Level
-        Clusters” (21 December 2015), built from the Gamer Motivation Profile answers of over 140,000 gamers. The
-        picture behind the chart is theirs. The games listed for each motivation come from Quantic Foundry's lists of
-        the favourite games of each motivation's strongest scorers. Everything placed on the map is this page's own
-        judgement, not Quantic Foundry's data.
-      </p>
 
       <div class="cols">
         <div>
@@ -333,6 +335,14 @@
           <div id="editbar" hidden><span id="editmsg"></span><button type="button" id="save">Save to map.html</button><button type="button" id="revert">Drop the unsaved moves</button></div>
         </div>
         <div>
+          <p class="credit">
+            The map, its two axes and its 12 motivations are Nick Yee's, from
+            <a href="https://quanticfoundry.com/">Quantic Foundry</a>: “Gaming Motivations Group Into 3 High-Level
+            Clusters” (21 December 2015), built from the Gamer Motivation Profile answers of over 140,000 gamers. The
+            picture behind the chart is theirs. The games listed for each motivation come from Quantic Foundry's lists of
+            the favourite games of each motivation's strongest scorers. Everything placed on the map is this page's own
+            judgement, not Quantic Foundry's data.
+          </p>
           <h2 class="gh">Games</h2>
           <p class="gnote">The first row is this game. The others are small indie successes, each split into its loops on the same axes; a bigger mark is a bigger part of the play. The green diamond is the game's audience, read from its Steam tags and pitch without looking at the loops.</p>
           <div id="games" role="group" aria-label="Show a game"></div>
