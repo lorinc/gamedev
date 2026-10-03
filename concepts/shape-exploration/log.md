@@ -133,3 +133,4 @@ Quotes are the user's, with spelling lightly fixed.
   Taming the top predator makes the area colonizable; building the colony is the player's call.
 - **Caverns, and a balance.** The state after the top predator is tamed is called Caverns. The user: "Okay, this is
   balanced - foragers and pioneers both have 4 tasks."
+- **Area stages.** The opened area is called Wild: an area goes Unseen → Wild → Caverns → Cultivated.
