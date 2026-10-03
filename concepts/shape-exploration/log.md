@@ -40,3 +40,9 @@ Quotes are the user's, with spelling lightly fixed.
   towards challenge"; where 14's height and 25's column meet, near the audience–Story line; around 2b, 17, 8 and 3.
   "Not all pillars will be identical, but they should weigh the same. Some will be one central loop, some 2 support
   loops, and there will be one or two side loops." Their cards wait until their content is worked out.
+- **Pillar roles.** The user's reading of the map, which Claude agreed with: P3 is what the player controls about the
+  simulation; P2 is the most kinetic, the exciting exploration and horizon expansion; P1 is where difficulty scales
+  with progress (Claude added: at steps the player chooses, or Power gains feel erased). Claude had first read P2 as
+  the breather and asked where tranquility goes. The user: what is brought back from explorations feeds tinkering;
+  tranquility side loops can live around any pillar (a vivarium or zoo, rare beautiful sightings during exploration,
+  a riskless strategy-testing loop).

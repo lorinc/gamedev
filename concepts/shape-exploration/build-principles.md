@@ -117,14 +117,25 @@ different number than for a Challenge player.
 
 ## Pillars (user)
 
-Three pillars, drawn on [map.html](map.html) as equal circles. They differ inside (one core loop, or two supporting
-loops, plus one or two side loops) but weigh the same. Roles: open.
+Three pillars, drawn on [map.html](map.html) as equal circles, set apart far enough to give release from one another.
+They differ inside (one core loop, or two supporting loops, plus one or two side loops) but weigh the same.
 
-| Pillar | Where | Shapes inside |
-|---|---|---|
-| P1 | around 1a, 2a, 1b, a bit toward Challenge | 1a Cards: hand, 2a Harvest: yield, 1b Cards: loadout |
-| P2 | 14's height, 25's column, on the line from the audience to Story | 14 Expedition, 15 Caretaker |
-| P3 | around 2b, 17, 8, 3 | 2b Harvest: steering, 17 Pressure: deadline, 8 Tipping point, 3 Alchemy |
+| Pillar | Where | Shapes inside | Role |
+|---|---|---|---|
+| P1 | around 1a, 2a, 1b, toward Challenge | 1a Cards: hand, 2a Harvest: yield, 1b Cards: loadout | Strategy, Power, Challenge: difficulty scales with progress, at steps the player chooses |
+| P2 | 14's height, 25's column, on the line from the audience to Story | 14 Expedition, 15 Caretaker | Discovery and Story: the most kinetic pillar, to lean into; exploration and horizon expansion, the exciting part |
+| P3 | around 2b, 17, 8, 3 | 2b Harvest: steering, 17 Pressure: deadline, 8 Tipping point, 3 Alchemy | Cerebral and World: what the player controls about the simulation; tinkering |
+
+- **P2 feeds P3:** what is brought back from exploration feeds tinkering.
+- **Tranquility lives in side loops,** around any pillar, not in a pillar of its own. Examples: a vivarium or zoo;
+  rare, beautiful event sightings during exploration; a riskless strategy-testing loop.
+
+**Claude's reading, not agreed:** the links could close a cycle through shapes already in the pool. P2 → P3: an
+expedition carries something from each cavern into the next (14). P3 → P1: Harvest is split across the two, steering
+(2b) in P3 and the yield (2a) in P1. P1 → P2: the loadout (1b) is what the player takes on the outing. The three
+example side loops also land one per pillar: sightings by P2 (near 25, the naturalist), the vivarium by P3 (the
+system's living things, kept and watched), strategy testing by P1 (trying a build before choosing the next step; 3,
+Alchemy, already combines in isolation).
 
 ## Candidate A: the short run that keeps only knowledge (candidate)
 
