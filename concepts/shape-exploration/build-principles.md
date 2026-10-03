@@ -189,11 +189,13 @@ colonies settle into stable idle play.
 
 ### How an area moves
 
-**Every living thing goes through five stages:** unseen → wild → studied → foraged → cultivated.
+**Every living thing goes through five stages:** unseen → wild → studied → foraged → cultivated. Fauna is never
+foraged on its own: the pioneers tame it, with the player taking part, so its stages are unseen → wild → studied →
+tamed → cultivated.
 
 1. **Pioneers open an Unseen area:** everything in it goes from unseen to wild.
 2. **Foragers study the food chain bottom-up,** on their own.
-3. **What is studied is foraged,** on its own.
+3. **Studied flora is foraged,** on its own.
 4. **What is foraged can be used in taming.** A creature can't be tamed until its natural diet is foraged.
 5. **Tamed animals are used to tame predators:** the pioneers must tame enough prey to capture a predator. A deep food
    chain needs exponentially more prey.

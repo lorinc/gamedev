@@ -125,3 +125,5 @@ Quotes are the user's, with spelling lightly fixed.
   foraged"; "this also applies to predators, pioneers need to tame enough prey to capture it - careful, deep food
   chain requires exponentially more prey"; once the top predator is tamed the area can be cultivated; "cultivated
   area self-harvests both crop and prey". Studying and foraging are automatic.
+- **Fauna is tamed, not foraged.** The user: "Fauna does not get automatically foraged, it needs the pioneers to tame
+  them with active player participation."

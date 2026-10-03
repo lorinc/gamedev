@@ -220,17 +220,16 @@
       edge('flora', 'studied', 'foraged', 'idle')
       edge('flora', 'foraged', 'cultivated', 'idle')
 
-      // fauna: unseen > wild > studied > foraged > tamed > cultivated
+      // fauna: unseen > wild > studied > tamed > cultivated
       node('fauna', 'unseen', 'Unseen')
       node('fauna', 'wild', 'Wild')
       node('fauna', 'studied', 'Studied')
-      node('fauna', 'foraged', 'Foraged')
       node('fauna', 'tamed', 'Tamed')
       node('fauna', 'cultivated', 'Cultivated')
       edge('fauna', 'unseen', 'wild', 'idle')
       edge('fauna', 'wild', 'studied', 'idle')
-      edge('fauna', 'studied', 'foraged', 'idle')
-      edge('fauna', 'foraged', 'tamed', 'active')
+      // fauna is never foraged on its own: the pioneers tame it, with the player taking part
+      edge('fauna', 'studied', 'tamed', 'active')
       decision((X.foraged + X.tamed) / 2, Y.fauna, 'Tame')
       text((X.foraged + X.tamed) / 2, Y.fauna + 40, 'its natural diet is foraged', 'cond')
       text((X.foraged + X.tamed) / 2, Y.fauna + 55, 'a predator: enough prey tamed', 'cond')
