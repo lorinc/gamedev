@@ -223,6 +223,28 @@
         padding: 4px 10px 4px 4px;
         color: var(--ink2);
       }
+      #editbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 10px;
+        margin: 10px 0 0;
+        font-size: 13px;
+        color: var(--ink2);
+      }
+      #editbar button {
+        font: inherit;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 3px 10px;
+        cursor: pointer;
+      }
+      #plot.editing .mark {
+        cursor: grab;
+        touch-action: none;
+      }
       .scroll {
         overflow-x: auto;
       }
@@ -285,6 +307,7 @@
             <div id="tip" role="tooltip" hidden></div>
           </div>
           <div class="legend" id="legend" role="group" aria-label="Show one group"></div>
+          <div id="editbar" hidden><span id="editmsg"></span><button type="button" id="save">Save to map.html</button><button type="button" id="revert">Drop the unsaved moves</button></div>
         </div>
         <div>
           <h2 class="gh">Games</h2>
@@ -507,16 +530,16 @@
       const DOT = { Completion: [577, 148], Strategy: [668, 296], Challenge: [922, 341], Discovery: [402, 469], Power: [777, 513], Story: [183, 679], Design: [306, 684], Competition: [1051, 720], Fantasy: [160, 823], Community: [749, 847], Excitement: [927, 878], Destruction: [742, 1042] }
       const INK = '#0b0b0b'
       const REF = [
-        {"key": "hike", "title": "A Short Hike", "metric": "22,778 Steam reviews", "meta": "solo · 4 months to the first release", "marks": [["roam", "Roam the island", 3, -0.8, -0.3, "Being somewhere else, at your own pace: close to Fantasy.", "Walking, climbing and gliding are the play, but nothing hurries you.", "Walk, climb and glide anywhere on a small island. There is a summit to reach and no pressure to reach it."], ["feathers", "Collect golden feathers", 2, -0.3, 0.45, "Things hidden in the world, found by looking around.", "A light checklist: each feather lets you climb higher.", "Golden feathers are hidden and sold around the island. Each one adds stamina, which opens more of the mountain."], ["help", "Help the islanders", 2, -0.86, 0.08, "Characters and their small stories: close to Story.", "Short errands, taken at your own pace.", "Islanders ask for small favours and reward them with tools, feathers or a chat."], ["side games", "Side activities", 1, -0.35, -0.45, "Small games inside the world.", "The most kinetic part: fishing, a boat, races, a ball game.", "Optional mini-games dotted around the island."], ["audience", "Audience, read from the store page", 0, -0.57, -0.09, "Its tags and pitch point to: Fantasy 45%, Discovery 44%, Excitement 7%.", "Mood tags the model has no place for (Relaxing, Cute, Casual, Nature, Family Friendly, Beautiful, Cozy, Funny) carry 53% of the tag weight. This mark is 0.08 from the centre of the loops.", "People who want to wander a pretty place in peace: a short, gentle, cute outing, children included."]], "aud": [["Fantasy", 45], ["Discovery", 44]]},
-        {"key": "islanders", "title": "Islanders", "metric": "16,787 Steam reviews", "meta": "3 students · 7 months", "marks": [["place", "Place a building", 3, -0.12, 0.6, "Acts on a board of scoring rules more than on a place.", "Every placement is weighed against what already stands there: close to Strategy.", "Pick a building from your hand and place it. It scores by what stands near it.", "l"], ["next pack", "Beat the score for the next pack", 2, 0.18, 0.4, "A target to beat, set by the game.", "Planning a few placements ahead to reach it.", "Reach the score target to get the next pack of buildings and, in time, the next island."], ["high score", "Chase a higher score", 1, 0.5, 0.34, "Measured against yourself: toward Challenge.", "Mastery over many islands.", "A run goes on for as long as you keep reaching the targets; the total is your score."], ["pretty island", "End up with a pretty island", 2, -0.5, -0.06, "The island you built is something to look at: close to Design.", "No planning is needed to enjoy it.", "The finished island is small, tidy and yours."], ["audience", "Audience, read from the store page", 0, -0.19, 0.32, "Its tags and pitch point to: Strategy 57%, Design 31%, Fantasy 7%.", "Mood tags the model has no place for (Relaxing, Beautiful, Colorful, Addictive) carry 32% of the tag weight. This mark is 0.13 from the centre of the loops.", "Relaxed builders who like a puzzle: city building as a calm score game, with nothing to manage."]], "aud": [["Strategy", 57], ["Design", 31]]},
-        {"key": "minami", "title": "Minami Lane", "metric": "6,786 Steam reviews", "meta": "2 people and a composer · about 6 months", "marks": [["street", "Arrange the street", 3, -0.58, 0.1, "A small place that becomes yours: close to Design.", "Some planning: what goes next to what.", "Build houses and shops along one street and decide where each one goes."], ["tune shops", "Tune the shops", 2, -0.2, 0.58, "A system to read: what each villager likes.", "Change one thing, watch the reaction, change it again.", "Set each shop’s recipe and prices to match what the villagers want, judged by their reactions."], ["missions", "Finish the missions", 2, -0.16, 0.82, "Goals set by the game.", "A short checklist per mission: close to Completion.", "A handful of missions, each with a few goals such as a number of happy villagers.", "l"], ["villagers", "Watch the villagers, pet the cats", 1, -0.8, -0.34, "Attachment to the little people and animals of the street.", "Nothing to work out.", "Villagers stroll past, and cats turn up and can be petted."], ["audience", "Audience, read from the store page", 0, -0.2, 0.42, "Its tags and pitch point to: Strategy 48%, Design 35%, Completion 16%.", "Mood tags the model has no place for (Cute, Casual, Relaxing, Colorful, Cozy, Cats) carry 56% of the tag weight. This mark is 0.22 from the centre of the loops.", "Cozy players who want a cute little management game: light optimising, wrapped in cats and colour."]], "aud": [["Strategy", 48], ["Design", 35], ["Completion", 16]]},
-        {"key": "kabuto", "title": "Kabuto Park", "metric": "4,684 Steam reviews", "meta": "9 months · cost about €65,000", "marks": [["catch", "Catch bugs", 3, -0.34, 0.2, "The thrill of finding a new species: toward Discovery.", "Then the pleasure of seeing its stats: toward Power. The catch itself is a short timing game.", "Search spots in the park and catch bugs with a small timing game."], ["collection", "Fill the collection", 2, -0.3, 0.82, "Every kind of bug in the park.", "A list to complete, with rare ones: close to Completion.", "Bugs come in kinds and rarities; the album shows what is still missing.", "l"], ["team", "Build a team and battle", 2, 0.14, 0.44, "Your own team of three.", "Choosing bugs and playing their moves.", "Pick three bugs and play their moves in short battles against other kids’ teams."], ["tournament", "Win the summer tournament", 1, 0.5, 0.34, "A contest, against computer opponents.", "The one goal that needs a good team.", "The summer ends with a tournament; winning it finishes the game."], ["summer", "A childhood summer", 2, -0.9, -0.34, "Being a kid on holiday: close to Fantasy and Story.", "Mood, not thought.", "A hand-drawn park, a month of summer days, upgrades bought with pocket money."], ["audience", "Audience, as the user reads it from play", 0, -0.32, 0.33, "The user’s mix: Discovery 40%, Story 20%, Completion 20%, Power 20%. Story here is visual storytelling: the atmosphere. Power: \"you can not progress without beating other teams.\"", "The store page alone gave Power 36%, Completion 35%, Strategy 29%: the atmosphere sits in the mood tags, which carry 57% of the tag weight. This mark is 0.08 from the centre of the loops; the store-page mark was 0.62 away.", "Cozy creature collectors of any age: catch them all, train a team, win light card battles."]], "aud": [["Discovery", 40], ["Story", 20], ["Completion", 20], ["Power", 20]]},
-        {"key": "stacklands", "title": "Stacklands", "metric": "30,383 Steam reviews", "meta": "one developer of a 4-person co-op · under 4 months", "marks": [["stack", "Stack cards", 3, -0.2, 0.46, "A village made of cards on a table.", "Each stack is a small decision about who does what.", "Put a villager card on a resource card and it produces something. Everything is done by stacking."], ["recipes", "Discover recipes", 2, -0.56, 0.42, "Finding out what the cards can do together: close to Discovery.", "Trying combinations.", "New combinations and ideas turn up from packs and from trying things."], ["feed", "Feed everyone before the moon ends", 2, 0.08, 0.26, "Your villagers against a clock.", "Planning under a timer; the nearest thing to pressure here.", "Each moon ends with a meal for every villager. Not enough food and someone starves."], ["packs", "Sell cards, buy packs", 2, 0.2, 0.4, "What you own, and a gamble on what comes next.", "Choosing which pack the village needs.", "Sell spare cards for coins and spend them on packs of new cards."], ["fight", "Fight", 1, 0.36, -0.2, "Creatures attack the village.", "Automatic, and the fastest part of the game.", "Villagers with weapons fight creatures by being stacked on them."], ["quests", "Tick off the quests", 1, -0.34, 0.8, "A list set by the game.", "Close to Completion.", "A long quest list hands out new packs as it is ticked off.", "l"], ["audience", "Audience, read from the store page", 0, 0.1, 0.48, "Its tags and pitch point to: Strategy 59%, Challenge 17%, Design 15%, Power 8%.", "Mood tags the model has no place for (Cute, Casual, Colorful) carry 7% of the tag weight. This mark is 0.23 from the centre of the loops.", "Card and board game players who like to run a village and keep it alive. Strategy first, cute second."]], "aud": [["Strategy", 59], ["Challenge", 17], ["Design", 15]]},
-        {"key": "summerhouse", "title": "SUMMERHOUSE", "metric": "3,382 Steam reviews", "meta": "solo · time not found", "marks": [["place", "Place pieces", 3, -0.56, -0.08, "Making a little scene that is yours: Design itself.", "By feel. There is nothing to plan and nothing to win.", "Place walls, roofs, doors and plants freely to make a small sunny scene. No goals, no score."], ["secrets", "Find the hidden pieces", 1, -0.6, 0.36, "Finding out what the toy can do: close to Discovery.", "Trying arrangements to see what appears.", "Some arrangements unlock new pieces and little inhabitants, unannounced."], ["mood", "Soak in the mood", 2, -0.92, -0.36, "A place to be in: close to Fantasy.", "Nothing to work out.", "Late-afternoon light, weather and sound; a place to sit in for a while."], ["audience", "Audience, read from the store page", 0, -0.51, 0.05, "Its tags and pitch point to: Design 53%, Strategy 24%, Fantasy 13%, Discovery 11%.", "Mood tags the model has no place for (Relaxing, Casual, Colorful, Cozy, Cute) carry 44% of the tag weight. This mark is 0.24 from the centre of the loops.", "People who want to make something pretty with no rules: a creative toy to relax with."]], "aud": [["Design", 53], ["Strategy", 24], ["Fantasy", 13], ["Discovery", 11]]},
-        {"key": "dawn", "title": "20 Minutes Till Dawn", "metric": "29,163 Steam reviews", "meta": "solo · 2 months", "marks": [["move and shoot", "Move and shoot", 3, 0.5, -0.78, "Against a swarm, not a place.", "Constant dodging and aiming: close to Excitement.", "Dodge an endless swarm and shoot it, for twenty minutes."], ["upgrades", "Pick an upgrade", 2, 0.22, 0.34, "Your own character getting stronger: close to Power.", "A quick choice among a few, with synergies to spot.", "On each level-up choose one of a few upgrades; the right ones combine into something absurd.", "l"], ["survive", "Survive the clock", 2, 0.62, 0.38, "A test of you: close to Challenge.", "Knowing the escalation and preparing for it.", "The swarm thickens on a fixed schedule; lasting the full twenty minutes is the win."], ["unlocks", "Unlock characters and weapons", 1, 0.3, 0.62, "A roster that grows.", "A list to fill over many runs.", "Runs earn currency that unlocks new characters, weapons and permanent bonuses."], ["audience", "Audience, read from the store page", 0, 0.34, -0.11, "Its tags and pitch point to: Challenge 29%, Excitement 19%, Power 19%, Destruction 18%, Fantasy 11%.", "Mood tags the model has no place for (Casual) carry 5% of the tag weight. This mark is 0.12 from the centre of the loops.", "Action roguelite players: survive a bullet hell and grow an overpowered build, in a dark horror theme."]], "aud": [["Challenge", 29], ["Excitement", 19], ["Power", 19], ["Destruction", 18], ["Fantasy", 11]]},
-        {"key": "brotato", "title": "Brotato", "metric": "119,375 Steam reviews", "meta": "solo · 3 months to early access", "marks": [["dodge", "Dodge while the weapons fire", 3, 0.52, -0.42, "Against waves of enemies.", "Movement only: the weapons aim and fire by themselves.", "Survive short waves. You only move; up to six weapons fire on their own."], ["shop", "Shop between waves", 3, 0.24, 0.46, "Your own build: close to Power.", "A pause to weigh items, stats and money.", "After each wave spend what you collected on weapons and items, or reroll the offer.", "l"], ["character", "Build around a character", 2, 0.16, 0.7, "Each character bends the rules of the build.", "Planning a whole run around one twist: close to Strategy.", "Dozens of characters, each with a rule that changes which builds work."], ["danger", "Beat a higher danger level", 2, 0.52, 0.24, "A test of your skill: toward Challenge.", "Each level asks for a tighter build.", "Several danger levels per character, each harder than the last."], ["audience", "Audience, read from the store page", 0, 0.49, -0.1, "Its tags and pitch point to: Challenge 34%, Excitement 28%, Community 15%, Power 13%, Destruction 6%, Fantasy 5%.", "Mood tags the model has no place for (Casual) carry 2% of the tag weight. This mark is 0.32 from the centre of the loops.", "Action roguelike players who want short arcade runs and builds, alone or with a friend on the couch."]], "aud": [["Challenge", 34], ["Excitement", 28], ["Community", 15], ["Power", 13]]},
-        {"key": "forager", "title": "Forager", "metric": "44,155 Steam reviews", "meta": "solo with a publisher · about 2 years (unchecked)", "marks": [["gather", "Gather", 3, -0.24, -0.4, "Hitting what the land grows.", "Constant moving and striking, lightly.", "Hit trees, rocks and plants that keep growing back, and pick up what drops."], ["craft", "Craft and build the base", 3, -0.22, 0.44, "A base that turns materials into better ones.", "What to build next, and where.", "Furnaces, forges and dozens of other structures turn materials into tools, coins and more structures."], ["lands", "Buy the next land", 2, -0.56, 0.42, "New biomes with new things in them: close to Discovery.", "Saving up and choosing where to expand.", "Spend coins to add a neighbouring piece of land, each with new resources, creatures or a secret.", "l"], ["skills", "Level up, pick skills", 2, 0.24, 0.36, "Your character getting stronger: close to Power.", "One choice per level from a big grid.", "Every action gives experience; each level unlocks one more skill, which opens new structures and bonuses."], ["automate", "Automate the work", 2, 0.06, 0.7, "A system that works without you.", "Setting the base up so it runs itself.", "Mining rods, droids and other late structures collect and craft for you."], ["fight", "Fight", 2, 0.44, -0.44, "Enemies and a few bosses.", "Fast, simple hitting.", "Slimes, skeletons and bosses attack; the same swing that gathers also fights."], ["dungeons", "Solve puzzles and dungeons", 1, -0.48, 0.06, "Secrets built into the lands.", "Small puzzles, some fighting.", "Some lands hold a puzzle or a small dungeon with a reward."], ["museum", "Fill the museum", 1, -0.34, 0.82, "One of everything.", "A long list: close to Completion.", "A museum asks for bundles of items and pays out for each one completed.", "l"], ["audience", "Audience, read from the store page", 0, -0.22, 0.17, "Its tags and pitch point to: Discovery 30%, Design 25%, Challenge 13%, Power 11%, Strategy 9%, Fantasy 7%.", "Mood tags the model has no place for (Casual) carry 2% of the tag weight. This mark is 0.11 from the centre of the loops.", "Survival-crafting players who want to explore, gather and build a base, in a lighter 2D form."]], "aud": [["Discovery", 30], ["Design", 25], ["Challenge", 13], ["Power", 11]]},
-        {"key": "pets", "title": "Super Auto Pets", "metric": "36,229 Steam reviews", "meta": "free to play · team and time not found", "marks": [["shop", "Buy and arrange the team", 3, 0.34, 0.3, "Your own team getting strong: close to Power.", "Power is the aim; strategy and grind are how it is reached. No timer in the main mode.", "Spend ten gold a turn on pets and food, put the pets in order, and merge three of a kind to level one up."], ["battle", "Watch the battle", 2, 0.62, -0.3, "Against a team another player built earlier; the two never meet live.", "Automatic and over in seconds: nothing to do but watch.", "The two teams fight on their own, front pet against front pet, with every ability firing in order."], ["ten wins", "Reach ten wins", 2, 0.74, 0.2, "A run measured against other players’ teams.", "Each loss costs a life, so the run is nursed along turn by turn.", "A run ends at ten wins or when the lives run out."], ["synergies", "Learn what combines", 2, -0.14, 0.4, "Finding out what the pets do to each other.", "Trying a combination and seeing it work, or not.", "Every pet has one ability with a trigger; the fun is the chain you get when several fire together."], ["versus", "Play a live lobby", 1, 0.9, -0.1, "Other players, at the same time.", "Turns are timed here.", "A versus mode puts up to eight players in one lobby, live or asynchronous."], ["hats", "Unlock packs and hats", 1, -0.45, -0.1, "A bit of dressing up.", "Nothing to work out.", "Extra pet packs and cosmetics are the paid part of the game."], ["audience", "Audience, read from the store page", 0, 0.42, 0.06, "Its tags and pitch point to: Strategy 34%, Community 25%, Competition 24%, Power 11%.", "Mood tags the model has no place for (Cute, Casual, Colorful, Family Friendly, Dogs, Horses) carry 32% of the tag weight. This mark is 0.09 from the centre of the loops.", "Casual strategy players who want to compete with friends without pressure: cute, free, family friendly."]], "aud": [["Strategy", 34], ["Community", 25], ["Competition", 24], ["Power", 11]]},
+        {"key": "hike", "title": "A Short Hike", "metric": "22,778 Steam reviews", "meta": "solo · 4 months to the first release", "marks": [["roam", "Roam the island", 3, -0.8, -0.3, "Being somewhere else, at your own pace: close to Fantasy.", "Walking, climbing and gliding are the play, but nothing hurries you.", "Walk, climb and glide anywhere on a small island. There is a summit to reach and no pressure to reach it."], ["feathers", "Collect golden feathers", 2, -0.3, 0.45, "Things hidden in the world, found by looking around.", "A light checklist: each feather lets you climb higher.", "Golden feathers are hidden and sold around the island. Each one adds stamina, which opens more of the mountain."], ["help", "Help the islanders", 2, -0.86, 0.08, "Characters and their small stories: close to Story.", "Short errands, taken at your own pace.", "Islanders ask for small favours and reward them with tools, feathers or a chat."], ["side games", "Side activities", 1, -0.35, -0.45, "Small games inside the world.", "The most kinetic part: fishing, a boat, races, a ball game.", "Optional mini-games dotted around the island."], ["audience", "Audience, read from the store page", 0, -0.57, -0.09, "Its tags and pitch point to: Fantasy 45%, Discovery 44%, Excitement 7%.", "Mood tags the model has no place for (Relaxing, Cute, Casual, Nature, Family Friendly, Beautiful, Cozy, Funny) carry 53% of the tag weight.", "People who want to wander a pretty place in peace: a short, gentle, cute outing, children included."]], "aud": [["Fantasy", 45], ["Discovery", 44]]},
+        {"key": "islanders", "title": "Islanders", "metric": "16,787 Steam reviews", "meta": "3 students · 7 months", "marks": [["place", "Place a building", 3, -0.12, 0.6, "Acts on a board of scoring rules more than on a place.", "Every placement is weighed against what already stands there: close to Strategy.", "Pick a building from your hand and place it. It scores by what stands near it.", "l"], ["next pack", "Beat the score for the next pack", 2, 0.18, 0.4, "A target to beat, set by the game.", "Planning a few placements ahead to reach it.", "Reach the score target to get the next pack of buildings and, in time, the next island."], ["high score", "Chase a higher score", 1, 0.5, 0.34, "Measured against yourself: toward Challenge.", "Mastery over many islands.", "A run goes on for as long as you keep reaching the targets; the total is your score."], ["pretty island", "End up with a pretty island", 2, -0.5, -0.06, "The island you built is something to look at: close to Design.", "No planning is needed to enjoy it.", "The finished island is small, tidy and yours."], ["audience", "Audience, read from the store page", 0, -0.19, 0.32, "Its tags and pitch point to: Strategy 57%, Design 31%, Fantasy 7%.", "Mood tags the model has no place for (Relaxing, Beautiful, Colorful, Addictive) carry 32% of the tag weight.", "Relaxed builders who like a puzzle: city building as a calm score game, with nothing to manage."]], "aud": [["Strategy", 57], ["Design", 31]]},
+        {"key": "minami", "title": "Minami Lane", "metric": "6,786 Steam reviews", "meta": "2 people and a composer · about 6 months", "marks": [["street", "Arrange the street", 3, -0.58, 0.1, "A small place that becomes yours: close to Design.", "Some planning: what goes next to what.", "Build houses and shops along one street and decide where each one goes."], ["tune shops", "Tune the shops", 2, -0.2, 0.58, "A system to read: what each villager likes.", "Change one thing, watch the reaction, change it again.", "Set each shop’s recipe and prices to match what the villagers want, judged by their reactions."], ["missions", "Finish the missions", 2, -0.16, 0.82, "Goals set by the game.", "A short checklist per mission: close to Completion.", "A handful of missions, each with a few goals such as a number of happy villagers.", "l"], ["villagers", "Watch the villagers, pet the cats", 1, -0.8, -0.34, "Attachment to the little people and animals of the street.", "Nothing to work out.", "Villagers stroll past, and cats turn up and can be petted."], ["audience", "Audience, read from the store page", 0, -0.2, 0.42, "Its tags and pitch point to: Strategy 48%, Design 35%, Completion 16%.", "Mood tags the model has no place for (Cute, Casual, Relaxing, Colorful, Cozy, Cats) carry 56% of the tag weight.", "Cozy players who want a cute little management game: light optimising, wrapped in cats and colour."]], "aud": [["Strategy", 48], ["Design", 35], ["Completion", 16]]},
+        {"key": "kabuto", "title": "Kabuto Park", "metric": "4,684 Steam reviews", "meta": "9 months · cost about €65,000", "marks": [["catch", "Catch bugs", 3, -0.34, 0.2, "The thrill of finding a new species: toward Discovery.", "Then the pleasure of seeing its stats: toward Power. The catch itself is a short timing game.", "Search spots in the park and catch bugs with a small timing game."], ["collection", "Fill the collection", 2, -0.3, 0.82, "Every kind of bug in the park.", "A list to complete, with rare ones: close to Completion.", "Bugs come in kinds and rarities; the album shows what is still missing.", "l"], ["team", "Build a team and battle", 2, 0.14, 0.44, "Your own team of three.", "Choosing bugs and playing their moves.", "Pick three bugs and play their moves in short battles against other kids’ teams."], ["tournament", "Win the summer tournament", 1, 0.5, 0.34, "A contest, against computer opponents.", "The one goal that needs a good team.", "The summer ends with a tournament; winning it finishes the game."], ["summer", "A childhood summer", 2, -0.9, -0.34, "Being a kid on holiday: close to Fantasy and Story.", "Mood, not thought.", "A hand-drawn park, a month of summer days, upgrades bought with pocket money."], ["audience", "Audience, as the user reads it from play", 0, -0.32, 0.33, "The user’s mix: Discovery 40%, Story 20%, Completion 20%, Power 20%. Story here is visual storytelling: the atmosphere. Power: \"you can not progress without beating other teams.\"", "The store page alone gave Power 36%, Completion 35%, Strategy 29%: the atmosphere sits in the mood tags, which carry 57% of the tag weight. The store-page mark was 0.62 from the centre of the loops.", "Cozy creature collectors of any age: catch them all, train a team, win light card battles."]], "aud": [["Discovery", 40], ["Story", 20], ["Completion", 20], ["Power", 20]]},
+        {"key": "stacklands", "title": "Stacklands", "metric": "30,383 Steam reviews", "meta": "one developer of a 4-person co-op · under 4 months", "marks": [["stack", "Stack cards", 3, -0.2, 0.46, "A village made of cards on a table.", "Each stack is a small decision about who does what.", "Put a villager card on a resource card and it produces something. Everything is done by stacking."], ["recipes", "Discover recipes", 2, -0.56, 0.42, "Finding out what the cards can do together: close to Discovery.", "Trying combinations.", "New combinations and ideas turn up from packs and from trying things."], ["feed", "Feed everyone before the moon ends", 2, 0.08, 0.26, "Your villagers against a clock.", "Planning under a timer; the nearest thing to pressure here.", "Each moon ends with a meal for every villager. Not enough food and someone starves."], ["packs", "Sell cards, buy packs", 2, 0.2, 0.4, "What you own, and a gamble on what comes next.", "Choosing which pack the village needs.", "Sell spare cards for coins and spend them on packs of new cards."], ["fight", "Fight", 1, 0.36, -0.2, "Creatures attack the village.", "Automatic, and the fastest part of the game.", "Villagers with weapons fight creatures by being stacked on them."], ["quests", "Tick off the quests", 1, -0.34, 0.8, "A list set by the game.", "Close to Completion.", "A long quest list hands out new packs as it is ticked off.", "l"], ["audience", "Audience, read from the store page", 0, 0.1, 0.48, "Its tags and pitch point to: Strategy 59%, Challenge 17%, Design 15%, Power 8%.", "Mood tags the model has no place for (Cute, Casual, Colorful) carry 7% of the tag weight.", "Card and board game players who like to run a village and keep it alive. Strategy first, cute second."]], "aud": [["Strategy", 59], ["Challenge", 17], ["Design", 15]]},
+        {"key": "summerhouse", "title": "SUMMERHOUSE", "metric": "3,382 Steam reviews", "meta": "solo · time not found", "marks": [["place", "Place pieces", 3, -0.56, -0.08, "Making a little scene that is yours: Design itself.", "By feel. There is nothing to plan and nothing to win.", "Place walls, roofs, doors and plants freely to make a small sunny scene. No goals, no score."], ["secrets", "Find the hidden pieces", 1, -0.6, 0.36, "Finding out what the toy can do: close to Discovery.", "Trying arrangements to see what appears.", "Some arrangements unlock new pieces and little inhabitants, unannounced."], ["mood", "Soak in the mood", 2, -0.92, -0.36, "A place to be in: close to Fantasy.", "Nothing to work out.", "Late-afternoon light, weather and sound; a place to sit in for a while."], ["audience", "Audience, read from the store page", 0, -0.51, 0.05, "Its tags and pitch point to: Design 53%, Strategy 24%, Fantasy 13%, Discovery 11%.", "Mood tags the model has no place for (Relaxing, Casual, Colorful, Cozy, Cute) carry 44% of the tag weight.", "People who want to make something pretty with no rules: a creative toy to relax with."]], "aud": [["Design", 53], ["Strategy", 24], ["Fantasy", 13], ["Discovery", 11]]},
+        {"key": "dawn", "title": "20 Minutes Till Dawn", "metric": "29,163 Steam reviews", "meta": "solo · 2 months", "marks": [["move and shoot", "Move and shoot", 3, 0.5, -0.78, "Against a swarm, not a place.", "Constant dodging and aiming: close to Excitement.", "Dodge an endless swarm and shoot it, for twenty minutes."], ["upgrades", "Pick an upgrade", 2, 0.22, 0.34, "Your own character getting stronger: close to Power.", "A quick choice among a few, with synergies to spot.", "On each level-up choose one of a few upgrades; the right ones combine into something absurd.", "l"], ["survive", "Survive the clock", 2, 0.62, 0.38, "A test of you: close to Challenge.", "Knowing the escalation and preparing for it.", "The swarm thickens on a fixed schedule; lasting the full twenty minutes is the win."], ["unlocks", "Unlock characters and weapons", 1, 0.3, 0.62, "A roster that grows.", "A list to fill over many runs.", "Runs earn currency that unlocks new characters, weapons and permanent bonuses."], ["audience", "Audience, read from the store page", 0, 0.34, -0.11, "Its tags and pitch point to: Challenge 29%, Excitement 19%, Power 19%, Destruction 18%, Fantasy 11%.", "Mood tags the model has no place for (Casual) carry 5% of the tag weight.", "Action roguelite players: survive a bullet hell and grow an overpowered build, in a dark horror theme."]], "aud": [["Challenge", 29], ["Excitement", 19], ["Power", 19], ["Destruction", 18], ["Fantasy", 11]]},
+        {"key": "brotato", "title": "Brotato", "metric": "119,375 Steam reviews", "meta": "solo · 3 months to early access", "marks": [["dodge", "Dodge while the weapons fire", 3, 0.52, -0.42, "Against waves of enemies.", "Movement only: the weapons aim and fire by themselves.", "Survive short waves. You only move; up to six weapons fire on their own."], ["shop", "Shop between waves", 3, 0.24, 0.46, "Your own build: close to Power.", "A pause to weigh items, stats and money.", "After each wave spend what you collected on weapons and items, or reroll the offer.", "l"], ["character", "Build around a character", 2, 0.16, 0.7, "Each character bends the rules of the build.", "Planning a whole run around one twist: close to Strategy.", "Dozens of characters, each with a rule that changes which builds work."], ["danger", "Beat a higher danger level", 2, 0.52, 0.24, "A test of your skill: toward Challenge.", "Each level asks for a tighter build.", "Several danger levels per character, each harder than the last."], ["audience", "Audience, read from the store page", 0, 0.49, -0.1, "Its tags and pitch point to: Challenge 34%, Excitement 28%, Community 15%, Power 13%, Destruction 6%, Fantasy 5%.", "Mood tags the model has no place for (Casual) carry 2% of the tag weight.", "Action roguelike players who want short arcade runs and builds, alone or with a friend on the couch."]], "aud": [["Challenge", 34], ["Excitement", 28], ["Community", 15], ["Power", 13]]},
+        {"key": "forager", "title": "Forager", "metric": "44,155 Steam reviews", "meta": "solo with a publisher · about 2 years (unchecked)", "marks": [["gather", "Gather", 3, -0.24, -0.4, "Hitting what the land grows.", "Constant moving and striking, lightly.", "Hit trees, rocks and plants that keep growing back, and pick up what drops."], ["craft", "Craft and build the base", 3, -0.22, 0.44, "A base that turns materials into better ones.", "What to build next, and where.", "Furnaces, forges and dozens of other structures turn materials into tools, coins and more structures."], ["lands", "Buy the next land", 2, -0.56, 0.42, "New biomes with new things in them: close to Discovery.", "Saving up and choosing where to expand.", "Spend coins to add a neighbouring piece of land, each with new resources, creatures or a secret.", "l"], ["skills", "Level up, pick skills", 2, 0.24, 0.36, "Your character getting stronger: close to Power.", "One choice per level from a big grid.", "Every action gives experience; each level unlocks one more skill, which opens new structures and bonuses."], ["automate", "Automate the work", 2, 0.06, 0.7, "A system that works without you.", "Setting the base up so it runs itself.", "Mining rods, droids and other late structures collect and craft for you."], ["fight", "Fight", 2, 0.44, -0.44, "Enemies and a few bosses.", "Fast, simple hitting.", "Slimes, skeletons and bosses attack; the same swing that gathers also fights."], ["dungeons", "Solve puzzles and dungeons", 1, -0.48, 0.06, "Secrets built into the lands.", "Small puzzles, some fighting.", "Some lands hold a puzzle or a small dungeon with a reward."], ["museum", "Fill the museum", 1, -0.34, 0.82, "One of everything.", "A long list: close to Completion.", "A museum asks for bundles of items and pays out for each one completed.", "l"], ["audience", "Audience, read from the store page", 0, -0.22, 0.17, "Its tags and pitch point to: Discovery 30%, Design 25%, Challenge 13%, Power 11%, Strategy 9%, Fantasy 7%.", "Mood tags the model has no place for (Casual) carry 2% of the tag weight.", "Survival-crafting players who want to explore, gather and build a base, in a lighter 2D form."]], "aud": [["Discovery", 30], ["Design", 25], ["Challenge", 13], ["Power", 11]]},
+        {"key": "pets", "title": "Super Auto Pets", "metric": "36,229 Steam reviews", "meta": "free to play · team and time not found", "marks": [["shop", "Buy and arrange the team", 3, 0.34, 0.3, "Your own team getting strong: close to Power.", "Power is the aim; strategy and grind are how it is reached. No timer in the main mode.", "Spend ten gold a turn on pets and food, put the pets in order, and merge three of a kind to level one up."], ["battle", "Watch the battle", 2, 0.62, -0.3, "Against a team another player built earlier; the two never meet live.", "Automatic and over in seconds: nothing to do but watch.", "The two teams fight on their own, front pet against front pet, with every ability firing in order."], ["ten wins", "Reach ten wins", 2, 0.74, 0.2, "A run measured against other players’ teams.", "Each loss costs a life, so the run is nursed along turn by turn.", "A run ends at ten wins or when the lives run out."], ["synergies", "Learn what combines", 2, -0.14, 0.4, "Finding out what the pets do to each other.", "Trying a combination and seeing it work, or not.", "Every pet has one ability with a trigger; the fun is the chain you get when several fire together."], ["versus", "Play a live lobby", 1, 0.9, -0.1, "Other players, at the same time.", "Turns are timed here.", "A versus mode puts up to eight players in one lobby, live or asynchronous."], ["hats", "Unlock packs and hats", 1, -0.45, -0.1, "A bit of dressing up.", "Nothing to work out.", "Extra pet packs and cosmetics are the paid part of the game."], ["audience", "Audience, read from the store page", 0, 0.42, 0.06, "Its tags and pitch point to: Strategy 34%, Community 25%, Competition 24%, Power 11%.", "Mood tags the model has no place for (Cute, Casual, Colorful, Family Friendly, Dogs, Horses) carry 32% of the tag weight.", "Casual strategy players who want to compete with friends without pressure: cute, free, family friendly."]], "aud": [["Strategy", 34], ["Community", 25], ["Competition", 24], ["Power", 11]]},
       ]
       const GAMES = [
         { key: 'this', pool: true, title: 'This game', metric: 'the shape pool', meta: '29 candidate shapes, split into variants; nothing chosen', marks: SHAPES.map((s) => ({ ...s, desc: DESC[s.id] })) },
@@ -587,13 +610,113 @@
           g.addEventListener('mouseleave', () => (pinned ? show(pinned) : hide()))
           g.addEventListener('focus', () => show(s.id))
           g.addEventListener('blur', () => (pinned ? show(pinned) : hide()))
-          g.addEventListener('click', (e) => (e.stopPropagation(), pin(pinned === s.id ? null : s.id)))
+          g.addEventListener('click', (e) => (e.stopPropagation(), dragged || pin(pinned === s.id ? null : s.id)))
+          if (EDIT && !game.pool && s.w) g.addEventListener('pointerdown', (e) => drag(e, s))
           g.addEventListener('keydown', (e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), pin(pinned === s.id ? null : s.id)))
           marks[s.id] = g
         }
+        plot.classList.toggle('editing', EDIT && !game.pool)
         pinned ? show(pinned) : hide()
         filter(shown)
       }
+
+      // Opened from disk, the loops of the other games can be dragged. Moves are kept in this browser until they are
+      // written back into this file, so a reload doesn't lose them.
+      const EDIT = location.protocol === 'file:' || ['localhost', '127.0.0.1'].includes(location.hostname)
+      const DRAFT = 'shape-map-moves'
+      let moves = {} // game key -> loop id -> [x, y]
+      let dragged = false // swallows the click that ends a drag
+      let fileHandle = null
+      try {
+        moves = (EDIT && JSON.parse(localStorage.getItem(DRAFT))) || {}
+      } catch (e) {}
+      const store = () => {
+        try {
+          localStorage.setItem(DRAFT, JSON.stringify(moves))
+        } catch (e) {}
+      }
+      const pending = () => Object.values(moves).reduce((n, m) => n + Object.keys(m).length, 0)
+      function bar(msg) {
+        const b = document.getElementById('editbar')
+        b.hidden = !EDIT || game.pool
+        const n = pending()
+        document.getElementById('editmsg').textContent =
+          msg || (n ? n + (n === 1 ? ' loop moved' : ' loops moved') + ', not saved yet.' : 'Drag a loop to move it.')
+        document.getElementById('save').hidden = document.getElementById('revert').hidden = !n
+      }
+
+      function drag(e, s) {
+        if (e.button) return
+        const box = plot.getBoundingClientRect()
+        let moved = false
+        const move = (ev) => {
+          const X = (ev.clientX - box.left) / K
+          const Y = (ev.clientY - box.top) / K
+          const clamp = (v) => Math.round(Math.max(-1, Math.min(1, v)) * 100) / 100
+          s.x = clamp((X - 619) / (X < 619 ? 464 : 439))
+          s.y = clamp((622 - Y) / (Y < 622 ? 497 : 438))
+          moved = true
+          pinned = s.id
+          draw()
+        }
+        const up = () => {
+          removeEventListener('pointermove', move)
+          removeEventListener('pointerup', up)
+          if (!moved) return
+          dragged = true
+          setTimeout(() => (dragged = false))
+          ;(moves[game.key] ||= {})[s.id] = [s.x, s.y]
+          store()
+          table()
+          pin(s.id)
+          bar()
+        }
+        addEventListener('pointermove', move)
+        addEventListener('pointerup', up)
+      }
+
+      // The data lines are written the way Python's json.dumps writes them, so a save changes only the numbers.
+      const pyjson = (v) =>
+        Array.isArray(v)
+          ? '[' + v.map(pyjson).join(', ') + ']'
+          : v && typeof v === 'object'
+            ? '{' + Object.entries(v).map(([k, x]) => JSON.stringify(k) + ': ' + pyjson(x)).join(', ') + '}'
+            : JSON.stringify(v)
+
+      async function save() {
+        try {
+          if (!fileHandle) {
+            if (!window.showOpenFilePicker) return bar('This browser cannot write files. Use Chromium.')
+            ;[fileHandle] = await showOpenFilePicker({ types: [{ description: 'This page', accept: { 'text/html': ['.html'] } }] })
+          }
+          const lines = (await (await fileHandle.getFile()).text()).split('\n')
+          if (!lines.some((l) => l.includes('const REF = ['))) {
+            fileHandle = null
+            return bar('That file is not map.html. Nothing saved.')
+          }
+          lines.forEach((l, i) => {
+            const k = (l.match(/^\s*\{"key": "([^"]+)"/) || [])[1]
+            if (!k || !moves[k]) return
+            const d = JSON.parse(l.trim().replace(/,$/, ''))
+            for (const m of d.marks) if (moves[k][m[0]]) [m[3], m[4]] = moves[k][m[0]]
+            lines[i] = l.match(/^\s*/)[0] + pyjson(d) + ','
+          })
+          const w = await fileHandle.createWritable()
+          await w.write(lines.join('\n'))
+          await w.close()
+          moves = {}
+          store()
+          bar('Saved to ' + fileHandle.name + '.')
+        } catch (e) {
+          bar('Not saved: ' + e.message)
+        }
+      }
+      document.getElementById('save').addEventListener('click', (e) => (e.stopPropagation(), save()))
+      document.getElementById('revert').addEventListener('click', () => {
+        moves = {}
+        store()
+        location.reload()
+      })
 
       const dot = (r, color, shape) => {
         const s = document.createElementNS(NS, 'svg')
@@ -691,6 +814,14 @@
         what.textContent = s.desc
         const why = document.createElement('p')
         why.textContent = s.whyX + ' ' + s.whyY
+        if (!game.pool && s.w === 0) {
+          // live, so that moving a loop shows at once how far the audience is from the loops' centre
+          const L = game.marks.filter((q) => q.w)
+          const n = L.reduce((a, q) => a + q.w, 0)
+          const cx = L.reduce((a, q) => a + q.x * q.w, 0) / n
+          const cy = L.reduce((a, q) => a + q.y * q.w, 0) / n
+          why.textContent += ' This mark is ' + Math.hypot(s.x - cx, s.y - cy).toFixed(2) + ' from the centre of the loops.'
+        }
         tip.append(h, grp, what, why)
         tip.hidden = false
 
@@ -726,7 +857,7 @@
         id ? show(id) : hide()
       }
 
-      document.addEventListener('click', () => pin(null))
+      document.addEventListener('click', () => dragged || pin(null))
 
       function play(g) {
         game = g
@@ -737,6 +868,7 @@
         key()
         table()
         draw()
+        bar()
         try {
           history.replaceState(null, '', g.pool ? location.pathname : '?game=' + g.key)
         } catch (e) {}
@@ -760,6 +892,9 @@
         b.addEventListener('click', () => play(g))
         games.appendChild(b)
       }
+
+      for (const g of GAMES)
+        for (const s of g.marks) if (moves[g.key] && moves[g.key][s.id]) [s.x, s.y] = moves[g.key][s.id]
 
       // ?game=forager opens straight on that game, so a view can be shared as a link
       const asked = new URLSearchParams(location.search)
