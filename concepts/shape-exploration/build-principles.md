@@ -129,8 +129,8 @@ They differ inside (one core loop, or two supporting loops, plus one or two side
 
 | Pillar | Where | Role |
 |---|---|---|
-| P1 Breach | around 1a, 2a, 1b, toward Challenge | Strategy, Power, Challenge: the team breaches a cavern never entered before and brings back samples, seeds or captured animals. Difficulty scales with progress, at steps the player chooses |
-| P2 Expedition | 14's height, 25's column, on the line from the audience to Story | Discovery and Story, the most kinetic pillar: exploring the world and flagging prospects |
+| P1 Breach | around 1a, 2a, 1b, toward Challenge | Strategy, Power, Challenge: the team breaches a cavern never entered before and brings back flora and fauna. Difficulty scales with progress, at steps the player chooses |
+| P2 Expedition | 14's height, 25's column, on the line from the audience to Story | Discovery and Story, the most kinetic pillar: exploring the world, flagging prospects, and spending time in breached caverns to collect intel |
 | P3 Enclosures | around 2b, 17, 8, 3 | The simulation: natural enclosures for the living things, to farm resources, or to tame and level them for excursions |
 
 Each pillar has a limit that is visible in the world and raised by what another pillar delivers:
@@ -144,9 +144,14 @@ Each pillar has a limit that is visible in the world and raised by what another 
 Flows between the pillars (P3 is the hub):
 
 - **P2 → P1:** prospects.
-- **P1 → P3:** samples, seeds, captured animals.
-- **P3 → P1:** the team.
-- **P3 → P2:** scouts with matching traits.
+- **P1 → P3:** flora (environmental and economic) and fauna (economic and exploration).
+- **P3 → P3:** resources to host and level the flora and fauna.
+- **P3 → P1 and P3 → P2:** the teams that go on both kinds of expedition.
+- **P1 → P1 and P1 → P2:** a breach unlocks new areas for both.
+
+**Prospects are mysteries until breached.** A prospect shows only as particle effects and shaders crossing the fog of
+war, never as text or a symbol. Once breached, the expedition spends time there to collect intel; without it the
+player sees the visuals and nothing more.
 
 Beefing up, per pillar: P1 levels the team longer; P2 brings more scouts, better matched; P3 runs more generations.
 
@@ -217,3 +222,5 @@ With 20% Power in the audience, B has the more natural home for it.
 1. **What should the simulator tell first?** The first thing the user can't judge by playing alone.
 2. **How does a player who has mastered the game show it,** without beating anyone or anything? In Slay the Spire it
    is winning at higher Ascension.
+3. **How does the causality get across without walls of text?** Mysteries are visuals only, and intel comes from
+   time spent in a breached cavern.

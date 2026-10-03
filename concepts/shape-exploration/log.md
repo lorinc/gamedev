@@ -53,3 +53,11 @@ Quotes are the user's, with spelling lightly fixed.
   excursions." Breach = strategy, bringing back samples, seeds or captured animals; enclosures = the simulation, to
   farm or to tame and level; expeditions = exploring and flagging prospects. This replaced the earlier cycle
   (P2 → P3 → P1 → P2 through 14, 2b/2a, 1b).
+- **Flows reworked.** The user: "P1 brings environmental / economic flora into the P3 simulation. P1 brings economic
+  and exploration fauna into the P3 simulation. P3 simulation creates resources to host and level both. P3 simulation
+  creates the teams that go on both P2 and P1 expeditions." And: "P1 unlocks new areas for P1 and P2 exploration."
+  This replaced samples, seeds and captured animals (P1 → P3) and scouts with matching traits (P3 → P2).
+- **Prospects as mysteries.** The user: "Prospects should be flagged as mystery (indicated by particle effects and
+  shaders crossing the FOW, not by text or a symbol), until breached. Once breached, the expedition needs to spend time
+  there to collect intel. Without that, we just see the visuals, but that's all. I'm not sure how we will be able to
+  get the causality through without walls of text, but that's a good challenge to have."
