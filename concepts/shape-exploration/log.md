@@ -64,3 +64,5 @@ Quotes are the user's, with spelling lightly fixed.
 - **Flows renamed and rerouted.** The user: "P1 -> P1: new fauna to tame. P2 -> P1: new areas to breach. P1 -> P2: open
   area for exploration. P3 -> P2: explorer pets. P3 -> P1: breach pets (would be nice to find a more peaceful name).
   P1 -> P3: does not exist, this goes through the P1 > P2 > P3 route."
+- **Pillar names.** The user: "P3 is 'Colony'. P2 is 'Caverns'. P1 is 'Expanse' -- but I need options for this now."
+  They replace Breach, Expedition and Enclosures.
