@@ -129,3 +129,5 @@ Quotes are the user's, with spelling lightly fixed.
   them with active player participation."
 - **Cultivation is triggered.** The user: "Cultivate is not an active process, it is a triggered outcome of active fauna
   taming."
+- **Building a colony is a decision.** The user: "but colony build should be a user action, done by foragers."
+  Taming the top predator makes the area colonizable; building the colony is the player's call.
