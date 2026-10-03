@@ -136,6 +136,7 @@
       #tip.subtle {
         width: max-content;
         max-width: 260px;
+        white-space: pre-line;
         padding: 4px 8px;
         font-size: 12px;
         color: var(--ink2);
@@ -679,9 +680,10 @@
       // what flows from one pillar to the next
       const FLOWS = [
         { from: 'P2', to: 'P1', text: 'Prospects' },
-        { from: 'P1', to: 'P3', text: 'Samples, seeds, captured animals' },
+        { from: 'P1', to: 'P3', text: 'Flora: environmental and economic\nFauna: economic and exploration' },
         { from: 'P3', to: 'P1', text: 'The team' },
-        { from: 'P3', to: 'P2', text: 'Scouts with matching traits' },
+        { from: 'P3', to: 'P2', text: 'The team' },
+        { from: 'P3', to: 'P3', at: -2.4, text: 'Resources to host and level the flora and fauna' }, // at: where the loop leaves the rim, radians
       ]
       const PILLAR_COLOR = '#c98a00'
       const FLOW_ALPHA = 0.45
@@ -706,6 +708,7 @@
       let link = null
       let marks = {}
       let trs = {}
+      let shapesOn = false // the brainstorm shapes of the pool, hidden until asked for
 
       // Marks keep a constant size on screen: the plot is redrawn in real pixels when the chart's width changes.
       function draw() {
@@ -731,18 +734,30 @@
             const A = PILLARS.find((q) => q.id === f.from)
             const B = PILLARS.find((q) => q.id === f.to)
             const ax = px(A.x), ay = py(A.y), bx = px(B.x), by = py(B.y)
-            const d = Math.hypot(bx - ax, by - ay)
-            const ux = (bx - ax) / d, uy = (by - ay) / d
             const gap = PILLAR_R * K + 4
-            // a pair flowing both ways is split to either side of the line between the pillars
-            const o = FLOWS.some((q) => q.from === f.to && q.to === f.from) ? 6 : 0
-            const x1 = ax + ux * gap - uy * o, y1 = ay + uy * gap + ux * o, x2 = bx - ux * gap - uy * o, y2 = by - uy * gap + ux * o
+            let d
+            if (A === B) {
+              // a loop back into the same pillar, bulging out of the rim at angle f.at
+              const pt = (a, r) => [ax + Math.cos(a) * r, ay + Math.sin(a) * r]
+              const [x1, y1] = pt(f.at - 0.45, gap), [c1x, c1y] = pt(f.at - 0.6, gap * 2.1)
+              const [c2x, c2y] = pt(f.at + 0.6, gap * 2.1), [x2, y2] = pt(f.at + 0.45, gap)
+              d = `M${x1},${y1} C${c1x},${c1y} ${c2x},${c2y} ${x2},${y2}`
+              f.mx = (x1 + 3 * c1x + 3 * c2x + x2) / 8
+              f.my = (y1 + 3 * c1y + 3 * c2y + y2) / 8
+            } else {
+              const n = Math.hypot(bx - ax, by - ay)
+              const ux = (bx - ax) / n, uy = (by - ay) / n
+              // a pair flowing both ways is split to either side of the line between the pillars
+              const o = FLOWS.some((q) => q.from === f.to && q.to === f.from) ? 6 : 0
+              const x1 = ax + ux * gap - uy * o, y1 = ay + uy * gap + ux * o, x2 = bx - ux * gap - uy * o, y2 = by - uy * gap + ux * o
+              d = `M${x1},${y1} L${x2},${y2}`
+              f.mx = (x1 + x2) / 2
+              f.my = (y1 + y2) / 2
+            }
             const id = 'f:' + f.from + f.to
             const g = el('g', { class: 'mark flow', tabindex: 0, role: 'button', 'aria-label': f.text }, plot)
-            el('line', { class: 'fline', x1, y1, x2, y2, stroke: PILLAR_COLOR, opacity: FLOW_ALPHA, 'stroke-width': 4.5, 'marker-end': 'url(#flowhead)', 'pointer-events': 'none' }, g)
-            el('line', { x1, y1, x2, y2, stroke: 'transparent', 'stroke-width': 14, 'pointer-events': 'stroke' }, g)
-            f.mx = (x1 + x2) / 2
-            f.my = (y1 + y2) / 2
+            el('path', { class: 'fline', d, fill: 'none', stroke: PILLAR_COLOR, opacity: FLOW_ALPHA, 'stroke-width': 4.5, 'marker-end': 'url(#flowhead)', 'pointer-events': 'none' }, g)
+            el('path', { d, fill: 'none', stroke: 'transparent', 'stroke-width': 14, 'pointer-events': 'stroke' }, g)
             g.addEventListener('mouseenter', () => show(id))
             g.addEventListener('mouseleave', () => (pinned ? show(pinned) : hide()))
             g.addEventListener('focus', () => show(id))
@@ -776,7 +791,7 @@
           // prep-and-run: one shape, two marks
           const P = SHAPES.find((s) => s.id === '20p')
           const R = SHAPES.find((s) => s.id === '20r')
-          link = el('line', { x1: px(P.x), y1: py(P.y), x2: px(R.x), y2: py(R.y), stroke: GROUPS.pw.color, 'stroke-width': 2, 'stroke-dasharray': '5 4', opacity: 0.7 }, plot)
+          if (shapesOn) link = el('line', { x1: px(P.x), y1: py(P.y), x2: px(R.x), y2: py(R.y), stroke: GROUPS.pw.color, 'stroke-width': 2, 'stroke-dasharray': '5 4', opacity: 0.7 }, plot)
         }
         // the 12 motivation dots of the picture: each opens its own card
         for (const m in DOT) {
@@ -803,6 +818,7 @@
         }
 
         for (const s of game.marks) {
+          if (game.pool && !shapesOn && s.id !== 'audience') continue
           const g = el('g', { class: 'mark', tabindex: 0, role: 'button', 'aria-label': s.name }, plot)
           const cx = px(s.x)
           const cy = py(s.y)
@@ -959,6 +975,7 @@
           })
           tr.addEventListener('click', (e) => {
             e.stopPropagation()
+            if (game.pool && !shapesOn) shapes(true)
             pin(s.id)
             document.getElementById('chart').scrollIntoView({ block: 'nearest', behavior: 'smooth' })
           })
@@ -970,6 +987,14 @@
       function key() {
         legend.textContent = ''
         if (game.pool) {
+          const t = document.createElement('button')
+          t.type = 'button'
+          t.dataset.toggle = 'shapes'
+          t.setAttribute('aria-pressed', String(shapesOn))
+          t.textContent = shapesOn ? 'Hide the brainstorm shapes' : 'Show the brainstorm shapes'
+          t.addEventListener('click', () => shapes(!shapesOn))
+          legend.appendChild(t)
+          if (!shapesOn) return
           for (const k in GROUPS) {
             const b = document.createElement('button')
             b.type = 'button'
@@ -996,7 +1021,7 @@
         if (!game.pool) return
         for (const s of game.marks) if (marks[s.id]) marks[s.id].classList.toggle('dim', !!k && s.g !== k)
         if (link) link.classList.toggle('dim', !!k && k !== 'pw')
-        for (const b of legend.children) b.setAttribute('aria-pressed', String(b.dataset.g === k))
+        for (const b of legend.children) if (b.dataset.g) b.setAttribute('aria-pressed', String(b.dataset.g === k))
       }
 
       function show(id) {
@@ -1127,6 +1152,13 @@
 
       document.addEventListener('click', () => dragged || pin(null))
 
+      function shapes(on) {
+        shapesOn = on
+        shown = null
+        if (pinned && !pinned.includes(':') && pinned !== 'audience') pinned = null
+        key()
+        draw()
+      }
       function play(g) {
         game = g
         shown = null
