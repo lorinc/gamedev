@@ -193,6 +193,9 @@ colonies settle into stable idle play.
 foraged on its own: the pioneers tame it, with the player taking part, so its stages are unseen → wild → studied →
 tamed → cultivated.
 
+**Terrain goes through the same stages:** its elements (ores, liquids, physical attributes) are studied and foraged by
+the foragers; taming the top predator turns it into Caverns, and a colony cultivates it.
+
 1. **Pioneers open an Unseen area:** everything in it goes from unseen to wild.
 2. **Foragers study the food chain bottom-up,** on their own.
 3. **Studied flora is foraged,** on its own.

@@ -150,11 +150,11 @@
     <main>
       <h1>Biosphere lifecycle</h1>
       <p>
-        How an area, its flora and its fauna move from unseen to cultivated. Only the player's decisions carry a name;
+        How terrain, flora and fauna move from unseen to cultivated. Only the player's decisions carry a name;
         everything else runs on its own.
       </p>
       <div class="chart">
-        <svg id="svg" viewBox="0 0 1240 580" role="img" aria-label="Lifecycle of areas, flora and fauna"></svg>
+        <svg id="svg" viewBox="0 0 1240 580" role="img" aria-label="Lifecycle of terrain, flora and fauna"></svg>
       </div>
       <div class="legend">
         <span><svg width="36" height="10" style="min-width: 0"><line x1="0" y1="5" x2="36" y2="5" class="active" /></svg>active: a player decision</span>
@@ -193,7 +193,9 @@
       const Y = { area: 90, flora: 270, fauna: 440 }
       const W = 112, H = 40
 
-      for (const [lane, label] of [['area', 'Area'], ['flora', 'Flora'], ['fauna', 'Fauna']]) text(16, Y[lane] + 5, label, 'row')
+      for (const [lane, label] of [['area', 'Terrain'], ['flora', 'Flora'], ['fauna', 'Fauna']]) text(16, Y[lane] + 5, label, 'row')
+      text(16, Y.area + 22, 'ores, liquids,', 'cond').style.textAnchor = 'start'
+      text(16, Y.area + 36, 'physical attributes', 'cond').style.textAnchor = 'start'
 
       function node(lane, col, label) {
         const g = el('g', { class: 'node' })
@@ -228,13 +230,17 @@
       // area: Unseen > Opened > Cultivated
       node('area', 'unseen', 'Unseen')
       node('area', 'wild', 'Wild')
+      node('area', 'studied', 'Studied')
+      node('area', 'foraged', 'Foraged')
       node('area', 'tamed', 'Caverns')
       node('area', 'cultivated', 'Cultivated')
       edge('area', 'unseen', 'wild', 'active')
       decision((X.unseen + X.wild) / 2, Y.area, 'Open up')
       who((X.unseen + X.wild) / 2, Y.area + 22, 'pioneers')
       // not a decision: taming the top predator triggers it
-      edge('area', 'wild', 'tamed', 'idle')
+      edge('area', 'wild', 'studied', 'idle', 'foragers')
+      edge('area', 'studied', 'foraged', 'idle', 'foragers')
+      edge('area', 'foraged', 'tamed', 'idle')
       edge('area', 'tamed', 'cultivated', 'active')
       decision((X.tamed + X.cultivated) / 2, Y.area, 'Build colony')
       who((X.tamed + X.cultivated) / 2, Y.area + 22, 'foragers')
