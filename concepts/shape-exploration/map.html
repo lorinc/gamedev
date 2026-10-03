@@ -703,41 +703,39 @@
         },
       ]
       // what flows from one pillar to the next
-      // what flows from one pillar to the next. action: [mode, what], mode '' when it is neither idle nor active
+      // One arrow per action, from the pillar in the player's list to the pillar it acts on. mode: idle, active, or ''.
+      // at: where a loop back into the same pillar leaves the rim, radians.
       const FLOWS = [
-        { from: 'P3', to: 'P3', at: -2.4, text: 'Crops, livestock, balance',
-          action: [['idle', 'grow crops and livestock'], ['active', 'claim new colony areas'], ['active', 'tune the biosphere so that all colony loops work']],
-          condition: ['tames grow and reproduce only in ideal conditions', 'a colony needs an area whose top predator is tamed'],
-          outcome: ['bait for the pioneers', 'food for the pioneers and foragers', 'a simulation that is beautiful, increasingly diverse, but stable'] },
-        { from: 'P3', to: 'P1', text: 'Pioneer teams',
-          action: [['active', 'send them to open up an Unseen'], ['active', 'send them to tame animals']],
-          condition: ['protection from the area\'s conditions', 'something that intrigues the animal', 'food for it, prey animals included'],
-          outcome: ['pioneers at the frontier'] },
-        { from: 'P1', to: 'P1', at: -0.9, text: 'Up the food chain',
-          action: [['', 'tame a few of the easiest animals first, then use tamed animals and outside baits on stronger ones']],
-          condition: ['the stronger the animal, the longer the taming, the stronger the team and the more food or prey it needs'],
-          outcome: ['local resistances', 'step by step, the top predator: a mini-boss'] },
-        { from: 'P1', to: 'P3', text: 'Fauna, land to colonize',
-          action: [['', 'win a taming: a peaceful pull, not a violent push']],
-          condition: ['after a loss the animal decides to stay'],
-          outcome: ['the animal follows the pioneers home', 'with the top predator tamed, the area is ready to colonize'] },
-        { from: 'P1', to: 'P2', text: 'An opened area',
-          action: [['', 'the pioneers open up an Unseen']],
-          outcome: ['the area becomes a cavern, for the foragers to prospect and forage'] },
-        { from: 'P3', to: 'P2', text: 'Forager teams',
-          action: [['active', 'set them up for field trips'], ['idle', 'they go on their own trips']],
-          condition: ['traits that get them through the cavern conditions: dark, flooded, toxic, hot, overgrown'],
-          outcome: ['foragers in the caverns'] },
-        { from: 'P2', to: 'P2', at: 2.5, text: 'A living cavern',
-          action: [['idle', 'the cavern\'s simulation runs']],
-          outcome: ['a simulation that is beautiful and non-linear'] },
-        { from: 'P2', to: 'P3', text: 'Flora, goods, finds',
-          action: [['idle', 'field trips'], ['active', 'a breather: search by hand near the foragers']],
-          condition: ['foragers in the cavern'],
-          outcome: ['flora unlocks and foraged goods', 'unique, special finds'] },
-        { from: 'P2', to: 'P1', text: 'Edges of the Unseen',
-          action: [['idle', 'the foragers lift the fog within the caverns']],
-          outcome: ['the boundaries of the Unseen, alive only as ambience (particles, shaders), no text or symbol'] },
+        { from: 'P3', to: 'P3', at: -3.0, mode: 'idle', action: 'grow crops and livestock for bait',
+          condition: ['a colonized area: economic use starts only there'], outcome: ['bait for the pioneers'] },
+        { from: 'P3', to: 'P3', at: -2.35, mode: 'idle', action: 'grow crops and livestock for food',
+          condition: ['a colonized area: economic use starts only there'], outcome: ['food for the pioneers and foragers'] },
+        { from: 'P3', to: 'P3', at: -1.7, mode: 'active', action: 'claim a new colony area',
+          condition: ['the area\'s top predator is tamed'], outcome: ['a colony in that biome, with economic use of its crops and animals'] },
+        { from: 'P3', to: 'P3', at: -1.05, mode: 'active', action: 'tune the biosphere',
+          condition: ['tames grow and reproduce only in ideal conditions'], outcome: ['a more productive balance, so that all colony loops work'] },
+        { from: 'P3', to: 'P3', at: 2.85, mode: 'idle', action: 'the colony\'s simulation runs',
+          condition: ['new flora and fauna keep arriving'], outcome: ['a simulation that is beautiful, increasingly diverse, but stable'] },
+        { from: 'P3', to: 'P1', mode: 'active', action: 'send a pioneer team to open up an Unseen',
+          condition: ['a boundary of the Unseen, found by the foragers'], outcome: ['the area becomes a cavern, for the foragers to prospect and forage'] },
+        { from: 'P3', to: 'P1', mode: 'active', action: 'send a pioneer team to tame an animal',
+          condition: ['some of the biome\'s elements fully learnt by the foragers', 'protection from the area\'s conditions, something that intrigues the animal, food for it (prey animals included)'],
+          outcome: ['a win: the animal follows the pioneers home', 'a loss: the animal decides to stay'] },
+        { from: 'P1', to: 'P1', at: -0.9, mode: 'active', action: 'walk the food chain',
+          condition: ['tamed animals from the tier below, and crops and baits from outside', 'the stronger the animal, the longer the taming, the stronger the team and the more food or prey it needs'],
+          outcome: ['local resistances from the easiest animals first', 'at the top, the top predator (a mini-boss): the area is ready to colonize'] },
+        { from: 'P3', to: 'P2', mode: 'active', action: 'set up a forager team for field trips',
+          condition: ['traits that get it through the cavern conditions: dark, flooded, toxic, hot, overgrown'], outcome: ['a team on field trips'] },
+        { from: 'P3', to: 'P2', mode: 'idle', action: 'forager teams go on their own trips',
+          condition: ['a team already set up'], outcome: ['field trips keep running without the player'] },
+        { from: 'P2', to: 'P2', at: 2.5, mode: 'idle', action: 'the cavern\'s simulation runs',
+          condition: ['an opened area: under the fog of war the simulation is suspended'], outcome: ['a simulation that is beautiful and non-linear'] },
+        { from: 'P2', to: 'P3', mode: 'idle', action: 'field trips',
+          condition: ['foragers prospecting the biome'], outcome: ['flora unlocks and foraged goods'] },
+        { from: 'P2', to: 'P3', mode: 'active', action: 'a breather: search by hand near the foragers',
+          condition: ['foragers nearby'], outcome: ['unique, special finds'] },
+        { from: 'P2', to: 'P1', mode: 'idle', action: 'the foragers lift the fog within the caverns',
+          condition: ['foragers in the caverns'], outcome: ['the boundaries of the Unseen, alive only as ambience (particles, shaders), no text or symbol'] },
       ]
       const PILLAR_COLOR = '#c98a00'
       const FLOW_ALPHA = 0.45
@@ -788,23 +786,25 @@
             if (A === B) {
               // a loop back into the same pillar, bulging out of the rim at angle f.at
               const pt = (a, r) => [ax + Math.cos(a) * r, ay + Math.sin(a) * r]
-              const [x1, y1] = pt(f.at - 0.45, gap), [c1x, c1y] = pt(f.at - 0.6, gap * 2.1)
-              const [c2x, c2y] = pt(f.at + 0.6, gap * 2.1), [x2, y2] = pt(f.at + 0.45, gap)
+              const [x1, y1] = pt(f.at - 0.26, gap), [c1x, c1y] = pt(f.at - 0.42, gap * 1.9)
+              const [c2x, c2y] = pt(f.at + 0.42, gap * 1.9), [x2, y2] = pt(f.at + 0.26, gap)
               d = `M${x1},${y1} C${c1x},${c1y} ${c2x},${c2y} ${x2},${y2}`
               f.mx = (x1 + 3 * c1x + 3 * c2x + x2) / 8
               f.my = (y1 + 3 * c1y + 3 * c2y + y2) / 8
             } else {
               const n = Math.hypot(bx - ax, by - ay)
               const ux = (bx - ax) / n, uy = (by - ay) / n
-              // a pair flowing both ways is split to either side of the line between the pillars
-              const o = FLOWS.some((q) => q.from === f.to && q.to === f.from) ? 6 : 0
+              // all arrows between the same two pillars, either way, side by side in lanes across the line between them
+              const lane = FLOWS.filter((q) => q.from !== q.to && [q.from, q.to].sort().join() === [f.from, f.to].sort().join())
+              const sign = f.from < f.to ? 1 : -1
+              const o = (lane.indexOf(f) - (lane.length - 1) / 2) * 9 * sign
               const x1 = ax + ux * gap - uy * o, y1 = ay + uy * gap + ux * o, x2 = bx - ux * gap - uy * o, y2 = by - uy * gap + ux * o
               d = `M${x1},${y1} L${x2},${y2}`
               f.mx = (x1 + x2) / 2
               f.my = (y1 + y2) / 2
             }
-            const id = 'f:' + f.from + f.to
-            const g = el('g', { class: 'mark flow', tabindex: 0, role: 'button', 'aria-label': f.text }, plot)
+            const id = 'f:' + FLOWS.indexOf(f)
+            const g = el('g', { class: 'mark flow', tabindex: 0, role: 'button', 'aria-label': f.action }, plot)
             el('path', { class: 'fline', d, fill: 'none', stroke: PILLAR_COLOR, opacity: FLOW_ALPHA, 'stroke-width': 4.5, 'marker-end': 'url(#flowhead)', 'pointer-events': 'none' }, g)
             el('path', { d, fill: 'none', stroke: 'transparent', 'stroke-width': 14, 'pointer-events': 'stroke' }, g)
             g.addEventListener('mouseenter', () => show(id))
@@ -1101,23 +1101,18 @@
           return place(DOT[m][0] * K, DOT[m][1] * K)
         }
         if (id.startsWith('f:')) {
-          const f = FLOWS.find((q) => 'f:' + q.from + q.to === id)
-          const h = document.createElement('b')
-          h.textContent = f.text
-          tip.append(h)
+          const f = FLOWS[+id.slice(2)]
           for (const k of ['action', 'condition', 'outcome']) {
-            if (!f[k]) continue
             const t = document.createElement('div')
             t.className = 'blk'
             t.textContent = k
             tip.append(t)
-            for (const line of f[k]) {
-              const [mode, what] = Array.isArray(line) ? line : ['', line]
+            for (const what of k === 'action' ? [f.action] : f[k]) {
               const p = document.createElement('p')
-              if (mode) {
+              if (k === 'action' && f.mode) {
                 const m = document.createElement('span')
                 m.className = 'mode'
-                m.textContent = mode
+                m.textContent = f.mode
                 p.append(m)
               }
               p.append(what)
