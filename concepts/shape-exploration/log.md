@@ -145,3 +145,7 @@ Quotes are the user's, with spelling lightly fixed.
   This is a lot of work, even if a lot of things already run on autopilot."
 - **Pillar names.** P3 Colony is renamed Cultivation and P2 Caverns is renamed Prospecting, so the pillars are The
   Unseen, Prospecting and Cultivation.
+- **Biome tiers, teams, levelling.** Asked what a team is, what levelling costs and raises, and what makes a biome's
+  tier: the first two are TBD. On tiers: "biomes will be a descent into the depths of the moon, but not like cake
+  layers, but as amorphous blobs. And TBD, but I guess deeper layers will have more complexity: more environmental
+  threats, deeper food chain, probably dependent on previous ones."

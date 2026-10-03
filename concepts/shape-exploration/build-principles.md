@@ -186,6 +186,8 @@ colonies settle into stable idle play.
   and polished. No pathfinding either way.
 - **Biome connections are limited,** which keeps growth manageable. Biomes come in tiers, like the levels of a DAG; baits
   and crops from the same tier give a heavy incentive to explore all of a tier before moving on.
+- **A tier is depth.** Biomes are a descent into the depths of the moon: amorphous blobs, not cake layers. Deeper
+  biomes are likely more complex: more environmental threats, a deeper food chain, and a dependence on earlier ones.
 
 ### How an area moves
 
@@ -321,3 +323,5 @@ With 20% Power in the audience, B has the more natural home for it.
    is winning at higher Ascension.
 3. **How does the causality get across without walls of text?** Mysteries are visuals only, and intel comes from
    time spent in a woken area.
+4. **What is a team?** Its size, its slots, and how traits combine.
+5. **What does levelling cost, and what does it raise?**
