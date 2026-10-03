@@ -141,7 +141,14 @@ Each pillar has a limit that is visible in the world and raised by what another 
 | P2 | the conditions of each cavern (dark, flooded, toxic, hot, overgrown): only creatures with the matching traits get through |
 | P3 | the palette: the simulation holds only the living things brought home |
 
-Flows between the pillars: open, being reworked for the taming direction.
+Flows between the pillars (P3 is the hub):
+
+- **P2 → P1:** prospects.
+- **P1 → P3:** samples, seeds, captured animals.
+- **P3 → P1:** the team.
+- **P3 → P2:** scouts with matching traits.
+
+Beefing up, per pillar: P1 levels the team longer; P2 brings more scouts, better matched; P3 runs more generations.
 
 **Tranquility lives in side loops,** around any pillar, not in a pillar of its own. Examples: a vivarium or zoo;
 rare, beautiful event sightings during exploration; a riskless strategy-testing loop.

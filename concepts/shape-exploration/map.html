@@ -127,8 +127,15 @@
         stroke-width: 2.5;
         stroke-opacity: 0.9;
       }
+      #tip p.kv + p.kv {
+        margin-top: 3px;
+      }
+      #tip.tinted p.kv {
+        opacity: 1;
+      }
       #tip.subtle {
         width: max-content;
+        max-width: 260px;
         padding: 4px 8px;
         font-size: 12px;
         color: var(--ink2);
@@ -637,28 +644,44 @@
       const PILLARS = [
         {
           id: 'P1', x: 0.195, y: 0.421, // around 1a, 2a, 1b, nudged toward Challenge
-          name: 'Strategy, Power, Challenge',
-          role: 'Where difficulty scales with progress, at steps the player chooses; the game never scales silently.',
-          quiet: 'A riskless strategy-testing loop: trying a build before choosing the next step.',
+          name: 'Breach',
+          mot: 'Strategy, Power, Challenge',
+          lines: [
+            ['Play', 'the team breaks into a cavern never entered before'],
+            ['Limit', 'team strength against the chosen cavern'],
+            ['Beef up', 'level the team longer'],
+            ['Side loop, e.g.', 'a riskless strategy test'],
+          ],
         },
         {
           id: 'P2', x: -0.6, y: 0.08, // 14's height, 25's column, on the line from the audience to Story
-          name: 'Discovery and Story',
-          role: 'The most kinetic pillar, to lean into: exploration and horizon expansion, the exciting part.',
-          quiet: 'Rare, beautiful event sightings during exploration.',
+          name: 'Expedition',
+          mot: 'Discovery, Story; the most kinetic',
+          lines: [
+            ['Play', 'explore the world, flag prospects'],
+            ['Limit', 'cavern conditions (dark, flooded, toxic, hot, overgrown): only matching traits get through'],
+            ['Beef up', 'more scouts, better matched'],
+            ['Side loop, e.g.', 'rare, beautiful sightings'],
+          ],
         },
         {
           id: 'P3', x: -0.32, y: 0.57, // around 2b, 17, 8, 3
-          name: 'Controlling the simulation',
-          role: 'What the player controls about the simulation: tinkering.',
-          quiet: 'A vivarium or zoo: the system’s living things, kept and watched.',
+          name: 'Enclosures',
+          mot: 'the simulation',
+          lines: [
+            ['Play', 'natural enclosures: farm resources, or tame and level creatures'],
+            ['Limit', 'the palette: only living things brought home'],
+            ['Beef up', 'run more generations'],
+            ['Side loop, e.g.', 'a vivarium or zoo'],
+          ],
         },
       ]
       // what flows from one pillar to the next
       const FLOWS = [
-        { from: 'P2', to: 'P3', text: 'What exploration brings back' },
-        { from: 'P3', to: 'P1', text: 'The yield of what was steered' },
-        { from: 'P1', to: 'P2', text: 'The loadout taken on the outing' },
+        { from: 'P2', to: 'P1', text: 'Prospects' },
+        { from: 'P1', to: 'P3', text: 'Samples, seeds, captured animals' },
+        { from: 'P3', to: 'P1', text: 'The team' },
+        { from: 'P3', to: 'P2', text: 'Scouts with matching traits' },
       ]
       const PILLAR_COLOR = '#c98a00'
       const PILLAR_R = 72
@@ -710,7 +733,9 @@
             const d = Math.hypot(bx - ax, by - ay)
             const ux = (bx - ax) / d, uy = (by - ay) / d
             const gap = PILLAR_R * K + 4
-            const x1 = ax + ux * gap, y1 = ay + uy * gap, x2 = bx - ux * gap, y2 = by - uy * gap
+            // a pair flowing both ways is split to either side of the line between the pillars
+            const o = FLOWS.some((q) => q.from === f.to && q.to === f.from) ? 6 : 0
+            const x1 = ax + ux * gap - uy * o, y1 = ay + uy * gap + ux * o, x2 = bx - ux * gap - uy * o, y2 = by - uy * gap + ux * o
             const id = 'f:' + f.from + f.to
             const g = el('g', { class: 'mark flow', tabindex: 0, role: 'button', 'aria-label': f.text }, plot)
             el('line', { class: 'fline', x1, y1, x2, y2, stroke: PILLAR_COLOR, 'stroke-opacity': 0.6, 'stroke-width': 1.5, 'marker-end': 'url(#flowhead)', 'pointer-events': 'none' }, g)
@@ -1011,12 +1036,18 @@
           const h = document.createElement('b')
           h.className = 'th'
           h.textContent = p.id + ' · ' + p.name
-          const lines = [p.role, 'Tranquility side loop, e.g.: ' + p.quiet].map((x) => {
+          const grp = document.createElement('div')
+          grp.className = 'grp'
+          grp.textContent = p.mot
+          const lines = p.lines.map(([k, v]) => {
             const q = document.createElement('p')
-            q.textContent = x
+            q.className = 'kv'
+            const b = document.createElement('b')
+            b.textContent = k + ': '
+            q.append(b, v)
             return q
           })
-          tip.append(h, ...lines)
+          tip.append(h, grp, ...lines)
           paint(PILLAR_COLOR, '#0b0b0b')
           tip.hidden = false
           return place(px(p.x) + PILLAR_R * K * 0.72, py(p.y) - PILLAR_R * K * 0.72)
@@ -1063,8 +1094,8 @@
       function place(cx, cy, max = 290) {
         const W = chart.clientWidth
         tip.style.width = ''
-        const w = Math.min(max, W - 16, max < 290 ? tip.scrollWidth + 2 : max)
-        tip.style.width = w + 'px'
+        const w = max < 290 ? Math.min(tip.offsetWidth, W - 16) : Math.min(max, W - 16)
+        if (max >= 290) tip.style.width = w + 'px'
         const th = tip.offsetHeight
         let left = cx + 18
         let top = cy - th / 2
