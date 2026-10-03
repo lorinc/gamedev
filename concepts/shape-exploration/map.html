@@ -124,8 +124,8 @@
       }
       .mark.flow.on .fline,
       .mark.flow:focus .fline {
-        stroke-width: 2.5;
-        stroke-opacity: 0.9;
+        stroke-width: 6;
+        opacity: 0.7;
       }
       #tip p.kv + p.kv {
         margin-top: 3px;
@@ -684,6 +684,7 @@
         { from: 'P3', to: 'P2', text: 'Scouts with matching traits' },
       ]
       const PILLAR_COLOR = '#c98a00'
+      const FLOW_ALPHA = 0.45
       const PILLAR_R = 72
       const GAMES = [
         { key: 'this', pool: true, title: 'This game', metric: 'the shape pool', meta: '29 candidate shapes, split into variants; nothing chosen', marks: SHAPES.map((s) => ({ ...s, desc: DESC[s.id] })).concat(AUDIENCE), aud: [['Discovery', 30], ['Strategy', 30], ['Power', 20], ['Story', 10], ['Challenge', 10]] },
@@ -724,8 +725,8 @@
 
           // flows first, so the pillar rims and the shapes stay on top
           const defs = el('defs', {}, plot)
-          const head = el('marker', { id: 'flowhead', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 5, markerHeight: 5, orient: 'auto-start-reverse' }, defs)
-          el('path', { d: 'M0,0 L10,5 L0,10 z', fill: PILLAR_COLOR, opacity: 0.6 }, head)
+          const head = el('marker', { id: 'flowhead', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 2.5, markerHeight: 2.5, orient: 'auto-start-reverse' }, defs)
+          el('path', { d: 'M0,0 L10,5 L0,10 z', fill: PILLAR_COLOR }, head)
           for (const f of FLOWS) {
             const A = PILLARS.find((q) => q.id === f.from)
             const B = PILLARS.find((q) => q.id === f.to)
@@ -738,7 +739,7 @@
             const x1 = ax + ux * gap - uy * o, y1 = ay + uy * gap + ux * o, x2 = bx - ux * gap - uy * o, y2 = by - uy * gap + ux * o
             const id = 'f:' + f.from + f.to
             const g = el('g', { class: 'mark flow', tabindex: 0, role: 'button', 'aria-label': f.text }, plot)
-            el('line', { class: 'fline', x1, y1, x2, y2, stroke: PILLAR_COLOR, 'stroke-opacity': 0.6, 'stroke-width': 1.5, 'marker-end': 'url(#flowhead)', 'pointer-events': 'none' }, g)
+            el('line', { class: 'fline', x1, y1, x2, y2, stroke: PILLAR_COLOR, opacity: FLOW_ALPHA, 'stroke-width': 4.5, 'marker-end': 'url(#flowhead)', 'pointer-events': 'none' }, g)
             el('line', { x1, y1, x2, y2, stroke: 'transparent', 'stroke-width': 14, 'pointer-events': 'stroke' }, g)
             f.mx = (x1 + x2) / 2
             f.my = (y1 + y2) / 2
@@ -1027,7 +1028,9 @@
           tip.textContent = f.text
           tip.classList.remove('tinted')
           tip.classList.add('subtle')
-          tip.style.background = tip.style.color = ''
+          // the arrow's colour as it looks on the paper, kept opaque so the chart does not show through
+          tip.style.background = `color-mix(in srgb, ${PILLAR_COLOR} ${FLOW_ALPHA * 100}%, #ffffff)`
+          tip.style.color = '#0b0b0b'
           tip.hidden = false
           return place(f.mx, f.my, 220)
         }
