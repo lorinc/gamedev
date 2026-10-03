@@ -155,7 +155,7 @@ Flows between the pillars (P3 is the hub):
 ambience, particle effects and shaders crossing the fog, never text or a symbol. Once woken, the naturalists spend
 time there to collect intel; without it the player sees the visuals and nothing more.
 
-Beefing up, per pillar: P1 levels the team longer; P2 brings more scouts, better matched; P3 runs more generations.
+Beefing up, per pillar: P1 levels the pioneers longer; P2 brings more naturalists, better matched; P3 runs more generations.
 
 **Tranquility lives in side loops,** around any pillar, not in a pillar of its own. Examples: a vivarium or zoo;
 rare, beautiful event sightings during exploration; a riskless strategy-testing loop.
