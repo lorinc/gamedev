@@ -138,7 +138,7 @@
       }
       #tip.subtle {
         width: max-content;
-        max-width: 240px;
+        max-width: 290px;
         white-space: pre-line;
         padding: 4px 8px;
         font-size: 12px;
@@ -147,6 +147,21 @@
       }
       #tip.subtle p {
         margin-top: 3px;
+        color: #0b0b0b;
+      }
+      #tip.subtle .mode {
+        display: inline-block;
+        margin-right: 5px;
+        padding: 0 4px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      #tip.subtle p.more {
+        font-style: italic;
       }
       .mark.pillar.on .prim,
       .mark.pillar:focus .prim {
@@ -683,14 +698,42 @@
         },
       ]
       // what flows from one pillar to the next
+      // what flows from one pillar to the next; loops: [mode, what happens], mode '' when it is neither idle nor active
       const FLOWS = [
-        { from: 'P2', to: 'P1', text: 'New areas to wake', more: 'Asleep under the fog of war: the simulation is suspended, and only the ambience (particles, shaders) looks alive. No text or symbol.' },
-        { from: 'P1', to: 'P2', text: 'Open area for exploration', more: 'A successful pioneer push: the woken area becomes part of the caverns, the foragers\' domain. Until they collect intel there, only its visuals show.' },
-        { from: 'P2', to: 'P3', text: 'Flora', more: 'Collected by the foragers on field trips. All of it plays a systemic role; the economic plants also generate resources.' },
-        { from: 'P1', to: 'P3', text: 'Fauna', more: 'Won by a peaceful pull, not a violent push: a won animal follows the pioneers home; after a loss it decides to stay.' },
-        { from: 'P3', to: 'P2', text: 'Foragers', more: 'Their traits get them through the cavern conditions (dark, flooded, toxic, hot, overgrown).' },
-        { from: 'P3', to: 'P1', text: 'Pioneers', more: 'Protected from the area\'s conditions, bringing something that intrigues the animal and food for it, prey animals included.' },
-        { from: 'P3', to: 'P3', at: -2.4, text: 'Resources to host and level the flora and fauna', more: 'Farmed in the enclosures; more generations, stronger stock.' }, // at: where the loop leaves the rim, radians
+        { from: 'P3', to: 'P3', at: -2.4, text: 'Crops, livestock, balance', loops: [
+          ['idle', 'grows crops and livestock the pioneers use as bait'],
+          ['idle', 'grows crops and livestock to feed the pioneers and foragers'],
+          ['active', 'claim new colony areas; tune the biosphere so that all colony loops work'],
+          ['idle', 'the simulation is beautiful, increasingly diverse, but stable'],
+        ] },
+        { from: 'P3', to: 'P1', text: 'Pioneer teams', loops: [
+          ['active', 'send them to open up an Unseen'],
+          ['active', 'send them to tame animals'],
+        ], more: 'Protected from the area\'s conditions, bringing something that intrigues the animal and food for it, prey animals included.' },
+        { from: 'P1', to: 'P1', at: -0.9, text: 'Up the food chain', loops: [
+          ['', 'a few of the easiest animals first, for their local resistances; then tamed animals and outside baits tame stronger ones, up to the top predator'],
+        ] },
+        { from: 'P1', to: 'P3', text: 'Fauna, land to colonize', loops: [
+          ['', 'a won animal follows the pioneers home; after a loss it decides to stay'],
+          ['', 'taming the top predator makes the area ready to colonize'],
+        ] },
+        { from: 'P1', to: 'P2', text: 'An opened area', loops: [
+          ['', 'an opened Unseen becomes a cavern, for the foragers to prospect and forage'],
+        ] },
+        { from: 'P3', to: 'P2', text: 'Forager teams', loops: [
+          ['active', 'set them up for field trips'],
+          ['idle', 'they go on their own trips'],
+        ], more: 'Their traits get them through the cavern conditions (dark, flooded, toxic, hot, overgrown).' },
+        { from: 'P2', to: 'P2', at: 2.5, text: 'A living cavern', loops: [
+          ['idle', 'the simulation itself is beautiful and non-linear'],
+        ] },
+        { from: 'P2', to: 'P3', text: 'Flora, goods, finds', loops: [
+          ['idle', 'field trips bring flora unlocks and foraged goods'],
+          ['active', 'a breather: find unique, special things by hand near the foragers'],
+        ] },
+        { from: 'P2', to: 'P1', text: 'Edges of the Unseen', loops: [
+          ['idle', 'lifting the fog within the caverns finds the boundaries of the Unseen'],
+        ], more: 'Asleep under the fog of war: the simulation is suspended, and only the ambience (particles, shaders) looks alive. No text or symbol.' },
       ]
       const PILLAR_COLOR = '#c98a00'
       const FLOW_ALPHA = 0.45
@@ -1058,8 +1101,20 @@
           const h = document.createElement('b')
           h.textContent = f.text
           tip.append(h)
+          for (const [mode, what] of f.loops) {
+            const p = document.createElement('p')
+            if (mode) {
+              const m = document.createElement('span')
+              m.className = 'mode'
+              m.textContent = mode
+              p.append(m)
+            }
+            p.append(what)
+            tip.append(p)
+          }
           if (f.more) {
             const more = document.createElement('p')
+            more.className = 'more'
             more.textContent = f.more
             tip.append(more)
           }
@@ -1068,7 +1123,7 @@
           tip.style.background = PILLAR_COLOR
           tip.style.color = '#0b0b0b'
           tip.hidden = false
-          return place(f.mx, f.my, 240)
+          return place(f.mx, f.my, 290)
         }
         if (id.startsWith('p:')) {
           const p = PILLARS.find((q) => 'p:' + q.id === id)
