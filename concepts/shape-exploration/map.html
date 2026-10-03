@@ -447,6 +447,7 @@
         a2: { name: 'Anchor 2: mine, and complete', color: '#008300', shape: 'square' },
         pw: { name: 'Power: grow strong', color: '#4a3aa7', shape: 'diamond' },
         op: { name: 'Other players', color: '#e34948', shape: 'triangle' },
+        au: { name: 'Audience', color: '#008300', shape: 'diamond' },
       }
       const SHAPES = [
         ['3', 'a1', 'Alchemy', -0.42, 0.52, 'Acts only on the cave’s own materials.', 'Small, careful experiments before applying anything; no time pressure.'],
@@ -601,8 +602,19 @@
         {"key": "forager", "title": "Forager", "metric": "44,155 Steam reviews", "meta": "solo with a publisher · about 2 years (unchecked)", "marks": [["gather", "Gather", 3, -0.24, -0.4, "Hitting what the land grows.", "Constant moving and striking, lightly.", "Hit trees, rocks and plants that keep growing back, and pick up what drops."], ["craft", "Craft and build the base", 3, -0.22, 0.44, "A base that turns materials into better ones.", "What to build next, and where.", "Furnaces, forges and dozens of other structures turn materials into tools, coins and more structures."], ["lands", "Buy the next land", 2, -0.56, 0.42, "New biomes with new things in them: close to Discovery.", "Saving up and choosing where to expand.", "Spend coins to add a neighbouring piece of land, each with new resources, creatures or a secret.", "l"], ["skills", "Level up, pick skills", 2, 0.24, 0.36, "Your character getting stronger: close to Power.", "One choice per level from a big grid.", "Every action gives experience; each level unlocks one more skill, which opens new structures and bonuses."], ["automate", "Automate the work", 2, 0.06, 0.7, "A system that works without you.", "Setting the base up so it runs itself.", "Mining rods, droids and other late structures collect and craft for you."], ["fight", "Fight", 2, 0.44, -0.44, "Enemies and a few bosses.", "Fast, simple hitting.", "Slimes, skeletons and bosses attack; the same swing that gathers also fights."], ["dungeons", "Solve puzzles and dungeons", 1, -0.48, 0.06, "Secrets built into the lands.", "Small puzzles, some fighting.", "Some lands hold a puzzle or a small dungeon with a reward."], ["museum", "Fill the museum", 1, -0.34, 0.82, "One of everything.", "A long list: close to Completion.", "A museum asks for bundles of items and pays out for each one completed.", "l"], ["audience", "Audience, read from the store page", 0, -0.22, 0.17, "Its tags and pitch point to: Discovery 30%, Design 25%, Challenge 13%, Power 11%, Strategy 9%, Fantasy 7%.", "Mood tags the model has no place for (Casual) carry 2% of the tag weight.", "Survival-crafting players who want to explore, gather and build a base, in a lighter 2D form."]], "aud": [["Discovery", 30], ["Design", 25], ["Challenge", 13], ["Power", 11]]},
         {"key": "pets", "title": "Super Auto Pets", "metric": "36,229 Steam reviews", "meta": "free to play · team and time not found", "marks": [["shop", "Buy and arrange the team", 3, 0.34, 0.3, "Your own team getting strong: close to Power.", "Power is the aim; strategy and grind are how it is reached. No timer in the main mode.", "Spend ten gold a turn on pets and food, put the pets in order, and merge three of a kind to level one up."], ["battle", "Watch the battle", 2, 0.62, -0.3, "Against a team another player built earlier; the two never meet live.", "Automatic and over in seconds: nothing to do but watch.", "The two teams fight on their own, front pet against front pet, with every ability firing in order."], ["ten wins", "Reach ten wins", 2, 0.74, 0.2, "A run measured against other players’ teams.", "Each loss costs a life, so the run is nursed along turn by turn.", "A run ends at ten wins or when the lives run out."], ["synergies", "Learn what combines", 2, -0.14, 0.4, "Finding out what the pets do to each other.", "Trying a combination and seeing it work, or not.", "Every pet has one ability with a trigger; the fun is the chain you get when several fire together."], ["versus", "Play a live lobby", 1, 0.9, -0.1, "Other players, at the same time.", "Turns are timed here.", "A versus mode puts up to eight players in one lobby, live or asynchronous."], ["hats", "Unlock packs and hats", 1, -0.45, -0.1, "A bit of dressing up.", "Nothing to work out.", "Extra pet packs and cosmetics are the paid part of the game."], ["audience", "Audience, read from the store page", 0, 0.42, 0.06, "Its tags and pitch point to: Strategy 34%, Community 25%, Competition 24%, Power 11%.", "Mood tags the model has no place for (Cute, Casual, Colorful, Family Friendly, Dogs, Horses) carry 32% of the tag weight.", "Casual strategy players who want to compete with friends without pressure: cute, free, family friendly."]], "aud": [["Strategy", 34], ["Community", 25], ["Competition", 24], ["Power", 11]]},
       ]
+      // The audience this game is for, as the user set it on 2026-10-03.
+      const AUDIENCE = {
+        id: 'audience',
+        g: 'au',
+        name: 'Audience, as the user set it',
+        x: -0.08,
+        y: 0.35,
+        desc: 'The user’s mix for this game: Discovery 30%, Power 20%, Strategy 20%, Story 10%, Challenge 10%. It adds up to 90%, so the rings are drawn from 33, 22, 22, 11 and 11.',
+        whyX: 'Just on the World side of the centre: Discovery and Story pull left, Power and Challenge right.',
+        whyY: 'Toward Cerebral, between Discovery and Strategy, near the toy.',
+      }
       const GAMES = [
-        { key: 'this', pool: true, title: 'This game', metric: 'the shape pool', meta: '29 candidate shapes, split into variants; nothing chosen', marks: SHAPES.map((s) => ({ ...s, desc: DESC[s.id] })) },
+        { key: 'this', pool: true, title: 'This game', metric: 'the shape pool', meta: '29 candidate shapes, split into variants; nothing chosen', marks: SHAPES.map((s) => ({ ...s, desc: DESC[s.id] })).concat(AUDIENCE), aud: [['Discovery', 33], ['Power', 22], ['Strategy', 22], ['Story', 11], ['Challenge', 11]] },
         ...REF.map((g) => ({
           ...g,
           marks: g.marks.map(([id, name, w, x, y, whyX, whyY, desc, a]) => ({ id, name, w, x, y, whyX, whyY, desc, left: a === 'l' || x > 0.45 })),
@@ -659,7 +671,7 @@
         }
         if (game.aud) {
           // the motivations the store page points to: ring and line width grow with the share
-          const A = game.marks.find((s) => s.w === 0)
+          const A = game.marks.find((s) => s.id === 'audience')
           for (const [m, share] of game.aud) {
             const [dx, dy] = DOT[m]
             el('line', { x1: px(A.x), y1: py(A.y), x2: dx * K, y2: dy * K, stroke: WEIGHT[0].color, 'stroke-width': 1 + share / 15, opacity: 0.35, 'pointer-events': 'none' }, plot)
