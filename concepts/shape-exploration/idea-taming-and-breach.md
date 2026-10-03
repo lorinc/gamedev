@@ -18,8 +18,9 @@ unexpected way. The mechanics behind it, made independent of fighting:
 4. **The answer is a promotion.** The key to the challenge is a side effect the player has owned since an earlier
    area, now used as the main job. That's where the "unexpected, really smart" feeling comes from: the tool was
    always in the kit.
-5. **A readable windup.** The threat shows itself before it lands (two turns of charging), so the player can read
-   the state and answer it. No guessing.
+5. **The opponent telegraphs.** Its next action shows before it lands (two turns of charging), so the player
+   adjusts the plan to it, and the outcome is strategy, not luck. Slay the Spire's intents, which shook the industry
+   years later, are the same move.
 6. **Rebuilding is expected.** The kit is chosen from a larger pool (an 8-slot wheel), and changing it for one
    challenge is cheap. The puzzle is choosing, not grinding.
 7. **New dials, now and then.** A couple of areas in, a new dial unlocks and changes what the old tools mean.
@@ -41,8 +42,9 @@ player already has, and it was never that action's main job.
   only live prey; one comes only to a mating dance.
 - **The promotion:** the key is a pet from an earlier biome whose side effect is that dial. This is the carry-over
   between biomes, through team synergy instead of a bait graph.
-- **The windup:** the animal's behaviour shows the dial (it circles, it sniffs and leaves, it watches from a
-  distance), with no text, in line with "causality without walls of text".
+- **The telegraph:** the animal shows what it will do next (it circles, it sniffs and leaves, it watches from a
+  distance), with no text, in line with "causality without walls of text". The player answers that, so a taming is
+  won by reading, not by luck.
 - **The lie:** a late animal that looks calm while it is the most suspicious of all.
 
 ## The breach as a scouting game

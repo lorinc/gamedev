@@ -165,3 +165,5 @@ Quotes are the user's, with spelling lightly fixed.
   to any battle mechanic, and to save it as an idea for taming and the breach: idea-taming-and-breach.md. The user
   added: "the breach could be a game, where the pioneers must wander in the unseen until all entities that live
   there have been spotted. Not a fight, not a tame, but a scouting game."
+- **Telegraphing.** The user: "Sonny did what Slay the Spire did years later and shook the industry with it - Sonny's
+  enemies telegraphed their actions, and you had to adjust your strategy, and it was therefore not luck."
