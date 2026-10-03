@@ -14,6 +14,8 @@
         --line: #e1e0d9;
         --active: #c98a00;
         --dep: #2a78d6;
+        --pioneer: #b5338a;
+        --forager: #2f7d32;
       }
       @media (prefers-color-scheme: dark) {
         :root {
@@ -24,6 +26,8 @@
           --muted: #8f8d86;
           --line: #2c2c2a;
           --dep: #6aa6ec;
+          --pioneer: #e070b8;
+          --forager: #6cc070;
         }
       }
       * {
@@ -102,6 +106,22 @@
         fill: var(--active);
         text-anchor: middle;
       }
+      .who {
+        font-size: 12px;
+        font-weight: 700;
+        text-anchor: middle;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .who.pioneers {
+        fill: var(--pioneer);
+      }
+      .who.foragers {
+        fill: var(--forager);
+      }
+      .who.colony {
+        fill: var(--muted);
+      }
       .cond {
         font-size: 12px;
         fill: var(--ink2);
@@ -169,7 +189,7 @@
       }
 
       // stage columns and lanes
-      const X = { unseen: 160, wild: 360, studied: 520, foraged: 680, tamed: 930, cultivated: 1120 }
+      const X = { unseen: 150, wild: 340, studied: 525, foraged: 710, tamed: 945, cultivated: 1120 }
       const Y = { area: 90, flora: 270, fauna: 440 }
       const W = 112, H = 40
 
@@ -181,8 +201,13 @@
         const t = el('text', { x: X[col], y: Y[lane] + 5 }, g)
         t.textContent = label
       }
-      function edge(lane, from, to, kind) {
+      // who does the work: the pioneers, the foragers, or the colony itself
+      function who(x, y, actor) {
+        text(x, y, actor, 'who ' + actor)
+      }
+      function edge(lane, from, to, kind, actor) {
         el('path', { d: `M${X[from] + W / 2},${Y[lane]} L${X[to] - W / 2 - 2},${Y[lane]}`, class: kind, 'marker-end': `url(#h-${kind})` })
+        if (actor) who((X[from] + X[to]) / 2, Y[lane] - 8, actor)
       }
       function decision(x, y, name, cond) {
         text(x, y - 12, name, 'decision')
@@ -197,6 +222,7 @@
         // a cultivated area harvests itself
         const x = X.cultivated, y = Y[lane] - H / 2
         el('path', { d: `M${x - 18},${y} C${x - 30},${y - 34} ${x + 30},${y - 34} ${x + 18},${y - 2}`, class: 'idle', 'marker-end': 'url(#h-idle)' })
+        who(x - 54, y - 14, 'colony')
       }
 
       // area: Unseen > Opened > Cultivated
@@ -205,6 +231,7 @@
       node('area', 'cultivated', 'Cultivated')
       edge('area', 'unseen', 'wild', 'active')
       decision((X.unseen + X.wild) / 2, Y.area, 'Open up')
+      who((X.unseen + X.wild) / 2, Y.area + 22, 'pioneers')
       edge('area', 'wild', 'cultivated', 'active')
       decision((X.studied + X.foraged) / 2, Y.area, 'Cultivate', ['its top predator is tamed'])
       harvest('area')
@@ -215,10 +242,10 @@
       node('flora', 'studied', 'Studied')
       node('flora', 'foraged', 'Foraged')
       node('flora', 'cultivated', 'Cultivated')
-      edge('flora', 'unseen', 'wild', 'idle')
-      edge('flora', 'wild', 'studied', 'idle')
-      edge('flora', 'studied', 'foraged', 'idle')
-      edge('flora', 'foraged', 'cultivated', 'idle')
+      edge('flora', 'unseen', 'wild', 'idle', 'pioneers')
+      edge('flora', 'wild', 'studied', 'idle', 'foragers')
+      edge('flora', 'studied', 'foraged', 'idle', 'foragers')
+      edge('flora', 'foraged', 'cultivated', 'idle', 'colony')
 
       // fauna: unseen > wild > studied > tamed > cultivated
       node('fauna', 'unseen', 'Unseen')
@@ -226,14 +253,15 @@
       node('fauna', 'studied', 'Studied')
       node('fauna', 'tamed', 'Tamed')
       node('fauna', 'cultivated', 'Cultivated')
-      edge('fauna', 'unseen', 'wild', 'idle')
-      edge('fauna', 'wild', 'studied', 'idle')
+      edge('fauna', 'unseen', 'wild', 'idle', 'pioneers')
+      edge('fauna', 'wild', 'studied', 'idle', 'foragers')
       // fauna is never foraged on its own: the pioneers tame it, with the player taking part
       edge('fauna', 'studied', 'tamed', 'active')
       decision((X.foraged + X.tamed) / 2, Y.fauna, 'Tame')
+      who((X.foraged + X.tamed) / 2, Y.fauna + 22, 'pioneers')
       text((X.foraged + X.tamed) / 2, Y.fauna + 40, 'its natural diet is foraged', 'cond')
       text((X.foraged + X.tamed) / 2, Y.fauna + 55, 'a predator: enough prey tamed', 'cond')
-      edge('fauna', 'tamed', 'cultivated', 'idle')
+      edge('fauna', 'tamed', 'cultivated', 'idle', 'colony')
 
       // what enables what, across the lanes
       dep(`M${X.wild},${Y.area + H / 2} L${X.wild},${Y.flora - H / 2 - 2}`, 'opens', X.wild + 8, (Y.area + Y.flora) / 2)
