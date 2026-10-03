@@ -1,171 +1,146 @@
-# What to build: the principle and the tool
+# What to build: the principle, the tool, the expectations
 
-Supporting document for the [shape exploration](README.md). Written 2026-10-03, at the user's request: "save these
-ideas, these are relevant and important at this 'what to build' stage". Quotes are the user's, with spelling lightly
-fixed. Points marked **Claude** are Claude's additions; nothing here is a design decision unless it says so.
+Supporting document for the [shape exploration](README.md). Current state only; how it got here is in
+[log.md](log.md). Marks: **agreed** = the user confirmed it; **user** = the user's view, not a decision; **Claude** =
+a suggestion, not agreed; **candidate** = not chosen.
 
-## The principle: accessible, and never boring, through systems
+## The principle: accessible, and never boring, through systems (user)
 
-The user's starting point was a summary of why Slay the Spire is easy to play and impossible to master, with: "I
-really would like to build the game like this."
+Slay the Spire is the model: easy to play, impossible to master, and it gets there through systems rather than
+content, which makes the dev effort valuable. The model is the principle, not Slay the Spire's structure (runs, a
+deck, a map, fights); a run structure is not chosen.
 
-The user's reading of why it sold:
-
-> "Why I think Slay the Spire was a financial success is that it is both accessible, but never gets boring. And it
-> does it through system, not by content, which makes the dev effort valuable."
-
-**Why it is easy to play** (from the summary the user pasted), and what each point would be in this game (**Claude**):
+**Why it is easy to play, and what that is in this game** (**Claude**):
 
 | Slay the Spire | In this game |
 |---|---|
 | Simple verbs: play a card to attack or block | "Casual during play" ([brief.md](brief.md)) |
-| Every enemy's intent is shown before the player acts | The user's rule that consequences must be painfully obvious: the simulation shows what it is about to do |
+| Every enemy's intent is shown before the player acts | Consequences must be painfully obvious: the simulation shows what it is about to do |
 | No time limit | The cerebral side of the map, and "peaceful" |
 
-**Why it is hard to master**, against this game's audience (Discovery 30%, Strategy 30%, Power 20%, Story 10%,
+**Why it is hard to master, against this game's audience** (Discovery 30%, Strategy 30%, Power 20%, Story 10%,
 Challenge 10%; see [README.md](README.md)) (**Claude**):
 
 | Slay the Spire | Motivation | Fit |
 |---|---|---|
 | Random rewards and layouts that the player must adapt to | Discovery and Strategy | the core of this audience (60%) |
 | Planning several turns ahead | Strategy | fits |
-| Ascension: higher levels punish small mistakes | Challenge | only 10%, and no killing: it can only be an optional dial on top (the pool's anchor "difficulty as a dial", [03-consolidate.md](03-consolidate.md)) |
+| Ascension: higher levels punish small mistakes | Challenge | only 10%, and no killing: at most an optional dial on top ("difficulty as a dial", [03-consolidate.md](03-consolidate.md)) |
 
-So the depth would have to come from reading the system and adapting to the random draw, not from harsh losses.
+So depth comes from reading the system and adapting to the random draw, not from harsh losses.
 
-**Claude's refinement: "content that combines", more than "system instead of content".** Slay the Spire has a lot of
-content (around 75 cards per character, four characters, well over a hundred relics, three acts of enemies). What
-the system does is make content multiply instead of add: a new card combines with every other card and relic, so it
-adds many new situations. In a content-driven game each new area adds one area. For dev effort the lesson is a small
-number of pieces, each of which changes how the others behave.
+**Content that combines, more than system instead of content** (**Claude**). Slay the Spire has a lot of content
+(around 75 cards per character, four characters, over a hundred relics, three acts of enemies). The system makes
+content multiply instead of add: a new card combines with every other card and relic. In a content-driven game each
+new area adds one area. For dev effort: a small number of pieces, each of which changes how the others behave.
 
 **The reference games split along this line** (**Claude**, [reference-games.md](reference-games.md)):
 
 - **Combining, replayable:** Stacklands, Brotato, Super Auto Pets, 20 Minutes Till Dawn, Forager.
-- **Played through about once:** A Short Hike, SUMMERHOUSE, Minami Lane. They succeeded too, on mood and a short,
-  polished experience: a different use of dev time.
+- **Played through about once:** A Short Hike, SUMMERHOUSE, Minami Lane. They succeed on mood and a short, polished
+  experience: a different use of dev time.
 
-The toy, an ecosystem simulation, is already on the combining side: its parts change each other.
+The toy, an ecosystem simulation, is on the combining side: its parts change each other.
 
-**The test for every piece** (**Claude**, from guide
-[09](../../guides/game-design/09-repetition-and-variety.md)): does it change what the player decides? If a new
-species makes the cave look different but the player does the same thing, it reads as more content, not more depth.
+**The test for every piece** (**Claude**, from guide [09](../../guides/game-design/09-repetition-and-variety.md)):
+does it change what the player decides? A species that makes the cave look different while the player does the same
+thing is more content, not more depth.
 
-## The tool: a system simulator and optimizer
+## The tool: a system simulator and optimizer (user)
 
-> "I plan to build a system optimizer / simulator, that makes the balancing and the complexity of random permutations
-> manageable."
+A planned tool that makes balancing and the complexity of random permutations manageable. Combinations that multiply
+can't be playtested by hand; a simulator plays thousands of random runs. Simple local models (few discrete states per
+patch) are cheap to simulate in bulk. Its settings are knobs, searched the way the generators are tuned.
 
-Combinations that multiply can't be playtested by hand. A simulator can play thousands of random runs. It suits the
-user's rule of simple local models (few discrete states per patch): a few states per patch is cheap to
-simulate in bulk. Its settings become knobs, searched the way the user already tunes the generators.
-
-Slay the Spire's developers balanced with data from real players in early access (card pick and win rates).
-A simulator gives a similar view before there are players (**Claude**).
+It gives, before there are players, a view like the one Slay the Spire's developers got from early-access data (card
+pick and win rates) (**Claude**).
 
 **What it can see** (**Claude**):
 
 - **Dead and dominant pieces:** a species, card or upgrade that never matters, or one that wins regardless.
-- **Bad seeds:** random starts that are unwinnable or trivially easy, and how wide the spread between seeds is.
+- **Bad seeds:** random starts that are unwinnable or trivially easy, and the spread between seeds.
 - **Runaway and collapse:** ecosystems that tip into one state whatever the player does.
 - **Whether decisions matter:** a sensible bot and a random bot on the same seeds. If their outcomes are close, the
   player's choices don't change much. This is the measurable form of the test above.
 
 **What it can't see** (**Claude**): whether it is fun or readable. A bot doesn't mind a hidden consequence or a flat
-turn. Those still need the user, and players.
+turn; those need the user, and players.
 
 **What its questions depend on** (**Claude**): the audience. "Never boring" for a Discovery-and-Strategy player is a
 different number than for a Challenge player.
 
-## Expectations of a good game (agreed 2026-10-03)
-
-The user: "We know enough already to describe some expectations of a good game." The user drafted the list; Claude
-objected to three points, sharpened four and added two; the user agreed to all of it. This is the agreed version. The
-user's own wording is kept where it did not change.
+## Expectations of a good game (agreed)
 
 **Tension–release cadence**
 
 - Each win is progress.
 - Release is not rest but a very different kind of challenge: switching to another pillar.
-- There must also be breathers, and even places of tranquility: intensity drops altogether. Release and breather are
-  two different things, and the game needs both.
-- The pillars must be distinct and distant, or the cadence doesn't work (user: "I need distinct, distant pillars for
-  the tension cadence to work"). This matches the main finding in [findings.md](findings.md), the swing between
-  pillars.
+- There are also breathers, and places of tranquility: intensity drops altogether. Release and breather are two
+  different things; the game needs both.
+- The pillars are distinct and distant, or the cadence doesn't work. This matches the main finding in
+  [findings.md](findings.md), the swing between pillars.
 
 **Gameplay loops**
 
-- The core must be simple, and the fun toy feeling must be reachable within seconds of loading the game (user: "the
-  core should be possible to reach the fun toy feeling in seconds of loading the game"). Not "fast" in the sense of
-  quick hands: for this audience the core is a small decision, and speed, if any, lives in another loop.
-- The core must give an "I've got this" feeling.
+- The core is simple, and the fun toy feeling is reachable within seconds of loading the game. Not "fast" as in quick
+  hands: for this audience the core is a small decision; speed, if any, lives in another loop.
+- The core gives an "I've got this" feeling.
 - Supporting loops add progress and structure.
 - Side loops add release and relatedness.
-- The loops must average up to the audience's motivation profile, **and** every large share of the profile must have
-  a loop near it: two loops can average to the right spot while serving none of its motivations.
-- Picking the game up again must not be overwhelming.
+- The loops average up to the audience's motivation profile, **and** every large share of the profile has a loop near
+  it: two loops can average to the right spot while serving none of its motivations.
+- Picking the game up again is not overwhelming.
 
 **Mechanics depth**
 
 - Few rules, infinite combinations, through a dense interaction graph between systems, **with every interaction
-  visible.** A dense graph produces hidden consequences by nature; readability is what keeps the depth accessible.
-- **Readability:** the system shows what it is about to do before the player acts (Slay the Spire's enemy intents;
-  the user's rule that consequences must be painfully obvious).
+  visible.** A dense graph produces hidden consequences by nature; readability keeps the depth accessible.
+- **Readability:** the system shows what it is about to do before the player acts (Slay the Spire's enemy intents).
 
 **Difficulty**
 
 - Input randomness is fun; output randomness is frustrating.
-- Failures must be near misses and actionable lessons.
+- Failures are near misses and actionable lessons.
 - Lessons carry over to the next attempt; that is what mastery is.
-- **The player chooses the cost of failure and when to face the next challenge;** the game does not adjust it
-  silently, which would be a hidden consequence. The user: "I love games where you choose when to face the next
-  challenge, and you are under no constant pressure while preparing." (Slay the Spire's Ascension; the pool's
-  "difficulty as a dial".)
+- **The player chooses the cost of failure and when to face the next challenge,** with no constant pressure while
+  preparing. The game does not adjust difficulty silently, which would be a hidden consequence. (Slay the Spire's
+  Ascension; "difficulty as a dial".)
 
 **Learning**
 
 - Teach through directed experience, not abstract instructions.
 - There is no learning under stress, so learning happens in the release and the breathers: the tension–release
   cadence is also the teaching cadence.
-- Every action gets an immediate signal, and every delayed consequence can be traced back to its cause. (The draft
-  said "the only useful feedback is the immediate"; for a Discovery-and-Strategy audience delayed consequences are
-  where strategy comes from, as long as they are traceable.)
+- Every action gets an immediate signal, and every delayed consequence can be traced back to its cause. For a
+  Discovery-and-Strategy audience, delayed consequences are where strategy comes from, as long as they are traceable.
 - New rules arrive one at a time, after the previous one is understood.
 
-## A strong candidate shape: the short run that keeps only knowledge (2026-10-03, not chosen)
+## Candidate A: the short run that keeps only knowledge (candidate)
 
-The user, from "picking the game up again must not be overwhelming":
+A short run where complexity does not carry over, only knowledge: Noita, Super Auto Pets. It follows from "picking the
+game up again is not overwhelming".
 
-> "This points towards a very specific game shape: a short run, where complexity does not carry over, only
-> knowledge, like Noita, or Super Auto Pets. Magicraft is borderline, because you unlock mechanics, but they can be
-> ignored. What can not be ignored in Magicraft is the unlocked spells / trinkets in your random pool, that WILL make
-> subsequent runs more complex, even if you forgot a lot about the game. That's an antipattern."
+**The antipattern (user): unlocks that grow the random pool.** Unlocked mechanics a player can ignore cost a returning
+player nothing (Magicraft's mechanics). Unlocked items that appear in every draw cost them every run (Magicraft's
+spells and trinkets): later runs get more complex even when the player has forgotten much of the game.
 
-**Status:** "just a strong candidate". Not chosen; the expectations above still say "the next attempt".
+Refinements (**Claude**):
 
-**The antipattern:** unlocks that grow the random pool. Unlocked mechanics a player can ignore cost a returning player
-nothing; unlocked items that appear in every draw cost them every run.
-
-Claude's refinements:
-
-- **It is a matter of degree.** Slay the Spire also unlocks cards into the pool, but few, and within the first hours,
-  while the player is still active. The antipattern bites when the pool keeps growing after the player has stopped
+- **It is a matter of degree.** Slay the Spire also unlocks cards into the pool, but few, within the first hours,
+  while the player is still active. The antipattern bites when the pool keeps growing after the player stopped
   tracking it.
-- **The variant that escapes it: the player curates the pool.** Vampire Survivors added a "seal" that removes items
-  from the random pool. As a rule: nothing enters the random pool without the player's say.
-- **Power must live inside the run.** The audience has 20% Power, which usually comes from progression across runs.
-  With only knowledge kept, each run needs a satisfying power curve of its own (the team in Super Auto Pets, the build
-  in Brotato).
-- **On the pool:** this is shape 10a ("Run: nothing kept", toward Challenge) with the knowledge loop, 26 (near
-  Discovery), as its pair. For a Discovery-and-Strategy audience, what carries over should be knowledge of the
-  ecosystem's rules rather than execution skill, which pulls the shape toward 26.
+- **The variant that escapes it: the player curates the pool.** Vampire Survivors' "seal" removes items from the
+  random pool. As a rule: nothing enters the random pool without the player's say.
+- **Power lives inside the run.** The audience's 20% Power usually comes from progression across runs. With only
+  knowledge kept, each run needs a satisfying power curve of its own (the team in Super Auto Pets, the build in
+  Brotato).
+- **On the pool:** shape 10a ("Run: nothing kept", toward Challenge) paired with the knowledge loop, 26 (near
+  Discovery). For this audience, what carries over is knowledge of the ecosystem's rules rather than execution skill,
+  which pulls the shape toward 26.
 
-### The tension with the simulation
-
-The user: "Short runs bring a LOT of restrictions, but probably that's a good thing for creative constraints and
-interesting design. But it will be hard to combine with a simulated world that needs time to run its course."
-
-Ways to fit the simulation's arc inside one run (Claude), without splitting the game into two modes:
+**The tension with the simulation.** Short runs bring many restrictions, which are useful creative constraints, but
+the simulated world needs time to run its course. Ways to fit its arc inside one run, without splitting the game into
+two modes (**Claude**):
 
 1. **Compress time:** few discrete states per patch let a generation take a second instead of a minute (Noita's world
    resolves in seconds). The speed is a knob.
@@ -173,37 +148,34 @@ Ways to fit the simulation's arc inside one run (Claude), without splitting the 
 3. **Set up, then watch it play out:** a calm phase, then the simulation runs its course fast. Pool shapes 17
    ("Pressure: deadline") and 24 ("One trigger"); it gives distant pillars and the toy feeling in seconds.
 
-Which one works depends on what in the simulation needs the time (population growth, slow spreading, succession);
-not answered yet. Claude also advised against a world that keeps running between runs; the user corrected that, below.
+Which one works depends on what in the simulation needs the time (population growth, slow spreading, succession):
+open. Candidate B takes the other route: the world keeps running between sessions.
 
-## A second strong candidate: idle with prestige (2026-10-03, not chosen)
+## Candidate B: idle with prestige (candidate)
 
-The user: "You forget that incremental / idle games are very popular now, and we should not reject that angle just
-yet." The user's b4 work already points this way (D164, "intelligent idle game").
+Incremental and idle games are popular now; the angle stays open. The b4 work already points this way (D164,
+"intelligent idle game").
 
-Claude's reading:
+Reading (**Claude**):
 
 - **Idle escapes the antipattern when what piles up is quantity, not complexity.** More of the familiar and bigger
   numbers make coming back a reward, not a burden. New rules entering the draw would still be the antipattern.
 - **It dissolves the time tension from the other side:** the simulation gets all the time it needs, because it runs
-  while the player is away. Coming back to see what the ecosystem did on its own is "surprise from discovery".
-- **It doesn't compete with runs: prestige is a run.** The question between the two candidates is what survives the
+  while the player is away. Coming back to see what the ecosystem did on its own is surprise from discovery.
+- **It doesn't compete with runs: prestige is a run.** The question between the candidates is what survives the
   reset.
 
-| | Short run, knowledge only | Idle with prestige |
+| | A: short run, knowledge only | B: idle with prestige |
 |---|---|---|
 | What carries over | only what the player learned | multipliers or unlocks, plus knowledge |
 | Where Power lives | inside the run | across resets (the idle genre's main pull) |
 | Simulation time | must fit inside the run | free: it runs while away |
 | Risk | the simulation's arc too slow for a run | complexity piling up across resets (the Magicraft antipattern) |
 
-With 20% Power in the audience, the idle column has the more natural home for it (Claude).
+With 20% Power in the audience, B has the more natural home for it (**Claude**).
 
 ## Open questions
 
-1. **What should the simulator tell first?** The first thing the user couldn't judge by playing it alone.
+1. **What should the simulator tell first?** The first thing the user can't judge by playing alone.
 2. **How does a player who has mastered the game show it,** without beating anyone or anything? In Slay the Spire it
    is winning at higher Ascension.
-3. **"Like this" (answered in part):** the user's follow-up points to the principle (accessible, never boring,
-   through systems), not to Slay the Spire's structure of runs, a deck, a map and fights. A run structure is not
-   chosen: the expectations below say "the next attempt" (user, 2026-10-03).

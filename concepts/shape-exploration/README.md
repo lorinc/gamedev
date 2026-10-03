@@ -37,6 +37,7 @@ Quotes are the user's, with spelling lightly fixed.
 | [findings.md](findings.md) | What the exploration has shown so far, graded: confident, likely, or an assumption |
 | [reference-games.md](reference-games.md) | Small indie successes to show on the map page for comparison: the ten on the page and the four dropped, with team, development time, Steam reviews and sources |
 | [build-principles.md](build-principles.md) | What to build: the user's principle (accessible and never boring, through systems, after Slay the Spire) and the planned simulator and optimizer for balancing; open questions |
+| [log.md](log.md) | How the exercise got here: quotes, objections, corrections, dated. The other files hold the present only |
 | [audience-from-tags.md](audience-from-tags.md) | The audience of each reference game, read from its Steam tags and pitch without the loops, and how far it lands from the loops on the map |
 
 ## Ground rules the user set
