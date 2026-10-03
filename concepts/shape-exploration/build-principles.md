@@ -160,6 +160,45 @@ Claude's refinements:
   Discovery), as its pair. For a Discovery-and-Strategy audience, what carries over should be knowledge of the
   ecosystem's rules rather than execution skill, which pulls the shape toward 26.
 
+### The tension with the simulation
+
+The user: "Short runs bring a LOT of restrictions, but probably that's a good thing for creative constraints and
+interesting design. But it will be hard to combine with a simulated world that needs time to run its course."
+
+Ways to fit the simulation's arc inside one run (Claude), without splitting the game into two modes:
+
+1. **Compress time:** few discrete states per patch let a generation take a second instead of a minute (Noita's world
+   resolves in seconds). The speed is a knob.
+2. **Shrink the space:** a small cave reaches its course within the run, and is easier to read.
+3. **Set up, then watch it play out:** a calm phase, then the simulation runs its course fast. Pool shapes 17
+   ("Pressure: deadline") and 24 ("One trigger"); it gives distant pillars and the toy feeling in seconds.
+
+Which one works depends on what in the simulation needs the time (population growth, slow spreading, succession);
+not answered yet. Claude also advised against a world that keeps running between runs; the user corrected that, below.
+
+## A second strong candidate: idle with prestige (2026-10-03, not chosen)
+
+The user: "You forget that incremental / idle games are very popular now, and we should not reject that angle just
+yet." The user's b4 work already points this way (D164, "intelligent idle game").
+
+Claude's reading:
+
+- **Idle escapes the antipattern when what piles up is quantity, not complexity.** More of the familiar and bigger
+  numbers make coming back a reward, not a burden. New rules entering the draw would still be the antipattern.
+- **It dissolves the time tension from the other side:** the simulation gets all the time it needs, because it runs
+  while the player is away. Coming back to see what the ecosystem did on its own is "surprise from discovery".
+- **It doesn't compete with runs: prestige is a run.** The question between the two candidates is what survives the
+  reset.
+
+| | Short run, knowledge only | Idle with prestige |
+|---|---|---|
+| What carries over | only what the player learned | multipliers or unlocks, plus knowledge |
+| Where Power lives | inside the run | across resets (the idle genre's main pull) |
+| Simulation time | must fit inside the run | free: it runs while away |
+| Risk | the simulation's arc too slow for a run | complexity piling up across resets (the Magicraft antipattern) |
+
+With 20% Power in the audience, the idle column has the more natural home for it (Claude).
+
 ## Open questions
 
 1. **What should the simulator tell first?** The first thing the user couldn't judge by playing it alone.
