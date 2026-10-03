@@ -157,3 +157,6 @@ Quotes are the user's, with spelling lightly fixed.
   We need stuff like psychoactive crops or bait, mating-dance-imitators, resistance copiers, buffers, healers,
   burrowing super-prospectors... exciting stuff, that will keep a pet in a team, even if it has no resistance to the
   biome."
+- **Suspicion and pickiness.** On Claude's reading that psychoactive bait substitutes for the natural diet: "actually
+  psychoactive food was about lowering the tamed animal's suspicion... but yes, lowering how picky an animal is also a
+  cool 'bend'."

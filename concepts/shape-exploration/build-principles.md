@@ -193,8 +193,9 @@ colonies settle into stable idle play.
   and much less intuitive here: a drag. Unless that is fixed, the dependency stays shallow. Team synergy is the more
   enjoyable mechanic, and carries the depth instead.
 - **Resistances gate, abilities delight.** Resistances are a good gatekeeper but no fun at all, so pets carry exciting
-  abilities that keep them in a team even with no resistance to the biome: psychoactive crops or bait,
-  mating-dance imitators, resistance copiers, buffers, healers, burrowing super-prospectors.
+  abilities that keep them in a team even with no resistance to the biome: psychoactive crops or bait (they lower the
+  animal's suspicion), mating-dance imitators, resistance copiers, buffers, healers, burrowing super-prospectors.
+  Lowering how picky an animal is about its food is another.
 
 ### How an area moves
 
