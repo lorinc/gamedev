@@ -160,8 +160,13 @@
         text-transform: uppercase;
         letter-spacing: 0.04em;
       }
-      #tip.subtle p.more {
-        font-style: italic;
+      #tip.subtle .blk {
+        margin-top: 6px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        opacity: 0.65;
       }
       .mark.pillar.on .prim,
       .mark.pillar:focus .prim {
@@ -698,42 +703,41 @@
         },
       ]
       // what flows from one pillar to the next
-      // what flows from one pillar to the next; loops: [mode, what happens], mode '' when it is neither idle nor active
+      // what flows from one pillar to the next. action: [mode, what], mode '' when it is neither idle nor active
       const FLOWS = [
-        { from: 'P3', to: 'P3', at: -2.4, text: 'Crops, livestock, balance', loops: [
-          ['idle', 'grows crops and livestock the pioneers use as bait'],
-          ['idle', 'grows crops and livestock to feed the pioneers and foragers'],
-          ['active', 'claim new colony areas; tune the biosphere so that all colony loops work'],
-          ['idle', 'the simulation is beautiful, increasingly diverse, but stable'],
-        ] },
-        { from: 'P3', to: 'P1', text: 'Pioneer teams', loops: [
-          ['active', 'send them to open up an Unseen'],
-          ['active', 'send them to tame animals'],
-        ], more: 'Protected from the area\'s conditions, bringing something that intrigues the animal and food for it, prey animals included.' },
-        { from: 'P1', to: 'P1', at: -0.9, text: 'Up the food chain', loops: [
-          ['', 'a few of the easiest animals first, for their local resistances; then tamed animals and outside baits tame stronger ones, up to the top predator'],
-        ] },
-        { from: 'P1', to: 'P3', text: 'Fauna, land to colonize', loops: [
-          ['', 'a won animal follows the pioneers home; after a loss it decides to stay'],
-          ['', 'taming the top predator makes the area ready to colonize'],
-        ] },
-        { from: 'P1', to: 'P2', text: 'An opened area', loops: [
-          ['', 'an opened Unseen becomes a cavern, for the foragers to prospect and forage'],
-        ] },
-        { from: 'P3', to: 'P2', text: 'Forager teams', loops: [
-          ['active', 'set them up for field trips'],
-          ['idle', 'they go on their own trips'],
-        ], more: 'Their traits get them through the cavern conditions (dark, flooded, toxic, hot, overgrown).' },
-        { from: 'P2', to: 'P2', at: 2.5, text: 'A living cavern', loops: [
-          ['idle', 'the simulation itself is beautiful and non-linear'],
-        ] },
-        { from: 'P2', to: 'P3', text: 'Flora, goods, finds', loops: [
-          ['idle', 'field trips bring flora unlocks and foraged goods'],
-          ['active', 'a breather: find unique, special things by hand near the foragers'],
-        ] },
-        { from: 'P2', to: 'P1', text: 'Edges of the Unseen', loops: [
-          ['idle', 'lifting the fog within the caverns finds the boundaries of the Unseen'],
-        ], more: 'Asleep under the fog of war: the simulation is suspended, and only the ambience (particles, shaders) looks alive. No text or symbol.' },
+        { from: 'P3', to: 'P3', at: -2.4, text: 'Crops, livestock, balance',
+          action: [['idle', 'grow crops and livestock'], ['active', 'claim new colony areas'], ['active', 'tune the biosphere so that all colony loops work']],
+          condition: ['tames grow and reproduce only in ideal conditions', 'a colony needs an area whose top predator is tamed'],
+          outcome: ['bait for the pioneers', 'food for the pioneers and foragers', 'a simulation that is beautiful, increasingly diverse, but stable'] },
+        { from: 'P3', to: 'P1', text: 'Pioneer teams',
+          action: [['active', 'send them to open up an Unseen'], ['active', 'send them to tame animals']],
+          condition: ['protection from the area\'s conditions', 'something that intrigues the animal', 'food for it, prey animals included'],
+          outcome: ['pioneers at the frontier'] },
+        { from: 'P1', to: 'P1', at: -0.9, text: 'Up the food chain',
+          action: [['', 'tame a few of the easiest animals first, then use tamed animals and outside baits on stronger ones']],
+          condition: ['the stronger the animal, the longer the taming, the stronger the team and the more food or prey it needs'],
+          outcome: ['local resistances', 'step by step, the top predator: a mini-boss'] },
+        { from: 'P1', to: 'P3', text: 'Fauna, land to colonize',
+          action: [['', 'win a taming: a peaceful pull, not a violent push']],
+          condition: ['after a loss the animal decides to stay'],
+          outcome: ['the animal follows the pioneers home', 'with the top predator tamed, the area is ready to colonize'] },
+        { from: 'P1', to: 'P2', text: 'An opened area',
+          action: [['', 'the pioneers open up an Unseen']],
+          outcome: ['the area becomes a cavern, for the foragers to prospect and forage'] },
+        { from: 'P3', to: 'P2', text: 'Forager teams',
+          action: [['active', 'set them up for field trips'], ['idle', 'they go on their own trips']],
+          condition: ['traits that get them through the cavern conditions: dark, flooded, toxic, hot, overgrown'],
+          outcome: ['foragers in the caverns'] },
+        { from: 'P2', to: 'P2', at: 2.5, text: 'A living cavern',
+          action: [['idle', 'the cavern\'s simulation runs']],
+          outcome: ['a simulation that is beautiful and non-linear'] },
+        { from: 'P2', to: 'P3', text: 'Flora, goods, finds',
+          action: [['idle', 'field trips'], ['active', 'a breather: search by hand near the foragers']],
+          condition: ['foragers in the cavern'],
+          outcome: ['flora unlocks and foraged goods', 'unique, special finds'] },
+        { from: 'P2', to: 'P1', text: 'Edges of the Unseen',
+          action: [['idle', 'the foragers lift the fog within the caverns']],
+          outcome: ['the boundaries of the Unseen, alive only as ambience (particles, shaders), no text or symbol'] },
       ]
       const PILLAR_COLOR = '#c98a00'
       const FLOW_ALPHA = 0.45
@@ -1101,22 +1105,24 @@
           const h = document.createElement('b')
           h.textContent = f.text
           tip.append(h)
-          for (const [mode, what] of f.loops) {
-            const p = document.createElement('p')
-            if (mode) {
-              const m = document.createElement('span')
-              m.className = 'mode'
-              m.textContent = mode
-              p.append(m)
+          for (const k of ['action', 'condition', 'outcome']) {
+            if (!f[k]) continue
+            const t = document.createElement('div')
+            t.className = 'blk'
+            t.textContent = k
+            tip.append(t)
+            for (const line of f[k]) {
+              const [mode, what] = Array.isArray(line) ? line : ['', line]
+              const p = document.createElement('p')
+              if (mode) {
+                const m = document.createElement('span')
+                m.className = 'mode'
+                m.textContent = mode
+                p.append(m)
+              }
+              p.append(what)
+              tip.append(p)
             }
-            p.append(what)
-            tip.append(p)
-          }
-          if (f.more) {
-            const more = document.createElement('p')
-            more.className = 'more'
-            more.textContent = f.more
-            tip.append(more)
           }
           tip.classList.remove('tinted')
           tip.classList.add('subtle')
