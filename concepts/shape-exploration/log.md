@@ -46,3 +46,10 @@ Quotes are the user's, with spelling lightly fixed.
   the breather and asked where tranquility goes. The user: what is brought back from explorations feeds tinkering;
   tranquility side loops can live around any pillar (a vivarium or zoo, rare beautiful sightings during exploration,
   a riskless strategy-testing loop).
+- **Limits and feeds.** Each pillar needs a limit raised by its loop and a plausible feed from another pillar. The user:
+  "Allow players to grind and 'beef up' for the challenge in each pillar, so if something feels hard, it can be made
+  easier without a slider. The theme is ecology, the loadout can not be technology. I think, this will be a taming
+  game, where you find procgen living things (from slime mold to Arrakis sand worm), raise them, and send them to
+  excursions." Breach = strategy, bringing back samples, seeds or captured animals; enclosures = the simulation, to
+  farm or to tame and level; expeditions = exploring and flagging prospects. This replaced the earlier cycle
+  (P2 → P3 → P1 → P2 through 14, 2b/2a, 1b).

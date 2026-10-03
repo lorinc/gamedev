@@ -114,27 +114,37 @@ different number than for a Challenge player.
   Discovery-and-Strategy audience, delayed consequences are where strategy comes from, as long as they are traceable.
 - New rules arrive one at a time, after the previous one is understood.
 
+## Direction: a taming game
+
+- **Theme: ecology.** Nothing the player uses is technology; every tool, trait and loadout piece is a living thing.
+- **A taming game.** The player finds procedurally generated living things, from slime mold to an Arrakis-scale sand
+  worm, raises them, and sends them on excursions.
+- **Grinding is the difficulty setting.** Every pillar lets the player beef up for its challenge, so anything that
+  feels hard can be made easier without a slider.
+
 ## Pillars
 
 Three pillars, drawn on [map.html](map.html) as equal circles, set apart far enough to give release from one another.
 They differ inside (one core loop, or two supporting loops, plus one or two side loops) but weigh the same.
 
-| Pillar | Where | Shapes inside | Role |
-|---|---|---|---|
-| P1 | around 1a, 2a, 1b, toward Challenge | 1a Cards: hand, 2a Harvest: yield, 1b Cards: loadout | Strategy, Power, Challenge: difficulty scales with progress, at steps the player chooses |
-| P2 | 14's height, 25's column, on the line from the audience to Story | 14 Expedition, 15 Caretaker | Discovery and Story: the most kinetic pillar, to lean into; exploration and horizon expansion, the exciting part |
-| P3 | around 2b, 17, 8, 3 | 2b Harvest: steering, 17 Pressure: deadline, 8 Tipping point, 3 Alchemy | Cerebral and World: what the player controls about the simulation; tinkering |
+| Pillar | Where | Role |
+|---|---|---|
+| P1 Breach | around 1a, 2a, 1b, toward Challenge | Strategy, Power, Challenge: the team breaches a cavern never entered before and brings back samples, seeds or captured animals. Difficulty scales with progress, at steps the player chooses |
+| P2 Expedition | 14's height, 25's column, on the line from the audience to Story | Discovery and Story, the most kinetic pillar: exploring the world and flagging prospects |
+| P3 Enclosures | around 2b, 17, 8, 3 | The simulation: natural enclosures for the living things, to farm resources, or to tame and level them for excursions |
 
-- **P2 feeds P3:** what is brought back from exploration feeds tinkering.
-- **Tranquility lives in side loops,** around any pillar, not in a pillar of its own. Examples: a vivarium or zoo;
-  rare, beautiful event sightings during exploration; a riskless strategy-testing loop.
+Each pillar has a limit that is visible in the world and raised by what another pillar delivers:
 
-**The links could close a cycle** through shapes already in the pool. P2 → P3: an
-expedition carries something from each cavern into the next (14). P3 → P1: Harvest is split across the two, steering
-(2b) in P3 and the yield (2a) in P1. P1 → P2: the loadout (1b) is what the player takes on the outing. The three
-example side loops also land one per pillar: sightings by P2 (near 25, the naturalist), the vivarium by P3 (the
-system's living things, kept and watched), strategy testing by P1 (trying a build before choosing the next step; 3,
-Alchemy, already combines in isolation).
+| Pillar | Limit |
+|---|---|
+| P1 | the team's strength against the cavern chosen for the breach |
+| P2 | the conditions of each cavern (dark, flooded, toxic, hot, overgrown): only creatures with the matching traits get through |
+| P3 | the palette: the simulation holds only the living things brought home |
+
+Flows between the pillars: open, being reworked for the taming direction.
+
+**Tranquility lives in side loops,** around any pillar, not in a pillar of its own. Examples: a vivarium or zoo;
+rare, beautiful event sightings during exploration; a riskless strategy-testing loop.
 
 ## Candidate A: the short run that keeps only knowledge (candidate)
 
