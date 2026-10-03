@@ -79,3 +79,7 @@ Quotes are the user's, with spelling lightly fixed.
   plants. All flora is collected by foragers during trips. All fauna is collected by pioneers through some kind of
   battle, that is not violent push, but peaceful pull, and success results the animal following the pioneers back
   into the colony, loss means that the animal decided to stay." Fauna now goes P1 → P3, flora P2 → P3.
+- **What taming needs.** The user: "Pioneers need environmental protection for that area, and something that is
+  intriguing for the tamed animal; ability to generate / deliver food for them, and, because nature is not
+  romanticised, even prey animals can be used. And the stronger the animal is, the longer the taming takes, needing
+  stronger team, more food / prey."

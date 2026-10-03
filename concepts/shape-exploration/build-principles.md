@@ -137,7 +137,7 @@ Each pillar has a limit that is visible in the world and raised by what another 
 
 | Pillar | Limit |
 |---|---|
-| P1 | the team's strength against the cavern chosen to wake |
+| P1 | the strength of the animal to tame: the stronger it is, the longer the taming, the stronger the team and the more food it needs |
 | P2 | the conditions of each cavern (dark, flooded, toxic, hot, overgrown): only creatures with the matching traits get through |
 | P3 | the palette: the simulation holds only the living things brought home |
 
@@ -156,7 +156,13 @@ Flows between the pillars (P3 is the hub):
 **Flora:** all of it plays a systemic role; the economic plants also generate resources.
 
 **Fauna is won by a peaceful pull, not a violent push.** The pioneers face an animal in a kind of battle; a win means
-the animal follows them back to the colony, a loss means it decided to stay.
+the animal follows them back to the colony, a loss means it decided to stay. To tame, the pioneers need:
+
+- protection from the area's environment;
+- something that intrigues the animal;
+- a way to generate or deliver food for it. Nature is not romanticised: prey animals count as food.
+
+The stronger the animal, the longer the taming takes, and the stronger the team and the more food or prey it needs.
 
 **Areas are asleep until woken.** Under the fog of war the simulation is suspended; an area looks alive only through
 ambience, particle effects and shaders crossing the fog, never text or a symbol. Once woken, the foragers spend
