@@ -1,16 +1,15 @@
 # What to build: the principle, the tool, the expectations
 
 Supporting document for the [shape exploration](README.md). Current state only; how it got here is in
-[log.md](log.md). Marks: **agreed** = the user confirmed it; **user** = the user's view, not a decision; **Claude** =
-a suggestion, not agreed; **candidate** = not chosen.
+[log.md](log.md). Only sections marked **agreed** are settled; **candidate** = not chosen.
 
-## The principle: accessible, and never boring, through systems (user)
+## The principle: accessible, and never boring, through systems
 
 Slay the Spire is the model: easy to play, impossible to master, and it gets there through systems rather than
 content, which makes the dev effort valuable. The model is the principle, not Slay the Spire's structure (runs, a
 deck, a map, fights); a run structure is not chosen.
 
-**Why it is easy to play, and what that is in this game** (**Claude**):
+**Why it is easy to play, and what that is in this game**:
 
 | Slay the Spire | In this game |
 |---|---|
@@ -19,7 +18,7 @@ deck, a map, fights); a run structure is not chosen.
 | No time limit | The cerebral side of the map, and "peaceful" |
 
 **Why it is hard to master, against this game's audience** (Discovery 30%, Strategy 30%, Power 20%, Story 10%,
-Challenge 10%; see [README.md](README.md)) (**Claude**):
+Challenge 10%; see [README.md](README.md)):
 
 | Slay the Spire | Motivation | Fit |
 |---|---|---|
@@ -29,12 +28,12 @@ Challenge 10%; see [README.md](README.md)) (**Claude**):
 
 So depth comes from reading the system and adapting to the random draw, not from harsh losses.
 
-**Content that combines, more than system instead of content** (**Claude**). Slay the Spire has a lot of content
+**Content that combines, more than system instead of content**. Slay the Spire has a lot of content
 (around 75 cards per character, four characters, over a hundred relics, three acts of enemies). The system makes
 content multiply instead of add: a new card combines with every other card and relic. In a content-driven game each
 new area adds one area. For dev effort: a small number of pieces, each of which changes how the others behave.
 
-**The reference games split along this line** (**Claude**, [reference-games.md](reference-games.md)):
+**The reference games split along this line** ([reference-games.md](reference-games.md)):
 
 - **Combining, replayable:** Stacklands, Brotato, Super Auto Pets, 20 Minutes Till Dawn, Forager.
 - **Played through about once:** A Short Hike, SUMMERHOUSE, Minami Lane. They succeed on mood and a short, polished
@@ -42,20 +41,20 @@ new area adds one area. For dev effort: a small number of pieces, each of which 
 
 The toy, an ecosystem simulation, is on the combining side: its parts change each other.
 
-**The test for every piece** (**Claude**, from guide [09](../../guides/game-design/09-repetition-and-variety.md)):
+**The test for every piece** (from guide [09](../../guides/game-design/09-repetition-and-variety.md)):
 does it change what the player decides? A species that makes the cave look different while the player does the same
 thing is more content, not more depth.
 
-## The tool: a system simulator and optimizer (user)
+## The tool: a system simulator and optimizer
 
 A planned tool that makes balancing and the complexity of random permutations manageable. Combinations that multiply
 can't be playtested by hand; a simulator plays thousands of random runs. Simple local models (few discrete states per
 patch) are cheap to simulate in bulk. Its settings are knobs, searched the way the generators are tuned.
 
 It gives, before there are players, a view like the one Slay the Spire's developers got from early-access data (card
-pick and win rates) (**Claude**).
+pick and win rates).
 
-**What it can see** (**Claude**):
+**What it can see**:
 
 - **Dead and dominant pieces:** a species, card or upgrade that never matters, or one that wins regardless.
 - **Bad seeds:** random starts that are unwinnable or trivially easy, and the spread between seeds.
@@ -63,10 +62,10 @@ pick and win rates) (**Claude**).
 - **Whether decisions matter:** a sensible bot and a random bot on the same seeds. If their outcomes are close, the
   player's choices don't change much. This is the measurable form of the test above.
 
-**What it can't see** (**Claude**): whether it is fun or readable. A bot doesn't mind a hidden consequence or a flat
+**What it can't see**: whether it is fun or readable. A bot doesn't mind a hidden consequence or a flat
 turn; those need the user, and players.
 
-**What its questions depend on** (**Claude**): the audience. "Never boring" for a Discovery-and-Strategy player is a
+**What its questions depend on**: the audience. "Never boring" for a Discovery-and-Strategy player is a
 different number than for a Challenge player.
 
 ## Expectations of a good game (agreed)
@@ -115,7 +114,7 @@ different number than for a Challenge player.
   Discovery-and-Strategy audience, delayed consequences are where strategy comes from, as long as they are traceable.
 - New rules arrive one at a time, after the previous one is understood.
 
-## Pillars (user)
+## Pillars
 
 Three pillars, drawn on [map.html](map.html) as equal circles, set apart far enough to give release from one another.
 They differ inside (one core loop, or two supporting loops, plus one or two side loops) but weigh the same.
@@ -130,7 +129,7 @@ They differ inside (one core loop, or two supporting loops, plus one or two side
 - **Tranquility lives in side loops,** around any pillar, not in a pillar of its own. Examples: a vivarium or zoo;
   rare, beautiful event sightings during exploration; a riskless strategy-testing loop.
 
-**Claude's reading, not agreed:** the links could close a cycle through shapes already in the pool. P2 → P3: an
+**The links could close a cycle** through shapes already in the pool. P2 → P3: an
 expedition carries something from each cavern into the next (14). P3 → P1: Harvest is split across the two, steering
 (2b) in P3 and the yield (2a) in P1. P1 → P2: the loadout (1b) is what the player takes on the outing. The three
 example side loops also land one per pillar: sightings by P2 (near 25, the naturalist), the vivarium by P3 (the
@@ -142,11 +141,11 @@ Alchemy, already combines in isolation).
 A short run where complexity does not carry over, only knowledge: Noita, Super Auto Pets. It follows from "picking the
 game up again is not overwhelming".
 
-**The antipattern (user): unlocks that grow the random pool.** Unlocked mechanics a player can ignore cost a returning
+**The antipattern: unlocks that grow the random pool.** Unlocked mechanics a player can ignore cost a returning
 player nothing (Magicraft's mechanics). Unlocked items that appear in every draw cost them every run (Magicraft's
 spells and trinkets): later runs get more complex even when the player has forgotten much of the game.
 
-Refinements (**Claude**):
+Refinements:
 
 - **It is a matter of degree.** Slay the Spire also unlocks cards into the pool, but few, within the first hours,
   while the player is still active. The antipattern bites when the pool keeps growing after the player stopped
@@ -162,7 +161,7 @@ Refinements (**Claude**):
 
 **The tension with the simulation.** Short runs bring many restrictions, which are useful creative constraints, but
 the simulated world needs time to run its course. Ways to fit its arc inside one run, without splitting the game into
-two modes (**Claude**):
+two modes:
 
 1. **Compress time:** few discrete states per patch let a generation take a second instead of a minute (Noita's world
    resolves in seconds). The speed is a knob.
@@ -178,7 +177,7 @@ open. Candidate B takes the other route: the world keeps running between session
 Incremental and idle games are popular now; the angle stays open. The b4 work already points this way (D164,
 "intelligent idle game").
 
-Reading (**Claude**):
+Reading:
 
 - **Idle escapes the antipattern when what piles up is quantity, not complexity.** More of the familiar and bigger
   numbers make coming back a reward, not a burden. New rules entering the draw would still be the antipattern.
@@ -194,7 +193,7 @@ Reading (**Claude**):
 | Simulation time | must fit inside the run | free: it runs while away |
 | Risk | the simulation's arc too slow for a run | complexity piling up across resets (the Magicraft antipattern) |
 
-With 20% Power in the audience, B has the more natural home for it (**Claude**).
+With 20% Power in the audience, B has the more natural home for it.
 
 ## Open questions
 

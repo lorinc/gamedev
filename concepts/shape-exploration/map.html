@@ -122,6 +122,10 @@
       .mark:focus {
         outline: none;
       }
+      .mark.flow.on .fline,
+      .mark.flow:focus .fline {
+        stroke-width: 4;
+      }
       .mark.pillar.on .prim,
       .mark.pillar:focus .prim {
         stroke-width: 4;
@@ -402,7 +406,7 @@
       <h2>How the positions were made</h2>
       <ul>
         <li>
-          <b>They are Claude's judgement,</b> one shape at a time, on each axis separately, using the 12 motivation dots
+          <b>They are judgements,</b> one shape at a time, on each axis separately, using the 12 motivation dots
           as rulers (for example "more cerebral than Discovery, less than Strategy"). Quantic Foundry publishes no
           position for any mechanic.
         </li>
@@ -416,7 +420,7 @@
         </li>
         <li><b>The toy</b> is marked at Discovery, where the simulation as a toy sits.</li>
         <li>
-          <b>The other games</b> are placed the same way, from what Claude knows of each game, not from play sessions
+          <b>The other games</b> are placed the same way, from what is known of each game, not from play sessions
           or from Quantic Foundry's data. Which loops a game is split into, and how big each one is, are judgements
           too. Review counts are Steam's on 2026-10-02; teams and development times are in
           <a href="reference-games.md">reference-games.md</a> with their sources.
@@ -579,8 +583,8 @@
       }
       // The 12 motivation dots, in pixels of the 1200 px picture. A game's audience (audience-from-tags.md) is a
       // weighted mean of these, so it is drawn with a ring on each dot it is made of.
-      // What each motivation means: Quantic Foundry's keywords and game lists, with Claude's reading of the lists
-      // (motivation-map.md). Two definitions are the user's own: Design is building things, Story includes atmosphere.
+      // What each motivation means: Quantic Foundry's keywords and game lists, and a reading of the lists
+      // (motivation-map.md). Two definitions are this project's own: Design is building things, Story includes atmosphere.
       const MOT = {
         Destruction: ['Action: “Boom!”', 'guns, explosives, chaos, mayhem', 'Blowing things up in shooters; GTA’s sandbox mayhem.', 'GTA, Battlefield, Destiny, Call of Duty, Gears of War, Halo, Borderlands, Doom'],
         Excitement: ['Action: “Boom!”', 'fast-paced, action, surprises, thrills', 'Fast action.', 'Super Smash Bros. Melee, Battlefield, Counter-Strike, Call of Duty, God of War, Destiny'],
@@ -591,8 +595,8 @@
         Completion: ['Achievement: “I want more”', 'get all collectibles, complete all missions', 'Collecting everything and finishing every mission in a large game.', 'Final Fantasy, Assassin’s Creed, Zelda, Animal Crossing, Pokémon, Fire Emblem'],
         Power: ['Achievement: “I want more”', 'powerful character, powerful equipment', 'Levelling and loot: a character, a team or gear that gets stronger. The most central motivation on the map.', 'World of Warcraft, Diablo 2/3, RuneScape, Destiny, League of Legends, God of War'],
         Fantasy: ['Immersion: “Once upon a time”', 'being someone else, somewhere else', 'Being someone else in an immersive world.', 'Dragon Age, Elder Scrolls, Dishonored, Mass Effect, Skyrim, Journey, Zelda'],
-        Story: ['Immersion: “Once upon a time”', 'elaborate plots, interesting characters', 'Elaborate plots in long role-playing games. In the user’s reading it also covers atmosphere: visual storytelling, even with little story in the game.', 'Dragon Age, Mass Effect, Persona 3/4, Final Fantasy VIII–X, Knights of the Old Republic, Planescape Torment'],
-        Design: ['Creativity: “What if?”', 'expression, customization', 'Making a character, a home or a team your own. In the user’s reading: building things.', 'The Sims, Animal Crossing, Guild Wars 2, Final Fantasy XIV, Monster Hunter, Pokémon'],
+        Story: ['Immersion: “Once upon a time”', 'elaborate plots, interesting characters', 'Elaborate plots in long role-playing games. It also covers atmosphere: visual storytelling, even with little story in the game.', 'Dragon Age, Mass Effect, Persona 3/4, Final Fantasy VIII–X, Knights of the Old Republic, Planescape Torment'],
+        Design: ['Creativity: “What if?”', 'expression, customization', 'Making a character, a home or a team your own. Here: building things.', 'The Sims, Animal Crossing, Guild Wars 2, Final Fantasy XIV, Monster Hunter, Pokémon'],
         Discovery: ['Creativity: “What if?”', 'explore, tinker, experiment', 'Mostly big open worlds to roam; and, in Minecraft and Kerbal, a system to experiment on. It joins the left side of the map to the top.', 'Elder Scrolls, Fallout, Zelda, Minecraft, Kerbal Space Program, Metroid Prime'],
       }
       const DOT = { Completion: [577, 148], Strategy: [668, 296], Challenge: [922, 341], Discovery: [402, 469], Power: [777, 513], Story: [183, 679], Design: [306, 684], Competition: [1051, 720], Fantasy: [160, 823], Community: [749, 847], Excitement: [927, 878], Destruction: [742, 1042] }
@@ -601,7 +605,7 @@
         {"key": "hike", "title": "A Short Hike", "metric": "22,778 Steam reviews", "meta": "solo · 4 months to the first release", "marks": [["roam", "Roam the island", 3, -0.67, -0.04, "Being somewhere else, at your own pace: close to Fantasy.", "Walking, climbing and gliding are the play, but nothing hurries you.", "Walk, climb and glide anywhere on a small island. There is a summit to reach and no pressure to reach it."], ["feathers", "Collect golden feathers", 2, -0.17, 0.16, "Things hidden in the world, found by looking around.", "A light checklist: each feather lets you climb higher.", "Golden feathers are hidden and sold around the island. Each one adds stamina, which opens more of the mountain."], ["help", "Help the islanders", 2, -0.83, 0.07, "Characters and their small stories: close to Story.", "Short errands, taken at your own pace.", "Islanders ask for small favours and reward them with tools, feathers or a chat."], ["side games", "Side activities", 1, -0.35, -0.45, "Small games inside the world.", "The most kinetic part: fishing, a boat, races, a ball game.", "Optional mini-games dotted around the island."], ["audience", "Audience, read from the store page", 0, -0.57, -0.09, "Its tags and pitch point to: Fantasy 45%, Discovery 44%, Excitement 7%.", "Mood tags the model has no place for (Relaxing, Cute, Casual, Nature, Family Friendly, Beautiful, Cozy, Funny) carry 53% of the tag weight.", "People who want to wander a pretty place in peace: a short, gentle, cute outing, children included."]], "aud": [["Fantasy", 45], ["Discovery", 44]]},
         {"key": "islanders", "title": "Islanders", "metric": "16,787 Steam reviews", "meta": "3 students · 7 months", "marks": [["place", "Place a building", 3, -0.12, 0.6, "Acts on a board of scoring rules more than on a place.", "Every placement is weighed against what already stands there: close to Strategy.", "Pick a building from your hand and place it. It scores by what stands near it.", "l"], ["next pack", "Beat the score for the next pack", 2, 0.18, 0.4, "A target to beat, set by the game.", "Planning a few placements ahead to reach it.", "Reach the score target to get the next pack of buildings and, in time, the next island."], ["high score", "Chase a higher score", 1, 0.5, 0.34, "Measured against yourself: toward Challenge.", "Mastery over many islands.", "A run goes on for as long as you keep reaching the targets; the total is your score."], ["pretty island", "End up with a pretty island", 2, -0.5, -0.06, "The island you built is something to look at: close to Design.", "No planning is needed to enjoy it.", "The finished island is small, tidy and yours."], ["audience", "Audience, read from the store page", 0, -0.19, 0.32, "Its tags and pitch point to: Strategy 57%, Design 31%, Fantasy 7%.", "Mood tags the model has no place for (Relaxing, Beautiful, Colorful, Addictive) carry 32% of the tag weight.", "Relaxed builders who like a puzzle: city building as a calm score game, with nothing to manage."]], "aud": [["Strategy", 57], ["Design", 31]]},
         {"key": "minami", "title": "Minami Lane", "metric": "6,786 Steam reviews", "meta": "2 people and a composer · about 6 months", "marks": [["street", "Arrange the street", 3, -0.58, 0.1, "A small place that becomes yours: close to Design.", "Some planning: what goes next to what.", "Build houses and shops along one street and decide where each one goes."], ["tune shops", "Tune the shops", 2, -0.2, 0.58, "A system to read: what each villager likes.", "Change one thing, watch the reaction, change it again.", "Set each shop’s recipe and prices to match what the villagers want, judged by their reactions."], ["missions", "Finish the missions", 2, -0.16, 0.82, "Goals set by the game.", "A short checklist per mission: close to Completion.", "A handful of missions, each with a few goals such as a number of happy villagers.", "l"], ["villagers", "Watch the villagers, pet the cats", 1, -0.8, -0.34, "Attachment to the little people and animals of the street.", "Nothing to work out.", "Villagers stroll past, and cats turn up and can be petted."], ["audience", "Audience, read from the store page", 0, -0.2, 0.42, "Its tags and pitch point to: Strategy 48%, Design 35%, Completion 16%.", "Mood tags the model has no place for (Cute, Casual, Relaxing, Colorful, Cozy, Cats) carry 56% of the tag weight.", "Cozy players who want a cute little management game: light optimising, wrapped in cats and colour."]], "aud": [["Strategy", 48], ["Design", 35], ["Completion", 16]]},
-        {"key": "kabuto", "title": "Kabuto Park", "metric": "4,684 Steam reviews", "meta": "9 months · cost about €65,000", "marks": [["catch", "Catch bugs", 3, -0.34, 0.2, "The thrill of finding a new species: toward Discovery.", "Then the pleasure of seeing its stats: toward Power. The catch itself is a short timing game.", "Search spots in the park and catch bugs with a small timing game."], ["collection", "Fill the collection", 2, -0.3, 0.82, "Every kind of bug in the park.", "A list to complete, with rare ones: close to Completion.", "Bugs come in kinds and rarities; the album shows what is still missing.", "l"], ["team", "Build a team and battle", 2, 0.14, 0.44, "Your own team of three.", "Choosing bugs and playing their moves.", "Pick three bugs and play their moves in short battles against other kids’ teams."], ["tournament", "Win the summer tournament", 1, 0.5, 0.34, "A contest, against computer opponents.", "The one goal that needs a good team.", "The summer ends with a tournament; winning it finishes the game."], ["summer", "A childhood summer", 2, -0.9, -0.34, "Being a kid on holiday: close to Fantasy and Story.", "Mood, not thought.", "A hand-drawn park, a month of summer days, upgrades bought with pocket money."], ["audience", "Audience, as the user reads it from play", 0, -0.32, 0.33, "The user’s mix: Discovery 40%, Story 20%, Completion 20%, Power 20%. Story here is visual storytelling: the atmosphere. Power: \"you can not progress without beating other teams.\"", "The store page alone gave Power 36%, Completion 35%, Strategy 29%: the atmosphere sits in the mood tags, which carry 57% of the tag weight. The store-page mark was 0.62 from the centre of the loops.", "Cozy creature collectors of any age: catch them all, train a team, win light card battles."]], "aud": [["Discovery", 40], ["Story", 20], ["Completion", 20], ["Power", 20]]},
+        {"key": "kabuto", "title": "Kabuto Park", "metric": "4,684 Steam reviews", "meta": "9 months · cost about €65,000", "marks": [["catch", "Catch bugs", 3, -0.34, 0.2, "The thrill of finding a new species: toward Discovery.", "Then the pleasure of seeing its stats: toward Power. The catch itself is a short timing game.", "Search spots in the park and catch bugs with a small timing game."], ["collection", "Fill the collection", 2, -0.3, 0.82, "Every kind of bug in the park.", "A list to complete, with rare ones: close to Completion.", "Bugs come in kinds and rarities; the album shows what is still missing.", "l"], ["team", "Build a team and battle", 2, 0.14, 0.44, "Your own team of three.", "Choosing bugs and playing their moves.", "Pick three bugs and play their moves in short battles against other kids’ teams."], ["tournament", "Win the summer tournament", 1, 0.5, 0.34, "A contest, against computer opponents.", "The one goal that needs a good team.", "The summer ends with a tournament; winning it finishes the game."], ["summer", "A childhood summer", 2, -0.9, -0.34, "Being a kid on holiday: close to Fantasy and Story.", "Mood, not thought.", "A hand-drawn park, a month of summer days, upgrades bought with pocket money."], ["audience", "Audience, read from play", 0, -0.32, 0.33, "Mix: Discovery 40%, Story 20%, Completion 20%, Power 20%. Story here is visual storytelling: the atmosphere. Power: \"you can not progress without beating other teams.\"", "The store page alone gave Power 36%, Completion 35%, Strategy 29%: the atmosphere sits in the mood tags, which carry 57% of the tag weight. The store-page mark was 0.62 from the centre of the loops.", "Cozy creature collectors of any age: catch them all, train a team, win light card battles."]], "aud": [["Discovery", 40], ["Story", 20], ["Completion", 20], ["Power", 20]]},
         {"key": "stacklands", "title": "Stacklands", "metric": "30,383 Steam reviews", "meta": "one developer of a 4-person co-op · under 4 months", "marks": [["stack", "Stack cards", 3, -0.2, 0.46, "A village made of cards on a table.", "Each stack is a small decision about who does what.", "Put a villager card on a resource card and it produces something. Everything is done by stacking."], ["recipes", "Discover recipes", 2, -0.56, 0.42, "Finding out what the cards can do together: close to Discovery.", "Trying combinations.", "New combinations and ideas turn up from packs and from trying things."], ["feed", "Feed everyone before the moon ends", 2, 0.08, 0.26, "Your villagers against a clock.", "Planning under a timer; the nearest thing to pressure here.", "Each moon ends with a meal for every villager. Not enough food and someone starves."], ["packs", "Sell cards, buy packs", 2, 0.2, 0.4, "What you own, and a gamble on what comes next.", "Choosing which pack the village needs.", "Sell spare cards for coins and spend them on packs of new cards."], ["fight", "Fight", 1, 0.36, -0.2, "Creatures attack the village.", "Automatic, and the fastest part of the game.", "Villagers with weapons fight creatures by being stacked on them."], ["quests", "Tick off the quests", 1, -0.34, 0.8, "A list set by the game.", "Close to Completion.", "A long quest list hands out new packs as it is ticked off.", "l"], ["audience", "Audience, read from the store page", 0, 0.1, 0.48, "Its tags and pitch point to: Strategy 59%, Challenge 17%, Design 15%, Power 8%.", "Mood tags the model has no place for (Cute, Casual, Colorful) carry 7% of the tag weight.", "Card and board game players who like to run a village and keep it alive. Strategy first, cute second."]], "aud": [["Strategy", 59], ["Challenge", 17], ["Design", 15]]},
         {"key": "summerhouse", "title": "SUMMERHOUSE", "metric": "3,382 Steam reviews", "meta": "solo · time not found", "marks": [["place", "Place pieces", 3, -0.56, -0.08, "Making a little scene that is yours: Design itself.", "By feel. There is nothing to plan and nothing to win.", "Place walls, roofs, doors and plants freely to make a small sunny scene. No goals, no score."], ["secrets", "Find the hidden pieces", 1, -0.6, 0.36, "Finding out what the toy can do: close to Discovery.", "Trying arrangements to see what appears.", "Some arrangements unlock new pieces and little inhabitants, unannounced."], ["mood", "Soak in the mood", 2, -0.92, -0.36, "A place to be in: close to Fantasy.", "Nothing to work out.", "Late-afternoon light, weather and sound; a place to sit in for a while."], ["audience", "Audience, read from the store page", 0, -0.51, 0.05, "Its tags and pitch point to: Design 53%, Strategy 24%, Fantasy 13%, Discovery 11%.", "Mood tags the model has no place for (Relaxing, Casual, Colorful, Cozy, Cute) carry 44% of the tag weight.", "People who want to make something pretty with no rules: a creative toy to relax with."]], "aud": [["Design", 53], ["Strategy", 24], ["Fantasy", 13], ["Discovery", 11]]},
         {"key": "dawn", "title": "20 Minutes Till Dawn", "metric": "29,163 Steam reviews", "meta": "solo · 2 months", "marks": [["move and shoot", "Move and shoot", 3, 0.5, -0.78, "Against a swarm, not a place.", "Constant dodging and aiming: close to Excitement.", "Dodge an endless swarm and shoot it, for twenty minutes."], ["upgrades", "Pick an upgrade", 2, 0.22, 0.34, "Your own character getting stronger: close to Power.", "A quick choice among a few, with synergies to spot.", "On each level-up choose one of a few upgrades; the right ones combine into something absurd.", "l"], ["survive", "Survive the clock", 2, 0.62, 0.38, "A test of you: close to Challenge.", "Knowing the escalation and preparing for it.", "The swarm thickens on a fixed schedule; lasting the full twenty minutes is the win."], ["unlocks", "Unlock characters and weapons", 1, 0.3, 0.62, "A roster that grows.", "A list to fill over many runs.", "Runs earn currency that unlocks new characters, weapons and permanent bonuses."], ["audience", "Audience, read from the store page", 0, 0.34, -0.11, "Its tags and pitch point to: Challenge 29%, Excitement 19%, Power 19%, Destruction 18%, Fantasy 11%.", "Mood tags the model has no place for (Casual) carry 5% of the tag weight.", "Action roguelite players: survive a bullet hell and grow an overpowered build, in a dark horror theme."]], "aud": [["Challenge", 29], ["Excitement", 19], ["Power", 19], ["Destruction", 18], ["Fantasy", 11]]},
@@ -609,45 +613,44 @@
         {"key": "forager", "title": "Forager", "metric": "44,155 Steam reviews", "meta": "solo with a publisher · about 2 years (unchecked)", "marks": [["gather", "Gather", 3, -0.24, -0.4, "Hitting what the land grows.", "Constant moving and striking, lightly.", "Hit trees, rocks and plants that keep growing back, and pick up what drops."], ["craft", "Craft and build the base", 3, -0.22, 0.44, "A base that turns materials into better ones.", "What to build next, and where.", "Furnaces, forges and dozens of other structures turn materials into tools, coins and more structures."], ["lands", "Buy the next land", 2, -0.56, 0.42, "New biomes with new things in them: close to Discovery.", "Saving up and choosing where to expand.", "Spend coins to add a neighbouring piece of land, each with new resources, creatures or a secret.", "l"], ["skills", "Level up, pick skills", 2, 0.24, 0.36, "Your character getting stronger: close to Power.", "One choice per level from a big grid.", "Every action gives experience; each level unlocks one more skill, which opens new structures and bonuses."], ["automate", "Automate the work", 2, 0.06, 0.7, "A system that works without you.", "Setting the base up so it runs itself.", "Mining rods, droids and other late structures collect and craft for you."], ["fight", "Fight", 2, 0.44, -0.44, "Enemies and a few bosses.", "Fast, simple hitting.", "Slimes, skeletons and bosses attack; the same swing that gathers also fights."], ["dungeons", "Solve puzzles and dungeons", 1, -0.48, 0.06, "Secrets built into the lands.", "Small puzzles, some fighting.", "Some lands hold a puzzle or a small dungeon with a reward."], ["museum", "Fill the museum", 1, -0.34, 0.82, "One of everything.", "A long list: close to Completion.", "A museum asks for bundles of items and pays out for each one completed.", "l"], ["audience", "Audience, read from the store page", 0, -0.22, 0.17, "Its tags and pitch point to: Discovery 30%, Design 25%, Challenge 13%, Power 11%, Strategy 9%, Fantasy 7%.", "Mood tags the model has no place for (Casual) carry 2% of the tag weight.", "Survival-crafting players who want to explore, gather and build a base, in a lighter 2D form."]], "aud": [["Discovery", 30], ["Design", 25], ["Challenge", 13], ["Power", 11]]},
         {"key": "pets", "title": "Super Auto Pets", "metric": "36,229 Steam reviews", "meta": "free to play · team and time not found", "marks": [["shop", "Buy and arrange the team", 3, 0.34, 0.3, "Your own team getting strong: close to Power.", "Power is the aim; strategy and grind are how it is reached. No timer in the main mode.", "Spend ten gold a turn on pets and food, put the pets in order, and merge three of a kind to level one up."], ["battle", "Watch the battle", 2, 0.62, -0.3, "Against a team another player built earlier; the two never meet live.", "Automatic and over in seconds: nothing to do but watch.", "The two teams fight on their own, front pet against front pet, with every ability firing in order."], ["ten wins", "Reach ten wins", 2, 0.74, 0.2, "A run measured against other players’ teams.", "Each loss costs a life, so the run is nursed along turn by turn.", "A run ends at ten wins or when the lives run out."], ["synergies", "Learn what combines", 2, -0.14, 0.4, "Finding out what the pets do to each other.", "Trying a combination and seeing it work, or not.", "Every pet has one ability with a trigger; the fun is the chain you get when several fire together."], ["versus", "Play a live lobby", 1, 0.9, -0.1, "Other players, at the same time.", "Turns are timed here.", "A versus mode puts up to eight players in one lobby, live or asynchronous."], ["hats", "Unlock packs and hats", 1, -0.45, -0.1, "A bit of dressing up.", "Nothing to work out.", "Extra pet packs and cosmetics are the paid part of the game."], ["audience", "Audience, read from the store page", 0, 0.42, 0.06, "Its tags and pitch point to: Strategy 34%, Community 25%, Competition 24%, Power 11%.", "Mood tags the model has no place for (Cute, Casual, Colorful, Family Friendly, Dogs, Horses) carry 32% of the tag weight.", "Casual strategy players who want to compete with friends without pressure: cute, free, family friendly."]], "aud": [["Strategy", 34], ["Community", 25], ["Competition", 24], ["Power", 11]]},
       ]
-      // The audience this game is for, as the user set it on 2026-10-03.
+      // The audience this game is for, set on 2026-10-03.
       const AUDIENCE = {
         id: 'audience',
         g: 'au',
-        name: 'Audience, as the user set it',
+        name: 'Audience',
         x: -0.06,
         y: 0.38,
-        desc: 'The user’s mix for this game: Discovery 30%, Strategy 30%, Power 20%, Story 10%, Challenge 10%.',
+        desc: 'This game’s mix: Discovery 30%, Strategy 30%, Power 20%, Story 10%, Challenge 10%.',
         whyX: 'Near the centre: Discovery and Story pull toward World, Strategy, Power and Challenge toward Player.',
         whyY: 'Toward Cerebral, between Discovery and Strategy.',
       }
-      // Pillars of this game (user, 2026-10-03): equal weight, so equal size. Radius in pixels of the 1200 px picture.
+      // Pillars of this game (2026-10-03): equal weight, so equal size. Radius in pixels of the 1200 px picture.
       // Only the rim and the label take clicks, so the shapes inside still open their own cards.
-      // links and quiet: what the user said, then Claude's reading where marked (build-principles.md).
       const PILLARS = [
         {
           id: 'P1', x: 0.195, y: 0.421, // around 1a, 2a, 1b, nudged toward Challenge
           name: 'Strategy, Power, Challenge',
           role: 'Where difficulty scales with progress, at steps the player chooses; the game never scales silently.',
-          shapes: '1a Cards: hand, 2a Harvest: yield, 1b Cards: loadout',
-          links: 'Fed by P3: the yield (2a) of what was steered there (2b). Feeds P2: the loadout (1b) is what the player takes on the outing. (Claude’s reading.)',
-          quiet: 'A riskless strategy-testing loop: trying a build before choosing the next step. (The user’s example; placing it here is Claude’s reading.)',
+          quiet: 'A riskless strategy-testing loop: trying a build before choosing the next step.',
         },
         {
           id: 'P2', x: -0.6, y: 0.08, // 14's height, 25's column, on the line from the audience to Story
           name: 'Discovery and Story',
           role: 'The most kinetic pillar, to lean into: exploration and horizon expansion, the exciting part.',
-          shapes: '14 Expedition, 15 Caretaker',
-          links: 'Feeds P3: what is brought back from exploration feeds tinkering. Fed by P1: the loadout taken on the outing (Claude’s reading).',
-          quiet: 'Rare, beautiful event sightings during exploration, near 25, the naturalist. (The user’s example; placing it here is Claude’s reading.)',
+          quiet: 'Rare, beautiful event sightings during exploration.',
         },
         {
           id: 'P3', x: -0.32, y: 0.57, // around 2b, 17, 8, 3
           name: 'Controlling the simulation',
-          role: 'What the player controls about the simulation: tinkering, on the cerebral, world side.',
-          shapes: '2b Harvest: steering, 17 Pressure: deadline, 8 Tipping point, 3 Alchemy',
-          links: 'Fed by P2: what exploration brings back. Feeds P1: what is steered here (2b) is taken as the yield there (2a) (Claude’s reading).',
-          quiet: 'A vivarium or zoo: the system’s living things, kept and watched. (The user’s example; placing it here is Claude’s reading.)',
+          role: 'What the player controls about the simulation: tinkering.',
+          quiet: 'A vivarium or zoo: the system’s living things, kept and watched.',
         },
+      ]
+      // what flows from one pillar to the next
+      const FLOWS = [
+        { from: 'P2', to: 'P3', text: 'What exploration brings back' },
+        { from: 'P3', to: 'P1', text: 'The yield of what was steered' },
+        { from: 'P1', to: 'P2', text: 'The loadout taken on the outing' },
       ]
       const PILLAR_COLOR = '#c98a00'
       const PILLAR_R = 72
@@ -688,6 +691,32 @@
           const toy = el('text', { x: 402 * K - 15, y: 470 * K + 4, 'text-anchor': 'end', class: 'toy' }, plot)
           toy.textContent = 'the toy'
 
+          // flows first, so the pillar rims and the shapes stay on top
+          const defs = el('defs', {}, plot)
+          const head = el('marker', { id: 'flowhead', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }, defs)
+          el('path', { d: 'M0,0 L10,5 L0,10 z', fill: PILLAR_COLOR }, head)
+          for (const f of FLOWS) {
+            const A = PILLARS.find((q) => q.id === f.from)
+            const B = PILLARS.find((q) => q.id === f.to)
+            const ax = px(A.x), ay = py(A.y), bx = px(B.x), by = py(B.y)
+            const d = Math.hypot(bx - ax, by - ay)
+            const ux = (bx - ax) / d, uy = (by - ay) / d
+            const gap = PILLAR_R * K + 4
+            const x1 = ax + ux * gap, y1 = ay + uy * gap, x2 = bx - ux * gap, y2 = by - uy * gap
+            const id = 'f:' + f.from + f.to
+            const g = el('g', { class: 'mark flow', tabindex: 0, role: 'button', 'aria-label': f.text }, plot)
+            el('line', { class: 'fline', x1, y1, x2, y2, stroke: PILLAR_COLOR, 'stroke-width': 2.5, 'marker-end': 'url(#flowhead)', 'pointer-events': 'none' }, g)
+            el('line', { x1, y1, x2, y2, stroke: 'transparent', 'stroke-width': 14, 'pointer-events': 'stroke' }, g)
+            f.mx = (x1 + x2) / 2
+            f.my = (y1 + y2) / 2
+            g.addEventListener('mouseenter', () => show(id))
+            g.addEventListener('mouseleave', () => (pinned ? show(pinned) : hide()))
+            g.addEventListener('focus', () => show(id))
+            g.addEventListener('blur', () => (pinned ? show(pinned) : hide()))
+            g.addEventListener('click', (e) => (e.stopPropagation(), pin(pinned === id ? null : id)))
+            g.addEventListener('keydown', (e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), pin(pinned === id ? null : id)))
+            marks[id] = g
+          }
           for (const p of PILLARS) {
             const cx = px(p.x)
             const cy = py(p.y)
@@ -960,20 +989,27 @@
           tip.hidden = false
           return place(DOT[m][0] * K, DOT[m][1] * K)
         }
+        if (id.startsWith('f:')) {
+          const f = FLOWS.find((q) => 'f:' + q.from + q.to === id)
+          const h = document.createElement('b')
+          h.className = 'th'
+          h.textContent = f.text
+          tip.append(h)
+          paint(PILLAR_COLOR, '#0b0b0b')
+          tip.hidden = false
+          return place(f.mx, f.my)
+        }
         if (id.startsWith('p:')) {
           const p = PILLARS.find((q) => 'p:' + q.id === id)
           const h = document.createElement('b')
           h.className = 'th'
           h.textContent = p.id + ' · ' + p.name
-          const grp = document.createElement('div')
-          grp.className = 'grp'
-          grp.textContent = 'Pillar, as the user set it'
-          const lines = [p.role, 'Shapes inside: ' + p.shapes + '.', p.links, 'Tranquility side loop: ' + p.quiet].map((x) => {
+          const lines = [p.role, 'Tranquility side loop: ' + p.quiet].map((x) => {
             const q = document.createElement('p')
             q.textContent = x
             return q
           })
-          tip.append(h, grp, ...lines)
+          tip.append(h, ...lines)
           paint(PILLAR_COLOR, '#0b0b0b')
           tip.hidden = false
           return place(px(p.x) + PILLAR_R * K * 0.72, py(p.y) - PILLAR_R * K * 0.72)
