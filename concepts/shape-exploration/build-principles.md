@@ -77,10 +77,66 @@ turn. Those still need the user, and players.
 **What its questions depend on** (**Claude**): the audience. "Never boring" for a Discovery-and-Strategy player is a
 different number than for a Challenge player.
 
+## Expectations of a good game (agreed 2026-10-03)
+
+The user: "We know enough already to describe some expectations of a good game." The user drafted the list; Claude
+objected to three points, sharpened four and added two; the user agreed to all of it. This is the agreed version. The
+user's own wording is kept where it did not change.
+
+**Tension–release cadence**
+
+- Each win is progress.
+- Release is not rest but a very different kind of challenge: switching to another pillar.
+- There must also be breathers, and even places of tranquility: intensity drops altogether. Release and breather are
+  two different things, and the game needs both.
+- The pillars must be distinct and distant, or the cadence doesn't work (user: "I need distinct, distant pillars for
+  the tension cadence to work"). This matches the main finding in [findings.md](findings.md), the swing between
+  pillars.
+
+**Gameplay loops**
+
+- The core must be simple, and the fun toy feeling must be reachable within seconds of loading the game (user: "the
+  core should be possible to reach the fun toy feeling in seconds of loading the game"). Not "fast" in the sense of
+  quick hands: for this audience the core is a small decision, and speed, if any, lives in another loop.
+- The core must give an "I've got this" feeling.
+- Supporting loops add progress and structure.
+- Side loops add release and relatedness.
+- The loops must average up to the audience's motivation profile, **and** every large share of the profile must have
+  a loop near it: two loops can average to the right spot while serving none of its motivations.
+- Picking the game up again must not be overwhelming.
+
+**Mechanics depth**
+
+- Few rules, infinite combinations, through a dense interaction graph between systems, **with every interaction
+  visible.** A dense graph produces hidden consequences by nature; readability is what keeps the depth accessible.
+- **Readability:** the system shows what it is about to do before the player acts (Slay the Spire's enemy intents;
+  the user's rule that consequences must be painfully obvious).
+
+**Difficulty**
+
+- Input randomness is fun; output randomness is frustrating.
+- Failures must be near misses and actionable lessons.
+- Lessons carry over to the next attempt; that is what mastery is.
+- **The player chooses the cost of failure and when to face the next challenge;** the game does not adjust it
+  silently, which would be a hidden consequence. The user: "I love games where you choose when to face the next
+  challenge, and you are under no constant pressure while preparing." (Slay the Spire's Ascension; the pool's
+  "difficulty as a dial".)
+
+**Learning**
+
+- Teach through directed experience, not abstract instructions.
+- There is no learning under stress, so learning happens in the release and the breathers: the tension–release
+  cadence is also the teaching cadence.
+- Every action gets an immediate signal, and every delayed consequence can be traced back to its cause. (The draft
+  said "the only useful feedback is the immediate"; for a Discovery-and-Strategy audience delayed consequences are
+  where strategy comes from, as long as they are traceable.)
+- New rules arrive one at a time, after the previous one is understood.
+
 ## Open questions
 
 1. **What should the simulator tell first?** The first thing the user couldn't judge by playing it alone.
 2. **How does a player who has mastered the game show it,** without beating anyone or anything? In Slay the Spire it
    is winning at higher Ascension.
 3. **"Like this" (answered in part):** the user's follow-up points to the principle (accessible, never boring,
-   through systems), not to Slay the Spire's structure of runs, a deck, a map and fights. Not confirmed outright.
+   through systems), not to Slay the Spire's structure of runs, a deck, a map and fights. A run structure is not
+   chosen: the expectations below say "the next attempt" (user, 2026-10-03).
