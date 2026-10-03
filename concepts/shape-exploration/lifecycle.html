@@ -236,6 +236,8 @@
       node('area', 'cultivated', 'Cultivated')
       edge('area', 'unseen', 'wild', 'active')
       decision((X.unseen + X.wild) / 2, Y.area, 'Open up')
+      text((X.unseen + X.wild) / 2 - 20, Y.area + 38, 'a boundary found:', 'cond')
+      text((X.unseen + X.wild) / 2 - 20, Y.area + 52, 'foragers lift the fog', 'cond')
       who((X.unseen + X.wild) / 2, Y.area + 22, 'pioneers')
       // not a decision: taming the top predator triggers it
       edge('area', 'wild', 'studied', 'idle', 'foragers')
