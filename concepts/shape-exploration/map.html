@@ -1062,8 +1062,7 @@
           tip.append(h, more)
           tip.classList.remove('tinted')
           tip.classList.add('subtle')
-          // the arrow's colour as it looks on the paper, kept opaque so the chart does not show through
-          tip.style.background = `color-mix(in srgb, ${PILLAR_COLOR} ${FLOW_ALPHA * 100}%, #ffffff)`
+          tip.style.background = PILLAR_COLOR
           tip.style.color = '#0b0b0b'
           tip.hidden = false
           return place(f.mx, f.my, 240)
