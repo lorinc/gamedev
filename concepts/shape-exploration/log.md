@@ -117,3 +117,11 @@ Quotes are the user's, with spelling lightly fixed.
   area can be colonized > colonized area allows economic use of crops and animals." Prospectors are not a fourth
   role: "just foragers have multiple roles: they collect knowledge (prospectors), they forage resources, they bring
   home flora samples, and they lift FOW". Taming the top predator, not finding everything, now unlocks colonization.
+- **Five stages of a living thing.** The user: "biosphere entities go through these stages: unseen > wild > studied >
+  foraged > cultivated." Pioneers open an area (unseen > wild); foragers study the food chain bottom-up; what is
+  known can be foraged; what is foraged can be used in taming; tamed animals tame predators; the top predator tamed
+  opens the area for colonization; cultivated areas self-collect. "We do not have to name everything, only what
+  requires user decision": send pioneers to open up; "can't tame a creature without its natural diet already
+  foraged"; "this also applies to predators, pioneers need to tame enough prey to capture it - careful, deep food
+  chain requires exponentially more prey"; once the top predator is tamed the area can be cultivated; "cultivated
+  area self-harvests both crop and prey". Studying and foraging are automatic.

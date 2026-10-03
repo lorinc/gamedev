@@ -189,15 +189,29 @@ colonies settle into stable idle play.
 
 ### How an area moves
 
-1. **Open:** an Unseen is opened up and becomes a cavern.
-2. **Foragers prospect and forage;** pioneers tame a few of the easiest animals, for their local resistances.
-3. **Pioneers walk the food chain:** tamed animals help tame stronger ones, with crops and baits brought in from
-   outside, up to the top predator, a mini-boss.
-4. **Colonize:** once the top predator is tamed, the area can be colonized.
-5. **Economic use:** a colonized area allows economic use of its crops and animals.
+**Every living thing goes through five stages:** unseen → wild → studied → foraged → cultivated.
 
-**Foragers have several roles:** they collect knowledge (prospecting), forage resources, bring home flora samples, and
-lift the fog of war.
+1. **Pioneers open an Unseen area:** everything in it goes from unseen to wild.
+2. **Foragers study the food chain bottom-up,** on their own.
+3. **What is studied is foraged,** on its own.
+4. **What is foraged can be used in taming.** A creature can't be tamed until its natural diet is foraged.
+5. **Tamed animals are used to tame predators:** the pioneers must tame enough prey to capture a predator. A deep food
+   chain needs exponentially more prey.
+6. **Once the top predator is tamed,** the area can be cultivated.
+7. **A cultivated area harvests itself,** both crops and prey.
+
+**Only what needs a player decision gets a name:**
+
+| Decision | Condition |
+|---|---|
+| Send pioneers to open up an Unseen area | |
+| Tame a creature | its natural diet is foraged |
+| Tame a predator | enough of its prey tamed; a deep food chain needs exponentially more |
+| Cultivate an area | its top predator is tamed |
+
+Studying and foraging run on their own, and a cultivated area harvests itself, so none of them needs a name.
+
+**Foragers have several roles:** they study (prospecting), forage, bring home flora samples, and lift the fog of war.
 
 ### Why every biome gets a colony
 
