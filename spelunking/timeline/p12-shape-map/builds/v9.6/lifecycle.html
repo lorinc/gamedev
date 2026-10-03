@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Biosphere lifecycle</title>
+    <style>
+      :root {
+        --page: #f9f9f7;
+        --surface: #fcfcfb;
+        --ink: #0b0b0b;
+        --ink2: #52514e;
+        --muted: #898781;
+        --line: #e1e0d9;
+        --active: #c98a00;
+        --dep: #2a78d6;
+        --pioneer: #b5338a;
+        --forager: #2f7d32;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --page: #0d0d0d;
+          --surface: #1a1a19;
+          --ink: #ffffff;
+          --ink2: #c3c2b7;
+          --muted: #8f8d86;
+          --line: #2c2c2a;
+          --dep: #6aa6ec;
+          --pioneer: #e070b8;
+          --forager: #6cc070;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--page);
+        color: var(--ink);
+        font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 20px 16px 48px;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0 0 4px;
+      }
+      p {
+        margin: 0 0 10px;
+        color: var(--ink2);
+        max-width: 78ch;
+      }
+      .chart {
+        overflow-x: auto;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px;
+      }
+      .chart svg {
+        display: block;
+        width: 100%;
+        min-width: 760px;
+        height: auto;
+        font-family: inherit;
+      }
+      .row {
+        font-size: 15px;
+        font-weight: 700;
+        fill: var(--ink);
+      }
+      .node rect {
+        fill: var(--surface);
+        stroke: var(--ink2);
+        stroke-width: 1.5;
+      }
+      .node text {
+        font-size: 14px;
+        fill: var(--ink);
+        text-anchor: middle;
+      }
+      .active {
+        stroke: var(--active);
+        stroke-width: 4;
+        fill: none;
+      }
+      .idle {
+        stroke: var(--muted);
+        stroke-width: 2;
+        stroke-dasharray: 2 5;
+        stroke-linecap: round;
+        fill: none;
+      }
+      .dep {
+        stroke: var(--dep);
+        stroke-width: 1.5;
+        stroke-dasharray: 6 4;
+        fill: none;
+      }
+      .decision {
+        font-size: 14px;
+        font-weight: 700;
+        fill: var(--active);
+        text-anchor: middle;
+      }
+      .who {
+        font-size: 12px;
+        font-weight: 700;
+        text-anchor: middle;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .who.pioneers {
+        fill: var(--pioneer);
+      }
+      .who.foragers {
+        fill: var(--forager);
+      }
+      .who.colony {
+        fill: var(--muted);
+      }
+      .cond {
+        font-size: 12px;
+        fill: var(--ink2);
+        text-anchor: middle;
+      }
+      .deplabel {
+        font-size: 12px;
+        fill: var(--dep);
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 18px;
+        margin: 12px 0 0;
+        font-size: 14px;
+        color: var(--ink2);
+      }
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Biosphere lifecycle</h1>
+      <p>
+        How terrain, flora and fauna move from unseen to cultivated. Only the player's decisions carry a name;
+        everything else runs on its own.
+      </p>
+      <div class="chart">
+        <svg id="svg" viewBox="0 0 1240 580" role="img" aria-label="Lifecycle of terrain, flora and fauna"></svg>
+      </div>
+      <div class="legend">
+        <span><svg width="36" height="10" style="min-width: 0"><line x1="0" y1="5" x2="36" y2="5" class="active" /></svg>active: a player decision</span>
+        <span><svg width="36" height="10" style="min-width: 0"><line x1="2" y1="5" x2="34" y2="5" class="idle" /></svg>idle: runs on its own</span>
+        <span><svg width="36" height="10" style="min-width: 0"><line x1="0" y1="5" x2="36" y2="5" class="dep" /></svg>enables</span>
+      </div>
+      <p style="margin-top: 14px">
+        A deep food chain needs exponentially more prey: each predator needs enough of its prey tamed first.
+      </p>
+    </main>
+    <script>
+      const svg = document.getElementById('svg')
+      const NS = 'http://www.w3.org/2000/svg'
+      function el(tag, attrs, parent = svg) {
+        const e = document.createElementNS(NS, tag)
+        for (const k in attrs) e.setAttribute(k, attrs[k])
+        parent.appendChild(e)
+        return e
+      }
+      function text(x, y, s, cls) {
+        const t = el('text', { x, y, class: cls })
+        t.textContent = s
+        return t
+      }
+
+      const defs = el('defs', {})
+      for (const [id, color] of [['h-active', 'var(--active)'], ['h-idle', 'var(--muted)'], ['h-dep', 'var(--dep)']]) {
+        const m = el('marker', { id, viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, markerUnits: 'userSpaceOnUse', orient: 'auto' }, defs)
+        m.setAttribute('markerWidth', 12)
+        m.setAttribute('markerHeight', 12)
+        el('path', { d: 'M0,0 L10,5 L0,10 z', fill: color }, m)
+      }
+
+      // stage columns and lanes
+      const X = { unseen: 150, wild: 340, studied: 525, foraged: 710, tamed: 945, cultivated: 1170 }
+      const Y = { area: 90, flora: 270, fauna: 440 }
+      const W = 112, H = 40
+
+      for (const [lane, label] of [['area', 'Terrain'], ['flora', 'Flora'], ['fauna', 'Fauna']]) text(16, Y[lane] + 5, label, 'row')
+      text(16, Y.area + 22, 'ores, liquids,', 'cond').style.textAnchor = 'start'
+      text(16, Y.area + 36, 'physical attributes', 'cond').style.textAnchor = 'start'
+
+      function node(lane, col, label) {
+        const g = el('g', { class: 'node' })
+        el('rect', { x: X[col] - W / 2, y: Y[lane] - H / 2, width: W, height: H, rx: 8 }, g)
+        const t = el('text', { x: X[col], y: Y[lane] + 5 }, g)
+        t.textContent = label
+      }
+      // who does the work: the pioneers, the foragers, or the colony itself
+      function who(x, y, actor) {
+        text(x, y, actor, 'who ' + actor)
+      }
+      function edge(lane, from, to, kind, actor) {
+        el('path', { d: `M${X[from] + W / 2},${Y[lane]} L${X[to] - W / 2 - 2},${Y[lane]}`, class: kind, 'marker-end': `url(#h-${kind})` })
+        if (actor) who((X[from] + X[to]) / 2, Y[lane] - 8, actor)
+      }
+      function decision(x, y, name, cond) {
+        text(x, y - 12, name, 'decision')
+        if (cond) cond.forEach((c, i) => text(x, y + 22 + i * 15, c, 'cond'))
+      }
+      function dep(d, label, lx, ly, anchor = 'start') {
+        el('path', { d, class: 'dep', 'marker-end': 'url(#h-dep)' })
+        const t = text(lx, ly, label, 'deplabel')
+        t.setAttribute('text-anchor', anchor)
+      }
+      function harvest(lane) {
+        // a cultivated area harvests itself
+        const x = X.cultivated, y = Y[lane] - H / 2
+        el('path', { d: `M${x - 18},${y} C${x - 30},${y - 34} ${x + 30},${y - 34} ${x + 18},${y - 2}`, class: 'idle', 'marker-end': 'url(#h-idle)' })
+        text(x - 24, y - 14, 'self-collects', 'who colony').style.textAnchor = 'end'
+      }
+
+      // area: Unseen > Opened > Cultivated
+      node('area', 'unseen', 'Unseen')
+      node('area', 'wild', 'Wild')
+      node('area', 'studied', 'Studied')
+      node('area', 'foraged', 'Foraged')
+      node('area', 'tamed', 'Caverns')
+      node('area', 'cultivated', 'Cultivated')
+      edge('area', 'unseen', 'wild', 'active')
+      decision((X.unseen + X.wild) / 2, Y.area, 'Open up')
+      who((X.unseen + X.wild) / 2, Y.area + 22, 'pioneers')
+      // not a decision: taming the top predator triggers it
+      edge('area', 'wild', 'studied', 'idle', 'foragers')
+      edge('area', 'studied', 'foraged', 'idle', 'foragers')
+      edge('area', 'foraged', 'tamed', 'idle')
+      edge('area', 'tamed', 'cultivated', 'active')
+      decision((X.tamed + X.cultivated) / 2, Y.area, 'Build colony')
+      who((X.tamed + X.cultivated) / 2, Y.area + 22, 'foragers')
+      harvest('area')
+
+      // flora: unseen > wild > studied > foraged > cultivated
+      node('flora', 'unseen', 'Unseen')
+      node('flora', 'wild', 'Wild')
+      node('flora', 'studied', 'Studied')
+      node('flora', 'foraged', 'Foraged')
+      node('flora', 'cultivated', 'Cultivated')
+      edge('flora', 'unseen', 'wild', 'idle', 'pioneers')
+      edge('flora', 'wild', 'studied', 'idle', 'foragers')
+      edge('flora', 'studied', 'foraged', 'idle', 'foragers')
+      edge('flora', 'foraged', 'cultivated', 'idle', 'colony')
+
+      // fauna: unseen > wild > studied > tamed > cultivated
+      node('fauna', 'unseen', 'Unseen')
+      node('fauna', 'wild', 'Wild')
+      node('fauna', 'studied', 'Studied')
+      node('fauna', 'tamed', 'Tamed')
+      node('fauna', 'cultivated', 'Cultivated')
+      edge('fauna', 'unseen', 'wild', 'idle', 'pioneers')
+      edge('fauna', 'wild', 'studied', 'idle', 'foragers')
+      // fauna is never foraged on its own: the pioneers tame it, with the player taking part
+      edge('fauna', 'studied', 'tamed', 'active')
+      decision((X.foraged + X.tamed) / 2, Y.fauna, 'Tame')
+      who((X.foraged + X.tamed) / 2, Y.fauna + 22, 'pioneers')
+      text((X.foraged + X.tamed) / 2, Y.fauna + 40, 'its natural diet is foraged', 'cond')
+      text((X.foraged + X.tamed) / 2, Y.fauna + 55, 'a predator: enough prey tamed', 'cond')
+      edge('fauna', 'tamed', 'cultivated', 'idle', 'colony')
+
+      // what enables what, across the lanes
+      dep(`M${X.wild},${Y.area + H / 2} L${X.wild},${Y.flora - H / 2 - 2}`, 'opens', X.wild + 8, (Y.area + Y.flora) / 2)
+      dep(`M${X.wild - 40},${Y.area + H / 2} C${X.wild - 110},${Y.flora - 40} ${X.wild - 110},${Y.flora + 60} ${X.wild - 40},${Y.fauna - H / 2 - 2}`, 'opens', X.wild - 98, Y.flora + 50, 'end')
+      dep(`M${X.foraged + 20},${Y.flora + H / 2} C${X.foraged + 40},${Y.flora + 80} ${(X.foraged + X.tamed) / 2},${Y.fauna - 80} ${(X.foraged + X.tamed) / 2},${Y.fauna - 28}`, 'diet', X.foraged + 50, Y.flora + 60)
+      dep(`M${X.tamed},${Y.fauna + H / 2} C${X.tamed},${Y.fauna + 100} ${(X.foraged + X.tamed) / 2 + 40},${Y.fauna + 100} ${(X.foraged + X.tamed) / 2 + 30},${Y.fauna + 64}`, 'prey', X.tamed + 8, Y.fauna + 90)
+      dep(`M${X.tamed},${Y.fauna - H / 2} L${X.tamed},${Y.area + H / 2 + 2}`, 'top predator tamed', X.tamed + 8, Y.flora + 40)
+      dep(`M${X.cultivated - 40},${Y.area + H / 2} L${X.cultivated - 40},${Y.flora - H / 2 - 2}`, 'cultivates', X.cultivated - 32, (Y.area + Y.flora) / 2)
+      harvest('flora')
+      harvest('fauna')
+    </script>
+  </body>
+</html>

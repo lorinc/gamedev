@@ -380,7 +380,7 @@ function main() {
   problems.push(...dp)
   const game = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).name
   const title = game.charAt(0).toUpperCase() + game.slice(1)
-  // The shape exploration (concepts/shape-exploration) is design work between prototypes: no build, so no card.
+  // The shape map's live page; its milestones are frozen in p12's card.
   const links = [{ label: '◆ shape map', href: '../../concepts/shape-exploration/map.html' }]
   writeFileSync(out, renderPage(entries, { game: title, devBase, decisions, links }))
   for (const p of problems) console.warn('⚠', p)

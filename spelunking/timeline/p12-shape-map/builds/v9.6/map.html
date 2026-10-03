@@ -1,0 +1,1277 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gameplay loop and mechanics rationalizer</title>
+    <style>
+      :root {
+        --page: #f9f9f7;
+        --surface: #fcfcfb;
+        --ink: #0b0b0b;
+        --ink2: #52514e;
+        --muted: #898781;
+        --line: #e1e0d9;
+        --pick: #0b0b0b;
+        --a1: #2a78d6;
+        --a2: #008300;
+        --pw: #4a3aa7;
+        --op: #e34948;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --page: #0d0d0d;
+          --surface: #1a1a19;
+          --ink: #ffffff;
+          --ink2: #c3c2b7;
+          --line: #2c2c2a;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--page);
+        color: var(--ink);
+        font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 20px 16px 48px;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0 0 4px;
+      }
+      h2 {
+        font-size: 16px;
+        margin: 28px 0 8px;
+      }
+      p {
+        margin: 0 0 10px;
+        color: var(--ink2);
+        max-width: 78ch;
+      }
+      .cols {
+        display: grid;
+        grid-template-columns: minmax(0, 760px) minmax(260px, 1fr);
+        gap: 20px;
+        align-items: start;
+        margin-top: 14px;
+      }
+      @media (max-width: 900px) {
+        .cols {
+          grid-template-columns: 1fr;
+        }
+      }
+      /* the map image is light in both themes, so the chart keeps a light card and light-surface colours */
+      #chart {
+        position: relative;
+        background: #f1f1f1;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+        aspect-ratio: 1;
+      }
+      #chart > img,
+      #chart > svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      #chart text {
+        font: 600 11px system-ui, -apple-system, 'Segoe UI', sans-serif;
+        fill: #0b0b0b;
+        paint-order: stroke;
+        stroke: #f1f1f1;
+        stroke-width: 3px;
+        stroke-linejoin: round;
+        pointer-events: none;
+      }
+      #chart .toy {
+        font-weight: 700;
+      }
+      #chart .pname {
+        fill: #8a5e00;
+      }
+      /* narrow screens: the ids would cover each other, so only the picked mark keeps its label */
+      #plot.small .mark text {
+        display: none;
+      }
+      #plot.small .mark.on text {
+        display: block;
+        font-size: 13px;
+      }
+      .mark {
+        cursor: pointer;
+      }
+      .mark .hit {
+        fill: transparent;
+      }
+      .mark .ring {
+        fill: none;
+        stroke: #0b0b0b;
+        stroke-width: 2;
+        opacity: 0;
+      }
+      .mark.on .ring,
+      .mark:focus .ring {
+        opacity: 1;
+      }
+      .mark:focus {
+        outline: none;
+      }
+      .mark.flow.on .fline,
+      .mark.flow:focus .fline {
+        stroke-width: 6;
+        opacity: 0.7;
+      }
+      #tip p.kv + p.kv {
+        margin-top: 3px;
+      }
+      #tip.tinted p.kv {
+        opacity: 1;
+      }
+      #tip.subtle {
+        width: max-content;
+        max-width: 290px;
+        white-space: pre-line;
+        padding: 4px 8px;
+        font-size: 12px;
+        color: var(--ink2);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+      }
+      #tip.subtle p {
+        margin-top: 3px;
+        color: #0b0b0b;
+      }
+      #tip.subtle .mode {
+        display: inline-block;
+        margin-right: 5px;
+        padding: 0 4px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      #tip.subtle .blk {
+        margin-top: 6px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        opacity: 0.65;
+      }
+      .mark.pillar.on .prim,
+      .mark.pillar:focus .prim {
+        stroke-width: 4;
+      }
+      #plot.small .mark.pillar text {
+        display: block;
+      }
+      .dim {
+        opacity: 0.22;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 8px;
+        margin: 12px 0 0;
+      }
+      .legend button {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font: inherit;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 4px 10px;
+        cursor: pointer;
+      }
+      .legend button[aria-pressed='true'] {
+        border-color: var(--ink);
+      }
+      .gh {
+        margin: 0 0 2px;
+      }
+      /* the hover card: what a mark is and why it sits there */
+      #tip {
+        position: absolute;
+        z-index: 2;
+        pointer-events: none;
+        background: var(--surface);
+        color: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+        font-size: 14px;
+        line-height: 1.4;
+      }
+      #tip .th {
+        display: block;
+        font-size: 15px;
+      }
+      #tip .grp {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--ink2);
+        font-size: 13px;
+        margin: 1px 0 6px;
+      }
+      #tip p {
+        margin: 0;
+        color: var(--ink);
+        max-width: none;
+      }
+      #tip p + p {
+        margin-top: 6px;
+        color: var(--ink2);
+      }
+      /* the card takes the colour of the symbol it describes */
+      #tip.tinted {
+        border-color: transparent;
+      }
+      #tip.tinted .grp,
+      #tip.tinted p {
+        color: inherit;
+      }
+      #tip.tinted .grp,
+      #tip.tinted p + p {
+        opacity: 0.85;
+      }
+      .credit {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 0;
+      }
+      .cols.head {
+        align-items: end;
+        margin-top: 0;
+      }
+      .cols.head p {
+        margin-bottom: 0;
+      }
+      .credit a {
+        color: #0645ad;
+      }
+      @media (prefers-color-scheme: dark) {
+        .credit a {
+          color: #6ea8fe;
+        }
+      }
+      .gnote {
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+      #games {
+        display: grid;
+        gap: 6px;
+      }
+      #games button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        font: inherit;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 7px 12px;
+        cursor: pointer;
+      }
+      #games button[aria-pressed='true'] {
+        border-color: var(--ink);
+        box-shadow: inset 3px 0 0 var(--ink);
+      }
+      #games .gt {
+        display: block;
+      }
+      #games .gm {
+        display: block;
+        font-size: 13px;
+        color: var(--ink2);
+      }
+      .legend .key {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px 4px 4px;
+        color: var(--ink2);
+      }
+      #editbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 10px;
+        margin: 10px 0 0;
+        font-size: 13px;
+        color: var(--ink2);
+      }
+      #editbar button {
+        font: inherit;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 3px 10px;
+        cursor: pointer;
+      }
+      #plot.editing .mark {
+        cursor: grab;
+        touch-action: none;
+      }
+      .scroll {
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 6px 10px 6px 0;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        color: var(--ink2);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      td.n {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      tbody tr {
+        cursor: pointer;
+      }
+      tbody tr.on td {
+        background: var(--surface);
+        box-shadow: inset 0 0 0 9999px rgba(127, 127, 127, 0.1);
+      }
+      .sw {
+        flex: none;
+      }
+      ul {
+        margin: 0 0 10px;
+        padding-left: 20px;
+        color: var(--ink2);
+        max-width: 78ch;
+      }
+      a {
+        color: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="cols head">
+        <div>
+          <h1>Gameplay loop and mechanics rationalizer</h1>
+          <p>
+            A tool to understand how successful small indie games engineer their loops around what their audience
+            expects, and then to choose my own mechanics from what was learned. Point at a mark to see what it is and why
+            it sits there, or at a motivation dot to see what it means; pick a game on the right.
+          </p>
+        </div>
+        <p class="credit">
+          The map, its two axes and its 12 motivations are Nick Yee's, from
+          <a href="https://quanticfoundry.com/">Quantic Foundry</a>: “Gaming Motivations Group Into 3 High-Level
+          Clusters” (21 December 2015), built from the Gamer Motivation Profile answers of over 140,000 gamers. The
+          picture behind the chart is theirs. The games listed for each motivation come from Quantic Foundry's lists of
+          the favourite games of each motivation's strongest scorers. Everything placed on the map is this page's own
+          judgement, not Quantic Foundry's data.
+        </p>
+      </div>
+
+      <div class="cols">
+        <div>
+          <div id="chart">
+            <img src="Nick_axes.webp" alt="Quantic Foundry's motivation map with the axes World to Player and Cerebral to Kinetic" />
+            <svg id="plot" viewBox="0 0 760 760" role="img" aria-label="The shapes of the pool placed on the two axes"></svg>
+            <div id="tip" role="tooltip" hidden></div>
+          </div>
+          <div class="legend" id="legend" role="group" aria-label="Show one group"></div>
+          <div id="editbar" hidden><span id="editmsg"></span><button type="button" id="save">Save to map.html</button><button type="button" id="revert">Drop the unsaved moves</button></div>
+        </div>
+        <div>
+          <h2 class="gh">Games</h2>
+          <p class="gnote">The first row is this game. The others are small indie successes, each split into its loops on the same axes; a bigger mark is a bigger part of the play. The green diamond is the game's audience, read from its Steam tags and pitch without looking at the loops.</p>
+          <div id="games" role="group" aria-label="Show a game"></div>
+        </div>
+      </div>
+
+      <div id="poolnotes">
+      <h2>What the picture shows for this game's pool</h2>
+      <ul>
+        <li>
+          <b>The whole pool sits in the upper left and the centre.</b> It runs from 0.86 toward World to 0.60 toward
+          Player, and from 0.84 toward Cerebral to 0.32 toward Kinetic.
+        </li>
+        <li><b>The lower right is empty.</b> No shape is both fast-paced and about other players.</li>
+        <li>
+          <b>Anchor 1 (experiment, then plan) is a column</b> just left of the vertical axis, from Diagnosis at the top
+          down to the Front near the horizontal axis. Within it, the more a shape is about a deck or a path, the lower
+          and further right it sits.
+        </li>
+        <li>
+          <b>Anchor 2 (mine, and complete) is a long diagonal band</b> from Catalogue at the top (next to Completion) down
+          to Base and Companion at the left (next to Design and Story). It is the most spread-out group.
+        </li>
+        <li>
+          <b>Only six marks are below the horizontal axis:</b> Base, Companion, One trigger, Character as centre,
+          Visit, and the run half of Prep-and-run. None is further than 0.32 toward Kinetic.
+        </li>
+        <li>
+          <b>Prep-and-run is the one shape drawn as two marks</b> joined by a dashed line: its prep half and its run half
+          sit half the map's width apart.
+        </li>
+        <li>
+          <b>Only three marks are clearly on the Player side:</b> Async challenge, Same start, and the run that keeps
+          nothing.
+        </li>
+      </ul>
+      </div>
+
+      <h2>How the positions were made</h2>
+      <ul>
+        <li>
+          <b>They are judgements,</b> one shape at a time, on each axis separately, using the 12 motivation dots
+          as rulers (for example "more cerebral than Discovery, less than Strategy"). Quantic Foundry publishes no
+          position for any mechanic.
+        </li>
+        <li>
+          <b>The scale</b> runs from 0 at the crossing of the axes to 1 at each arrowhead. A difference under about 0.1
+          means nothing; several marks were moved by up to 0.05 so they don't cover each other or the picture's labels.
+        </li>
+        <li>
+          <b>The numbers in <a href="04-assess.md">04-assess.md</a> are a different measure:</b> there, each shape is a
+          list of motivations and its width is the distance between them. Here each shape is placed directly.
+        </li>
+        <li>
+          <b>The other games</b> are placed the same way, from what is known of each game, not from play sessions
+          or from Quantic Foundry's data. Which loops a game is split into, and how big each one is, are judgements
+          too. Review counts are Steam's on 2026-10-02; teams and development times are in
+          <a href="reference-games.md">reference-games.md</a> with their sources.
+        </li>
+        <li>
+          <b>The audience mark</b> is made differently, and without the loops: each of a game's 20 Steam tags and each
+          thing its pitch promises is assigned to a motivation by one fixed table, and the mark sits at the weighted
+          middle of those motivations. A green ring marks each motivation with at least a 10% share; a bigger ring is
+          a bigger share. Mood tags (relaxing, cozy, cute) have no motivation in the model and don't move the mark.
+          The table and the tags are in <a href="audience-from-tags.md">audience-from-tags.md</a>.
+        </li>
+      </ul>
+
+      <h2 id="tabletitle">All shapes</h2>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Shape</th>
+              <th id="thg">Group</th>
+              <th>World ↔ Player</th>
+              <th>Cerebral ↔ Kinetic</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </main>
+
+    <script>
+      // x: -1 = World arrowhead, +1 = Player arrowhead. y: +1 = Cerebral arrowhead, -1 = Kinetic arrowhead.
+      const GROUPS = {
+        a1: { name: 'Anchor 1: experiment, then plan', color: '#2a78d6', shape: 'circle' },
+        a2: { name: 'Anchor 2: mine, and complete', color: '#008300', shape: 'square' },
+        pw: { name: 'Power: grow strong', color: '#4a3aa7', shape: 'diamond' },
+        op: { name: 'Other players', color: '#e34948', shape: 'triangle' },
+        au: { name: 'Audience', color: '#008300', shape: 'diamond' },
+      }
+      const SHAPES = [
+        ['3', 'a1', 'Alchemy', -0.42, 0.52, 'Acts only on the cave’s own materials.', 'Small, careful experiments before applying anything; no time pressure.'],
+        ['16', 'a1', 'Diagnosis', -0.5, 0.68, 'Pure observation of the world.', 'The most deliberate shape in the pool: observe, guess, test.'],
+        ['2b', 'a1', 'Harvest: steering', -0.28, 0.6, 'Acts on the world, through a system the player has to model.', 'What is left to seed pays off generations later.'],
+        ['4b', 'a1', 'Pet: worker', -0.18, 0.44, 'Acts on the world through an agent, one step removed.', 'Assign a job and watch; moderate planning.'],
+        ['4c', 'a1', 'Pet: rule-follower', -0.06, 0.78, 'About the rule set more than about the place.', 'All the thinking is done up front; then it runs unattended.'],
+        ['17', 'a1', 'Pressure: deadline', -0.2, 0.52, 'Prepares a cavern of the world.', 'Long preparation, with one sharp moment when the event hits.'],
+        ['13', 'a1', 'Orders', -0.14, 0.69, 'A target set from outside, met by steering the world.', 'Planning toward one specific result.'],
+        ['1a', 'a1', 'Cards: hand', 0.07, 0.46, 'As much about the hand and the deck as about the cave.', 'A decision every moment, each one thought through.'],
+        ['22', 'a1', 'Deck-building run', 0.08, 0.18, 'Follows the character’s progress along a path.', 'Reacting to threats as they come.'],
+        ['23', 'a1', 'Pressure: front', 0.08, 0.08, 'An opposing force to push against: the nearest thing to an opponent without one.', 'Continuous pressure; the most dynamic shape of this group.'],
+        ['15', 'a2', 'Caretaker', -0.74, 0.06, 'The place itself is the point.', 'Slow, but upkeep is doing more than planning.'],
+        ['5', 'a2', 'Base', -0.62, -0.3, 'A home in the world; expression.', 'Arranged by feel, not by plan.'],
+        ['4a', 'a2', 'Pet: companion', -0.86, -0.32, 'Attachment to a creature of the world: the nearest shape to Story and Fantasy.', 'Affection, not calculation.'],
+        ['11', 'a2', 'Catalogue', -0.36, 0.84, 'The world’s contents, recorded.', 'The longest horizon in the pool: fill every slot.'],
+        ['25', 'a2', 'Pet: lure; naturalist', -0.56, 0.46, 'Watching the world.', 'Patient set-up, then waiting.'],
+        ['29a', 'a2', 'Creature requests: side wishes', -0.72, 0.24, 'Creatures of the world as characters.', 'Small errands with some planning.'],
+        ['21', 'a2', 'Breeding; seed crafting', -0.38, 0.7, 'The world’s living things, made yours.', 'Combining traits over generations.'],
+        ['28', 'a2', 'Exhibit', -0.24, 0.26, 'A place built for visitors, though simulated ones.', 'Managing interest and income.'],
+        ['8', 'a2', 'Tipping point as a new level', -0.3, 0.44, 'The world changing state.', 'Working toward a threshold.'],
+        ['14', 'a2', 'Expedition', -0.7, 0.12, 'Going somewhere else in the world: toward Fantasy.', 'Preparation, then travel.'],
+        ['24', 'a2', 'One trigger', -0.38, -0.18, 'Arranged in the world.', 'Careful set-up, but the payoff is watching a fast chain reaction.'],
+        ['26', 'a2', 'Knowledge loop', -0.6, 0.38, 'Learning the world itself.', 'What carries over is understanding.'],
+        ['1b', 'pw', 'Cards: loadout', 0.16, 0.4, 'The player’s own kit.', 'Designed in a pause, then used without thinking.'],
+        ['1c', 'pw', 'Cards: collection', 0.1, 0.72, 'What the player owns.', 'Weeks of collecting and deck planning.'],
+        ['2a', 'pw', 'Harvest: yield', 0.07, 0.34, 'The player’s gain.', 'Take it when it is ripe; light planning.'],
+        ['7', 'pw', 'Idle factory', -0.1, 0.6, 'A production system inside the world.', 'Optimising for the long run.'],
+        ['10b', 'pw', 'Run: something kept', 0.22, 0.09, 'The character getting stronger.', 'Play now, a permanent gain afterwards.'],
+        ['10a', 'pw', 'Run: nothing kept', 0.5, 0.34, 'The player’s own skill is what grows: toward Challenge.', 'Mastery through repetition.'],
+        ['29b', 'pw', 'Creature requests: the random ladder', -0.24, 0.76, 'Creatures of the world decide the order.', 'Seeing what this particular set can do together.'],
+        ['5b', 'pw', 'Character as centre', -0.3, -0.08, 'Being someone in the world, whose power grows.', 'Moment-to-moment presence.'],
+        ['20p', 'pw', 'Prep-and-run: the prep half', -0.24, 0.36, 'Shaping the environment.', 'Planning for the run.'],
+        ['20r', 'pw', 'Prep-and-run: the run half', 0.26, -0.08, 'The character pushed through the environment.', 'One of the most kinetic marks in the pool.'],
+        ['19', 'op', 'Other players: visit', -0.12, -0.14, 'Another player’s place, but with no contest.', 'Strolling and swapping.'],
+        ['T', 'op', 'Other players: traces', -0.14, 0.2, 'Another player’s creature turns up in your world.', 'Conditions to meet, then a surprise.'],
+        ['9', 'op', 'Other players: async challenge', 0.6, 0.2, 'Against a cave that another player built.', 'Reading their design, with some execution.'],
+        ['27', 'op', 'Other players: same start', 0.56, 0.42, 'Compared with every other player.', 'One considered attempt a day.'],
+      ].map(([id, g, name, x, y, whyX, whyY]) => ({ id, g, name, x, y, whyX, whyY }))
+
+      // What each shape is: the loop, as recorded in 01-broaden.md and 02-deepen.md.
+      const DESC = {
+        3: 'Gather ingredients, combine them in isolation, see how that plays out, then bring the change to the big system.',
+        16: 'A cavern is doing something strange. Observe, form a guess, test it in a small space, then fix it or reproduce it.',
+        '2b': 'What is removed and what is left to seed decides what grows next. The take is the tool.',
+        '4b': 'A creature does a job inside the ecosystem that the player can’t do.',
+        '4c': 'The player sets standing rules (eat this, avoid that, nest here). The creature follows them unattended.',
+        17: 'One known event is coming (fire season, storm, flood). Prepare, then watch it hit. Enough preparation makes it a world-changing event; too little, and the player tries again at the next one.',
+        13: 'Someone asks for an output that only a particular balance produces. Steer a cavern to it and deliver.',
+        '1a': 'A deck grows during one outing. Each moment a random hand is drawn from it and played.',
+        22: 'The environment is given and the character goes along a pre-calculated path. The player reacts to the environmental threats with the deck.',
+        23: 'Something spreads all the time along known paths. The base grows, the environment pushes back.',
+        15: 'Upkeep and decoration of one place that is yours.',
+        5: 'A home base that makes the game personal. It is there for long-term emotional connection, not as a loop.',
+        '4a': 'A creature is won and kept because it is cute or rare.',
+        11: 'Every distinct balance, creature and reaction found gets recorded. The pull is the empty slots.',
+        25: 'Rare moments happen in the ecosystem. The player raises the chance of one at a place, then is there to record it.',
+        '29a': 'Creatures are characters with wishes about their habitat. Requests come and go beside the main progress.',
+        21: 'Two creatures or plants combine into a third with mixed traits; or one seed is built from trait parts in a few slots, then planted to see what it does to the cavern.',
+        28: 'Caverns are built as displays. Visitors arrive and react, and their interest pays for new species.',
+        8: 'Pass a point of no return and the cave settles into a different balance, which needs different actions.',
+        14: 'Walk a chain of caverns with different climates and carry something from each into the next.',
+        24: 'Arrange a cavern, then set off a single event and watch the chain reaction run.',
+        26: 'The same cave restarts on a fixed cycle. Nothing is kept but what the player has learned.',
+        '1b': 'A few slots are filled between outings from what the player owns. During the outing the loadout is just used.',
+        '1c': 'Cards are owned for good and gathered over weeks. Decks are built from the collection.',
+        '2a': 'Take what the cave produces. The take is the reward.',
+        7: 'The ecosystem is also a production chain.',
+        '10b': 'A fresh cave each run, with random offers along the way. Each run leaves a permanent gain.',
+        '10a': 'A fresh cave each run, with random offers along the way. Each run starts from zero; only the player’s knowledge grows.',
+        '29b': 'The requests are the progress: granting one opens the next creature, and with it the next step of the game. Which creature asks next is random.',
+        '5b': 'The character is what grows, and the progress is theirs.',
+        '20p': 'Between runs, the player shapes the environment so that it supports the next run.',
+        '20r': 'The character is pushed through the prepared environment towards breaching a cave that has a new element, mechanic or biosphere.',
+        19: 'Walk through another player’s cave as a guest, take a cutting or a creature home, leave one behind. No contest.',
+        T: 'Players never meet. A rare tamed creature shows up in someone else’s world for a few days if the conditions are met.',
+        9: 'Another player’s cave is an obstacle course built by them. Get through it and take something, while they are away.',
+        27: 'Each day all players get one identical cave. Afterwards they compare which balance they reached.',
+      }
+
+      // Pixel positions measured on the 1200 px source picture, scaled to the 760 viewBox.
+      let K = 760 / 1200
+      const LEFT = new Set(['4c', '7']) // labels drawn to the left, off the axis and the picture's own labels
+      const px = (x) => (619 + x * (x < 0 ? 464 : 439)) * K
+      const py = (y) => (622 - y * (y > 0 ? 497 : 438)) * K
+      const NS = 'http://www.w3.org/2000/svg'
+      const el = (tag, attrs, parent) => {
+        const e = document.createElementNS(NS, tag)
+        for (const k in attrs) e.setAttribute(k, attrs[k])
+        if (parent) parent.appendChild(e)
+        return e
+      }
+      const glyph = (shape, cx, cy, r, color, parent) => {
+        const a = { fill: color, stroke: '#f1f1f1', 'stroke-width': 2 }
+        if (shape === 'circle') return el('circle', { cx, cy, r, ...a }, parent)
+        if (shape === 'square') return el('rect', { x: cx - r * 0.9, y: cy - r * 0.9, width: r * 1.8, height: r * 1.8, rx: 1.5, ...a }, parent)
+        const pts =
+          shape === 'diamond'
+            ? [[cx, cy - r * 1.25], [cx + r * 1.25, cy], [cx, cy + r * 1.25], [cx - r * 1.25, cy]]
+            : [[cx, cy - r * 1.2], [cx + r * 1.15, cy + r * 0.9], [cx - r * 1.15, cy + r * 0.9]]
+        return el('polygon', { points: pts.map((p) => p.join(',')).join(' '), ...a }, parent)
+      }
+      const side = (v, neg, pos) => (Math.abs(v) < 0.005 ? 'at the centre' : Math.abs(v).toFixed(2) + ' toward ' + (v < 0 ? neg : pos))
+      const swatch = (g, size) => {
+        const s = document.createElementNS(NS, 'svg')
+        s.setAttribute('width', size)
+        s.setAttribute('height', size)
+        s.setAttribute('viewBox', '0 0 20 20')
+        s.setAttribute('class', 'sw')
+        s.setAttribute('aria-hidden', 'true')
+        glyph(GROUPS[g].shape, 10, 10, 6.5, GROUPS[g].color, s)
+        return s
+      }
+
+      // Each game is a set of marks on the same axes. The first is this game's pool; the rest are small indie
+      // successes, each split into its loops (reference-games.md). Mark size there = how much of the play the loop is.
+      const WEIGHT = {
+        3: { name: 'Core loop', r: 9, color: '#e34948' },
+        2: { name: 'Supporting loop', r: 6.5, color: '#2a78d6' },
+        1: { name: 'Side loop', r: 4.5, color: '#52514e' },
+        0: { name: 'Audience', r: 7, color: '#008300', shape: 'diamond' },
+      }
+      // The 12 motivation dots, in pixels of the 1200 px picture. A game's audience (audience-from-tags.md) is a
+      // weighted mean of these, so it is drawn with a ring on each dot it is made of.
+      // What each motivation means: Quantic Foundry's keywords and game lists, and a reading of the lists
+      // (motivation-map.md). Two definitions are this project's own: Design is building things, Story includes atmosphere.
+      const MOT = {
+        Destruction: ['Action: “Boom!”', 'guns, explosives, chaos, mayhem', 'Blowing things up in shooters; GTA’s sandbox mayhem.', 'GTA, Battlefield, Destiny, Call of Duty, Gears of War, Halo, Borderlands, Doom'],
+        Excitement: ['Action: “Boom!”', 'fast-paced, action, surprises, thrills', 'Fast action.', 'Super Smash Bros. Melee, Battlefield, Counter-Strike, Call of Duty, God of War, Destiny'],
+        Competition: ['Social: “Let’s play together”', 'duels, matches, high on ranking', 'Live duels and rankings.', 'Counter-Strike, Super Smash Bros. Melee, DoTA, League of Legends, Street Fighter, StarCraft 2'],
+        Community: ['Social: “Let’s play together”', 'being on a team, chatting, interacting', 'Live team play and chat.', 'Final Fantasy XIV, Battlefield, Destiny, Guild Wars, EverQuest, World of Warcraft'],
+        Challenge: ['Mastery: “Let me think”', 'practice, high difficulty, challenges', 'Execution skill, practice and high difficulty, mostly dexterity and competitive.', 'Super Smash Bros. Melee, Devil May Cry 3, Dark Souls, Street Fighter, Monster Hunter, StarCraft 2'],
+        Strategy: ['Mastery: “Let me think”', 'thinking ahead, making decisions', 'Long-horizon planning in heavy games: grand strategy, 4X, tactics.', 'Europa Universalis 4, Crusader Kings 2, Civilization, XCOM, Fire Emblem, Kerbal Space Program'],
+        Completion: ['Achievement: “I want more”', 'get all collectibles, complete all missions', 'Collecting everything and finishing every mission in a large game.', 'Final Fantasy, Assassin’s Creed, Zelda, Animal Crossing, Pokémon, Fire Emblem'],
+        Power: ['Achievement: “I want more”', 'powerful character, powerful equipment', 'Levelling and loot: a character, a team or gear that gets stronger. The most central motivation on the map.', 'World of Warcraft, Diablo 2/3, RuneScape, Destiny, League of Legends, God of War'],
+        Fantasy: ['Immersion: “Once upon a time”', 'being someone else, somewhere else', 'Being someone else in an immersive world.', 'Dragon Age, Elder Scrolls, Dishonored, Mass Effect, Skyrim, Journey, Zelda'],
+        Story: ['Immersion: “Once upon a time”', 'elaborate plots, interesting characters', 'Elaborate plots in long role-playing games. It also covers atmosphere: visual storytelling, even with little story in the game.', 'Dragon Age, Mass Effect, Persona 3/4, Final Fantasy VIII–X, Knights of the Old Republic, Planescape Torment'],
+        Design: ['Creativity: “What if?”', 'expression, customization', 'Making a character, a home or a team your own. Here: building things.', 'The Sims, Animal Crossing, Guild Wars 2, Final Fantasy XIV, Monster Hunter, Pokémon'],
+        Discovery: ['Creativity: “What if?”', 'explore, tinker, experiment', 'Mostly big open worlds to roam; and, in Minecraft and Kerbal, a system to experiment on. It joins the left side of the map to the top.', 'Elder Scrolls, Fallout, Zelda, Minecraft, Kerbal Space Program, Metroid Prime'],
+      }
+      const DOT = { Completion: [577, 148], Strategy: [668, 296], Challenge: [922, 341], Discovery: [402, 469], Power: [777, 513], Story: [183, 679], Design: [306, 684], Competition: [1051, 720], Fantasy: [160, 823], Community: [749, 847], Excitement: [927, 878], Destruction: [742, 1042] }
+      const INK = '#0b0b0b'
+      const REF = [
+        {"key": "hike", "title": "A Short Hike", "metric": "22,778 Steam reviews", "meta": "solo · 4 months to the first release", "marks": [["roam", "Roam the island", 3, -0.67, -0.04, "Being somewhere else, at your own pace: close to Fantasy.", "Walking, climbing and gliding are the play, but nothing hurries you.", "Walk, climb and glide anywhere on a small island. There is a summit to reach and no pressure to reach it."], ["feathers", "Collect golden feathers", 2, -0.17, 0.16, "Things hidden in the world, found by looking around.", "A light checklist: each feather lets you climb higher.", "Golden feathers are hidden and sold around the island. Each one adds stamina, which opens more of the mountain."], ["help", "Help the islanders", 2, -0.83, 0.07, "Characters and their small stories: close to Story.", "Short errands, taken at your own pace.", "Islanders ask for small favours and reward them with tools, feathers or a chat."], ["side games", "Side activities", 1, -0.35, -0.45, "Small games inside the world.", "The most kinetic part: fishing, a boat, races, a ball game.", "Optional mini-games dotted around the island."], ["audience", "Audience, read from the store page", 0, -0.57, -0.09, "Its tags and pitch point to: Fantasy 45%, Discovery 44%, Excitement 7%.", "Mood tags the model has no place for (Relaxing, Cute, Casual, Nature, Family Friendly, Beautiful, Cozy, Funny) carry 53% of the tag weight.", "People who want to wander a pretty place in peace: a short, gentle, cute outing, children included."]], "aud": [["Fantasy", 45], ["Discovery", 44]]},
+        {"key": "islanders", "title": "Islanders", "metric": "16,787 Steam reviews", "meta": "3 students · 7 months", "marks": [["place", "Place a building", 3, -0.12, 0.6, "Acts on a board of scoring rules more than on a place.", "Every placement is weighed against what already stands there: close to Strategy.", "Pick a building from your hand and place it. It scores by what stands near it.", "l"], ["next pack", "Beat the score for the next pack", 2, 0.18, 0.4, "A target to beat, set by the game.", "Planning a few placements ahead to reach it.", "Reach the score target to get the next pack of buildings and, in time, the next island."], ["high score", "Chase a higher score", 1, 0.5, 0.34, "Measured against yourself: toward Challenge.", "Mastery over many islands.", "A run goes on for as long as you keep reaching the targets; the total is your score."], ["pretty island", "End up with a pretty island", 2, -0.5, -0.06, "The island you built is something to look at: close to Design.", "No planning is needed to enjoy it.", "The finished island is small, tidy and yours."], ["audience", "Audience, read from the store page", 0, -0.19, 0.32, "Its tags and pitch point to: Strategy 57%, Design 31%, Fantasy 7%.", "Mood tags the model has no place for (Relaxing, Beautiful, Colorful, Addictive) carry 32% of the tag weight.", "Relaxed builders who like a puzzle: city building as a calm score game, with nothing to manage."]], "aud": [["Strategy", 57], ["Design", 31]]},
+        {"key": "minami", "title": "Minami Lane", "metric": "6,786 Steam reviews", "meta": "2 people and a composer · about 6 months", "marks": [["street", "Arrange the street", 3, -0.58, 0.1, "A small place that becomes yours: close to Design.", "Some planning: what goes next to what.", "Build houses and shops along one street and decide where each one goes."], ["tune shops", "Tune the shops", 2, -0.2, 0.58, "A system to read: what each villager likes.", "Change one thing, watch the reaction, change it again.", "Set each shop’s recipe and prices to match what the villagers want, judged by their reactions."], ["missions", "Finish the missions", 2, -0.16, 0.82, "Goals set by the game.", "A short checklist per mission: close to Completion.", "A handful of missions, each with a few goals such as a number of happy villagers.", "l"], ["villagers", "Watch the villagers, pet the cats", 1, -0.8, -0.34, "Attachment to the little people and animals of the street.", "Nothing to work out.", "Villagers stroll past, and cats turn up and can be petted."], ["audience", "Audience, read from the store page", 0, -0.2, 0.42, "Its tags and pitch point to: Strategy 48%, Design 35%, Completion 16%.", "Mood tags the model has no place for (Cute, Casual, Relaxing, Colorful, Cozy, Cats) carry 56% of the tag weight.", "Cozy players who want a cute little management game: light optimising, wrapped in cats and colour."]], "aud": [["Strategy", 48], ["Design", 35], ["Completion", 16]]},
+        {"key": "kabuto", "title": "Kabuto Park", "metric": "4,684 Steam reviews", "meta": "9 months · cost about €65,000", "marks": [["catch", "Catch bugs", 3, -0.34, 0.2, "The thrill of finding a new species: toward Discovery.", "Then the pleasure of seeing its stats: toward Power. The catch itself is a short timing game.", "Search spots in the park and catch bugs with a small timing game."], ["collection", "Fill the collection", 2, -0.3, 0.82, "Every kind of bug in the park.", "A list to complete, with rare ones: close to Completion.", "Bugs come in kinds and rarities; the album shows what is still missing.", "l"], ["team", "Build a team and battle", 2, 0.14, 0.44, "Your own team of three.", "Choosing bugs and playing their moves.", "Pick three bugs and play their moves in short battles against other kids’ teams."], ["tournament", "Win the summer tournament", 1, 0.5, 0.34, "A contest, against computer opponents.", "The one goal that needs a good team.", "The summer ends with a tournament; winning it finishes the game."], ["summer", "A childhood summer", 2, -0.9, -0.34, "Being a kid on holiday: close to Fantasy and Story.", "Mood, not thought.", "A hand-drawn park, a month of summer days, upgrades bought with pocket money."], ["audience", "Audience, read from play", 0, -0.32, 0.33, "Mix: Discovery 40%, Story 20%, Completion 20%, Power 20%. Story here is visual storytelling: the atmosphere. Power: \"you can not progress without beating other teams.\"", "The store page alone gave Power 36%, Completion 35%, Strategy 29%: the atmosphere sits in the mood tags, which carry 57% of the tag weight. The store-page mark was 0.62 from the centre of the loops.", "Cozy creature collectors of any age: catch them all, train a team, win light card battles."]], "aud": [["Discovery", 40], ["Story", 20], ["Completion", 20], ["Power", 20]]},
+        {"key": "stacklands", "title": "Stacklands", "metric": "30,383 Steam reviews", "meta": "one developer of a 4-person co-op · under 4 months", "marks": [["stack", "Stack cards", 3, -0.2, 0.46, "A village made of cards on a table.", "Each stack is a small decision about who does what.", "Put a villager card on a resource card and it produces something. Everything is done by stacking."], ["recipes", "Discover recipes", 2, -0.56, 0.42, "Finding out what the cards can do together: close to Discovery.", "Trying combinations.", "New combinations and ideas turn up from packs and from trying things."], ["feed", "Feed everyone before the moon ends", 2, 0.08, 0.26, "Your villagers against a clock.", "Planning under a timer; the nearest thing to pressure here.", "Each moon ends with a meal for every villager. Not enough food and someone starves."], ["packs", "Sell cards, buy packs", 2, 0.2, 0.4, "What you own, and a gamble on what comes next.", "Choosing which pack the village needs.", "Sell spare cards for coins and spend them on packs of new cards."], ["fight", "Fight", 1, 0.36, -0.2, "Creatures attack the village.", "Automatic, and the fastest part of the game.", "Villagers with weapons fight creatures by being stacked on them."], ["quests", "Tick off the quests", 1, -0.34, 0.8, "A list set by the game.", "Close to Completion.", "A long quest list hands out new packs as it is ticked off.", "l"], ["audience", "Audience, read from the store page", 0, 0.1, 0.48, "Its tags and pitch point to: Strategy 59%, Challenge 17%, Design 15%, Power 8%.", "Mood tags the model has no place for (Cute, Casual, Colorful) carry 7% of the tag weight.", "Card and board game players who like to run a village and keep it alive. Strategy first, cute second."]], "aud": [["Strategy", 59], ["Challenge", 17], ["Design", 15]]},
+        {"key": "summerhouse", "title": "SUMMERHOUSE", "metric": "3,382 Steam reviews", "meta": "solo · time not found", "marks": [["place", "Place pieces", 3, -0.56, -0.08, "Making a little scene that is yours: Design itself.", "By feel. There is nothing to plan and nothing to win.", "Place walls, roofs, doors and plants freely to make a small sunny scene. No goals, no score."], ["secrets", "Find the hidden pieces", 1, -0.6, 0.36, "Finding out what the toy can do: close to Discovery.", "Trying arrangements to see what appears.", "Some arrangements unlock new pieces and little inhabitants, unannounced."], ["mood", "Soak in the mood", 2, -0.92, -0.36, "A place to be in: close to Fantasy.", "Nothing to work out.", "Late-afternoon light, weather and sound; a place to sit in for a while."], ["audience", "Audience, read from the store page", 0, -0.51, 0.05, "Its tags and pitch point to: Design 53%, Strategy 24%, Fantasy 13%, Discovery 11%.", "Mood tags the model has no place for (Relaxing, Casual, Colorful, Cozy, Cute) carry 44% of the tag weight.", "People who want to make something pretty with no rules: a creative toy to relax with."]], "aud": [["Design", 53], ["Strategy", 24], ["Fantasy", 13], ["Discovery", 11]]},
+        {"key": "dawn", "title": "20 Minutes Till Dawn", "metric": "29,163 Steam reviews", "meta": "solo · 2 months", "marks": [["move and shoot", "Move and shoot", 3, 0.5, -0.78, "Against a swarm, not a place.", "Constant dodging and aiming: close to Excitement.", "Dodge an endless swarm and shoot it, for twenty minutes."], ["upgrades", "Pick an upgrade", 2, 0.22, 0.34, "Your own character getting stronger: close to Power.", "A quick choice among a few, with synergies to spot.", "On each level-up choose one of a few upgrades; the right ones combine into something absurd.", "l"], ["survive", "Survive the clock", 2, 0.62, 0.38, "A test of you: close to Challenge.", "Knowing the escalation and preparing for it.", "The swarm thickens on a fixed schedule; lasting the full twenty minutes is the win."], ["unlocks", "Unlock characters and weapons", 1, 0.3, 0.62, "A roster that grows.", "A list to fill over many runs.", "Runs earn currency that unlocks new characters, weapons and permanent bonuses."], ["audience", "Audience, read from the store page", 0, 0.34, -0.11, "Its tags and pitch point to: Challenge 29%, Excitement 19%, Power 19%, Destruction 18%, Fantasy 11%.", "Mood tags the model has no place for (Casual) carry 5% of the tag weight.", "Action roguelite players: survive a bullet hell and grow an overpowered build, in a dark horror theme."]], "aud": [["Challenge", 29], ["Excitement", 19], ["Power", 19], ["Destruction", 18], ["Fantasy", 11]]},
+        {"key": "brotato", "title": "Brotato", "metric": "119,375 Steam reviews", "meta": "solo · 3 months to early access", "marks": [["dodge", "Dodge while the weapons fire", 3, 0.52, -0.42, "Against waves of enemies.", "Movement only: the weapons aim and fire by themselves.", "Survive short waves. You only move; up to six weapons fire on their own."], ["shop", "Shop between waves", 3, 0.24, 0.46, "Your own build: close to Power.", "A pause to weigh items, stats and money.", "After each wave spend what you collected on weapons and items, or reroll the offer.", "l"], ["character", "Build around a character", 2, 0.16, 0.7, "Each character bends the rules of the build.", "Planning a whole run around one twist: close to Strategy.", "Dozens of characters, each with a rule that changes which builds work."], ["danger", "Beat a higher danger level", 2, 0.52, 0.24, "A test of your skill: toward Challenge.", "Each level asks for a tighter build.", "Several danger levels per character, each harder than the last."], ["audience", "Audience, read from the store page", 0, 0.49, -0.1, "Its tags and pitch point to: Challenge 34%, Excitement 28%, Community 15%, Power 13%, Destruction 6%, Fantasy 5%.", "Mood tags the model has no place for (Casual) carry 2% of the tag weight.", "Action roguelike players who want short arcade runs and builds, alone or with a friend on the couch."]], "aud": [["Challenge", 34], ["Excitement", 28], ["Community", 15], ["Power", 13]]},
+        {"key": "forager", "title": "Forager", "metric": "44,155 Steam reviews", "meta": "solo with a publisher · about 2 years (unchecked)", "marks": [["gather", "Gather", 3, -0.24, -0.4, "Hitting what the land grows.", "Constant moving and striking, lightly.", "Hit trees, rocks and plants that keep growing back, and pick up what drops."], ["craft", "Craft and build the base", 3, -0.22, 0.44, "A base that turns materials into better ones.", "What to build next, and where.", "Furnaces, forges and dozens of other structures turn materials into tools, coins and more structures."], ["lands", "Buy the next land", 2, -0.56, 0.42, "New biomes with new things in them: close to Discovery.", "Saving up and choosing where to expand.", "Spend coins to add a neighbouring piece of land, each with new resources, creatures or a secret.", "l"], ["skills", "Level up, pick skills", 2, 0.24, 0.36, "Your character getting stronger: close to Power.", "One choice per level from a big grid.", "Every action gives experience; each level unlocks one more skill, which opens new structures and bonuses."], ["automate", "Automate the work", 2, 0.06, 0.7, "A system that works without you.", "Setting the base up so it runs itself.", "Mining rods, droids and other late structures collect and craft for you."], ["fight", "Fight", 2, 0.44, -0.44, "Enemies and a few bosses.", "Fast, simple hitting.", "Slimes, skeletons and bosses attack; the same swing that gathers also fights."], ["dungeons", "Solve puzzles and dungeons", 1, -0.48, 0.06, "Secrets built into the lands.", "Small puzzles, some fighting.", "Some lands hold a puzzle or a small dungeon with a reward."], ["museum", "Fill the museum", 1, -0.34, 0.82, "One of everything.", "A long list: close to Completion.", "A museum asks for bundles of items and pays out for each one completed.", "l"], ["audience", "Audience, read from the store page", 0, -0.22, 0.17, "Its tags and pitch point to: Discovery 30%, Design 25%, Challenge 13%, Power 11%, Strategy 9%, Fantasy 7%.", "Mood tags the model has no place for (Casual) carry 2% of the tag weight.", "Survival-crafting players who want to explore, gather and build a base, in a lighter 2D form."]], "aud": [["Discovery", 30], ["Design", 25], ["Challenge", 13], ["Power", 11]]},
+        {"key": "pets", "title": "Super Auto Pets", "metric": "36,229 Steam reviews", "meta": "free to play · team and time not found", "marks": [["shop", "Buy and arrange the team", 3, 0.34, 0.3, "Your own team getting strong: close to Power.", "Power is the aim; strategy and grind are how it is reached. No timer in the main mode.", "Spend ten gold a turn on pets and food, put the pets in order, and merge three of a kind to level one up."], ["battle", "Watch the battle", 2, 0.62, -0.3, "Against a team another player built earlier; the two never meet live.", "Automatic and over in seconds: nothing to do but watch.", "The two teams fight on their own, front pet against front pet, with every ability firing in order."], ["ten wins", "Reach ten wins", 2, 0.74, 0.2, "A run measured against other players’ teams.", "Each loss costs a life, so the run is nursed along turn by turn.", "A run ends at ten wins or when the lives run out."], ["synergies", "Learn what combines", 2, -0.14, 0.4, "Finding out what the pets do to each other.", "Trying a combination and seeing it work, or not.", "Every pet has one ability with a trigger; the fun is the chain you get when several fire together."], ["versus", "Play a live lobby", 1, 0.9, -0.1, "Other players, at the same time.", "Turns are timed here.", "A versus mode puts up to eight players in one lobby, live or asynchronous."], ["hats", "Unlock packs and hats", 1, -0.45, -0.1, "A bit of dressing up.", "Nothing to work out.", "Extra pet packs and cosmetics are the paid part of the game."], ["audience", "Audience, read from the store page", 0, 0.42, 0.06, "Its tags and pitch point to: Strategy 34%, Community 25%, Competition 24%, Power 11%.", "Mood tags the model has no place for (Cute, Casual, Colorful, Family Friendly, Dogs, Horses) carry 32% of the tag weight.", "Casual strategy players who want to compete with friends without pressure: cute, free, family friendly."]], "aud": [["Strategy", 34], ["Community", 25], ["Competition", 24], ["Power", 11]]},
+      ]
+      // The audience this game is for, set on 2026-10-03.
+      const AUDIENCE = {
+        id: 'audience',
+        g: 'au',
+        name: 'Audience',
+        x: -0.06,
+        y: 0.38,
+        desc: 'This game’s mix: Discovery 30%, Strategy 30%, Power 20%, Story 10%, Challenge 10%.',
+        whyX: 'Near the centre: Discovery and Story pull toward World, Strategy, Power and Challenge toward Player.',
+        whyY: 'Toward Cerebral, between Discovery and Strategy.',
+      }
+      // Pillars of this game (2026-10-03): equal weight, so equal size. Radius in pixels of the 1200 px picture.
+      // Only the rim and the label take clicks, so the shapes inside still open their own cards.
+      const PILLARS = [
+        {
+          id: 'P1', x: 0.195, y: 0.421, // around 1a, 2a, 1b, nudged toward Challenge
+          name: 'The Unseen',
+          mot: 'Strategy, Power, Challenge',
+          lines: [
+            ['Play', 'the pioneers wake an area never entered before'],
+            ['Limit', 'the strength of the animal to tame: the stronger it is, the longer the taming, the stronger the team and the more food it needs'],
+            ['Beef up', 'level the pioneers longer'],
+            ['Side loop, e.g.', 'a riskless strategy test'],
+          ],
+        },
+        {
+          id: 'P2', x: -0.6, y: 0.08, // 14's height, 25's column, on the line from the audience to Story
+          name: 'Prospecting',
+          mot: 'Discovery, Story; the most kinetic',
+          lines: [
+            ['Play', 'explore the world, flag prospects'],
+            ['Limit', 'cavern conditions (dark, flooded, toxic, hot, overgrown): only matching traits get through'],
+            ['Beef up', 'more foragers, better matched'],
+            ['Side loop, e.g.', 'rare, beautiful sightings'],
+          ],
+        },
+        {
+          id: 'P3', x: -0.32, y: 0.57, // around 2b, 17, 8, 3
+          name: 'Cultivation',
+          mot: 'the simulation',
+          lines: [
+            ['Play', 'natural enclosures: farm resources, or tame and level creatures'],
+            ['Limit', 'the palette: only living things brought home'],
+            ['Beef up', 'run more generations'],
+            ['Side loop, e.g.', 'a vivarium or zoo'],
+          ],
+        },
+      ]
+      // what flows from one pillar to the next
+      // One arrow per action, from the pillar in the player's list to the pillar it acts on. mode: idle, active, or ''.
+      // at: where a loop back into the same pillar leaves the rim, radians.
+      const FLOWS = [
+        { from: 'P3', to: 'P3', at: -3.0, mode: 'idle', action: 'grow crops and livestock for bait',
+          condition: ['a colonized area: economic use starts only there'], outcome: ['bait for the pioneers'] },
+        { from: 'P3', to: 'P3', at: -2.35, mode: 'idle', action: 'grow crops and livestock for food',
+          condition: ['a colonized area: economic use starts only there'], outcome: ['food for the pioneers and foragers'] },
+        { from: 'P3', to: 'P3', at: -1.7, mode: 'active', action: 'claim a new colony area',
+          condition: ['the area\'s top predator is tamed'], outcome: ['a colony in that biome, with economic use of its crops and animals'] },
+        { from: 'P3', to: 'P3', at: -1.05, mode: 'active', action: 'tune the biosphere',
+          condition: ['tames grow and reproduce only in ideal conditions'], outcome: ['a more productive balance, so that all colony loops work'] },
+        { from: 'P3', to: 'P3', at: 2.85, mode: 'idle', action: 'the colony\'s simulation runs',
+          condition: ['new flora and fauna keep arriving'], outcome: ['a simulation that is beautiful, increasingly diverse, but stable'] },
+        { from: 'P3', to: 'P1', mode: 'active', action: 'send a pioneer team to open up an Unseen',
+          condition: ['a boundary of the Unseen, found by the foragers'], outcome: ['the area becomes Wild, for the foragers to study'] },
+        { from: 'P3', to: 'P1', mode: 'active', action: 'send a pioneer team to tame an animal',
+          condition: ['some of the biome\'s elements fully learnt by the foragers', 'protection from the area\'s conditions, something that intrigues the animal, food for it (prey animals included)'],
+          outcome: ['a win: the animal follows the pioneers home', 'a loss: the animal decides to stay'] },
+        { from: 'P1', to: 'P1', at: -0.9, mode: 'active', action: 'walk the food chain',
+          condition: ['tamed animals from the tier below, and crops and baits from outside', 'the stronger the animal, the longer the taming, the stronger the team and the more food or prey it needs'],
+          outcome: ['local resistances from the easiest animals first', 'at the top, the top predator (a mini-boss): the area is ready to colonize'] },
+        { from: 'P3', to: 'P2', mode: 'active', action: 'set up a forager team for field trips',
+          condition: ['traits that get it through the cavern conditions: dark, flooded, toxic, hot, overgrown'], outcome: ['a team on field trips'] },
+        { from: 'P3', to: 'P2', mode: 'idle', action: 'forager teams go on their own trips',
+          condition: ['a team already set up'], outcome: ['field trips keep running without the player'] },
+        { from: 'P2', to: 'P2', at: 2.5, mode: 'idle', action: 'the cavern\'s simulation runs',
+          condition: ['an opened area: under the fog of war the simulation is suspended'], outcome: ['a simulation that is beautiful and non-linear'] },
+        { from: 'P2', to: 'P3', mode: 'idle', action: 'field trips',
+          condition: ['foragers prospecting the biome'], outcome: ['flora unlocks and foraged goods'] },
+        { from: 'P2', to: 'P3', mode: 'active', action: 'a breather: search by hand near the foragers',
+          condition: ['foragers nearby'], outcome: ['unique, special finds'] },
+        { from: 'P2', to: 'P1', mode: 'idle', action: 'the foragers lift the fog within the caverns',
+          condition: ['foragers in the caverns'], outcome: ['the boundaries of the Unseen, alive only as ambience (particles, shaders), no text or symbol'] },
+      ]
+      const PILLAR_COLOR = '#c98a00'
+      const FLOW_ALPHA = 0.45
+      const PILLAR_R = 72
+      const GAMES = [
+        { key: 'this', pool: true, title: 'This game', metric: 'the shape pool', meta: '29 candidate shapes, split into variants; nothing chosen', marks: SHAPES.map((s) => ({ ...s, desc: DESC[s.id] })).concat(AUDIENCE), aud: [['Discovery', 30], ['Strategy', 30], ['Power', 20], ['Story', 10], ['Challenge', 10]] },
+        ...REF.map((g) => ({
+          ...g,
+          marks: g.marks.map(([id, name, w, x, y, whyX, whyY, desc, a]) => ({ id, name, w, x, y, whyX, whyY, desc, left: a === 'l' || x > 0.45 })),
+        })),
+      ]
+
+      const plot = document.getElementById('plot')
+      const tip = document.getElementById('tip')
+      const chart = document.getElementById('chart')
+      const rows = document.getElementById('rows')
+      const legend = document.getElementById('legend')
+      const games = document.getElementById('games')
+      let game = GAMES[0]
+      let pinned = null // the mark whose card stays open after a tap or click
+      let shown = null
+      let link = null
+      let marks = {}
+      let trs = {}
+      let shapesOn = false // the brainstorm shapes of the pool, hidden until asked for
+
+      // Marks keep a constant size on screen: the plot is redrawn in real pixels when the chart's width changes.
+      function draw() {
+        const W = Math.max(240, Math.round(document.getElementById('chart').clientWidth))
+        K = W / 1200
+        plot.textContent = ''
+        plot.setAttribute('viewBox', `0 0 ${W} ${W}`)
+        plot.classList.toggle('small', W < 560 && !!game.pool)
+        marks = {}
+        link = null
+
+        if (game.pool) {
+          // flows first, so the pillar rims and the shapes stay on top
+          const defs = el('defs', {}, plot)
+          const head = el('marker', { id: 'flowhead', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 2.5, markerHeight: 2.5, orient: 'auto-start-reverse' }, defs)
+          el('path', { d: 'M0,0 L10,5 L0,10 z', fill: PILLAR_COLOR }, head)
+          for (const f of FLOWS) {
+            const A = PILLARS.find((q) => q.id === f.from)
+            const B = PILLARS.find((q) => q.id === f.to)
+            const ax = px(A.x), ay = py(A.y), bx = px(B.x), by = py(B.y)
+            const gap = PILLAR_R * K + 4
+            let d
+            if (A === B) {
+              // a loop back into the same pillar, bulging out of the rim at angle f.at
+              const pt = (a, r) => [ax + Math.cos(a) * r, ay + Math.sin(a) * r]
+              const [x1, y1] = pt(f.at - 0.26, gap), [c1x, c1y] = pt(f.at - 0.42, gap * 1.9)
+              const [c2x, c2y] = pt(f.at + 0.42, gap * 1.9), [x2, y2] = pt(f.at + 0.26, gap)
+              d = `M${x1},${y1} C${c1x},${c1y} ${c2x},${c2y} ${x2},${y2}`
+              f.mx = (x1 + 3 * c1x + 3 * c2x + x2) / 8
+              f.my = (y1 + 3 * c1y + 3 * c2y + y2) / 8
+            } else {
+              const n = Math.hypot(bx - ax, by - ay)
+              const ux = (bx - ax) / n, uy = (by - ay) / n
+              // all arrows between the same two pillars, either way, side by side in lanes across the line between them
+              const lane = FLOWS.filter((q) => q.from !== q.to && [q.from, q.to].sort().join() === [f.from, f.to].sort().join())
+              const sign = f.from < f.to ? 1 : -1
+              const o = (lane.indexOf(f) - (lane.length - 1) / 2) * 9 * sign
+              const x1 = ax + ux * gap - uy * o, y1 = ay + uy * gap + ux * o, x2 = bx - ux * gap - uy * o, y2 = by - uy * gap + ux * o
+              d = `M${x1},${y1} L${x2},${y2}`
+              f.mx = (x1 + x2) / 2
+              f.my = (y1 + y2) / 2
+            }
+            const id = 'f:' + FLOWS.indexOf(f)
+            const g = el('g', { class: 'mark flow', tabindex: 0, role: 'button', 'aria-label': f.action }, plot)
+            el('path', { class: 'fline', d, fill: 'none', stroke: PILLAR_COLOR, opacity: FLOW_ALPHA, 'stroke-width': 4.5, 'marker-end': 'url(#flowhead)', 'pointer-events': 'none' }, g)
+            el('path', { d, fill: 'none', stroke: 'transparent', 'stroke-width': 14, 'pointer-events': 'stroke' }, g)
+            g.addEventListener('mouseenter', () => show(id))
+            g.addEventListener('mouseleave', () => (pinned ? show(pinned) : hide()))
+            g.addEventListener('focus', () => show(id))
+            g.addEventListener('blur', () => (pinned ? show(pinned) : hide()))
+            g.addEventListener('click', (e) => (e.stopPropagation(), pin(pinned === id ? null : id)))
+            g.addEventListener('keydown', (e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), pin(pinned === id ? null : id)))
+            marks[id] = g
+          }
+          for (const p of PILLARS) {
+            const cx = px(p.x)
+            const cy = py(p.y)
+            const r = PILLAR_R * K
+            const g = el('g', { class: 'mark pillar', tabindex: 0, role: 'button', 'aria-label': 'Pillar ' + p.id }, plot)
+            el('circle', { class: 'prim', cx, cy, r, fill: PILLAR_COLOR, 'fill-opacity': 0.08, stroke: PILLAR_COLOR, 'stroke-width': 2, 'pointer-events': 'none' }, g)
+            el('circle', { cx, cy, r, fill: 'none', stroke: 'transparent', 'stroke-width': 12, 'pointer-events': 'stroke' }, g)
+            const lx = cx + r * 0.72
+            const ly = cy - r * 0.72
+            el('circle', { class: 'hit', cx: lx + 8, cy: ly - 4, r: 13 }, g)
+            const t = el('text', { x: lx, y: ly, class: 'toy' }, g)
+            t.textContent = p.id
+            // the name in the middle, outside the mark so it stays on narrow screens and never takes a click
+            const nm = el('text', { x: cx, y: cy + 4, 'text-anchor': 'middle', class: 'toy pname', 'font-size': Math.max(9, Math.min(13, 21 * K)), 'pointer-events': 'none' }, plot)
+            nm.textContent = p.name
+            const id = 'p:' + p.id
+            g.addEventListener('mouseenter', () => show(id))
+            g.addEventListener('mouseleave', () => (pinned ? show(pinned) : hide()))
+            g.addEventListener('focus', () => show(id))
+            g.addEventListener('blur', () => (pinned ? show(pinned) : hide()))
+            g.addEventListener('click', (e) => (e.stopPropagation(), pin(pinned === id ? null : id)))
+            g.addEventListener('keydown', (e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), pin(pinned === id ? null : id)))
+            marks[id] = g
+          }
+
+          // prep-and-run: one shape, two marks
+          const P = SHAPES.find((s) => s.id === '20p')
+          const R = SHAPES.find((s) => s.id === '20r')
+          if (shapesOn) link = el('line', { x1: px(P.x), y1: py(P.y), x2: px(R.x), y2: py(R.y), stroke: GROUPS.pw.color, 'stroke-width': 2, 'stroke-dasharray': '5 4', opacity: 0.7 }, plot)
+        }
+        // the 12 motivation dots of the picture: each opens its own card
+        for (const m in DOT) {
+          const [dx, dy] = DOT[m]
+          const g = el('g', { class: 'mark mot', tabindex: 0, role: 'button', 'aria-label': m }, plot)
+          el('circle', { class: 'hit', cx: dx * K, cy: dy * K, r: 13 }, g)
+          el('circle', { class: 'ring', cx: dx * K, cy: dy * K, r: 11 }, g)
+          const id = 'm:' + m
+          g.addEventListener('mouseenter', () => show(id))
+          g.addEventListener('mouseleave', () => (pinned ? show(pinned) : hide()))
+          g.addEventListener('focus', () => show(id))
+          g.addEventListener('blur', () => (pinned ? show(pinned) : hide()))
+          g.addEventListener('click', (e) => (e.stopPropagation(), pin(pinned === id ? null : id)))
+          marks[id] = g
+        }
+        if (game.aud) {
+          // the motivations the store page points to: ring and line width grow with the share
+          const A = game.marks.find((s) => s.id === 'audience')
+          for (const [m, share] of game.aud) {
+            const [dx, dy] = DOT[m]
+            el('line', { x1: px(A.x), y1: py(A.y), x2: dx * K, y2: dy * K, stroke: WEIGHT[0].color, 'stroke-width': 1 + share / 15, opacity: 0.35, 'pointer-events': 'none' }, plot)
+            el('circle', { cx: dx * K, cy: dy * K, r: 9 + share / 4, fill: 'none', stroke: WEIGHT[0].color, 'stroke-width': 2, 'pointer-events': 'none' }, plot)
+          }
+        }
+
+        for (const s of game.marks) {
+          if (game.pool && !shapesOn && s.id !== 'audience') continue
+          const g = el('g', { class: 'mark', tabindex: 0, role: 'button', 'aria-label': s.name }, plot)
+          const cx = px(s.x)
+          const cy = py(s.y)
+          const r = game.pool ? 5.5 : WEIGHT[s.w].r
+          el('circle', { class: 'hit', cx, cy, r: 16 }, g)
+          el('circle', { class: 'ring', cx, cy, r: r + 5 }, g)
+          if (game.pool) glyph(GROUPS[s.g].shape, cx, cy, r, GROUPS[s.g].color, g)
+          else glyph(WEIGHT[s.w].shape || 'circle', cx, cy, r, WEIGHT[s.w].color, g)
+          const left = game.pool ? LEFT.has(s.id) : s.left
+          const off = game.pool ? 9 : r + 5
+          const t = el('text', { x: cx + (left ? -off : off), y: cy + 4, 'text-anchor': left ? 'end' : 'start' }, g)
+          t.textContent = s.id
+          g.addEventListener('mouseenter', () => show(s.id))
+          g.addEventListener('mouseleave', () => (pinned ? show(pinned) : hide()))
+          g.addEventListener('focus', () => show(s.id))
+          g.addEventListener('blur', () => (pinned ? show(pinned) : hide()))
+          g.addEventListener('click', (e) => (e.stopPropagation(), dragged || pin(pinned === s.id ? null : s.id)))
+          if (EDIT && !game.pool && s.w) g.addEventListener('pointerdown', (e) => drag(e, s))
+          g.addEventListener('keydown', (e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), pin(pinned === s.id ? null : s.id)))
+          marks[s.id] = g
+        }
+        plot.classList.toggle('editing', EDIT && !game.pool)
+        pinned ? show(pinned) : hide()
+        filter(shown)
+      }
+
+      // Opened from disk, the loops of the other games can be dragged. Moves are kept in this browser until they are
+      // written back into this file, so a reload doesn't lose them.
+      const EDIT = location.protocol === 'file:' || ['localhost', '127.0.0.1'].includes(location.hostname)
+      const DRAFT = 'shape-map-moves'
+      let moves = {} // game key -> loop id -> [x, y]
+      let dragged = false // swallows the click that ends a drag
+      let fileHandle = null
+      try {
+        moves = (EDIT && JSON.parse(localStorage.getItem(DRAFT))) || {}
+      } catch (e) {}
+      const store = () => {
+        try {
+          localStorage.setItem(DRAFT, JSON.stringify(moves))
+        } catch (e) {}
+      }
+      const pending = () => Object.values(moves).reduce((n, m) => n + Object.keys(m).length, 0)
+      function bar(msg) {
+        const b = document.getElementById('editbar')
+        const n = pending()
+        b.hidden = !EDIT || game.pool || !(n || msg)
+        document.getElementById('editmsg').textContent = msg || n + (n === 1 ? ' loop moved' : ' loops moved') + ', not saved yet.'
+        document.getElementById('save').hidden = document.getElementById('revert').hidden = !n
+      }
+
+      function drag(e, s) {
+        if (e.button) return
+        const box = plot.getBoundingClientRect()
+        let moved = false
+        const move = (ev) => {
+          const X = (ev.clientX - box.left) / K
+          const Y = (ev.clientY - box.top) / K
+          const clamp = (v) => Math.round(Math.max(-1, Math.min(1, v)) * 100) / 100
+          s.x = clamp((X - 619) / (X < 619 ? 464 : 439))
+          s.y = clamp((622 - Y) / (Y < 622 ? 497 : 438))
+          moved = true
+          pinned = s.id
+          draw()
+        }
+        const up = () => {
+          removeEventListener('pointermove', move)
+          removeEventListener('pointerup', up)
+          if (!moved) return
+          dragged = true
+          setTimeout(() => (dragged = false))
+          ;(moves[game.key] ||= {})[s.id] = [s.x, s.y]
+          store()
+          table()
+          pin(s.id)
+          bar()
+        }
+        addEventListener('pointermove', move)
+        addEventListener('pointerup', up)
+      }
+
+      // The data lines are written the way Python's json.dumps writes them, so a save changes only the numbers.
+      const pyjson = (v) =>
+        Array.isArray(v)
+          ? '[' + v.map(pyjson).join(', ') + ']'
+          : v && typeof v === 'object'
+            ? '{' + Object.entries(v).map(([k, x]) => JSON.stringify(k) + ': ' + pyjson(x)).join(', ') + '}'
+            : JSON.stringify(v)
+
+      async function save() {
+        try {
+          if (!fileHandle) {
+            if (!window.showOpenFilePicker) return bar('This browser cannot write files. Use Chromium.')
+            ;[fileHandle] = await showOpenFilePicker({ types: [{ description: 'This page', accept: { 'text/html': ['.html'] } }] })
+          }
+          const lines = (await (await fileHandle.getFile()).text()).split('\n')
+          if (!lines.some((l) => l.includes('const REF = ['))) {
+            fileHandle = null
+            return bar('That file is not map.html. Nothing saved.')
+          }
+          lines.forEach((l, i) => {
+            const k = (l.match(/^\s*\{"key": "([^"]+)"/) || [])[1]
+            if (!k || !moves[k]) return
+            const d = JSON.parse(l.trim().replace(/,$/, ''))
+            for (const m of d.marks) if (moves[k][m[0]]) [m[3], m[4]] = moves[k][m[0]]
+            lines[i] = l.match(/^\s*/)[0] + pyjson(d) + ','
+          })
+          const w = await fileHandle.createWritable()
+          await w.write(lines.join('\n'))
+          await w.close()
+          moves = {}
+          store()
+          bar('Saved to ' + fileHandle.name + '.')
+        } catch (e) {
+          bar('Not saved: ' + e.message)
+        }
+      }
+      document.getElementById('save').addEventListener('click', (e) => (e.stopPropagation(), save()))
+      document.getElementById('revert').addEventListener('click', () => {
+        moves = {}
+        store()
+        location.reload()
+      })
+
+      const dot = (r, color, shape) => {
+        const s = document.createElementNS(NS, 'svg')
+        s.setAttribute('width', 20)
+        s.setAttribute('height', 20)
+        s.setAttribute('viewBox', '0 0 20 20')
+        s.setAttribute('class', 'sw')
+        s.setAttribute('aria-hidden', 'true')
+        glyph(shape || 'circle', 10, 10, r, color || 'currentColor', s)
+        return s
+      }
+
+      function table() {
+        rows.textContent = ''
+        trs = {}
+        document.getElementById('thg').textContent = game.pool ? 'Group' : 'Weight'
+        document.getElementById('tabletitle').textContent = game.pool ? 'All shapes' : 'All loops of ' + game.title
+        for (const s of game.marks) {
+          const tr = document.createElement('tr')
+          const cells = [game.pool ? s.id : '', null, game.pool ? GROUPS[s.g].name : WEIGHT[s.w].name, side(s.x, 'World', 'Player'), side(s.y, 'Kinetic', 'Cerebral')]
+          cells.forEach((c, i) => {
+            const td = document.createElement('td')
+            if (i === 1) {
+              const w = document.createElement('span')
+              w.style.cssText = 'display:inline-flex;align-items:center;gap:6px'
+              w.appendChild(game.pool ? swatch(s.g, 14) : dot(WEIGHT[s.w].r * 0.8, WEIGHT[s.w].color, WEIGHT[s.w].shape))
+              w.appendChild(document.createTextNode(s.name))
+              td.appendChild(w)
+            } else td.textContent = c
+            if (i > 2 || i === 0) td.className = 'n'
+            tr.appendChild(td)
+          })
+          tr.addEventListener('click', (e) => {
+            e.stopPropagation()
+            if (game.pool && !shapesOn) shapes(true)
+            pin(s.id)
+            document.getElementById('chart').scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+          })
+          rows.appendChild(tr)
+          trs[s.id] = tr
+        }
+      }
+
+      function key() {
+        legend.textContent = ''
+        if (game.pool) {
+          const t = document.createElement('button')
+          t.type = 'button'
+          t.dataset.toggle = 'shapes'
+          t.setAttribute('aria-pressed', String(shapesOn))
+          t.textContent = shapesOn ? 'Hide the brainstorm shapes' : 'Show the brainstorm shapes'
+          t.addEventListener('click', () => shapes(!shapesOn))
+          legend.appendChild(t)
+          if (!shapesOn) return
+          for (const k in GROUPS) {
+            const b = document.createElement('button')
+            b.type = 'button'
+            b.setAttribute('aria-pressed', 'false')
+            b.appendChild(swatch(k, 16))
+            b.appendChild(document.createTextNode(GROUPS[k].name))
+            b.addEventListener('click', () => filter(shown === k ? null : k))
+            b.dataset.g = k
+            legend.appendChild(b)
+          }
+          return
+        }
+        for (const w of [3, 2, 1, 0]) {
+          const s = document.createElement('span')
+          s.className = 'key'
+          s.appendChild(dot(WEIGHT[w].r * 0.9, WEIGHT[w].color, WEIGHT[w].shape))
+          s.appendChild(document.createTextNode(w ? WEIGHT[w].name : 'Audience, from Steam tags and the pitch (rings: the motivations it is made of)'))
+          legend.appendChild(s)
+        }
+      }
+
+      function filter(k) {
+        shown = k
+        if (!game.pool) return
+        for (const s of game.marks) if (marks[s.id]) marks[s.id].classList.toggle('dim', !!k && s.g !== k)
+        if (link) link.classList.toggle('dim', !!k && k !== 'pw')
+        for (const b of legend.children) if (b.dataset.g) b.setAttribute('aria-pressed', String(b.dataset.g === k))
+      }
+
+      function show(id) {
+        for (const k in marks) {
+          marks[k].classList.toggle('on', k === id)
+          if (trs[k]) trs[k].classList.toggle('on', k === id)
+        }
+        tip.textContent = ''
+        if (id.startsWith('m:')) {
+          const m = id.slice(2)
+          const [pair, words, practice, games] = MOT[m]
+          const h = document.createElement('b')
+          h.className = 'th'
+          h.textContent = m
+          const grp = document.createElement('div')
+          grp.className = 'grp'
+          grp.textContent = pair + ' · ' + words
+          const what = document.createElement('p')
+          what.textContent = practice
+          const who = document.createElement('p')
+          who.textContent = 'Favourites of its strongest fans: ' + games + '.'
+          tip.append(h, grp, what, who)
+          paint('#8cbee1', '#0b0b0b')
+          tip.hidden = false
+          return place(DOT[m][0] * K, DOT[m][1] * K)
+        }
+        if (id.startsWith('f:')) {
+          const f = FLOWS[+id.slice(2)]
+          for (const k of ['action', 'condition', 'outcome']) {
+            const t = document.createElement('div')
+            t.className = 'blk'
+            t.textContent = k
+            tip.append(t)
+            for (const what of k === 'action' ? [f.action] : f[k]) {
+              const p = document.createElement('p')
+              if (k === 'action' && f.mode) {
+                const m = document.createElement('span')
+                m.className = 'mode'
+                m.textContent = f.mode
+                p.append(m)
+              }
+              p.append(what)
+              tip.append(p)
+            }
+          }
+          tip.classList.remove('tinted')
+          tip.classList.add('subtle')
+          tip.style.background = PILLAR_COLOR
+          tip.style.color = '#0b0b0b'
+          tip.hidden = false
+          return place(f.mx, f.my, 290)
+        }
+        if (id.startsWith('p:')) {
+          const p = PILLARS.find((q) => 'p:' + q.id === id)
+          const h = document.createElement('b')
+          h.className = 'th'
+          h.textContent = p.id + ' · ' + p.name
+          const grp = document.createElement('div')
+          grp.className = 'grp'
+          grp.textContent = p.mot
+          const lines = p.lines.map(([k, v]) => {
+            const q = document.createElement('p')
+            q.className = 'kv'
+            const b = document.createElement('b')
+            b.textContent = k + ': '
+            q.append(b, v)
+            return q
+          })
+          tip.append(h, grp, ...lines)
+          paint(PILLAR_COLOR, '#0b0b0b')
+          tip.hidden = false
+          return place(px(p.x) + PILLAR_R * K * 0.72, py(p.y) - PILLAR_R * K * 0.72)
+        }
+        const s = game.marks.find((q) => q.id === id)
+        const h = document.createElement('b')
+        h.className = 'th'
+        h.textContent = game.pool ? s.id + ' · ' + s.name : s.name
+        const grp = document.createElement('div')
+        grp.className = 'grp'
+        if (game.pool) {
+          grp.appendChild(swatch(s.g, 14))
+          grp.appendChild(document.createTextNode(GROUPS[s.g].name))
+        } else {
+          grp.appendChild(dot(WEIGHT[s.w].r * 0.8, WEIGHT[s.w].color, WEIGHT[s.w].shape))
+          grp.appendChild(document.createTextNode(WEIGHT[s.w].name + ' of ' + game.title))
+        }
+        const what = document.createElement('p')
+        what.textContent = s.desc
+        const why = document.createElement('p')
+        why.textContent = s.whyX + ' ' + s.whyY
+        if (!game.pool && s.w === 0) {
+          // live, so that moving a loop shows at once how far the audience is from the loops' centre
+          const L = game.marks.filter((q) => q.w)
+          const n = L.reduce((a, q) => a + q.w, 0)
+          const cx = L.reduce((a, q) => a + q.x * q.w, 0) / n
+          const cy = L.reduce((a, q) => a + q.y * q.w, 0) / n
+          why.textContent += ' This mark is ' + Math.hypot(s.x - cx, s.y - cy).toFixed(2) + ' from the centre of the loops.'
+        }
+        tip.append(h, grp, what, why)
+        paint(game.pool ? GROUPS[s.g].color : WEIGHT[s.w].color, '#ffffff')
+        tip.hidden = false
+        place(px(s.x), py(s.y))
+      }
+
+      function paint(bg, fg) {
+        tip.classList.remove('subtle')
+        tip.classList.add('tinted')
+        tip.style.background = bg
+        tip.style.color = fg
+      }
+
+      // beside the mark where there is room, else under or over it; always inside the chart
+      function place(cx, cy, max = 290) {
+        const W = chart.clientWidth
+        tip.style.width = ''
+        const w = max < 290 ? Math.min(tip.offsetWidth, W - 16) : Math.min(max, W - 16)
+        if (max >= 290) tip.style.width = w + 'px'
+        const th = tip.offsetHeight
+        let left = cx + 18
+        let top = cy - th / 2
+        if (left + w > W - 8) left = cx - 18 - w
+        if (left < 8) {
+          left = Math.max(8, Math.min(W - w - 8, cx - w / 2))
+          top = cy + 18
+          if (top + th > W - 8) top = cy - 18 - th
+        }
+        tip.style.left = left + 'px'
+        tip.style.top = Math.max(8, Math.min(W - th - 8, top)) + 'px'
+      }
+
+      function hide() {
+        tip.hidden = true
+        for (const k in marks) {
+          marks[k].classList.remove('on')
+          if (trs[k]) trs[k].classList.remove('on')
+        }
+      }
+
+      function pin(id) {
+        pinned = id
+        id ? show(id) : hide()
+      }
+
+      document.addEventListener('click', () => dragged || pin(null))
+
+      function shapes(on) {
+        shapesOn = on
+        shown = null
+        if (pinned && !pinned.includes(':') && pinned !== 'audience') pinned = null
+        key()
+        draw()
+      }
+      function play(g) {
+        game = g
+        shown = null
+        pinned = null
+        for (const b of games.children) b.setAttribute('aria-pressed', String(b.dataset.key === g.key))
+        document.getElementById('poolnotes').hidden = !g.pool
+        key()
+        table()
+        draw()
+        bar()
+        try {
+          history.replaceState(null, '', g.pool ? location.pathname : '?game=' + g.key)
+        } catch (e) {}
+      }
+
+      for (const g of GAMES) {
+        const b = document.createElement('button')
+        b.type = 'button'
+        b.dataset.key = g.key
+        const t = document.createElement('span')
+        t.className = 'gt'
+        const name = document.createElement('b')
+        name.textContent = g.title
+        t.appendChild(name)
+        t.appendChild(document.createTextNode(' · ' + g.metric))
+        const m = document.createElement('span')
+        m.className = 'gm'
+        m.textContent = g.meta
+        b.appendChild(t)
+        b.appendChild(m)
+        b.addEventListener('click', () => play(g))
+        games.appendChild(b)
+      }
+
+      for (const g of GAMES)
+        for (const s of g.marks) if (moves[g.key] && moves[g.key][s.id]) [s.x, s.y] = moves[g.key][s.id]
+
+      // ?game=forager opens straight on that game, so a view can be shared as a link
+      const asked = new URLSearchParams(location.search)
+      play(GAMES.find((g) => g.key === asked.get('game')) || GAMES[0])
+      if (marks[asked.get('pin')]) pin(asked.get('pin')) // &pin=shop opens that mark's card too
+      let lastW = 0
+      new ResizeObserver(() => {
+        const w = document.getElementById('chart').clientWidth
+        if (Math.abs(w - lastW) > 1) (lastW = w), draw()
+      }).observe(document.getElementById('chart'))
+    </script>
+  </body>
+</html>
