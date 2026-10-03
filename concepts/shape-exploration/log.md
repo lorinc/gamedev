@@ -69,3 +69,5 @@ Quotes are the user's, with spelling lightly fixed.
 - **P1 named The Unseen,** from a list of options for "uncharted" and "mystery" (Outlands was the runner-up).
 - **Wake, not breach.** Asked for a less violent verb that can't be confused with exploring a cavern; the user chose
   "wake": "Wake is fitting, because simulation is suspended under FOW, it only looks alive via ambience."
+- **Pioneers.** "Breach pets" renamed. The user wants names that are the explanation, not ones that need explanation;
+  chose "Pioneers" from Pioneers, Pathfinders, Trailblazers, Openers, Vanguard.

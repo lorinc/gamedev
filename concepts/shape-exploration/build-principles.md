@@ -150,7 +150,7 @@ Flows between the pillars (P3 is the hub):
   P1 to P3: what a waking finds reaches the enclosures through the expedition.
 - **P3 → P3:** resources to host and level the flora and fauna.
 - **P3 → P2:** explorer pets.
-- **P3 → P1:** breach pets (a working name; a more peaceful one is wanted).
+- **P3 → P1:** pioneers, the pets that go first and wake an area.
 
 **Areas are asleep until woken.** Under the fog of war the simulation is suspended; an area looks alive only through
 ambience, particle effects and shaders crossing the fog, never text or a symbol. Once woken, the expedition spends
