@@ -131,3 +131,5 @@ Quotes are the user's, with spelling lightly fixed.
   taming."
 - **Building a colony is a decision.** The user: "but colony build should be a user action, done by foragers."
   Taming the top predator makes the area colonizable; building the colony is the player's call.
+- **Caverns, and a balance.** The state after the top predator is tamed is called Caverns. The user: "Okay, this is
+  balanced - foragers and pioneers both have 4 tasks."

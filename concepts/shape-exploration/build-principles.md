@@ -199,7 +199,7 @@ tamed → cultivated.
 4. **What is foraged can be used in taming.** A creature can't be tamed until its natural diet is foraged.
 5. **Tamed animals are used to tame predators:** the pioneers must tame enough prey to capture a predator. A deep food
    chain needs exponentially more prey.
-6. **Taming the top predator makes the area colonizable:** a triggered outcome, not a decision.
+6. **Taming the top predator turns the area into Caverns,** ready for a colony: a triggered outcome, not a decision.
 7. **The foragers build a colony there:** a player decision; its flora and fauna become cultivated.
 8. **A cultivated area harvests itself,** both crops and prey.
 
