@@ -184,10 +184,13 @@ colonies settle into stable idle play.
   colony area.
 - **Travel between colonies** is a teleport animation, or the mycelium travel network from the b-builds if it is kept
   and polished. No pathfinding either way.
-- **Biome connections are limited,** which keeps growth manageable. Biomes come in tiers, like the levels of a DAG; baits
-  and crops from the same tier give a heavy incentive to explore all of a tier before moving on.
+- **Biome connections are limited,** which keeps growth manageable. Biomes come in tiers; baits and crops from the same
+  tier give a heavy incentive to explore all of a tier before moving on.
 - **A tier is depth.** Biomes are a descent into the depths of the moon: amorphous blobs, not cake layers. Deeper
-  biomes are likely more complex: more environmental threats, a deeper food chain, and a dependence on earlier ones.
+  biomes are likely more complex: more environmental threats and a deeper food chain.
+- **No deep graph of cross-biome dependencies.** Needing baits from many earlier biomes is a Factorio-like mechanic,
+  and much less intuitive here: a drag. Unless that is fixed, the dependency stays shallow. Team synergy is the more
+  enjoyable mechanic, and carries the depth instead.
 
 ### How an area moves
 

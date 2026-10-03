@@ -149,3 +149,6 @@ Quotes are the user's, with spelling lightly fixed.
   tier: the first two are TBD. On tiers: "biomes will be a descent into the depths of the moon, but not like cake
   layers, but as amorphous blobs. And TBD, but I guess deeper layers will have more complexity: more environmental
   threats, deeper food chain, probably dependent on previous ones."
+- **No deep bait graph.** On Claude's "which earlier biomes' baits it needs": "this makes it a similar mechanics as
+  factorio games, but significantly less intuitive... so unless we fix that, I would not make this a deep graph. The
+  team synergy will be a much more enjoyable mechanics, this one is a drag."
