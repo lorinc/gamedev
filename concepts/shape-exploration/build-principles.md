@@ -145,7 +145,7 @@ Flows between the pillars (P3 is the hub):
 
 - **P2 → P1:** new areas to wake.
 - **P1 → P2:** the woken area, now part of the caverns and the foragers' domain.
-- **P2 → P3:** flora, collected by the foragers on their trips.
+- **P2 → P3:** flora, collected by the foragers on field trips.
 - **P1 → P3:** fauna, won by the pioneers.
 - **P3 → P3:** resources to host and level the flora and fauna.
 - **P3 → P2:** foragers, the pets that catalogue a woken cavern and bring its flora home.

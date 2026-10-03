@@ -83,3 +83,4 @@ Quotes are the user's, with spelling lightly fixed.
   intriguing for the tamed animal; ability to generate / deliver food for them, and, because nature is not
   romanticised, even prey animals can be used. And the stronger the animal is, the longer the taming takes, needing
   stronger team, more food / prey."
+- **Field trips.** The user: "Okay, foragers go on field trips."
