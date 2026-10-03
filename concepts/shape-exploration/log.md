@@ -143,3 +143,5 @@ Quotes are the user's, with spelling lightly fixed.
   their teams to be strong enough for the next unseen breach, balancing a food chain up from minerals to apex
   predators, across multiple biomes, and maintain good forager and pioneer teams with probably synergising traits.
   This is a lot of work, even if a lot of things already run on autopilot."
+- **Pillar names.** P3 Colony is renamed Cultivation and P2 Caverns is renamed Prospecting, so the pillars are The
+  Unseen, Prospecting and Cultivation.
