@@ -18,18 +18,21 @@ unexpected way. The mechanics behind it, made independent of fighting:
 4. **The answer is a promotion.** The key to the challenge is a side effect the player has owned since an earlier
    area, now used as the main job. That's where the "unexpected, really smart" feeling comes from: the tool was
    always in the kit.
-5. **The opponent telegraphs.** Its next action shows before it lands (two turns of charging), so the player
-   adjusts the plan to it, and the outcome is strategy, not luck. Slay the Spire's intents, which shook the industry
+5. **The opponent telegraphs, as far ahead as planning needs.** Its coming actions show before they land, sometimes
+   several rounds ahead, so the outcome is strategy, not luck. Slay the Spire's intents, which shook the industry
    years later, are the same move.
-6. **Rebuilding is expected.** The kit is chosen from a larger pool (an 8-slot wheel), and changing it for one
+6. **Your actions have cooldowns.** The lead time of a telegraph matches the time needed to prepare the answer. If
+   the counter is on cooldown when it's needed, the battle is lost. So the play is scheduling: keeping the right
+   action ready for the moment it's needed, not only reacting.
+7. **Rebuilding is expected.** The kit is chosen from a larger pool (an 8-slot wheel), and changing it for one
    challenge is cheap. The puzzle is choosing, not grinding.
-7. **New dials, now and then.** A couple of areas in, a new dial unlocks and changes what the old tools mean.
-8. **One lie, once trust exists.** Once the player reads the dials, one challenge shows a signal that means the
+8. **New dials, now and then.** A couple of areas in, a new dial unlocks and changes what the old tools mean.
+9. **One lie, once trust exists.** Once the player reads the dials, one challenge shows a signal that means the
    opposite (a buff that claims weakness and hides strength). It teaches reading over memorising.
-9. **Short enough to hold.** Every action is explainable in two or three lines.
+10. **Short enough to hold.** Every action is explainable in two or three lines.
 
-**As a recipe:** dials D; each action = a main job plus side effects on D; each challenge = a threat that runs on
-one dial d in D, with a windup; the design check = the answer to every challenge is a side effect on d that the
+**As a recipe:** dials D; each action = a main job plus side effects on D, and a cooldown; each challenge = a threat
+that runs on one dial d in D, telegraphed at least as far ahead as its answer takes to prepare; the design check = the answer to every challenge is a side effect on d that the
 player already has, and it was never that action's main job.
 
 ## Applied to taming
@@ -43,8 +46,9 @@ player already has, and it was never that action's main job.
 - **The promotion:** the key is a pet from an earlier biome whose side effect is that dial. This is the carry-over
   between biomes, through team synergy instead of a bait graph.
 - **The telegraph:** the animal shows what it will do next (it circles, it sniffs and leaves, it watches from a
-  distance), with no text, in line with "causality without walls of text". The player answers that, so a taming is
-  won by reading, not by luck.
+  distance), with no text, in line with "causality without walls of text", and early enough to prepare. Pets'
+  abilities need time to recover, so the player keeps the right one ready for the moment the animal's mood turns. A
+  taming is won by reading and planning, not by luck.
 - **The lie:** a late animal that looks calm while it is the most suspicious of all.
 
 ## The breach as a scouting game

@@ -167,3 +167,6 @@ Quotes are the user's, with spelling lightly fixed.
   there have been spotted. Not a fight, not a tame, but a scouting game."
 - **Telegraphing.** The user: "Sonny did what Slay the Spire did years later and shook the industry with it - Sonny's
   enemies telegraphed their actions, and you had to adjust your strategy, and it was therefore not luck."
+- **Telegraphs and cooldowns.** The user: "Sonny enemies sometimes telegraphed multiple rounds ahead, based on the time
+  you needed to plan your actions, because your actions also had cooldowns, so if your counter was on cooldown when
+  you needed it, you've lost the battle."
