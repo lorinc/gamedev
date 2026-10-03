@@ -129,7 +129,7 @@ They differ inside (one core loop, or two supporting loops, plus one or two side
 
 | Pillar | Where | Role |
 |---|---|---|
-| P1 The Unseen | around 1a, 2a, 1b, toward Challenge | Strategy, Power, Challenge: the pioneers wake a cavern never entered before; a successful push makes it part of the caverns. Difficulty scales with progress, at steps the player chooses |
+| P1 The Unseen | around 1a, 2a, 1b, toward Challenge | Strategy, Power, Challenge: the pioneers wake an area never entered before; it becomes Wild. Difficulty scales with progress, at steps the player chooses |
 | P2 Caverns | 14's height, 25's column, on the line from the audience to Story | Discovery and Story, the most kinetic pillar: exploring the world, flagging new areas to wake, spending time in woken caverns to collect intel, and bringing flora and fauna home |
 | P3 Colony | around 2b, 17, 8, 3 | The simulation: natural enclosures for the living things, to farm resources, or to tame and level them for excursions |
 
@@ -144,7 +144,7 @@ Each pillar has a limit that is visible in the world and raised by what another 
 Flows between the pillars (P3 is the hub):
 
 - **P2 → P1:** new areas to wake.
-- **P1 → P2:** the woken area, now part of the caverns and the foragers' domain.
+- **P1 → P2:** the woken area, now Wild, for the foragers to study.
 - **P2 → P3:** flora, collected by the foragers on field trips.
 - **P1 → P3:** fauna, won by the pioneers.
 - **P3 → P3:** resources to host and level the flora and fauna.
@@ -173,7 +173,7 @@ Beefing up, per pillar: P1 levels the pioneers longer; P2 brings more foragers, 
 **Tranquility lives in side loops,** around any pillar, not in a pillar of its own. Examples: a vivarium or zoo;
 rare, beautiful event sightings during exploration; a riskless strategy-testing loop.
 
-## Ground: Unseen → Cavern → Colony
+## Ground: Unseen → Wild → Caverns → Colony
 
 The pillars are three states of the same ground, and every area moves through them in order. Each transition has its
 own cost and challenge. Growth always has a clear frontier, so complexity does not explode: behind the frontier,
@@ -310,4 +310,4 @@ With 20% Power in the audience, B has the more natural home for it.
 2. **How does a player who has mastered the game show it,** without beating anyone or anything? In Slay the Spire it
    is winning at higher Ascension.
 3. **How does the causality get across without walls of text?** Mysteries are visuals only, and intel comes from
-   time spent in a woken cavern.
+   time spent in a woken area.
