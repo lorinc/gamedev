@@ -152,3 +152,8 @@ Quotes are the user's, with spelling lightly fixed.
 - **No deep bait graph.** On Claude's "which earlier biomes' baits it needs": "this makes it a similar mechanics as
   factorio games, but significantly less intuitive... so unless we fix that, I would not make this a deep graph. The
   team synergy will be a much more enjoyable mechanics, this one is a drag."
+- **Abilities over resistances.** The user: "blobs also have slightly randomized physical boundaries, keep that in
+  mind. And we need stuff that carry over resistances, because that mechanics is a good gatekeeper, but not fun at all.
+  We need stuff like psychoactive crops or bait, mating-dance-imitators, resistance copiers, buffers, healers,
+  burrowing super-prospectors... exciting stuff, that will keep a pet in a team, even if it has no resistance to the
+  biome."

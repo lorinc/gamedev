@@ -186,11 +186,15 @@ colonies settle into stable idle play.
   and polished. No pathfinding either way.
 - **Biome connections are limited,** which keeps growth manageable. Biomes come in tiers; baits and crops from the same
   tier give a heavy incentive to explore all of a tier before moving on.
-- **A tier is depth.** Biomes are a descent into the depths of the moon: amorphous blobs, not cake layers. Deeper
+- **A tier is depth.** Biomes are a descent into the depths of the moon: amorphous blobs with slightly randomized
+  boundaries, not cake layers. Deeper
   biomes are likely more complex: more environmental threats and a deeper food chain.
 - **No deep graph of cross-biome dependencies.** Needing baits from many earlier biomes is a Factorio-like mechanic,
   and much less intuitive here: a drag. Unless that is fixed, the dependency stays shallow. Team synergy is the more
   enjoyable mechanic, and carries the depth instead.
+- **Resistances gate, abilities delight.** Resistances are a good gatekeeper but no fun at all, so pets carry exciting
+  abilities that keep them in a team even with no resistance to the biome: psychoactive crops or bait,
+  mating-dance imitators, resistance copiers, buffers, healers, burrowing super-prospectors.
 
 ### How an area moves
 
