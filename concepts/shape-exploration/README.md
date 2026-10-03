@@ -35,6 +35,7 @@ Quotes are the user's, with spelling lightly fixed.
 | [motivation-map.md](motivation-map.md) | Quantic Foundry's motivation model as reference: the 12 motivations, the map measured, the games behind each motivation |
 | [map.html](map.html) | A picture of the assessment: every shape and variant placed on the map's two axes (World ↔ Player, Cerebral ↔ Kinetic), with the reason for each position, and ten small indie successes to compare on the same axes. Open it in a browser. Uses `Nick_axes.webp`, the axes picture saved by the user |
 | [lifecycle.html](lifecycle.html) | How an area, its flora and its fauna move from unseen to cultivated: player decisions (active), what runs on its own (idle), and what enables what across them. Open it in a browser |
+| [idea-taming-and-breach.md](idea-taming-and-breach.md) | An idea for taming and the breach: Sonny's fights made general (a challenge runs on one dial; the answer is promoting a side effect the player already owns), and the breach as a scouting game |
 | [findings.md](findings.md) | What the exploration has shown so far, graded: confident, likely, or an assumption |
 | [reference-games.md](reference-games.md) | Small indie successes to show on the map page for comparison: the ten on the page and the four dropped, with team, development time, Steam reviews and sources |
 | [build-principles.md](build-principles.md) | What to build: the user's principle (accessible and never boring, through systems, after Slay the Spire) and the planned simulator and optimizer for balancing; open questions |

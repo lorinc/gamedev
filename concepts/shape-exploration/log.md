@@ -160,3 +160,8 @@ Quotes are the user's, with spelling lightly fixed.
 - **Suspicion and pickiness.** On Claude's reading that psychoactive bait substitutes for the natural diet: "actually
   psychoactive food was about lowering the tamed animal's suspicion... but yes, lowering how picky an animal is also a
   cool 'bend'."
+- **Sonny and a scouting breach.** The user remembered Sonny's fights: "Every new area used something from the
+  previous skills in an unexpected, really smart and exciting way." Asked to abstract the mechanic so it generalises
+  to any battle mechanic, and to save it as an idea for taming and the breach: idea-taming-and-breach.md. The user
+  added: "the breach could be a game, where the pioneers must wander in the unseen until all entities that live
+  there have been spotted. Not a fight, not a tame, but a scouting game."
