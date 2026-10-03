@@ -184,6 +184,21 @@
         margin-top: 6px;
         color: var(--ink2);
       }
+      /* the card takes the colour of the symbol it describes */
+      #tip.tinted {
+        border-color: transparent;
+      }
+      #tip.tinted .grp,
+      #tip.tinted p {
+        color: inherit;
+      }
+      #tip.tinted .grp,
+      #tip.tinted p + p {
+        opacity: 0.85;
+      }
+      .credit {
+        font-size: 13px;
+      }
       .gnote {
         font-size: 13px;
         margin-bottom: 8px;
@@ -297,6 +312,14 @@
         A tool to understand how successful small indie games engineer their loops around what their audience
         expects, and then to choose my own mechanics from what was learned. Point at a mark to see what it is and why
         it sits there, or at a motivation dot to see what it means; pick a game on the right.
+      </p>
+      <p class="credit">
+        The map, its two axes and its 12 motivations are Nick Yee's, from
+        <a href="https://quanticfoundry.com/">Quantic Foundry</a>: “Gaming Motivations Group Into 3 High-Level
+        Clusters” (21 December 2015), built from the Gamer Motivation Profile answers of over 140,000 gamers. The
+        picture behind the chart is theirs. The games listed for each motivation come from Quantic Foundry's lists of
+        the favourite games of each motivation's strongest scorers. Everything placed on the map is this page's own
+        judgement, not Quantic Foundry's data.
       </p>
 
       <div class="cols">
@@ -668,10 +691,9 @@
       const pending = () => Object.values(moves).reduce((n, m) => n + Object.keys(m).length, 0)
       function bar(msg) {
         const b = document.getElementById('editbar')
-        b.hidden = !EDIT || game.pool
         const n = pending()
-        document.getElementById('editmsg').textContent =
-          msg || (n ? n + (n === 1 ? ' loop moved' : ' loops moved') + ', not saved yet.' : 'Drag a loop to move it.')
+        b.hidden = !EDIT || game.pool || !(n || msg)
+        document.getElementById('editmsg').textContent = msg || n + (n === 1 ? ' loop moved' : ' loops moved') + ', not saved yet.'
         document.getElementById('save').hidden = document.getElementById('revert').hidden = !n
       }
 
@@ -841,6 +863,7 @@
           const who = document.createElement('p')
           who.textContent = 'Favourites of its strongest fans: ' + games + '.'
           tip.append(h, grp, what, who)
+          paint('#8cbee1', '#0b0b0b')
           tip.hidden = false
           return place(DOT[m][0] * K, DOT[m][1] * K)
         }
@@ -870,8 +893,15 @@
           why.textContent += ' This mark is ' + Math.hypot(s.x - cx, s.y - cy).toFixed(2) + ' from the centre of the loops.'
         }
         tip.append(h, grp, what, why)
+        paint(game.pool ? GROUPS[s.g].color : WEIGHT[s.w].color, '#ffffff')
         tip.hidden = false
         place(px(s.x), py(s.y))
+      }
+
+      function paint(bg, fg) {
+        tip.classList.add('tinted')
+        tip.style.background = bg
+        tip.style.color = fg
       }
 
       // beside the mark where there is room, else under or over it; always inside the chart
