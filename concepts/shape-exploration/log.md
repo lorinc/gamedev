@@ -73,3 +73,5 @@ Quotes are the user's, with spelling lightly fixed.
   chose "Pioneers" from Pioneers, Pathfinders, Trailblazers, Openers, Vanguard.
 - **Naturalists; no P1 → P1.** "Explorer pets" renamed naturalists. The user: "There's no P1->P1. A successful pioneer
   push opens up the unseen that becomes part of the cavern, that is now the Naturalist's domain."
+- **Foragers; three categories.** The user: "So, we have 3 categories now. Economic, naturalist and pioneer. Let's call
+  the naturalists foragers."

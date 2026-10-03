@@ -144,18 +144,20 @@ Each pillar has a limit that is visible in the world and raised by what another 
 Flows between the pillars (P3 is the hub):
 
 - **P2 → P1:** new areas to wake.
-- **P1 → P2:** the woken area, now part of the caverns and the naturalists' domain.
+- **P1 → P2:** the woken area, now part of the caverns and the foragers' domain.
 - **P2 → P3:** flora (environmental and economic) and fauna (economic and exploration). Nothing goes straight from
-  P1 to P3: what a waking finds reaches the colony through the naturalists.
+  P1 to P3: what a waking finds reaches the colony through the foragers.
 - **P3 → P3:** resources to host and level the flora and fauna.
-- **P3 → P2:** naturalists, the pets that catalogue a woken cavern and bring its flora and fauna home.
+- **P3 → P2:** foragers, the pets that catalogue a woken cavern and bring its flora and fauna home.
 - **P3 → P1:** pioneers, the pets that go first and wake an area.
 
+**Three categories of pets:** economic, forager and pioneer.
+
 **Areas are asleep until woken.** Under the fog of war the simulation is suspended; an area looks alive only through
-ambience, particle effects and shaders crossing the fog, never text or a symbol. Once woken, the naturalists spend
+ambience, particle effects and shaders crossing the fog, never text or a symbol. Once woken, the foragers spend
 time there to collect intel; without it the player sees the visuals and nothing more.
 
-Beefing up, per pillar: P1 levels the pioneers longer; P2 brings more naturalists, better matched; P3 runs more generations.
+Beefing up, per pillar: P1 levels the pioneers longer; P2 brings more foragers, better matched; P3 runs more generations.
 
 **Tranquility lives in side loops,** around any pillar, not in a pillar of its own. Examples: a vivarium or zoo;
 rare, beautiful event sightings during exploration; a riskless strategy-testing loop.

@@ -666,7 +666,7 @@
           lines: [
             ['Play', 'explore the world, flag prospects'],
             ['Limit', 'cavern conditions (dark, flooded, toxic, hot, overgrown): only matching traits get through'],
-            ['Beef up', 'more naturalists, better matched'],
+            ['Beef up', 'more foragers, better matched'],
             ['Side loop, e.g.', 'rare, beautiful sightings'],
           ],
         },
@@ -685,9 +685,9 @@
       // what flows from one pillar to the next
       const FLOWS = [
         { from: 'P2', to: 'P1', text: 'New areas to wake', more: 'Asleep under the fog of war: the simulation is suspended, and only the ambience (particles, shaders) looks alive. No text or symbol.' },
-        { from: 'P1', to: 'P2', text: 'Open area for exploration', more: 'A successful pioneer push: the woken area becomes part of the caverns, the naturalists\' domain. Until they collect intel there, only its visuals show.' },
+        { from: 'P1', to: 'P2', text: 'Open area for exploration', more: 'A successful pioneer push: the woken area becomes part of the caverns, the foragers\' domain. Until they collect intel there, only its visuals show.' },
         { from: 'P2', to: 'P3', text: 'Flora: environmental and economic\nFauna: economic and exploration', more: 'Only what is brought home can live in the enclosures.' },
-        { from: 'P3', to: 'P2', text: 'Naturalists', more: 'Their traits get them through the cavern conditions (dark, flooded, toxic, hot, overgrown).' },
+        { from: 'P3', to: 'P2', text: 'Foragers', more: 'Their traits get them through the cavern conditions (dark, flooded, toxic, hot, overgrown).' },
         { from: 'P3', to: 'P1', text: 'Pioneers', more: 'Tamed and levelled, matched in strength against the chosen cavern.' },
         { from: 'P3', to: 'P3', at: -2.4, text: 'Resources to host and level the flora and fauna', more: 'Farmed in the enclosures; more generations, stronger stock.' }, // at: where the loop leaves the rim, radians
       ]
