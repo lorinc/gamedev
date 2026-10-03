@@ -440,7 +440,6 @@
           <b>The numbers in <a href="04-assess.md">04-assess.md</a> are a different measure:</b> there, each shape is a
           list of motivations and its width is the distance between them. Here each shape is placed directly.
         </li>
-        <li><b>The toy</b> is marked at Discovery, where the simulation as a toy sits.</li>
         <li>
           <b>The other games</b> are placed the same way, from what is known of each game, not from play sessions
           or from Quantic Foundry's data. Which loops a game is split into, and how big each one is, are judgements
@@ -729,11 +728,6 @@
         link = null
 
         if (game.pool) {
-          // the toy, at Discovery
-          el('circle', { cx: 402 * K, cy: 470 * K, r: 11, fill: 'none', stroke: INK, 'stroke-width': 2 }, plot)
-          const toy = el('text', { x: 402 * K - 15, y: 470 * K + 4, 'text-anchor': 'end', class: 'toy' }, plot)
-          toy.textContent = 'the toy'
-
           // flows first, so the pillar rims and the shapes stay on top
           const defs = el('defs', {}, plot)
           const head = el('marker', { id: 'flowhead', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 2.5, markerHeight: 2.5, orient: 'auto-start-reverse' }, defs)
