@@ -124,7 +124,7 @@ loops, plus one or two side loops) but weigh the same. Roles: open.
 |---|---|---|
 | P1 | around 1a, 2a, 1b, a bit toward Challenge | 1a Cards: hand, 2a Harvest: yield, 1b Cards: loadout |
 | P2 | 14's height, 25's column, on the line from the audience to Story | 14 Expedition, 15 Caretaker |
-| P3 | around 2b, 17, 8, 3 | 2b Harvest: steering, 17 Pressure: deadline, 8 Tipping point, 3 Alchemy, 4b Pet: worker |
+| P3 | around 2b, 17, 8, 3 | 2b Harvest: steering, 17 Pressure: deadline, 8 Tipping point, 3 Alchemy |
 
 ## Candidate A: the short run that keeps only knowledge (candidate)
 

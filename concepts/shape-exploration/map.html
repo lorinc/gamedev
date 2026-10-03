@@ -616,11 +616,11 @@
       // Pillars of this game (user, 2026-10-03): equal weight, so equal size. Radius in pixels of the 1200 px picture.
       // No card yet; they don't take clicks, so the shapes inside still open theirs.
       const PILLARS = [
-        { id: 'P1', x: 0.155, y: 0.414 }, // around 1a, 2a, 1b, nudged toward Challenge
-        { id: 'P2', x: -0.56, y: 0.11 }, // 14's height, 25's column, on the line from the audience to Story
-        { id: 'P3', x: -0.3, y: 0.52 }, // around 2b, 17, 8, 3
+        { id: 'P1', x: 0.195, y: 0.421 }, // around 1a, 2a, 1b, nudged toward Challenge
+        { id: 'P2', x: -0.6, y: 0.08 }, // 14's height, 25's column, on the line from the audience to Story
+        { id: 'P3', x: -0.32, y: 0.57 }, // around 2b, 17, 8, 3
       ]
-      const PILLAR_R = 82
+      const PILLAR_R = 72
       const GAMES = [
         { key: 'this', pool: true, title: 'This game', metric: 'the shape pool', meta: '29 candidate shapes, split into variants; nothing chosen', marks: SHAPES.map((s) => ({ ...s, desc: DESC[s.id] })).concat(AUDIENCE), aud: [['Discovery', 30], ['Strategy', 30], ['Power', 20], ['Story', 10], ['Challenge', 10]] },
         ...REF.map((g) => ({
