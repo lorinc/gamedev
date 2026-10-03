@@ -124,7 +124,15 @@
       }
       .mark.flow.on .fline,
       .mark.flow:focus .fline {
-        stroke-width: 4;
+        stroke-width: 2.5;
+        stroke-opacity: 0.9;
+      }
+      #tip.subtle {
+        width: max-content;
+        padding: 4px 8px;
+        font-size: 12px;
+        color: var(--ink2);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
       }
       .mark.pillar.on .prim,
       .mark.pillar:focus .prim {
@@ -693,8 +701,8 @@
 
           // flows first, so the pillar rims and the shapes stay on top
           const defs = el('defs', {}, plot)
-          const head = el('marker', { id: 'flowhead', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }, defs)
-          el('path', { d: 'M0,0 L10,5 L0,10 z', fill: PILLAR_COLOR }, head)
+          const head = el('marker', { id: 'flowhead', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 5, markerHeight: 5, orient: 'auto-start-reverse' }, defs)
+          el('path', { d: 'M0,0 L10,5 L0,10 z', fill: PILLAR_COLOR, opacity: 0.6 }, head)
           for (const f of FLOWS) {
             const A = PILLARS.find((q) => q.id === f.from)
             const B = PILLARS.find((q) => q.id === f.to)
@@ -705,7 +713,7 @@
             const x1 = ax + ux * gap, y1 = ay + uy * gap, x2 = bx - ux * gap, y2 = by - uy * gap
             const id = 'f:' + f.from + f.to
             const g = el('g', { class: 'mark flow', tabindex: 0, role: 'button', 'aria-label': f.text }, plot)
-            el('line', { class: 'fline', x1, y1, x2, y2, stroke: PILLAR_COLOR, 'stroke-width': 2.5, 'marker-end': 'url(#flowhead)', 'pointer-events': 'none' }, g)
+            el('line', { class: 'fline', x1, y1, x2, y2, stroke: PILLAR_COLOR, 'stroke-opacity': 0.6, 'stroke-width': 1.5, 'marker-end': 'url(#flowhead)', 'pointer-events': 'none' }, g)
             el('line', { x1, y1, x2, y2, stroke: 'transparent', 'stroke-width': 14, 'pointer-events': 'stroke' }, g)
             f.mx = (x1 + x2) / 2
             f.my = (y1 + y2) / 2
@@ -991,13 +999,12 @@
         }
         if (id.startsWith('f:')) {
           const f = FLOWS.find((q) => 'f:' + q.from + q.to === id)
-          const h = document.createElement('b')
-          h.className = 'th'
-          h.textContent = f.text
-          tip.append(h)
-          paint(PILLAR_COLOR, '#0b0b0b')
+          tip.textContent = f.text
+          tip.classList.remove('tinted')
+          tip.classList.add('subtle')
+          tip.style.background = tip.style.color = ''
           tip.hidden = false
-          return place(f.mx, f.my)
+          return place(f.mx, f.my, 220)
         }
         if (id.startsWith('p:')) {
           const p = PILLARS.find((q) => 'p:' + q.id === id)
@@ -1046,15 +1053,17 @@
       }
 
       function paint(bg, fg) {
+        tip.classList.remove('subtle')
         tip.classList.add('tinted')
         tip.style.background = bg
         tip.style.color = fg
       }
 
       // beside the mark where there is room, else under or over it; always inside the chart
-      function place(cx, cy) {
+      function place(cx, cy, max = 290) {
         const W = chart.clientWidth
-        const w = Math.min(290, W - 16)
+        tip.style.width = ''
+        const w = Math.min(max, W - 16, max < 290 ? tip.scrollWidth + 2 : max)
         tip.style.width = w + 'px'
         const th = tip.offsetHeight
         let left = cx + 18
