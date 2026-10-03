@@ -84,3 +84,31 @@ Quotes are the user's, with spelling lightly fixed.
   romanticised, even prey animals can be used. And the stronger the animal is, the longer the taming takes, needing
   stronger team, more food / prey."
 - **Field trips.** The user: "Okay, foragers go on field trips."
+- **Colonies in place; Unseen → Cavern → Colony.** The user listed the loops per pillar, idle or active, then: "As I'm
+  writing these I realized - the colony is not one place. Player needs colonized areas in different biomes, and
+  'taking them home' and building them is a lot of coding and complexity. Just let biomes stay, wherever they are, and
+  claim the place as colony and do the economic stuff in place. Even allow pioneers and foragers to leave from and
+  arrive to any colony area. So the progress is: unseen > cavern > colony, and each transition has its cost /
+  challenges. This growth always has a clear frontier, so complexity does not explode." Claude raised six gaps; the
+  user's answers:
+  1. Why more biomes: "for awesome, powerful, spectacular tames, for the sake of discovery and wonder, to see the
+     unique mechanics of that biome, to have a chance to find unique wonders (breather loop)".
+  2. Travel: "I'd rather add a teleport animation between colonies, I do not want to spend a lot of resources on
+     pathfinding... unless we keep and polish the current mycelium travel network, that reduces complexity by several
+     magnitudes."
+  3. Tuning: "tames will not have a 'native' biome colony to live at the beginning - that's the game's way to tell the
+     user to establish a colony in all biomes. The game can survive in non-native environment, but can only grow
+     and/or reproduce in ideal conditions. And there, the player might want to push the balance into a more productive
+     state. That's tuning."
+  4. "The unseen does not need an idle part, that's where the action happens. But okay, we can make the taming IDLE,
+     just like sending NMS frigates on missions. But not everything needs to be idle, the game does need some
+     hands-on kinetic challenge, and this is the best candidate - the messy, mysterious frontier."
+  5. "Open up: means now foragers can start to learn the biome. Once some biome elements are 100% learnt, prospectors
+     can bring fauna home, pioneers can start taming. Taming goes through the food chain - simple animals first, then
+     use them to tame stronger ones, and eventually the top predator, a mini-boss. The pioneers should tame a few
+     low-level animals for their local resistances, and send in external crops and baits for capturing the next tier
+     animal."
+  6. "We should limit the biome connections, and that will keep growth manageable. Also, we should add heavy incentive
+     using baits and crops from the same tier of biomes (like DAG levels), so player explores all of the next tiers
+     before moving on to the next ones."
+  The map stays as it is: it shows the player appeal per pillar, nothing else.
