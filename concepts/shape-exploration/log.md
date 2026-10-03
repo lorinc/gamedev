@@ -67,3 +67,5 @@ Quotes are the user's, with spelling lightly fixed.
 - **Pillar names.** The user: "P3 is 'Colony'. P2 is 'Caverns'. P1 is 'Expanse' -- but I need options for this now."
   They replace Breach, Expedition and Enclosures.
 - **P1 named The Unseen,** from a list of options for "uncharted" and "mystery" (Outlands was the runner-up).
+- **Wake, not breach.** Asked for a less violent verb that can't be confused with exploring a cavern; the user chose
+  "wake": "Wake is fitting, because simulation is suspended under FOW, it only looks alive via ambience."

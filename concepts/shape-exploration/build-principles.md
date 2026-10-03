@@ -129,32 +129,32 @@ They differ inside (one core loop, or two supporting loops, plus one or two side
 
 | Pillar | Where | Role |
 |---|---|---|
-| P1 The Unseen | around 1a, 2a, 1b, toward Challenge | Strategy, Power, Challenge: the team breaches a cavern never entered before, opens it for exploration and finds new fauna to tame. Difficulty scales with progress, at steps the player chooses |
-| P2 Caverns | 14's height, 25's column, on the line from the audience to Story | Discovery and Story, the most kinetic pillar: exploring the world, flagging new areas to breach, spending time in breached caverns to collect intel, and bringing flora and fauna home |
+| P1 The Unseen | around 1a, 2a, 1b, toward Challenge | Strategy, Power, Challenge: the team wakes a cavern never entered before, opens it for exploration and finds new fauna to tame. Difficulty scales with progress, at steps the player chooses |
+| P2 Caverns | 14's height, 25's column, on the line from the audience to Story | Discovery and Story, the most kinetic pillar: exploring the world, flagging new areas to wake, spending time in woken caverns to collect intel, and bringing flora and fauna home |
 | P3 Colony | around 2b, 17, 8, 3 | The simulation: natural enclosures for the living things, to farm resources, or to tame and level them for excursions |
 
 Each pillar has a limit that is visible in the world and raised by what another pillar delivers:
 
 | Pillar | Limit |
 |---|---|
-| P1 | the team's strength against the cavern chosen for the breach |
+| P1 | the team's strength against the cavern chosen to wake |
 | P2 | the conditions of each cavern (dark, flooded, toxic, hot, overgrown): only creatures with the matching traits get through |
 | P3 | the palette: the simulation holds only the living things brought home |
 
 Flows between the pillars (P3 is the hub):
 
-- **P2 → P1:** new areas to breach.
-- **P1 → P2:** the breached area, open for exploration.
+- **P2 → P1:** new areas to wake.
+- **P1 → P2:** the woken area, open for exploration.
 - **P1 → P1:** new fauna to tame.
 - **P2 → P3:** flora (environmental and economic) and fauna (economic and exploration). Nothing goes straight from
-  P1 to P3: what a breach finds reaches the enclosures through the expedition.
+  P1 to P3: what a waking finds reaches the enclosures through the expedition.
 - **P3 → P3:** resources to host and level the flora and fauna.
 - **P3 → P2:** explorer pets.
 - **P3 → P1:** breach pets (a working name; a more peaceful one is wanted).
 
-**Areas to breach are mysteries until breached.** One shows only as particle effects and shaders crossing the fog of
-war, never as text or a symbol. Once breached, the expedition spends time there to collect intel; without it the
-player sees the visuals and nothing more.
+**Areas are asleep until woken.** Under the fog of war the simulation is suspended; an area looks alive only through
+ambience, particle effects and shaders crossing the fog, never text or a symbol. Once woken, the expedition spends
+time there to collect intel; without it the player sees the visuals and nothing more.
 
 Beefing up, per pillar: P1 levels the team longer; P2 brings more scouts, better matched; P3 runs more generations.
 
@@ -226,4 +226,4 @@ With 20% Power in the audience, B has the more natural home for it.
 2. **How does a player who has mastered the game show it,** without beating anyone or anything? In Slay the Spire it
    is winning at higher Ascension.
 3. **How does the causality get across without walls of text?** Mysteries are visuals only, and intel comes from
-   time spent in a breached cavern.
+   time spent in a woken cavern.
