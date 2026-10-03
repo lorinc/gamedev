@@ -122,6 +122,13 @@
       .mark:focus {
         outline: none;
       }
+      .mark.pillar.on .prim,
+      .mark.pillar:focus .prim {
+        stroke-width: 4;
+      }
+      #plot.small .mark.pillar text {
+        display: block;
+      }
       .dim {
         opacity: 0.22;
       }
@@ -614,12 +621,35 @@
         whyY: 'Toward Cerebral, between Discovery and Strategy.',
       }
       // Pillars of this game (user, 2026-10-03): equal weight, so equal size. Radius in pixels of the 1200 px picture.
-      // No card yet; they don't take clicks, so the shapes inside still open theirs.
+      // Only the rim and the label take clicks, so the shapes inside still open their own cards.
+      // links and quiet: what the user said, then Claude's reading where marked (build-principles.md).
       const PILLARS = [
-        { id: 'P1', x: 0.195, y: 0.421 }, // around 1a, 2a, 1b, nudged toward Challenge
-        { id: 'P2', x: -0.6, y: 0.08 }, // 14's height, 25's column, on the line from the audience to Story
-        { id: 'P3', x: -0.32, y: 0.57 }, // around 2b, 17, 8, 3
+        {
+          id: 'P1', x: 0.195, y: 0.421, // around 1a, 2a, 1b, nudged toward Challenge
+          name: 'Strategy, Power, Challenge',
+          role: 'Where difficulty scales with progress, at steps the player chooses; the game never scales silently.',
+          shapes: '1a Cards: hand, 2a Harvest: yield, 1b Cards: loadout',
+          links: 'Fed by P3: the yield (2a) of what was steered there (2b). Feeds P2: the loadout (1b) is what the player takes on the outing. (Claude’s reading.)',
+          quiet: 'A riskless strategy-testing loop: trying a build before choosing the next step. (The user’s example; placing it here is Claude’s reading.)',
+        },
+        {
+          id: 'P2', x: -0.6, y: 0.08, // 14's height, 25's column, on the line from the audience to Story
+          name: 'Discovery and Story',
+          role: 'The most kinetic pillar, to lean into: exploration and horizon expansion, the exciting part.',
+          shapes: '14 Expedition, 15 Caretaker',
+          links: 'Feeds P3: what is brought back from exploration feeds tinkering. Fed by P1: the loadout taken on the outing (Claude’s reading).',
+          quiet: 'Rare, beautiful event sightings during exploration, near 25, the naturalist. (The user’s example; placing it here is Claude’s reading.)',
+        },
+        {
+          id: 'P3', x: -0.32, y: 0.57, // around 2b, 17, 8, 3
+          name: 'Controlling the simulation',
+          role: 'What the player controls about the simulation: tinkering, on the cerebral, world side.',
+          shapes: '2b Harvest: steering, 17 Pressure: deadline, 8 Tipping point, 3 Alchemy',
+          links: 'Fed by P2: what exploration brings back. Feeds P1: what is steered here (2b) is taken as the yield there (2a) (Claude’s reading).',
+          quiet: 'A vivarium or zoo: the system’s living things, kept and watched. (The user’s example; placing it here is Claude’s reading.)',
+        },
       ]
+      const PILLAR_COLOR = '#c98a00'
       const PILLAR_R = 72
       const GAMES = [
         { key: 'this', pool: true, title: 'This game', metric: 'the shape pool', meta: '29 candidate shapes, split into variants; nothing chosen', marks: SHAPES.map((s) => ({ ...s, desc: DESC[s.id] })).concat(AUDIENCE), aud: [['Discovery', 30], ['Strategy', 30], ['Power', 20], ['Story', 10], ['Challenge', 10]] },
@@ -659,9 +689,25 @@
           toy.textContent = 'the toy'
 
           for (const p of PILLARS) {
-            el('circle', { cx: px(p.x), cy: py(p.y), r: PILLAR_R * K, fill: '#c98a00', 'fill-opacity': 0.08, stroke: '#c98a00', 'stroke-width': 2, 'pointer-events': 'none' }, plot)
-            const t = el('text', { x: px(p.x) + PILLAR_R * K * 0.72, y: py(p.y) - PILLAR_R * K * 0.72, class: 'toy', 'pointer-events': 'none' }, plot)
+            const cx = px(p.x)
+            const cy = py(p.y)
+            const r = PILLAR_R * K
+            const g = el('g', { class: 'mark pillar', tabindex: 0, role: 'button', 'aria-label': 'Pillar ' + p.id }, plot)
+            el('circle', { class: 'prim', cx, cy, r, fill: PILLAR_COLOR, 'fill-opacity': 0.08, stroke: PILLAR_COLOR, 'stroke-width': 2, 'pointer-events': 'none' }, g)
+            el('circle', { cx, cy, r, fill: 'none', stroke: 'transparent', 'stroke-width': 12, 'pointer-events': 'stroke' }, g)
+            const lx = cx + r * 0.72
+            const ly = cy - r * 0.72
+            el('circle', { class: 'hit', cx: lx + 8, cy: ly - 4, r: 13 }, g)
+            const t = el('text', { x: lx, y: ly, class: 'toy' }, g)
             t.textContent = p.id
+            const id = 'p:' + p.id
+            g.addEventListener('mouseenter', () => show(id))
+            g.addEventListener('mouseleave', () => (pinned ? show(pinned) : hide()))
+            g.addEventListener('focus', () => show(id))
+            g.addEventListener('blur', () => (pinned ? show(pinned) : hide()))
+            g.addEventListener('click', (e) => (e.stopPropagation(), pin(pinned === id ? null : id)))
+            g.addEventListener('keydown', (e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), pin(pinned === id ? null : id)))
+            marks[id] = g
           }
 
           // prep-and-run: one shape, two marks
@@ -913,6 +959,24 @@
           paint('#8cbee1', '#0b0b0b')
           tip.hidden = false
           return place(DOT[m][0] * K, DOT[m][1] * K)
+        }
+        if (id.startsWith('p:')) {
+          const p = PILLARS.find((q) => 'p:' + q.id === id)
+          const h = document.createElement('b')
+          h.className = 'th'
+          h.textContent = p.id + ' · ' + p.name
+          const grp = document.createElement('div')
+          grp.className = 'grp'
+          grp.textContent = 'Pillar, as the user set it'
+          const lines = [p.role, 'Shapes inside: ' + p.shapes + '.', p.links, 'Tranquility side loop: ' + p.quiet].map((x) => {
+            const q = document.createElement('p')
+            q.textContent = x
+            return q
+          })
+          tip.append(h, grp, ...lines)
+          paint(PILLAR_COLOR, '#0b0b0b')
+          tip.hidden = false
+          return place(px(p.x) + PILLAR_R * K * 0.72, py(p.y) - PILLAR_R * K * 0.72)
         }
         const s = game.marks.find((q) => q.id === id)
         const h = document.createElement('b')
