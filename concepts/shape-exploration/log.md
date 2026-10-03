@@ -136,3 +136,10 @@ Quotes are the user's, with spelling lightly fixed.
 - **Area stages.** The opened area is called Wild: an area goes Unseen → Wild → Caverns → Cultivated.
 - **Terrain.** The user: "Area should be 'terrain' and also have studied and foraged stage for the elements (ores,
   liquids, physical attributes)."
+- **Depth, not confusion.** The user: "Coding this is not too complicated, because this is just a few principles
+  applied to a few concepts. I think the player will also get it, because it is both natural, and mostly on autopilot.
+  Complexity is now depth and lore, and not confusing uninformed decisions." On Claude's worry that three decisions
+  carry too little hands-on play: "there will be more hands-on decisions, the pet levelling system. Player will want
+  their teams to be strong enough for the next unseen breach, balancing a food chain up from minerals to apex
+  predators, across multiple biomes, and maintain good forager and pioneer teams with probably synergising traits.
+  This is a lot of work, even if a lot of things already run on autopilot."

@@ -219,6 +219,13 @@ Studying and foraging run on their own, and a cultivated area harvests itself, s
 
 **Foragers have several roles:** they study (prospecting), forage, bring home flora samples, and lift the fog of war.
 
+**Complexity is depth and lore, not uninformed decisions.** A few principles apply to a few concepts, most of it runs
+on autopilot, and it reads as natural.
+
+**The hands-on work is the pets.** Levelling the teams so they are strong enough for the next Unseen; balancing a food
+chain from minerals up to apex predators, across several biomes; keeping good forager and pioneer teams, probably with
+synergising traits.
+
 ### Why every biome gets a colony
 
 - **Tames have no native colony at first.** A tamed animal survives outside its native environment, but grows and
