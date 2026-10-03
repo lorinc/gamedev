@@ -135,12 +135,15 @@
       }
       #tip.subtle {
         width: max-content;
-        max-width: 260px;
+        max-width: 240px;
         white-space: pre-line;
         padding: 4px 8px;
         font-size: 12px;
         color: var(--ink2);
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+      }
+      #tip.subtle p {
+        margin-top: 3px;
       }
       .mark.pillar.on .prim,
       .mark.pillar:focus .prim {
@@ -679,11 +682,13 @@
       ]
       // what flows from one pillar to the next
       const FLOWS = [
-        { from: 'P2', to: 'P1', text: 'Prospects' },
-        { from: 'P1', to: 'P3', text: 'Flora: environmental and economic\nFauna: economic and exploration' },
-        { from: 'P3', to: 'P1', text: 'The team' },
-        { from: 'P3', to: 'P2', text: 'The team' },
-        { from: 'P3', to: 'P3', at: -2.4, text: 'Resources to host and level the flora and fauna' }, // at: where the loop leaves the rim, radians
+        { from: 'P2', to: 'P1', text: 'Prospects', more: 'Flagged caverns, each with its conditions: dark, flooded, toxic, hot or overgrown.' },
+        { from: 'P1', to: 'P3', text: 'Flora: environmental and economic\nFauna: economic and exploration', more: 'Only what is brought home can live in the enclosures.' },
+        { from: 'P3', to: 'P1', text: 'The team', more: 'Tamed and levelled creatures, matched in strength against the chosen cavern.' },
+        { from: 'P3', to: 'P2', text: 'The team', more: 'Scouts whose traits get them through the cavern conditions.' },
+        { from: 'P1', to: 'P2', text: 'New areas to explore', more: 'Ground opened by a breach, for the scouts to flag prospects in.' },
+        { from: 'P1', to: 'P1', at: -0.9, text: 'New areas to explore', more: 'Ground opened by a breach, for the next breach.' },
+        { from: 'P3', to: 'P3', at: -2.4, text: 'Resources to host and level the flora and fauna', more: 'Farmed in the enclosures; more generations, stronger stock.' }, // at: where the loop leaves the rim, radians
       ]
       const PILLAR_COLOR = '#c98a00'
       const FLOW_ALPHA = 0.45
@@ -1050,14 +1055,18 @@
         }
         if (id.startsWith('f:')) {
           const f = FLOWS.find((q) => 'f:' + q.from + q.to === id)
-          tip.textContent = f.text
+          const h = document.createElement('b')
+          h.textContent = f.text
+          const more = document.createElement('p')
+          more.textContent = f.more
+          tip.append(h, more)
           tip.classList.remove('tinted')
           tip.classList.add('subtle')
           // the arrow's colour as it looks on the paper, kept opaque so the chart does not show through
           tip.style.background = `color-mix(in srgb, ${PILLAR_COLOR} ${FLOW_ALPHA * 100}%, #ffffff)`
           tip.style.color = '#0b0b0b'
           tip.hidden = false
-          return place(f.mx, f.my, 220)
+          return place(f.mx, f.my, 240)
         }
         if (id.startsWith('p:')) {
           const p = PILLARS.find((q) => 'p:' + q.id === id)
