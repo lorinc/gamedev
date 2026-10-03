@@ -607,14 +607,14 @@
         id: 'audience',
         g: 'au',
         name: 'Audience, as the user set it',
-        x: -0.08,
-        y: 0.35,
-        desc: 'The user’s mix for this game: Discovery 30%, Power 20%, Strategy 20%, Story 10%, Challenge 10%. It adds up to 90%, so the rings are drawn from 33, 22, 22, 11 and 11.',
-        whyX: 'Just on the World side of the centre: Discovery and Story pull left, Power and Challenge right.',
-        whyY: 'Toward Cerebral, between Discovery and Strategy, near the toy.',
+        x: -0.06,
+        y: 0.38,
+        desc: 'The user’s mix for this game: Discovery 30%, Strategy 30%, Power 20%, Story 10%, Challenge 10%.',
+        whyX: 'Near the centre: Discovery and Story pull toward World, Strategy, Power and Challenge toward Player.',
+        whyY: 'Toward Cerebral, between Discovery and Strategy.',
       }
       const GAMES = [
-        { key: 'this', pool: true, title: 'This game', metric: 'the shape pool', meta: '29 candidate shapes, split into variants; nothing chosen', marks: SHAPES.map((s) => ({ ...s, desc: DESC[s.id] })).concat(AUDIENCE), aud: [['Discovery', 33], ['Power', 22], ['Strategy', 22], ['Story', 11], ['Challenge', 11]] },
+        { key: 'this', pool: true, title: 'This game', metric: 'the shape pool', meta: '29 candidate shapes, split into variants; nothing chosen', marks: SHAPES.map((s) => ({ ...s, desc: DESC[s.id] })).concat(AUDIENCE), aud: [['Discovery', 30], ['Strategy', 30], ['Power', 20], ['Story', 10], ['Challenge', 10]] },
         ...REF.map((g) => ({
           ...g,
           marks: g.marks.map(([id, name, w, x, y, whyX, whyY, desc, a]) => ({ id, name, w, x, y, whyX, whyY, desc, left: a === 'l' || x > 0.45 })),

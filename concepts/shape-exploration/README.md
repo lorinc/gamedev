@@ -10,9 +10,9 @@ Quotes are the user's, with spelling lightly fixed.
 - Stage 4 is half done: the motivation mix and its synergy are mapped (Claude's inference). The market part
   (competition, success rate, narrowly scoped indies) is not started.
 - Stage 5 is parked until the end.
-- **This game's audience, set by the user (2026-10-03):** Discovery 30%, Power 20%, Strategy 20%, Story 10%,
-  Challenge 10% (as given; it adds up to 90%). Shown on [map.html](map.html) as a green diamond at 0.08 World,
-  0.35 Cerebral, near the toy. The factors in [audience-factors.md](audience-factors.md) are not derived from it yet.
+- **This game's audience, set by the user (2026-10-03):** Discovery 30%, Strategy 30%, Power 20%, Story 10%,
+  Challenge 10% (a first version had Strategy at 20%). Shown on [map.html](map.html) as a green diamond at
+  0.06 World, 0.38 Cerebral. The factors in [audience-factors.md](audience-factors.md) are not derived from it yet.
 
 ## The method (user, 2026-10-02)
 
