@@ -132,6 +132,34 @@ user's own wording is kept where it did not change.
   where strategy comes from, as long as they are traceable.)
 - New rules arrive one at a time, after the previous one is understood.
 
+## A strong candidate shape: the short run that keeps only knowledge (2026-10-03, not chosen)
+
+The user, from "picking the game up again must not be overwhelming":
+
+> "This points towards a very specific game shape: a short run, where complexity does not carry over, only
+> knowledge, like Noita, or Super Auto Pets. Magicraft is borderline, because you unlock mechanics, but they can be
+> ignored. What can not be ignored in Magicraft is the unlocked spells / trinkets in your random pool, that WILL make
+> subsequent runs more complex, even if you forgot a lot about the game. That's an antipattern."
+
+**Status:** "just a strong candidate". Not chosen; the expectations above still say "the next attempt".
+
+**The antipattern:** unlocks that grow the random pool. Unlocked mechanics a player can ignore cost a returning player
+nothing; unlocked items that appear in every draw cost them every run.
+
+Claude's refinements:
+
+- **It is a matter of degree.** Slay the Spire also unlocks cards into the pool, but few, and within the first hours,
+  while the player is still active. The antipattern bites when the pool keeps growing after the player has stopped
+  tracking it.
+- **The variant that escapes it: the player curates the pool.** Vampire Survivors added a "seal" that removes items
+  from the random pool. As a rule: nothing enters the random pool without the player's say.
+- **Power must live inside the run.** The audience has 20% Power, which usually comes from progression across runs.
+  With only knowledge kept, each run needs a satisfying power curve of its own (the team in Super Auto Pets, the build
+  in Brotato).
+- **On the pool:** this is shape 10a ("Run: nothing kept", toward Challenge) with the knowledge loop, 26 (near
+  Discovery), as its pair. For a Discovery-and-Strategy audience, what carries over should be knowledge of the
+  ecosystem's rules rather than execution skill, which pulls the shape toward 26.
+
 ## Open questions
 
 1. **What should the simulator tell first?** The first thing the user couldn't judge by playing it alone.
