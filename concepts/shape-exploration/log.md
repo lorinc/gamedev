@@ -112,3 +112,8 @@ Quotes are the user's, with spelling lightly fixed.
      using baits and crops from the same tier of biomes (like DAG levels), so player explores all of the next tiers
      before moving on to the next ones."
   The map stays as it is: it shows the player appeal per pillar, nothing else.
+- **Order settled.** The loop list and answer 5 disagreed; the user: "I was changing my mind mid-flight. Open >
+  foragers prospect and forage, pioneers tame a few of easiest animals > pioneers walk the food chain, reach the top >
+  area can be colonized > colonized area allows economic use of crops and animals." Prospectors are not a fourth
+  role: "just foragers have multiple roles: they collect knowledge (prospectors), they forage resources, they bring
+  home flora samples, and they lift FOW". Taming the top predator, not finding everything, now unlocks colonization.

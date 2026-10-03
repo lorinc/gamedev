@@ -187,18 +187,17 @@ colonies settle into stable idle play.
 - **Biome connections are limited,** which keeps growth manageable. Biomes come in tiers, like the levels of a DAG; baits
   and crops from the same tier give a heavy incentive to explore all of a tier before moving on.
 
-### Unseen → Cavern: opening up
+### How an area moves
 
-Opening up an Unseen means the foragers can start learning its biome. Once some of its elements are fully learnt,
-fauna can be brought home and the pioneers can start taming.
+1. **Open:** an Unseen is opened up and becomes a cavern.
+2. **Foragers prospect and forage;** pioneers tame a few of the easiest animals, for their local resistances.
+3. **Pioneers walk the food chain:** tamed animals help tame stronger ones, with crops and baits brought in from
+   outside, up to the top predator, a mini-boss.
+4. **Colonize:** once the top predator is tamed, the area can be colonized.
+5. **Economic use:** a colonized area allows economic use of its crops and animals.
 
-**Taming goes through the food chain:** simple animals first, then those animals help tame stronger ones, up to the
-top predator, a mini-boss. The pioneers tame a few low-level animals for their local resistances, and bring in crops and
-baits from outside to capture the next tier.
-
-### Cavern → Colony: colonizing
-
-Finding everything in a cavern unlocks colonization.
+**Foragers have several roles:** they collect knowledge (prospecting), forage resources, bring home flora samples, and
+lift the fog of war.
 
 ### Why every biome gets a colony
 
@@ -218,14 +217,13 @@ Finding everything in a cavern unlocks colonization.
 | Colony → Colony | idle | the simulation is beautiful, increasingly diverse, but stable |
 | Colony → Unseen | active | send pioneer teams to open up an Unseen |
 | Colony → Unseen | active | send pioneer teams to tame animals |
-| Unseen → Unseen | | taming the top animal unlocks foraging |
+| Unseen → Unseen | | taming the top animal makes the area ready to colonize |
 | Colony → Caverns | active | set up forager teams for field trips |
 | Colony → Caverns | idle | forager teams go on their own trips |
 | Caverns → Caverns | idle | the simulation itself is beautiful and non-linear |
 | Caverns → Colony | idle | field trips bring flora unlocks and foraged goods |
 | Caverns → Colony | active | a breather: find unique, special things by hand near the foragers |
 | Caverns → Unseen | idle | lifting the fog within the caverns finds the boundaries of the Unseen |
-| Caverns → Caverns | | finding everything in a cavern unlocks colonization |
 
 **The Unseen stays hands-on.** It is the messy, mysterious frontier and the game's kinetic challenge. Taming may run as
 a timed idle mission (like sending frigates in No Man's Sky), but not everything needs to be idle.
