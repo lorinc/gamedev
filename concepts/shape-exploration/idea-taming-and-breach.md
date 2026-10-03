@@ -51,6 +51,15 @@ player already has, and it was never that action's main job.
   taming is won by reading and planning, not by luck.
 - **The lie:** a late animal that looks calm while it is the most suspicious of all.
 
+**A worked example.** A shy prey animal is spooking: in three turns it will flee. Pet A casts a snare, which frightens
+the prey but stops it fleeing. Pet B's charm is ready the next round and pushes the prey's trust to 80%. One more
+cycle of snare and charm, and trust crosses 100%. All the while pet C keeps pet A alive, because pet A has no
+protection against the environment.
+
+- **Trust and fear are a dial pair.** Fear isn't simply bad: a frightened animal that can't flee can be charmed.
+- The snare has two effects at once: it costs fear and buys time. The charm works only because it is off cooldown when
+  needed. Pet A has no resistance, and earns its place with the snare, made affordable by pet C's healing.
+
 ## The breach as a scouting game
 
 The breach could be its own game: the pioneers wander the Unseen until every entity that lives there has been

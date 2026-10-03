@@ -170,3 +170,7 @@ Quotes are the user's, with spelling lightly fixed.
 - **Telegraphs and cooldowns.** The user: "Sonny enemies sometimes telegraphed multiple rounds ahead, based on the time
   you needed to plan your actions, because your actions also had cooldowns, so if your counter was on cooldown when
   you needed it, you've lost the battle."
+- **Teams instead of a deck; coercion is allowed.** The user: "So, instead of building a deck, I build teams with
+  skills that complement each other and have cooldowns", with the snare-and-charm example now in
+  idea-taming-and-breach.md. On Claude's worry that a snare is coercion against the peaceful pull: "This does not
+  have to be a Disney tale, coercion is not brutal violence. Sometimes a vet does coerce a pet to save it."

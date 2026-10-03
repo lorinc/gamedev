@@ -156,7 +156,8 @@ Flows between the pillars (P3 is the hub):
 **Flora:** all of it plays a systemic role; the economic plants also generate resources.
 
 **Fauna is won by a peaceful pull, not a violent push.** The pioneers face an animal in a kind of battle; a win means
-the animal follows them back to the colony, a loss means it decided to stay. To tame, the pioneers need:
+the animal is tamed, a loss means it decided to stay. Coercion is allowed: it isn't brutal violence, the way a vet
+sometimes restrains an animal to save it. Nature is not romanticised. Killing stays out. To tame, the pioneers need:
 
 - protection from the area's environment;
 - something that intrigues the animal;
