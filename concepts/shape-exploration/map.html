@@ -682,12 +682,12 @@
       ]
       // what flows from one pillar to the next
       const FLOWS = [
-        { from: 'P2', to: 'P1', text: 'Prospects', more: 'Mysteries: particles and shaders crossing the fog of war, no text or symbol, until breached.' },
-        { from: 'P1', to: 'P3', text: 'Flora: environmental and economic\nFauna: economic and exploration', more: 'Only what is brought home can live in the enclosures.' },
-        { from: 'P3', to: 'P1', text: 'The team', more: 'Tamed and levelled creatures, matched in strength against the chosen cavern.' },
-        { from: 'P3', to: 'P2', text: 'The team', more: 'Scouts whose traits get them through the cavern conditions (dark, flooded, toxic, hot, overgrown).' },
-        { from: 'P1', to: 'P2', text: 'New areas to explore', more: 'A breached cavern: the expedition spends time there to collect intel; until then only its visuals show.' },
-        { from: 'P1', to: 'P1', at: -0.9, text: 'New areas to explore', more: 'Ground opened by a breach, for the next breach.' },
+        { from: 'P2', to: 'P1', text: 'New areas to breach', more: 'Mysteries: particles and shaders crossing the fog of war, no text or symbol, until breached.' },
+        { from: 'P1', to: 'P2', text: 'Open area for exploration', more: 'The expedition spends time there to collect intel; until then only its visuals show.' },
+        { from: 'P1', to: 'P1', at: -0.9, text: 'New fauna to tame' },
+        { from: 'P2', to: 'P3', text: 'Flora: environmental and economic\nFauna: economic and exploration', more: 'Only what is brought home can live in the enclosures.' },
+        { from: 'P3', to: 'P2', text: 'Explorer pets', more: 'Their traits get them through the cavern conditions (dark, flooded, toxic, hot, overgrown).' },
+        { from: 'P3', to: 'P1', text: 'Breach pets', more: 'Tamed and levelled, matched in strength against the chosen cavern.' },
         { from: 'P3', to: 'P3', at: -2.4, text: 'Resources to host and level the flora and fauna', more: 'Farmed in the enclosures; more generations, stronger stock.' }, // at: where the loop leaves the rim, radians
       ]
       const PILLAR_COLOR = '#c98a00'
@@ -1057,9 +1057,12 @@
           const f = FLOWS.find((q) => 'f:' + q.from + q.to === id)
           const h = document.createElement('b')
           h.textContent = f.text
-          const more = document.createElement('p')
-          more.textContent = f.more
-          tip.append(h, more)
+          tip.append(h)
+          if (f.more) {
+            const more = document.createElement('p')
+            more.textContent = f.more
+            tip.append(more)
+          }
           tip.classList.remove('tinted')
           tip.classList.add('subtle')
           tip.style.background = PILLAR_COLOR

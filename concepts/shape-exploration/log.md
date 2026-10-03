@@ -61,3 +61,6 @@ Quotes are the user's, with spelling lightly fixed.
   shaders crossing the FOW, not by text or a symbol), until breached. Once breached, the expedition needs to spend time
   there to collect intel. Without that, we just see the visuals, but that's all. I'm not sure how we will be able to
   get the causality through without walls of text, but that's a good challenge to have."
+- **Flows renamed and rerouted.** The user: "P1 -> P1: new fauna to tame. P2 -> P1: new areas to breach. P1 -> P2: open
+  area for exploration. P3 -> P2: explorer pets. P3 -> P1: breach pets (would be nice to find a more peaceful name).
+  P1 -> P3: does not exist, this goes through the P1 > P2 > P3 route."
