@@ -22,7 +22,7 @@ difficulty of each pillar in the other."
 
 **Grade: likely.** The spacing is there to see; that it is on purpose, and that its job is rest, is a reading.
 
-**What the maps show.** In seven of the nine games the core loop has a partner loop far from it on the
+**What the maps show.** In six of the nine games the core loop has a partner loop far from it on the
 cerebral–kinetic axis: one is done with the hands, the other with the head. The gap is in axis units, where the whole
 axis from Cerebral to Kinetic is 2.
 
@@ -31,10 +31,10 @@ axis from Cerebral to Kinetic is 2.
 | 20 Minutes Till Dawn | move and shoot | pick an upgrade | 1.12 |
 | Brotato | dodge while the weapons fire | shop between waves | 0.88 |
 | Forager | gather | craft and build the base | 0.84 |
-| A Short Hike | roam the island | collect golden feathers | 0.75 |
 | Minami Lane | arrange the street | finish the missions | 0.72 |
 | Islanders | place a building | end up with a pretty island | 0.66 |
 | Kabuto Park | catch bugs | fill the collection | 0.62 |
+| A Short Hike | roam the island | collect golden feathers | 0.20 |
 | Stacklands | stack cards | feed everyone before the moon ends | 0.20 |
 | SUMMERHOUSE | place pieces | soak in the mood | 0.28 |
 
@@ -52,6 +52,9 @@ axis from Cerebral to Kinetic is 2.
 - The positions, and so the gaps, are Claude's placements. The user checked the games they have played and found
   nothing to disagree with; the rest rests on that trust.
 - No developer of these games was read saying the spacing was intended.
+- **A Short Hike became a third exception on 2026-10-03,** when the user moved its loops on the map: roaming went
+  up to the horizontal axis (0.04 toward Kinetic) and the feathers down near it (0.16 toward Cerebral). Its gap was
+  0.75 before the move.
 - **The two exceptions matter.** Stacklands, one of the best sellers on the list (30,383 reviews), has no swing in pace: every loop is
   thinking. SUMMERHOUSE has none either. So a swing between a fast and a slow pillar is common in this sample, not
   required. Stacklands may swing in another way (between calm stacking and the deadline of the moon), which this axis
@@ -69,8 +72,7 @@ Claude's notes on it:
   simulation; the casual, hands-on pillar was never collected.
 - **What the sample shows is a hands pillar, which is not the same as Excitement.** On Quantic Foundry's chart
   Excitement means fast-paced action and thrills. The peaceful games on the list get their swing from something
-  milder: roaming (A Short Hike), gathering (Forager). These sit between 0.30 and 0.40 toward
-  Kinetic, with no violence and no time pressure. So the leaning can be followed without leaving "peaceful" or the
+  milder: gathering (Forager), which sits 0.40 toward Kinetic, with no violence and no time pressure. So the leaning can be followed without leaving "peaceful" or the
   user's doubt about high-tension play.
 - **Which pillar is the rest depends on the game.** In Brotato the shop is the rest from dodging. In a game whose
   demanding part is understanding a simulation, the hands pillar would be the rest.

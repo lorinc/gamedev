@@ -296,7 +296,7 @@
       <p>
         A tool to understand how successful small indie games engineer their loops around what their audience
         expects, and then to choose my own mechanics from what was learned. Point at a mark to see what it is and why
-        it sits there; pick a game on the right.
+        it sits there, or at a motivation dot to see what it means; pick a game on the right.
       </p>
 
       <div class="cols">
@@ -527,10 +527,26 @@
       }
       // The 12 motivation dots, in pixels of the 1200 px picture. A game's audience (audience-from-tags.md) is a
       // weighted mean of these, so it is drawn with a ring on each dot it is made of.
+      // What each motivation means: Quantic Foundry's keywords and game lists, with Claude's reading of the lists
+      // (motivation-map.md). Two definitions are the user's own: Design is building things, Story includes atmosphere.
+      const MOT = {
+        Destruction: ['Action: “Boom!”', 'guns, explosives, chaos, mayhem', 'Blowing things up in shooters; GTA’s sandbox mayhem.', 'GTA, Battlefield, Destiny, Call of Duty, Gears of War, Halo, Borderlands, Doom'],
+        Excitement: ['Action: “Boom!”', 'fast-paced, action, surprises, thrills', 'Fast action.', 'Super Smash Bros. Melee, Battlefield, Counter-Strike, Call of Duty, God of War, Destiny'],
+        Competition: ['Social: “Let’s play together”', 'duels, matches, high on ranking', 'Live duels and rankings.', 'Counter-Strike, Super Smash Bros. Melee, DoTA, League of Legends, Street Fighter, StarCraft 2'],
+        Community: ['Social: “Let’s play together”', 'being on a team, chatting, interacting', 'Live team play and chat.', 'Final Fantasy XIV, Battlefield, Destiny, Guild Wars, EverQuest, World of Warcraft'],
+        Challenge: ['Mastery: “Let me think”', 'practice, high difficulty, challenges', 'Execution skill, practice and high difficulty, mostly dexterity and competitive.', 'Super Smash Bros. Melee, Devil May Cry 3, Dark Souls, Street Fighter, Monster Hunter, StarCraft 2'],
+        Strategy: ['Mastery: “Let me think”', 'thinking ahead, making decisions', 'Long-horizon planning in heavy games: grand strategy, 4X, tactics.', 'Europa Universalis 4, Crusader Kings 2, Civilization, XCOM, Fire Emblem, Kerbal Space Program'],
+        Completion: ['Achievement: “I want more”', 'get all collectibles, complete all missions', 'Collecting everything and finishing every mission in a large game.', 'Final Fantasy, Assassin’s Creed, Zelda, Animal Crossing, Pokémon, Fire Emblem'],
+        Power: ['Achievement: “I want more”', 'powerful character, powerful equipment', 'Levelling and loot: a character, a team or gear that gets stronger. The most central motivation on the map.', 'World of Warcraft, Diablo 2/3, RuneScape, Destiny, League of Legends, God of War'],
+        Fantasy: ['Immersion: “Once upon a time”', 'being someone else, somewhere else', 'Being someone else in an immersive world.', 'Dragon Age, Elder Scrolls, Dishonored, Mass Effect, Skyrim, Journey, Zelda'],
+        Story: ['Immersion: “Once upon a time”', 'elaborate plots, interesting characters', 'Elaborate plots in long role-playing games. In the user’s reading it also covers atmosphere: visual storytelling, even with little story in the game.', 'Dragon Age, Mass Effect, Persona 3/4, Final Fantasy VIII–X, Knights of the Old Republic, Planescape Torment'],
+        Design: ['Creativity: “What if?”', 'expression, customization', 'Making a character, a home or a team your own. In the user’s reading: building things.', 'The Sims, Animal Crossing, Guild Wars 2, Final Fantasy XIV, Monster Hunter, Pokémon'],
+        Discovery: ['Creativity: “What if?”', 'explore, tinker, experiment', 'Mostly big open worlds to roam; and, in Minecraft and Kerbal, a system to experiment on. It joins the left side of the map to the top.', 'Elder Scrolls, Fallout, Zelda, Minecraft, Kerbal Space Program, Metroid Prime'],
+      }
       const DOT = { Completion: [577, 148], Strategy: [668, 296], Challenge: [922, 341], Discovery: [402, 469], Power: [777, 513], Story: [183, 679], Design: [306, 684], Competition: [1051, 720], Fantasy: [160, 823], Community: [749, 847], Excitement: [927, 878], Destruction: [742, 1042] }
       const INK = '#0b0b0b'
       const REF = [
-        {"key": "hike", "title": "A Short Hike", "metric": "22,778 Steam reviews", "meta": "solo · 4 months to the first release", "marks": [["roam", "Roam the island", 3, -0.8, -0.3, "Being somewhere else, at your own pace: close to Fantasy.", "Walking, climbing and gliding are the play, but nothing hurries you.", "Walk, climb and glide anywhere on a small island. There is a summit to reach and no pressure to reach it."], ["feathers", "Collect golden feathers", 2, -0.3, 0.45, "Things hidden in the world, found by looking around.", "A light checklist: each feather lets you climb higher.", "Golden feathers are hidden and sold around the island. Each one adds stamina, which opens more of the mountain."], ["help", "Help the islanders", 2, -0.86, 0.08, "Characters and their small stories: close to Story.", "Short errands, taken at your own pace.", "Islanders ask for small favours and reward them with tools, feathers or a chat."], ["side games", "Side activities", 1, -0.35, -0.45, "Small games inside the world.", "The most kinetic part: fishing, a boat, races, a ball game.", "Optional mini-games dotted around the island."], ["audience", "Audience, read from the store page", 0, -0.57, -0.09, "Its tags and pitch point to: Fantasy 45%, Discovery 44%, Excitement 7%.", "Mood tags the model has no place for (Relaxing, Cute, Casual, Nature, Family Friendly, Beautiful, Cozy, Funny) carry 53% of the tag weight.", "People who want to wander a pretty place in peace: a short, gentle, cute outing, children included."]], "aud": [["Fantasy", 45], ["Discovery", 44]]},
+        {"key": "hike", "title": "A Short Hike", "metric": "22,778 Steam reviews", "meta": "solo · 4 months to the first release", "marks": [["roam", "Roam the island", 3, -0.67, -0.04, "Being somewhere else, at your own pace: close to Fantasy.", "Walking, climbing and gliding are the play, but nothing hurries you.", "Walk, climb and glide anywhere on a small island. There is a summit to reach and no pressure to reach it."], ["feathers", "Collect golden feathers", 2, -0.17, 0.16, "Things hidden in the world, found by looking around.", "A light checklist: each feather lets you climb higher.", "Golden feathers are hidden and sold around the island. Each one adds stamina, which opens more of the mountain."], ["help", "Help the islanders", 2, -0.83, 0.07, "Characters and their small stories: close to Story.", "Short errands, taken at your own pace.", "Islanders ask for small favours and reward them with tools, feathers or a chat."], ["side games", "Side activities", 1, -0.35, -0.45, "Small games inside the world.", "The most kinetic part: fishing, a boat, races, a ball game.", "Optional mini-games dotted around the island."], ["audience", "Audience, read from the store page", 0, -0.57, -0.09, "Its tags and pitch point to: Fantasy 45%, Discovery 44%, Excitement 7%.", "Mood tags the model has no place for (Relaxing, Cute, Casual, Nature, Family Friendly, Beautiful, Cozy, Funny) carry 53% of the tag weight.", "People who want to wander a pretty place in peace: a short, gentle, cute outing, children included."]], "aud": [["Fantasy", 45], ["Discovery", 44]]},
         {"key": "islanders", "title": "Islanders", "metric": "16,787 Steam reviews", "meta": "3 students · 7 months", "marks": [["place", "Place a building", 3, -0.12, 0.6, "Acts on a board of scoring rules more than on a place.", "Every placement is weighed against what already stands there: close to Strategy.", "Pick a building from your hand and place it. It scores by what stands near it.", "l"], ["next pack", "Beat the score for the next pack", 2, 0.18, 0.4, "A target to beat, set by the game.", "Planning a few placements ahead to reach it.", "Reach the score target to get the next pack of buildings and, in time, the next island."], ["high score", "Chase a higher score", 1, 0.5, 0.34, "Measured against yourself: toward Challenge.", "Mastery over many islands.", "A run goes on for as long as you keep reaching the targets; the total is your score."], ["pretty island", "End up with a pretty island", 2, -0.5, -0.06, "The island you built is something to look at: close to Design.", "No planning is needed to enjoy it.", "The finished island is small, tidy and yours."], ["audience", "Audience, read from the store page", 0, -0.19, 0.32, "Its tags and pitch point to: Strategy 57%, Design 31%, Fantasy 7%.", "Mood tags the model has no place for (Relaxing, Beautiful, Colorful, Addictive) carry 32% of the tag weight.", "Relaxed builders who like a puzzle: city building as a calm score game, with nothing to manage."]], "aud": [["Strategy", 57], ["Design", 31]]},
         {"key": "minami", "title": "Minami Lane", "metric": "6,786 Steam reviews", "meta": "2 people and a composer · about 6 months", "marks": [["street", "Arrange the street", 3, -0.58, 0.1, "A small place that becomes yours: close to Design.", "Some planning: what goes next to what.", "Build houses and shops along one street and decide where each one goes."], ["tune shops", "Tune the shops", 2, -0.2, 0.58, "A system to read: what each villager likes.", "Change one thing, watch the reaction, change it again.", "Set each shop’s recipe and prices to match what the villagers want, judged by their reactions."], ["missions", "Finish the missions", 2, -0.16, 0.82, "Goals set by the game.", "A short checklist per mission: close to Completion.", "A handful of missions, each with a few goals such as a number of happy villagers.", "l"], ["villagers", "Watch the villagers, pet the cats", 1, -0.8, -0.34, "Attachment to the little people and animals of the street.", "Nothing to work out.", "Villagers stroll past, and cats turn up and can be petted."], ["audience", "Audience, read from the store page", 0, -0.2, 0.42, "Its tags and pitch point to: Strategy 48%, Design 35%, Completion 16%.", "Mood tags the model has no place for (Cute, Casual, Relaxing, Colorful, Cozy, Cats) carry 56% of the tag weight.", "Cozy players who want a cute little management game: light optimising, wrapped in cats and colour."]], "aud": [["Strategy", 48], ["Design", 35], ["Completion", 16]]},
         {"key": "kabuto", "title": "Kabuto Park", "metric": "4,684 Steam reviews", "meta": "9 months · cost about €65,000", "marks": [["catch", "Catch bugs", 3, -0.34, 0.2, "The thrill of finding a new species: toward Discovery.", "Then the pleasure of seeing its stats: toward Power. The catch itself is a short timing game.", "Search spots in the park and catch bugs with a small timing game."], ["collection", "Fill the collection", 2, -0.3, 0.82, "Every kind of bug in the park.", "A list to complete, with rare ones: close to Completion.", "Bugs come in kinds and rarities; the album shows what is still missing.", "l"], ["team", "Build a team and battle", 2, 0.14, 0.44, "Your own team of three.", "Choosing bugs and playing their moves.", "Pick three bugs and play their moves in short battles against other kids’ teams."], ["tournament", "Win the summer tournament", 1, 0.5, 0.34, "A contest, against computer opponents.", "The one goal that needs a good team.", "The summer ends with a tournament; winning it finishes the game."], ["summer", "A childhood summer", 2, -0.9, -0.34, "Being a kid on holiday: close to Fantasy and Story.", "Mood, not thought.", "A hand-drawn park, a month of summer days, upgrades bought with pocket money."], ["audience", "Audience, as the user reads it from play", 0, -0.32, 0.33, "The user’s mix: Discovery 40%, Story 20%, Completion 20%, Power 20%. Story here is visual storytelling: the atmosphere. Power: \"you can not progress without beating other teams.\"", "The store page alone gave Power 36%, Completion 35%, Strategy 29%: the atmosphere sits in the mood tags, which carry 57% of the tag weight. The store-page mark was 0.62 from the centre of the loops.", "Cozy creature collectors of any age: catch them all, train a team, win light card battles."]], "aud": [["Discovery", 40], ["Story", 20], ["Completion", 20], ["Power", 20]]},
@@ -583,13 +599,27 @@
           const R = SHAPES.find((s) => s.id === '20r')
           link = el('line', { x1: px(P.x), y1: py(P.y), x2: px(R.x), y2: py(R.y), stroke: GROUPS.pw.color, 'stroke-width': 2, 'stroke-dasharray': '5 4', opacity: 0.7 }, plot)
         }
+        // the 12 motivation dots of the picture: each opens its own card
+        for (const m in DOT) {
+          const [dx, dy] = DOT[m]
+          const g = el('g', { class: 'mark mot', tabindex: 0, role: 'button', 'aria-label': m }, plot)
+          el('circle', { class: 'hit', cx: dx * K, cy: dy * K, r: 13 }, g)
+          el('circle', { class: 'ring', cx: dx * K, cy: dy * K, r: 11 }, g)
+          const id = 'm:' + m
+          g.addEventListener('mouseenter', () => show(id))
+          g.addEventListener('mouseleave', () => (pinned ? show(pinned) : hide()))
+          g.addEventListener('focus', () => show(id))
+          g.addEventListener('blur', () => (pinned ? show(pinned) : hide()))
+          g.addEventListener('click', (e) => (e.stopPropagation(), pin(pinned === id ? null : id)))
+          marks[id] = g
+        }
         if (game.aud) {
           // the motivations the store page points to: ring and line width grow with the share
           const A = game.marks.find((s) => s.w === 0)
           for (const [m, share] of game.aud) {
             const [dx, dy] = DOT[m]
-            el('line', { x1: px(A.x), y1: py(A.y), x2: dx * K, y2: dy * K, stroke: WEIGHT[0].color, 'stroke-width': 1 + share / 15, opacity: 0.35 }, plot)
-            el('circle', { cx: dx * K, cy: dy * K, r: 9 + share / 4, fill: 'none', stroke: WEIGHT[0].color, 'stroke-width': 2 }, plot)
+            el('line', { x1: px(A.x), y1: py(A.y), x2: dx * K, y2: dy * K, stroke: WEIGHT[0].color, 'stroke-width': 1 + share / 15, opacity: 0.35, 'pointer-events': 'none' }, plot)
+            el('circle', { cx: dx * K, cy: dy * K, r: 9 + share / 4, fill: 'none', stroke: WEIGHT[0].color, 'stroke-width': 2, 'pointer-events': 'none' }, plot)
           }
         }
 
@@ -794,10 +824,27 @@
       function show(id) {
         for (const k in marks) {
           marks[k].classList.toggle('on', k === id)
-          trs[k].classList.toggle('on', k === id)
+          if (trs[k]) trs[k].classList.toggle('on', k === id)
+        }
+        tip.textContent = ''
+        if (id.startsWith('m:')) {
+          const m = id.slice(2)
+          const [pair, words, practice, games] = MOT[m]
+          const h = document.createElement('b')
+          h.className = 'th'
+          h.textContent = m
+          const grp = document.createElement('div')
+          grp.className = 'grp'
+          grp.textContent = pair + ' · ' + words
+          const what = document.createElement('p')
+          what.textContent = practice
+          const who = document.createElement('p')
+          who.textContent = 'Favourites of its strongest fans: ' + games + '.'
+          tip.append(h, grp, what, who)
+          tip.hidden = false
+          return place(DOT[m][0] * K, DOT[m][1] * K)
         }
         const s = game.marks.find((q) => q.id === id)
-        tip.textContent = ''
         const h = document.createElement('b')
         h.className = 'th'
         h.textContent = game.pool ? s.id + ' · ' + s.name : s.name
@@ -824,14 +871,15 @@
         }
         tip.append(h, grp, what, why)
         tip.hidden = false
+        place(px(s.x), py(s.y))
+      }
 
-        // beside the mark where there is room, else under or over it; always inside the chart
+      // beside the mark where there is room, else under or over it; always inside the chart
+      function place(cx, cy) {
         const W = chart.clientWidth
         const w = Math.min(290, W - 16)
         tip.style.width = w + 'px'
         const th = tip.offsetHeight
-        const cx = px(s.x)
-        const cy = py(s.y)
         let left = cx + 18
         let top = cy - th / 2
         if (left + w > W - 8) left = cx - 18 - w
@@ -848,7 +896,7 @@
         tip.hidden = true
         for (const k in marks) {
           marks[k].classList.remove('on')
-          trs[k].classList.remove('on')
+          if (trs[k]) trs[k].classList.remove('on')
         }
       }
 
