@@ -71,3 +71,5 @@ Quotes are the user's, with spelling lightly fixed.
   "wake": "Wake is fitting, because simulation is suspended under FOW, it only looks alive via ambience."
 - **Pioneers.** "Breach pets" renamed. The user wants names that are the explanation, not ones that need explanation;
   chose "Pioneers" from Pioneers, Pathfinders, Trailblazers, Openers, Vanguard.
+- **Naturalists; no P1 → P1.** "Explorer pets" renamed naturalists. The user: "There's no P1->P1. A successful pioneer
+  push opens up the unseen that becomes part of the cavern, that is now the Naturalist's domain."

@@ -129,7 +129,7 @@ They differ inside (one core loop, or two supporting loops, plus one or two side
 
 | Pillar | Where | Role |
 |---|---|---|
-| P1 The Unseen | around 1a, 2a, 1b, toward Challenge | Strategy, Power, Challenge: the team wakes a cavern never entered before, opens it for exploration and finds new fauna to tame. Difficulty scales with progress, at steps the player chooses |
+| P1 The Unseen | around 1a, 2a, 1b, toward Challenge | Strategy, Power, Challenge: the pioneers wake a cavern never entered before; a successful push makes it part of the caverns. Difficulty scales with progress, at steps the player chooses |
 | P2 Caverns | 14's height, 25's column, on the line from the audience to Story | Discovery and Story, the most kinetic pillar: exploring the world, flagging new areas to wake, spending time in woken caverns to collect intel, and bringing flora and fauna home |
 | P3 Colony | around 2b, 17, 8, 3 | The simulation: natural enclosures for the living things, to farm resources, or to tame and level them for excursions |
 
@@ -144,16 +144,15 @@ Each pillar has a limit that is visible in the world and raised by what another 
 Flows between the pillars (P3 is the hub):
 
 - **P2 → P1:** new areas to wake.
-- **P1 → P2:** the woken area, open for exploration.
-- **P1 → P1:** new fauna to tame.
+- **P1 → P2:** the woken area, now part of the caverns and the naturalists' domain.
 - **P2 → P3:** flora (environmental and economic) and fauna (economic and exploration). Nothing goes straight from
-  P1 to P3: what a waking finds reaches the enclosures through the expedition.
+  P1 to P3: what a waking finds reaches the colony through the naturalists.
 - **P3 → P3:** resources to host and level the flora and fauna.
-- **P3 → P2:** explorer pets.
+- **P3 → P2:** naturalists, the pets that catalogue a woken cavern and bring its flora and fauna home.
 - **P3 → P1:** pioneers, the pets that go first and wake an area.
 
 **Areas are asleep until woken.** Under the fog of war the simulation is suspended; an area looks alive only through
-ambience, particle effects and shaders crossing the fog, never text or a symbol. Once woken, the expedition spends
+ambience, particle effects and shaders crossing the fog, never text or a symbol. Once woken, the naturalists spend
 time there to collect intel; without it the player sees the visuals and nothing more.
 
 Beefing up, per pillar: P1 levels the team longer; P2 brings more scouts, better matched; P3 runs more generations.
