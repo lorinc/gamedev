@@ -95,6 +95,9 @@
       #chart .toy {
         font-weight: 700;
       }
+      #chart .pname {
+        fill: #8a5e00;
+      }
       /* narrow screens: the ids would cover each other, so only the picked mark keeps its label */
       #plot.small .mark text {
         display: none;
@@ -783,6 +786,9 @@
             el('circle', { class: 'hit', cx: lx + 8, cy: ly - 4, r: 13 }, g)
             const t = el('text', { x: lx, y: ly, class: 'toy' }, g)
             t.textContent = p.id
+            // the name in the middle, outside the mark so it stays on narrow screens and never takes a click
+            const nm = el('text', { x: cx, y: cy + 4, 'text-anchor': 'middle', class: 'toy pname', 'font-size': Math.max(9, Math.min(13, 21 * K)), 'pointer-events': 'none' }, plot)
+            nm.textContent = p.name
             const id = 'p:' + p.id
             g.addEventListener('mouseenter', () => show(id))
             g.addEventListener('mouseleave', () => (pinned ? show(pinned) : hide()))
