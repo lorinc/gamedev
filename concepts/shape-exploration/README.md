@@ -13,6 +13,8 @@ Quotes are the user's, with spelling lightly fixed.
 - **This game's audience, set by the user (2026-10-03):** Discovery 30%, Strategy 30%, Power 20%, Story 10%,
   Challenge 10% (a first version had Strategy at 20%). Shown on [map.html](map.html) as a green diamond at
   0.06 World, 0.38 Cerebral. The factors in [audience-factors.md](audience-factors.md) are not derived from it yet.
+- **What to build (2026-10-03):** the user's principle, accessible and never boring through systems, and a planned
+  simulator for balancing: [build-principles.md](build-principles.md).
 
 ## The method (user, 2026-10-02)
 
@@ -34,6 +36,7 @@ Quotes are the user's, with spelling lightly fixed.
 | [map.html](map.html) | A picture of the assessment: every shape and variant placed on the map's two axes (World ↔ Player, Cerebral ↔ Kinetic), with the reason for each position, and ten small indie successes to compare on the same axes. Open it in a browser. Uses `Nick_axes.webp`, the axes picture saved by the user |
 | [findings.md](findings.md) | What the exploration has shown so far, graded: confident, likely, or an assumption |
 | [reference-games.md](reference-games.md) | Small indie successes to show on the map page for comparison: the ten on the page and the four dropped, with team, development time, Steam reviews and sources |
+| [build-principles.md](build-principles.md) | What to build: the user's principle (accessible and never boring, through systems, after Slay the Spire) and the planned simulator and optimizer for balancing; open questions |
 | [audience-from-tags.md](audience-from-tags.md) | The audience of each reference game, read from its Steam tags and pitch without the loops, and how far it lands from the loops on the map |
 
 ## Ground rules the user set
