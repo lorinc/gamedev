@@ -196,6 +196,15 @@ sometimes restrains an animal to save it. Nature is not romanticised. Killing st
 
 The stronger the animal, the longer the taming takes, and the stronger the team and the more food or prey it needs.
 
+**Taming and the breach play like a deck-builder's combat, with simpler UX (agreed):**
+
+- **Cooldowns instead of a deck and a shuffle.** The player never has to remember when a card comes back into play.
+- **No luck, only strategy,** as in Sonny.
+- **The animal telegraphs its moves,** sometimes several moves ahead.
+- **Moves have several effects each;** that is where the encounter's complexity comes from.
+
+The pattern behind it, and a worked example: [idea-taming-and-breach.md](idea-taming-and-breach.md).
+
 **Areas are asleep until woken.** Under the fog of war the simulation is suspended; an area looks alive only through
 ambience, particle effects and shaders crossing the fog, never text or a symbol. Once woken, the foragers spend
 time there to collect intel; without it the player sees the visuals and nothing more.
