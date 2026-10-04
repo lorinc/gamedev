@@ -1,6 +1,6 @@
 # Game design library: index
 
-Five guides researched in parallel on 2026-09-24 (five more, on loops, engagement, appeal, repetition with variety, and depth versus complexity, were added 2026-09-30 and 2026-10-01 from pasted transcripts), starting from GMTK. Each has a TL;DR, principles in depth with an "apply to spelunking" note, an overengineering-traps section, and a source list ranked by value per hour.
+Five guides researched in parallel on 2026-09-24 (five more, on loops, engagement, appeal, repetition with variety, and depth versus complexity, were added 2026-09-30 and 2026-10-01 from pasted transcripts; four more, on the engagement references Slay the Spire, Sonny, Noita and Super Auto Pets, were researched in parallel on 2026-10-04), starting from GMTK. Each has a TL;DR, principles in depth with an "apply to spelunking" note, an overengineering-traps section, and a source list ranked by value per hour.
 
 | # | Guide | Answers |
 |---|---|---|
