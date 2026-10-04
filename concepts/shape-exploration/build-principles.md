@@ -397,15 +397,17 @@ You come in, move the needle, and reap the rewards: resources, lore, unlocks, an
 - **The idle layer keeps working while the player is away:** colonies auto-harvest, foragers forage the Caverns, and
   scouts gather intel. A session starts by collecting what they brought back.
 - **Taming is the one hands-on game** inside the idle frame.
-- **Idle escapes the antipattern when what piles up is quantity, not complexity.** More of the familiar and bigger
-  numbers make coming back a reward, not a burden. Unlocked items that keep entering every choice would make later
-  sessions more complex even after the player has forgotten much of the game (Magicraft's spells and trinkets);
+- **Quantity piles up on its own; complexity enters only when the player goes looking for it.** More of the familiar
+  and bigger numbers make coming back a reward, not a burden. Unlocked items that keep entering every choice would make
+  later sessions more complex even after the player has forgotten much of the game (Magicraft's spells and trinkets);
   unlocked mechanics a player can ignore cost nothing. The variant that escapes it: the player curates the pool
   (Vampire Survivors' "seal").
 - **The simulation gets all the time it needs,** because it runs while the player is away. Coming back to see what the
   ecosystem did on its own is surprise from discovery.
 
-Prestige is not decided.
+**Long-term progression: climb differently, not faster.** As in Slay the Spire, progress opens new, harder, more
+complex challenges that ask for more mastery (deeper tiers, animals with more motivations, families that bend their
+rules), not multipliers that make the same climb faster. The player chooses when to face them, as with Ascension.
 
 ## Open questions
 

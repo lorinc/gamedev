@@ -48,6 +48,7 @@ be read on screen.
 
 | Decision | What it settles |
 |---|---|
+| D189 | Long-term progression: climb differently, not faster; complexity enters only when the player goes looking for it |
 | D188 | The game shape: an incremental idle game; a session is one or more runs, a run is anything that pushes the needle; colonies, foragers and scouts keep working while away; the food chain and colony are content and balancing on the b4 system |
 | D187 | The taming gauge: willingness 0–100% in three zones, made of motivations, each with its own zones, temperament and decay; actions act on each motivation; a motivation-driven animal, to test |
 | D186 | Learning an animal, kept abstract: observation can fill the whole card, with gaps when time ran out; engagements add the numbers and fill the gaps; shown, not told; families share rules; late game, animals bend them |
