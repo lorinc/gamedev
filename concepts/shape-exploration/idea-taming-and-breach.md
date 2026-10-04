@@ -63,12 +63,14 @@ protection against the environment.
 
 ## The breach as a scouting game
 
-The breach could be its own game: the pioneers wander the Unseen until every entity that lives there has been
-spotted. Not a fight and not a taming, but scouting.
+Decided (D182, [build-principles.md](build-principles.md)): scouting is not an engagement of its own. The player sets
+up the scout team, and the scouting runs automatically in the simulation; taming is the only engagement. What stays
+from this idea: scouts wander the Unseen until the entities that live there have been spotted, and what hides an
+entity is what the scout team has to match.
 
 - It fits "mysteries are visuals only": spotting is the reveal, and an area turns Wild when nothing in it is unseen.
 - The same pattern applies. The dials are what hides an entity: camouflage, shyness, burrowing, being active only in
   the dark or at one time. The actions are pets' side effects: light, scent, noise, digging. Each Unseen has one
   entity that is hard to spot in one way, and an ability the player already owns spots it.
-- Scouting, taming and building a colony then become three different kinds of play: wandering, a negotiation, and
-  building.
+- Scouting, taming and building a colony are three different kinds of play: setting up a team that runs on its own, a
+  negotiation, and building.

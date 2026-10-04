@@ -96,7 +96,7 @@ run together, give results nobody can trace to a cause. Each component is fleshe
 1. **Taming:** the most defined piece ([idea-taming-and-breach.md](idea-taming-and-breach.md)) and the core decision,
    where the toy feeling within seconds has to come from. Small enough to watch whole.
 2. **The food chain,** as a simple local model: does it settle, collapse or run away?
-3. **The breach,** as scouting.
+3. **Scouting:** team setup, then an automatic run in the simulation.
 4. **The colony.**
 
 ## Expectations of a good game (agreed)
@@ -201,7 +201,15 @@ start and as hard to master as Slay the Spire, as strategic and intriguing as So
 Sonny's depth: spells have several effects, and those effects interact, multiply and counteract one another, with each
 other, the player, the environment and the enemy.
 
-**Taming and the breach play like a deck-builder's combat, with simpler UX (agreed):**
+**One engagement: taming (agreed).** Scouting is not a second engagement, which would make two games:
+
+- **Scouting is team setup, then an automatic run in the simulation.** The scouts stay close to an animal long enough
+  to read its rules and moves. The decision is the match: which scouts can stay in this cavern and get close to this
+  animal. The result shows what was learned, what wasn't, and why.
+- **The kit is built before the taming, not during it.** The player arrives with the knowledge scouting brought back.
+- **Failure is not death:** the animal got away, and some bait was consumed.
+
+**Taming plays like a deck-builder's combat, with simpler UX (agreed):**
 
 - **Cooldowns instead of a deck and a shuffle.** The player never has to remember when a card comes back into play.
 - **No luck, only strategy,** as in Sonny.
