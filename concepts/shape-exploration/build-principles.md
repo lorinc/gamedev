@@ -197,7 +197,9 @@ sometimes restrains an animal to save it. Nature is not romanticised. Killing st
 The stronger the animal, the longer the taming takes, and the stronger the team and the more food or prey it needs.
 
 **The engagement is the core gameplay and the most critical element of the game (agreed).** The bar: as easy to
-start and as hard to master as Slay the Spire, as strategic and intriguing as Sonny, as free as Noita's wand building.
+start and as hard to master as Slay the Spire, as strategic and intriguing as Sonny, as free as Noita's wand building. Noita's freedom comes from the same root as
+Sonny's depth: spells have several effects, and those effects interact, multiply and counteract one another, with each
+other, the player, the environment and the enemy.
 
 **Taming and the breach play like a deck-builder's combat, with simpler UX (agreed):**
 
