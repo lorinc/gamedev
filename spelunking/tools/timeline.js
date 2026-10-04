@@ -161,7 +161,7 @@ export function renderPage(entries, opts) {
   const ledger = decisions.length
     ? `<details class="ledger"><summary>Decision ledger · ${active} active · ${decisions.length - active} superseded</summary>
 <table><thead><tr><th>ID</th><th>Date</th><th>From</th><th>Status</th><th>Decision</th></tr></thead><tbody>
-${decisions.map((d) => `<tr id="${d.id}" class="${d.status === 'active' ? '' : 'sup'}"><td>${d.id}</td><td>${escapeHtml(d.date)}</td><td>${byId[d.from] ? `<a href="#${d.from}">${d.from}</a>` : escapeHtml(d.from)}</td><td>${inline(d.status.replace(/(D\d{3})/, '[$1](#$1)'))}</td><td>${inline(d.text)}</td></tr>`).join('\n')}
+${[...decisions].reverse().map((d) => `<tr id="${d.id}" class="${d.status === 'active' ? '' : 'sup'}"><td>${d.id}</td><td>${escapeHtml(d.date)}</td><td>${byId[d.from] ? `<a href="#${d.from}">${d.from}</a>` : escapeHtml(d.from)}</td><td>${inline(d.status.replace(/(D\d{3})/, '[$1](#$1)'))}</td><td>${inline(d.text)}</td></tr>`).join('\n')}
 </tbody></table></details>`
     : ''
   return `<!doctype html>
@@ -224,7 +224,8 @@ function card(e, byId, devBase, decided) {
           return `<span class="budget${d > budgetDays ? ' over' : ''}">${d} of ${budgetDays} days</span>`
         })()
       : `<span class="budget" data-start="${escapeHtml(m.started ?? '')}" data-budget="${budgetDays}">budget ${budgetDays} days</span>`
-  const dec = decided
+  const dec = [...decided]
+    .reverse() // newest decision first
     .map((d) => `<li class="${d.status === 'active' ? '' : 'sup'}"><a href="#${d.id}">${d.id}</a> ${inline(d.text, url)}</li>`)
     .join('')
   const play = [...e.builds]

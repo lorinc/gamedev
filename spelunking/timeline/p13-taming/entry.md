@@ -48,16 +48,16 @@ be read on screen.
 
 | Decision | What it settles |
 |---|---|
-| D177 | One component at a time: taming, the food chain, scouting, the colony |
-| D178 | Every simulated run can be watched: one rules core, replays from seed and actions, reports that link to runs |
-| D179 | Taming plays like a deck-builder's combat with simpler UX: cooldowns instead of a deck, no luck, telegraphs, moves with several effects |
-| D180 | The engagement is the core gameplay; the bar is Slay the Spire, Sonny and Noita's wand building |
-| D181 | Turn-based, no time pressure, all cards on the table, the player acts every turn |
-| D182 | Taming is the only engagement; scouting is team setup plus an automatic run; failure is the animal getting away and bait consumed |
-| D183 | Routes into a tame come from different pillars; taming without bait is as hard, in another pillar's shape |
-| D185 | The animal's card: scouting fills it by observation, taming through engagement; failed attempts reveal what scouting can't; attempts cost consumables, some from earlier tiers, never punitively (supersedes D184) |
-| D186 | Learning an animal, kept abstract: observation can fill the whole card, with gaps when time ran out; engagements add the numbers and fill the gaps; shown, not told; families share rules; late game, animals bend them |
 | D187 | The taming gauge: willingness 0–100% in three zones, made of motivations, each with its own zones, temperament and decay; actions act on each motivation; a motivation-driven animal, to test |
+| D186 | Learning an animal, kept abstract: observation can fill the whole card, with gaps when time ran out; engagements add the numbers and fill the gaps; shown, not told; families share rules; late game, animals bend them |
+| D185 | The animal's card: scouting fills it by observation, taming through engagement; failed attempts reveal what scouting can't; attempts cost consumables, some from earlier tiers, never punitively (supersedes D184) |
+| D183 | Routes into a tame come from different pillars; taming without bait is as hard, in another pillar's shape |
+| D182 | Taming is the only engagement; scouting is team setup plus an automatic run; failure is the animal getting away and bait consumed |
+| D181 | Turn-based, no time pressure, all cards on the table, the player acts every turn |
+| D180 | The engagement is the core gameplay; the bar is Slay the Spire, Sonny and Noita's wand building |
+| D179 | Taming plays like a deck-builder's combat with simpler UX: cooldowns instead of a deck, no luck, telegraphs, moves with several effects |
+| D178 | Every simulated run can be watched: one rules core, replays from seed and actions, reports that link to runs |
+| D177 | One component at a time: taming, the food chain, scouting, the colony |
 
 **The research** ([guides/game-design](../../../guides/game-design/README.md)): what makes the references' engagements
 work, and where they fail.
@@ -77,4 +77,4 @@ No play sessions yet: this is design work.
 
 ## Conclusion → next
 
-Not concluded. Next: the engagement's gauges and how they interact, then a toy of the taming alone.
+Not concluded. Next: a toy of the taming alone, played by hand, to check whether the motivation-driven animal is fun and simple enough.
