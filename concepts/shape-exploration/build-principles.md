@@ -208,6 +208,17 @@ other, the player, the environment and the enemy.
 - **The animal telegraphs its moves,** sometimes several moves ahead.
 - **Moves have several effects each;** that is where the encounter's complexity comes from.
 
+**Truly strategic, never under pressure (agreed):**
+
+- **Turn-based,** with no time pressure.
+- **All the cards are on the table,** and the cooldowns are visible, WoW style.
+- **Environmental effects too** are on the table, turn by turn, with their timing visible.
+- **The player acts every turn,** never an auto-battle. Super Auto Pets makes pets' effects on each other the primary
+  strategy, as here, but its auto-battle means playing the whole fight ahead in your head, like chess: too hard, and it
+  draws only a narrow niche.
+
+Idea, not decided: real-time engagements unlocked in meta-progression.
+
 The pattern behind it, and a worked example: [idea-taming-and-breach.md](idea-taming-and-breach.md).
 
 **Areas are asleep until woken.** Under the fog of war the simulation is suspended; an area looks alive only through
