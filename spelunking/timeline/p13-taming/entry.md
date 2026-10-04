@@ -48,6 +48,7 @@ be read on screen.
 
 | Decision | What it settles |
 |---|---|
+| D195 | Fight or flight depends on the animal's strength against the team's; strong pets hold out longer when attacked but scare animals away |
 | D194 | All models are wrong, but some are useful; "when scared" is no longer an axis: an animal fights, flees or hides by its strongest stat |
 | D193 | Animals live in a trait space: discrete behaviour axes (diet, when scared, social) and stats (size and strength, agility, intelligence, nerve); traits add up to behaviour and pet skills, how is open |
 | D187 | The taming gauge: willingness 0–100% in three zones, made of motivations, each with its own zones, temperament and decay; actions act on each motivation; a motivation-driven animal, to test |

@@ -274,6 +274,11 @@ about animals.
 **When scared, an animal uses its strongest stat:** strength, it fights; agility, it flees; neither, it hides (freezing
 is hiding in place). The generator gives one stat a clear lead, so the reaction never feels random.
 
+**Fight or flight depends on the team (agreed).** The animal sizes up the team: against a stronger team it is more
+likely to flee, against a weaker one to attack. Strong pets cut both ways: when the animal attacks they retreat later,
+but their strength also scares animals away. A big dog scares the cat; a puppy doesn't. Open: whether team strength is
+the sum, the strongest pet, or the pets near the animal.
+
 The values are a first set. Families are names for common corners of the space (herd prey: plants, flee, group). The
 direction: an animal's traits add up to its behaviour and stats, and, once tamed, to its skills as a pet. How they
 translate into animal behaviour and pet skills is to be decided.
