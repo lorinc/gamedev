@@ -48,6 +48,7 @@ be read on screen.
 
 | Decision | What it settles |
 |---|---|
+| D194 | All models are wrong, but some are useful; "when scared" is no longer an axis: an animal fights, flees or hides by its strongest stat |
 | D193 | Animals live in a trait space: discrete behaviour axes (diet, when scared, social) and stats (size and strength, agility, intelligence, nerve); traits add up to behaviour and pet skills, how is open |
 | D187 | The taming gauge: willingness 0–100% in three zones, made of motivations, each with its own zones, temperament and decay; actions act on each motivation; a motivation-driven animal, to test |
 | D186 | Learning an animal, kept abstract: observation can fill the whole card, with gaps when time ran out; engagements add the numbers and fill the gaps; shown, not told; families share rules; late game, animals bend them |

@@ -45,6 +45,12 @@ The toy, an ecosystem simulation, is on the combining side: its parts change eac
 does it change what the player decides? A species that makes the cave look different while the player does the same
 thing is more content, not more depth.
 
+## All models are wrong, but some are useful (agreed)
+
+The game can't model reality and doesn't try. It builds a model that is interesting, intuitive and immersive, yet not
+overly complicated. Micro-level accuracy doesn't matter (a snail pulling in and a newt bolting, then hiding, can be the
+same rule): if a feature is interesting enough, the complexity comes from the permutation of a few intuitive systems.
+
 ## The tool: a system simulator and optimizer
 
 A planned tool that makes balancing and the complexity of random permutations manageable. Combinations that multiply
@@ -261,10 +267,12 @@ about animals.
 
 1. **Behaviour axes:** a few discrete values, each value one rule the player can learn.
    - **Diet:** plants, anything, meat.
-   - **When scared:** flee, hide, freeze, fight.
    - **Social:** solitary, pair, group.
 2. **Stats:** numbers that tune within those rules.
    - **Size and strength,** **agility,** **intelligence,** **nerve** (shy to curious).
+
+**When scared, an animal uses its strongest stat:** strength, it fights; agility, it flees; neither, it hides (freezing
+is hiding in place). The generator gives one stat a clear lead, so the reaction never feels random.
 
 The values are a first set. Families are names for common corners of the space (herd prey: plants, flee, group). The
 direction: an animal's traits add up to its behaviour and stats, and, once tamed, to its skills as a pet. How they
