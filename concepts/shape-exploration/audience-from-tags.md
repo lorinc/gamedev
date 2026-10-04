@@ -12,7 +12,7 @@ every motivation the audience is made of.
 
 1. **The input** is each game's Steam store page on 2026-10-02: its tags in Steam's order (up to 20), and its short
    description (the pitch). The loops, their sizes and their positions were not used.
-2. **Each tag goes to one of three places** by a fixed table, the same for all ten games:
+2. **Each tag goes to one of three places** by a fixed table, the same for all eleven games (the tags only Monster Sanctuary carries were added on 2026-10-04):
    - a motivation of Quantic Foundry's model, or two of them at half weight each;
    - mood: a tag that says how the game feels and has no motivation in the model;
    - form: a tag that says what the game looks like or how it is delivered. Ignored.
@@ -35,6 +35,7 @@ Sorted by the gap. Motivations under 5% are left out.
 | 20 Minutes Till Dawn | Challenge 29%, Excitement 19%, Power 19%, Destruction 18%, Fantasy 11% | Casual | 5% | 0.34 Player, 0.11 Kinetic | 0.12 |
 | Islanders | Strategy 57%, Design 31%, Fantasy 7% | Relaxing, Beautiful, Colorful, Addictive | 32% | 0.19 World, 0.32 Cerebral | 0.13 |
 | Minami Lane | Strategy 48%, Design 35%, Completion 16% | Cute, Casual, Relaxing, Colorful, Cozy, Cats | 56% | 0.20 World, 0.42 Cerebral | 0.22 |
+| Monster Sanctuary | Discovery 20%, Strategy 20%, Completion 18%, Power 16%, Fantasy 11%, Excitement 5% | none | 0% | 0.10 World, 0.32 Cerebral | 0.23 |
 | Stacklands | Strategy 59%, Challenge 17%, Design 15%, Power 8% | Cute, Casual, Colorful | 7% | 0.10 Player, 0.48 Cerebral | 0.23 |
 | SUMMERHOUSE | Design 53%, Strategy 24%, Fantasy 13%, Discovery 11% | Relaxing, Casual, Colorful, Cozy, Cute | 44% | 0.51 World, 0.05 Cerebral | 0.24 |
 | Brotato | Challenge 34%, Excitement 28%, Community 15%, Power 13%, Destruction 6%, Fantasy 5% | Casual | 2% | 0.49 Player, 0.10 Kinetic | 0.32 |
@@ -54,6 +55,7 @@ Sorted by the gap. Motivations under 5% are left out.
 | Brotato | Action roguelike players who want short arcade runs and builds, alone or with a friend on the couch |
 | Forager | Survival-crafting players who want to explore, gather and build a base, in a lighter 2D form |
 | Super Auto Pets | Casual strategy players who want to compete with friends without pressure: cute, free, family friendly |
+| Monster Sanctuary | Creature collectors who like to explore and to plan: a monster-taming RPG wrapped in a metroidvania |
 
 ## What it shows
 
@@ -187,30 +189,32 @@ correction below:
 | Motivation | Tags |
 |---|---|
 | Discovery | Exploration, Crafting |
+| Discovery and Excitement | Metroidvania |
 | Discovery and Fantasy | Open World |
 | Discovery and Design | Sandbox |
 | Discovery and Challenge | Open World Survival Craft |
 | Design | Design & Illustration, Life Sim, Farming Sim, Agriculture |
 | Design and Strategy | Building, City Builder, Base Building, Colony Sim |
-| Strategy | Strategy, Turn-Based Strategy, Turn-Based, Management, Resource Management, Puzzle, Deckbuilding, Card Game, Card Battler, Auto Battler, Tabletop, Solitaire |
+| Strategy | Strategy, Turn-Based Strategy, Turn-Based, Turn-Based Tactics, Turn-Based Combat, Management, Resource Management, Puzzle, Deckbuilding, Card Game, Card Battler, Auto Battler, Tabletop, Solitaire |
 | Completion | Creature Collector, Hidden Object |
 | Power | RPG, Party-Based RPG, Roguelite |
+| Power and Story | JRPG |
 | Power and Design | Gun Customization |
-| Challenge | Survival, Bullet Hell, Score Attack, Roguelike |
-| Challenge and Excitement | Action Roguelike, 3D Platformer |
+| Challenge | Survival, Bullet Hell, Score Attack, Roguelike, Difficult |
+| Challenge and Excitement | Action Roguelike, 3D Platformer, Platformer |
 | Excitement | Action, Arcade, Bullet Heaven, Flight |
 | Excitement and Destruction | Shoot 'Em Up, Top-Down Shooter, Arena Shooter, Hack and Slash, Combat |
 | Competition | PvP |
 | Competition and Community | Asynchronous Multiplayer |
 | Community | Co-op, Local Co-Op, Multiplayer |
 | Fantasy | Adventure, Atmospheric, Walking Simulator, Horror, Lovecraftian, Dark Fantasy, Fantasy, Sci-fi |
-| Story | none of the tags on these ten pages |
+| Story | Story Rich |
 
 - **Mood (outside the model):** Relaxing, Cozy, Cute, Casual, Family Friendly, Beautiful, Colorful, Addictive, Nature,
   Cats, Dogs, Horses, Funny.
 - **Form (ignored):** Indie, Singleplayer, 2D, 3D, Pixel Graphics, Top-Down, Isometric, Stylized, Hand-drawn,
   Minimalist, Cartoony, Short, Great Soundtrack, Controller, Free to Play, Procedural Generation, Replay Value, PvE,
-  Simulation, Female Protagonist.
+  Simulation, Female Protagonist, Side Scroller.
 
 ## The store pages, as read
 
@@ -228,3 +232,4 @@ Tags in Steam's order; the last column is what the pitch was read as promising.
 | Brotato | Roguelike, Singleplayer, Bullet Hell, Action Roguelike, Local Co-Op, Bullet Heaven, Multiplayer, Survival, Arena Shooter, Sci-fi, Roguelite, Replay Value, Top-Down Shooter, Hack and Slash, Arcade, Co-op, Casual, 2D, Action, Controller | "Brotato is a top-down arena shooter roguelite where you play a potato wielding up to 6 weapons at a time to fight off hordes of aliens. Choose from a variety of traits and items to create unique builds and survive until help arrives." | Excitement, Power, Challenge |
 | Forager | Open World Survival Craft, Pixel Graphics, Survival, Crafting, Indie, Farming Sim, Sandbox, 2D, Adventure, Base Building, Resource Management, Singleplayer, Multiplayer, Building, Exploration, Open World, RPG, Casual, Agriculture, Simulation | "The highly popular and quirky 'idle game that you want to actively keep playing'. Explore, craft, gather & manage resources, find secrets and build your base out of nothing! Buy land to explore and expand!" | Discovery, Design, Power |
 | Super Auto Pets | Auto Battler, Free to Play, Strategy, Multiplayer, Cute, PvP, Asynchronous Multiplayer, 2D, Casual, Card Battler, Colorful, Family Friendly, Card Game, Minimalist, Combat, Roguelike, Dogs, Horses, Turn-Based, Deckbuilding | "Build the strongest team of pets and tussle with your friends!" | Power, Competition, Community |
+| Monster Sanctuary (read 2026-10-04) | Creature Collector, Pixel Graphics, Metroidvania, Turn-Based Tactics, Singleplayer, Turn-Based Combat, Exploration, Fantasy, Adventure, JRPG, RPG, 2D, Strategy, PvP, Difficult, Indie, Story Rich, Turn-Based, Platformer, Side Scroller | "Monster taming meets metroidvania. Collect, train and battle monsters in a lovely side-scroller pixel world." | Completion, Power, Discovery |

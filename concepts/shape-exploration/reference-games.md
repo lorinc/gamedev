@@ -7,14 +7,14 @@ Supporting document for the [shape exploration](README.md). Started 2026-10-02.
 wants "indie-sized 4–8 months projects that got successful". Violent games may stay: "I think I can learn from violent
 games too."
 
-**Status: agreed 2026-10-02.** Ten games are on the map page (nine at first, Super Auto Pets added later the same day): the six with a confirmed development time, Stacklands
+**Status: agreed 2026-10-02.** Eleven games are on the map page (nine at first, Super Auto Pets added later the same day, Monster Sanctuary on 2026-10-04): the six with a confirmed development time, Stacklands
 and SUMMERHOUSE (short by every indication, but unsourced), and Forager (the user's addition). Rusty's Retirement,
 Nodebuster, Luck be a Landlord and Tiny Aquarium were dropped because their times could not be confirmed.
 
 On the page each game is split into its loops, and each loop is placed on the two axes with a size for how much of the
 play it is. The split, the sizes and the positions are Claude's judgement from what it knows of each game, not from
 play sessions. A game opens directly with `map.html?game=` and one of: `hike`, `islanders`, `minami`, `kabuto`,
-`stacklands`, `summerhouse`, `dawn`, `brotato`, `forager`, `pets`.
+`stacklands`, `summerhouse`, `dawn`, `brotato`, `forager`, `pets`, `sanctuary`.
 
 Each game also has an audience mark on the page, read from its Steam tags and pitch and not from its loops:
 [audience-from-tags.md](audience-from-tags.md).
@@ -57,6 +57,12 @@ time is given by the user):
 
 Super Auto Pets was added by the user on 2026-10-02 ("please add Super Auto Pets to the analysis"). It is the one game
 on the list built on asynchronous play against other players, which is the kind the user named for this game.
+
+| Monster Sanctuary | tame monsters from eggs, level them and build a team of six; explore a side-scrolling metroidvania whose paths the monsters open | Denis Sinner, mostly solo; his brother helped with story, text and design | started 2015; early access August 2019 (about 4 years); 1.0 December 2020 | 5,016 (92%) | Kickstarter €105,297 from 4,466 backers |
+
+Monster Sanctuary was added by the user on 2026-10-04 for its pet levelling, team building and synergy, not its
+combat: "I'm interested in the pet levelling and team building and synergy aspects." It is far outside the 4–8 month
+window. What it teaches on those three is in [guide 16](../../guides/game-design/16-monster-sanctuary-teams.md).
 
 The user: "I know, it stands out, but pls put Forager on the list. It is a unique blend of casual, and I'd like to see
 where it stands."
