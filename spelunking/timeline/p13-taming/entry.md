@@ -57,6 +57,7 @@ be read on screen.
 | D183 | Routes into a tame come from different pillars; taming without bait is as hard, in another pillar's shape |
 | D185 | The animal's card: scouting fills it by observation, taming through engagement; failed attempts reveal what scouting can't; attempts cost consumables, some from earlier tiers, never punitively (supersedes D184) |
 | D186 | Learning an animal, kept abstract: observation can fill the whole card, with gaps when time ran out; engagements add the numbers and fill the gaps; shown, not told; families share rules; late game, animals bend them |
+| D187 | The taming gauge: willingness 0–100% in three zones, made of motivations, each with its own zones, temperament and decay; actions act on each motivation; a motivation-driven animal, to test |
 
 **The research** ([guides/game-design](../../../guides/game-design/README.md)): what makes the references' engagements
 work, and where they fail.
@@ -68,7 +69,7 @@ work, and where they fail.
 - [15 · Into the Breach](../../../guides/game-design/15-into-the-breach-combat.md): full telegraphs need an undodgeable stake; pushing, not killing, can be the core.
 
 **Where it stands:** the design is in [build-principles](../../../concepts/shape-exploration/build-principles.md) →
-*Pillars* and *Building it: one component at a time*. Open: the gauges of the engagement and how they interact.
+*Pillars* and *Building it: one component at a time*. Open: whether the motivation-driven animal is fun and simple enough, and how the animal's state is shown.
 
 ## Feedback
 

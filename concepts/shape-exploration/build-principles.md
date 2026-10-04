@@ -243,6 +243,28 @@ simpler game, not a realistic one:
 
 Idea, not decided: real-time engagements unlocked in meta-progression.
 
+**The taming gauge (agreed).** Intuitive and familiar, even for small kids: only what everyone already knows
+about animals.
+
+- **One gauge, willingness to befriend us, 0–100%, in three zones:** flee or attack, neutral, friendly.
+- **Motivations add up to the 100%:** a snail is safety and food; a bear is food, safety, curiosity and playfulness.
+  Each motivation has its own zones, needle temperament (calm to jumpy) and decay.
+- **Each animal draws its own zones.** A snail can just be picked up; a flea flees at anything; a bear is friendly
+  only near the top. How easy an animal is to catch belongs to the animal, not to its tier.
+- **A need can be filled:** a full animal ignores more of the same.
+- **Fear is one motivation,** read through the animal's role: prey flees, a predator attacks (startled, territorial).
+- **Pet actions and consumables act on each motivation separately,** through their main and side effects. That is
+  where the game's fun comes from.
+
+**The animal's behaviour (to test).** The animal acts, and its moves come from its motivations, not from a separate
+move list: hungry, it goes for the nearest food (maybe the bait); curious, it inspects a pet; scared, prey edges
+toward the exit and a predator goes for a pet; bored, it wanders off; friendly, it comes close. Its behaviour is the
+gauges made visible, the telegraph follows from known decay, and an exaggerated rule is an extreme motivation
+profile. The toy checks whether this is fun and simple enough.
+
+Idea, not decided: showing the animal's state through basic procedural postures. A major effort for its value, so
+handled with care.
+
 **Routes into a tame come from different pillars (agreed).** Taming wild bait one by one is a major pain point,
 worst with a food chain of two or more tiers, so the player gets several, very different routes. A different shape
 means a different pillar: each route is prepared in its own pillar and paid out in the taming, and taming without
