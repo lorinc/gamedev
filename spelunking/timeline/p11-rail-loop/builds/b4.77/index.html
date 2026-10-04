@@ -27,10 +27,14 @@
         touch-action: none;
         display: block;
       }
-      #reset {
+      #corner {
         position: fixed;
         right: max(8px, env(safe-area-inset-right));
         bottom: max(8px, env(safe-area-inset-bottom));
+        display: flex;
+        gap: 6px;
+      }
+      #corner button {
         padding: 4px 8px;
         font: 11px monospace;
         color: #888;
@@ -39,7 +43,11 @@
         border-radius: 4px;
         touch-action: manipulation;
       }
-      #reset.sure {
+      #corner button:disabled {
+        color: #555;
+        border-color: #222;
+      }
+      #corner button.sure {
         color: #fff;
         background: #b3261e;
         border-color: #e5484d;
@@ -107,7 +115,10 @@
   <body>
     <canvas id="game"></canvas>
     <div id="panel"></div>
-    <button id="reset" type="button">reset</button>
+    <div id="corner">
+      <button id="stuck" type="button">stuck</button>
+      <button id="reset" type="button">reset</button>
+    </div>
     <script type="module" src="src/bundles/b4/main.js"></script>
   </body>
 </html>
