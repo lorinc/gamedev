@@ -88,6 +88,7 @@ export const CONFIG = {
   light: { base: 8 },
   nodeReach: 2, // px: a shown node engulfs the bot this close (the user, b4.22; was 12, a build's reach)
   nodesPerBug: 4, // built nodes per tamed bug (the user, b4.63); they come only from the network
+  stuckTicks: 10800, // the stuck button's cooldown: 180 s (the user, b4.77)
   ejectTicks: 90, // a bulb lets the bot go after 1.5 s with nothing picked (the user, b4.52; 3 s since b4.26)
   holdOffTicks: 3, // the first 50 ms in a bulb, a drag or release picks nothing (the user, b4.52; main.js)
   ejectR: 5, // px from the bulb's centre it puts the bot (the user, b4.41)
@@ -125,7 +126,7 @@ export const CONFIG = {
 /** @typedef {typeof CONFIG} Config */
 
 /**
- * @typedef {{ type: 'move', dx: number, dy: number } | { type: 'tap' } | { type: 'build', edge: number, from: number } | { type: 'ride', edge: number, from: number, dx: number, dy: number }} Command
+ * @typedef {{ type: 'move', dx: number, dy: number } | { type: 'tap' } | { type: 'build', edge: number, from: number } | { type: 'ride', edge: number, from: number, dx: number, dy: number } | { type: 'stuck' }} Command
  *   move: any direction, dx and dy any numbers (0, 0 = stop)
  */
 /**
@@ -209,6 +210,7 @@ export const CONFIG = {
  * @property {boolean} firstBuilt an edge has been built
  * @property {Ride | null} ride
  * @property {number | null} engulf the node the bot is held in (b4.22)
+ * @property {number} stuckAt the tick the stuck button last moved the bot (b4.77)
  * @property {number} engulfAt the tick it was taken in
  * @property {{ dx: number, dy: number } | null} cameIn the way the bot was going when a bulb took it in (b4.41)
  * @property {number | null} freed the node that just let the bot go: it doesn't take it again until it's out of reach
@@ -270,6 +272,7 @@ export function createGame(map, cfg) {
     ride: null,
     engulf: null,
     engulfAt: 0,
+    stuckAt: -1e9,
     cameIn: null,
     freed: null,
     links: map.nodes.map(() => []),
@@ -299,7 +302,8 @@ export function tick(g) {
       else g.move = dir
     } else if (cmd.type === 'tap') {
       if (g.ride?.run) g.ride.stopNext = true
-    } else if (cmd.type === 'ride') rideFrom(g, cmd.edge, cmd.from, heading(cmd.dx, cmd.dy))
+    } else if (cmd.type === 'stuck') unstick(g)
+    else if (cmd.type === 'ride') rideFrom(g, cmd.edge, cmd.from, heading(cmd.dx, cmd.dy))
     else build(g, cmd.edge, cmd.from)
   }
   g.queue.length = 0
@@ -538,6 +542,20 @@ function engulf(g) {
     hold(g, i, g.move)
     return
   }
+}
+
+/** Ticks until the stuck button works again; 0: ready. @param {Game} g */
+export function stuckLeft(g) {
+  return Math.max(0, g.cfg.stuckTicks - (g.tick - g.stuckAt))
+}
+
+/** The stuck button (the user, b4.77): off cooldown, the bot goes home into the pod node's bulb, which lets it go
+ * as any bulb does. @param {Game} g */
+function unstick(g) {
+  if (stuckLeft(g) > 0) return
+  g.stuckAt = g.tick
+  g.ride = null
+  hold(g, g.map.podNodes[0], null)
 }
 
 /** The bot held in node i's bulb. @param {Game} g @param {number} i @param {{ dx: number, dy: number } | null} cameIn */

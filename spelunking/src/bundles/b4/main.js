@@ -2,7 +2,7 @@
 // interpolates. The URL carries the seed and every knob tuned away from its default (`?seed=1&k=price:12`).
 
 import { createPanel } from '../b3/panel.js'
-import { command, CONFIG, createGame, HEADING, tick } from './game.js'
+import { command, CONFIG, createGame, HEADING, stuckLeft, tick } from './game.js'
 import { createInput } from './input.js'
 import { createRenderer, ZOOM_PX } from './render.js'
 import { load, save } from './save.js'
@@ -89,20 +89,36 @@ function reset() {
   } catch {}
   location.reload()
 }
-// the reset button, bottom right (the user, b4.77): "reset", then a red "SURE??" that resets; it calms down after 3 s
-const resetBtn = /** @type {HTMLButtonElement} */ (document.getElementById('reset'))
-/** @type {ReturnType<typeof setTimeout> | undefined} */
-let resetTimer
-resetBtn.addEventListener('click', () => {
-  if (resetBtn.classList.contains('sure')) return reset()
-  resetBtn.classList.add('sure')
-  resetBtn.textContent = 'SURE??'
-  clearTimeout(resetTimer)
-  resetTimer = setTimeout(() => {
-    resetBtn.classList.remove('sure')
-    resetBtn.textContent = 'reset'
-  }, 3000)
-})
+/** A corner button that asks first (the user, b4.77): its label, then a red "SURE??" that runs `act`; it calms down
+ * after 3 s. @param {string} id @param {string} label @param {() => void} act */
+function sureButton(id, label, act) {
+  const btn = /** @type {HTMLButtonElement} */ (document.getElementById(id))
+  /** @type {ReturnType<typeof setTimeout> | undefined} */
+  let timer
+  const calm = () => {
+    clearTimeout(timer)
+    btn.classList.remove('sure')
+    btn.textContent = label
+  }
+  btn.addEventListener('click', () => {
+    if (btn.classList.contains('sure')) return calm(), act()
+    btn.classList.add('sure')
+    btn.textContent = 'SURE??'
+    clearTimeout(timer)
+    timer = setTimeout(calm, 3000)
+  })
+  return btn
+}
+sureButton('reset', 'reset', reset)
+// stuck: the bot goes home to the pod's bulb; then 180 s of cooldown, counted down on the button
+const stuckBtn = sureButton('stuck', 'stuck', () => command(game, { type: 'stuck' }))
+function stuckLabel() {
+  const left = Math.ceil(stuckLeft(game) / 60)
+  stuckBtn.disabled = left > 0
+  if (left > 0) stuckBtn.textContent = `stuck ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`
+  else if (!stuckBtn.classList.contains('sure')) stuckBtn.textContent = 'stuck'
+}
+setInterval(stuckLabel, 250)
 /** @type {import('./render.js').Ui} */
 const ui = { select: null, refusedAt: -9 }
 const canvas = /** @type {HTMLCanvasElement} */ ($('game'))

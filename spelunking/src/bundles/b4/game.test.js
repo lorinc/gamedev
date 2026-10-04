@@ -5,7 +5,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { addBug, blockOf } from '../../sim/dig/bugs.js'
 import { isOpen, Tile } from '../../sim/gen/world.js'
-import { buildable, command, CONFIG, createGame, dist2, HEADING, heading, shown, tick } from './game.js'
+import { buildable, command, CONFIG, createGame, dist2, HEADING, heading, shown, stuckLeft, tick } from './game.js'
 import { CRYSTAL, makeMap } from './world.js'
 
 const MAP = makeMap(1)
@@ -1642,6 +1642,27 @@ test('a gas node hatches one moth only while fewer than 2 moths are near it (b4.
   pin()
   assert.equal(near(), 2)
   assert.equal(hatchedAt(), 0, 'two near: none')
+})
+
+test('the stuck button puts the bot in the pod node\'s bulb, then not again for 180 s (b4.77)', () => {
+  const g = fresh()
+  const home = MAP.nodes[MAP.podNodes[0]]
+  g.ch.x = home.x + 40 // somewhere else
+  command(g, { type: 'stuck' })
+  tick(g)
+  assert.equal(g.engulf, MAP.podNodes[0], 'held in the pod bulb')
+  assert.deepEqual([g.ch.x, g.ch.y], [home.x, home.y])
+  assert.equal(stuckLeft(g), g.cfg.stuckTicks)
+  for (let i = 0; i < 200; i++) tick(g) // the bulb lets it go
+  const at = [g.ch.x, g.ch.y]
+  command(g, { type: 'stuck' })
+  tick(g)
+  assert.equal(g.engulf, null, 'on cooldown: nothing happens')
+  assert.deepEqual([g.ch.x, g.ch.y], at)
+  while (stuckLeft(g) > 0) tick(g)
+  command(g, { type: 'stuck' })
+  tick(g)
+  assert.equal(g.engulf, MAP.podNodes[0], 'ready again after 180 s')
 })
 
 test('a beast picks a built bulb 30–100 px from you, the one with the least moss round it (b4.76)', async () => {

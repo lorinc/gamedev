@@ -82,7 +82,7 @@ build b4.73: 2026-09-28 · p11: b4.73, predators haul their catch, hives hatch m
 build b4.74: 2026-09-28 · p11: b4.74, hives twice as often (D160)
 build b4.75: 2026-09-28 · p11: b4.75, no hives; built nodes with gas hatch a moth every 30 s (D161)
 build b4.76: 2026-09-28 · p11: b4.76, beasts eat 30-100 px from you where there's no moss (D162)
-build b4.77: 2026-09-28 · p11: b4.77, slime films gassy rock and bugs tap it for gas (D163); refrozen 2026-10-04: moths hatch only while fewer than 2 are near the node (D192); a reset button
+build b4.77: 2026-09-28 · p11: b4.77, slime films gassy rock and bugs tap it for gas (D163); refrozen 2026-10-04: moths hatch only while fewer than 2 are near the node (D192); reset and stuck buttons
 ---
 
 # p11 · b4 · Rail Loop
@@ -344,6 +344,9 @@ Then (D192, the user, 2026-10-04, refrozen as b4.77): a gas node hatches its one
 are within 32 px of it (`swarm.mothMax`), against the runaway.
 Then (the user, 2026-10-04, b4.77 again): a small reset button bottom right: "reset", then a red "SURE??" that wipes
 the save and starts the sim over (back to "reset" after 3 s); the panel's "new game" does the same.
+Then (the user, 2026-10-04, b4.77 again): a "stuck" button next to it, asking the same way: the bot goes home into the
+pod node's bulb (Claude's call: the pod, the one place that's always open), then 180 s of cooldown (`stuckTicks`),
+counted down on the greyed-out button.
 
 ## Feedback
 
