@@ -73,6 +73,8 @@ work, and where they fail.
 
 **Where it stands:** the design is in [build-principles](../../../concepts/shape-exploration/build-principles.md) →
 *Pillars* and *Building it: one component at a time*. Open: whether the motivation-driven animal is fun and simple enough, and how the animal's state is shown.
+The [gauge model](../../../concepts/taming/gauge-model.html) lays out what each animal dimension does to each
+motivation's gauge, to go through cell by cell.
 
 ## Feedback
 
