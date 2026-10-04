@@ -55,6 +55,7 @@ be read on screen.
 | D181 | Turn-based, no time pressure, all cards on the table, the player acts every turn |
 | D182 | Taming is the only engagement; scouting is team setup plus an automatic run; failure is the animal getting away and bait consumed |
 | D183 | Routes into a tame come from different pillars; taming without bait is as hard, in another pillar's shape |
+| D184 | The animal's card: scouting fills it by observation, taming through engagement; failed attempts reveal what scouting can't; attempts cost consumables from all tiers, never punitively |
 
 **The research** ([guides/game-design](../../../guides/game-design/README.md)): what makes the references' engagements
 work, and where they fail.
@@ -66,8 +67,7 @@ work, and where they fail.
 - [15 · Into the Breach](../../../guides/game-design/15-into-the-breach-combat.md): full telegraphs need an undodgeable stake; pushing, not killing, can be the core.
 
 **Where it stands:** the design is in [build-principles](../../../concepts/shape-exploration/build-principles.md) →
-*Pillars* and *Building it: one component at a time*. Open: the gauges of the engagement and how they interact, and
-the animal's card.
+*Pillars* and *Building it: one component at a time*. Open: the gauges of the engagement and how they interact.
 
 ## Feedback
 
