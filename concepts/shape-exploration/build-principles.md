@@ -68,6 +68,25 @@ turn; those need the user, and players.
 **What its questions depend on**: the audience. "Never boring" for a Discovery-and-Strategy player is a
 different number than for a Challenge player.
 
+## Building it: one component at a time (agreed)
+
+The lifecycle is not simulated end to end first. Many co-dependent, vaguely defined mechanics with little content,
+run together, give results nobody can trace to a cause. Each component is fleshed out on its own first:
+
+- **Its own small question,** with pass and kill conditions, run in isolation. Its neighbours are stubbed with fixed
+  inputs (taming gets a given team and a given animal, no food chain behind them).
+- **Real content before simulating:** a handful of concrete pets and animals with numbers, enough to test whether the
+  component produces decisions.
+- **Wired together only once each one holds.** An end-to-end simulation comes last, if it is still needed.
+
+**Order:**
+
+1. **Taming:** the most defined piece ([idea-taming-and-breach.md](idea-taming-and-breach.md)) and the core decision,
+   where the toy feeling within seconds has to come from. Small enough to watch whole.
+2. **The food chain,** as a simple local model: does it settle, collapse or run away?
+3. **The breach,** as scouting.
+4. **The colony.**
+
 ## Expectations of a good game (agreed)
 
 **Tension–release cadence**
