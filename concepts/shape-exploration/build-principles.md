@@ -196,6 +196,9 @@ sometimes restrains an animal to save it. Nature is not romanticised. Killing st
 
 The stronger the animal, the longer the taming takes, and the stronger the team and the more food or prey it needs.
 
+**The engagement is the core gameplay and the most critical element of the game (agreed).** The bar: as easy to
+start and as hard to master as Slay the Spire, as strategic and intriguing as Sonny, as free as Noita's wand building.
+
 **Taming and the breach play like a deck-builder's combat, with simpler UX (agreed):**
 
 - **Cooldowns instead of a deck and a shuffle.** The player never has to remember when a card comes back into play.
