@@ -12,6 +12,7 @@ build v9.3: 2026-10-03 · the audience: this game's motivation mix, set by the u
 build v9.4: 2026-10-03 · three equal pillars placed around the audience, far enough apart to rest from one another
 build v9.5: 2026-10-03 · the taming game: The Unseen, Caverns and Colony, with pioneers, foragers and the flows between them
 build v9.6: 2026-10-03 · one arrow per action (action, condition, outcome); the pillars The Unseen, Prospecting and Cultivation; and [the lifecycle page](builds/v9.6/lifecycle.html)
+build v9.7: 2026-10-04 · the three loops as pillars: Engagement (a card battle) and Pet management (a management game) at the core, Resources (idle farming) in support
 ---
 
 # p12 · Shape map (v9)
@@ -62,6 +63,7 @@ then loop times. The map page is the assessment drawn: every shape on two axes, 
 | v9.4 | Three equal pillars around the audience; [build-principles](builds/v9.4/build-principles.md) starts: accessible and never boring, through systems |
 | v9.5 | The taming direction: an ecology theme with no technology, pets that go on excursions, pillars named, flows between them |
 | v9.6 | Every interaction as one arrow with an action, a condition and an outcome; the [lifecycle](builds/v9.6/lifecycle.html) of terrain, flora and fauna, with who does each step |
+| v9.7 | The three loops the player controls as pillars: Engagement between Strategy and Challenge, Pet management between Strategy and Power, Resources (smaller, support) beside the idle shapes; passive things are spectacle and lore, not drawn; Design read as building for aesthetics |
 
 **Where it ended** ([build-principles](builds/v9.6/build-principles.md)): ground moves Unseen → Wild → Caverns →
 Cultivated. The pioneers open the Unseen and tame fauna up the food chain to the top predator. The foragers study and
