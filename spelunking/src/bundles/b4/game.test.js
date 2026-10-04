@@ -5,7 +5,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { addBug, blockOf } from '../../sim/dig/bugs.js'
 import { isOpen, Tile } from '../../sim/gen/world.js'
-import { buildable, command, CONFIG, createGame, HEADING, heading, shown, tick } from './game.js'
+import { buildable, command, CONFIG, createGame, dist2, HEADING, heading, shown, tick } from './game.js'
 import { CRYSTAL, makeMap } from './world.js'
 
 const MAP = makeMap(1)
@@ -1615,6 +1615,33 @@ test('every 30 s each built node with gas hatches a moth onto the ledger; an unb
   assert.ok(hatched.length >= 2, `${hatched.length} moths`)
   for (const e of hatched) assert.deepEqual([e.x, e.y], [MAP.nodes[a].x, MAP.nodes[a].y], 'at the built node')
   assert.equal(g.ledger.bugs - bugs0, hatched.length, 'each on the ledger')
+})
+
+test('a gas node hatches one moth only while fewer than 2 moths are near it (b4.77)', () => {
+  const g = fresh()
+  g.cfg.gas.spreadTicks = 1e9
+  g.cfg.gas.perMoss = 0 // the gas stays
+  g.railed[0] = 1
+  g.gas[0] = 5
+  const n = MAP.nodes[0]
+  const s = g.cfg.swarm
+  const near = () => g.swarm.filter((b) => b.moth && dist2(g, b, n) <= s.crowd * s.crowd).length
+  const hatchedAt = () => {
+    while (g.tick % s.mothTicks !== s.mothTicks - 1) tick(g)
+    g.events.length = 0
+    tick(g)
+    return g.events.filter((e) => e.type === 'hatched').length
+  }
+  // pin the moths at the node: nothing fades, nothing flies off
+  s.idleTicks = 1e9
+  const pin = () => g.swarm.forEach((b) => b.moth && ((b.x = n.x), (b.y = n.y)))
+  assert.equal(near(), 0)
+  assert.equal(hatchedAt(), 1, 'none near: one hatches, not two')
+  pin()
+  assert.equal(hatchedAt(), 1, 'one near: one more hatches')
+  pin()
+  assert.equal(near(), 2)
+  assert.equal(hatchedAt(), 0, 'two near: none')
 })
 
 test('a beast picks a built bulb 30–100 px from you, the one with the least moss round it (b4.76)', async () => {

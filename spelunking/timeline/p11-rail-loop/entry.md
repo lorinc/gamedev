@@ -82,7 +82,7 @@ build b4.73: 2026-09-28 · p11: b4.73, predators haul their catch, hives hatch m
 build b4.74: 2026-09-28 · p11: b4.74, hives twice as often (D160)
 build b4.75: 2026-09-28 · p11: b4.75, no hives; built nodes with gas hatch a moth every 30 s (D161)
 build b4.76: 2026-09-28 · p11: b4.76, beasts eat 30-100 px from you where there's no moss (D162)
-build b4.77: 2026-09-28 · p11: b4.77, slime films gassy rock and bugs tap it for gas (D163)
+build b4.77: 2026-09-28 · p11: b4.77, slime films gassy rock and bugs tap it for gas (D163); refrozen 2026-10-04: moths hatch only while fewer than 2 are near the node (D192)
 ---
 
 # p11 · b4 · Rail Loop
@@ -340,6 +340,8 @@ Then (D161, the user): no hives after all; every 30 s each built node with gas h
 Then (D162, the user): beasts eat a bulb 30–100 px from you with no or very little moss round it, not one by you.
 Then (D163, the user): slime films the rock surface where there's gas, free; tamed bugs tap it for gas, lichen
 replaces it, fire leaves it: a meal's gas now lasts while bugs visit.
+Then (D192, the user, 2026-10-04, refrozen as b4.77): a gas node hatches its one moth only while fewer than 2 moths
+are within 32 px of it (`swarm.mothMax`), against the runaway.
 
 ## Feedback
 
