@@ -1,7 +1,7 @@
 # What to build: the principle, the tool, the expectations
 
 Supporting document for the [shape exploration](README.md). Current state only; how it got here is in
-[log.md](log.md). Only sections marked **agreed** are settled; **candidate** = not chosen.
+[log.md](log.md). Only sections marked **agreed** are settled.
 
 ## The principle: accessible, and never boring, through systems
 
@@ -95,9 +95,10 @@ run together, give results nobody can trace to a cause. Each component is fleshe
 
 1. **Taming:** the most defined piece ([idea-taming-and-breach.md](idea-taming-and-breach.md)) and the core decision,
    where the toy feeling within seconds has to come from. Small enough to watch whole.
-2. **The food chain,** as a simple local model: does it settle, collapse or run away?
-3. **Scouting:** team setup, then an automatic run in the simulation.
-4. **The colony.**
+2. **Scouting:** team setup, then an automatic run in the simulation.
+
+The food chain and the colony are not new components: the ecosystem system already works in the b4 prototype, and a
+colony is the same simulation, auto-harvesting. What they need is procedural content and balancing.
 
 ## Expectations of a good game (agreed)
 
@@ -386,64 +387,25 @@ synergising traits.
 **The Unseen stays hands-on.** It is the messy, mysterious frontier and the game's kinetic challenge. Taming may run as
 a timed idle mission (like sending frigates in No Man's Sky), but not everything needs to be idle.
 
-## Candidate A: the short run that keeps only knowledge (candidate)
+## Game shape: an incremental idle game (agreed)
 
-A short run where complexity does not carry over, only knowledge: Noita, Super Auto Pets. It follows from "picking the
-game up again is not overwhelming".
+You come in, move the needle, and reap the rewards: resources, lore, unlocks, and the taming game.
 
-**The antipattern: unlocks that grow the random pool.** Unlocked mechanics a player can ignore cost a returning
-player nothing (Magicraft's mechanics). Unlocked items that appear in every draw cost them every run (Magicraft's
-spells and trinkets): later runs get more complex even when the player has forgotten much of the game.
-
-Refinements:
-
-- **It is a matter of degree.** Slay the Spire also unlocks cards into the pool, but few, within the first hours,
-  while the player is still active. The antipattern bites when the pool keeps growing after the player stopped
-  tracking it.
-- **The variant that escapes it: the player curates the pool.** Vampire Survivors' "seal" removes items from the
-  random pool. As a rule: nothing enters the random pool without the player's say.
-- **Power lives inside the run.** The audience's 20% Power usually comes from progression across runs. With only
-  knowledge kept, each run needs a satisfying power curve of its own (the team in Super Auto Pets, the build in
-  Brotato).
-- **On the pool:** shape 10a ("Run: nothing kept", toward Challenge) paired with the knowledge loop, 26 (near
-  Discovery). For this audience, what carries over is knowledge of the ecosystem's rules rather than execution skill,
-  which pulls the shape toward 26.
-
-**The tension with the simulation.** Short runs bring many restrictions, which are useful creative constraints, but
-the simulated world needs time to run its course. Ways to fit its arc inside one run, without splitting the game into
-two modes:
-
-1. **Compress time:** few discrete states per patch let a generation take a second instead of a minute (Noita's world
-   resolves in seconds). The speed is a knob.
-2. **Shrink the space:** a small cave reaches its course within the run, and is easier to read.
-3. **Set up, then watch it play out:** a calm phase, then the simulation runs its course fast. Pool shapes 17
-   ("Pressure: deadline") and 24 ("One trigger"); it gives distant pillars and the toy feeling in seconds.
-
-Which one works depends on what in the simulation needs the time (population growth, slow spreading, succession):
-open. Candidate B takes the other route: the world keeps running between sessions.
-
-## Candidate B: idle with prestige (candidate)
-
-Incremental and idle games are popular now; the angle stays open. The b4 work already points this way (D164,
-"intelligent idle game").
-
-Reading:
-
+- **A session is one or more runs.** A run is anything that pushes the needle: levelling up pets, changing and testing
+  teams, reviewing new info on scouted animals, deciding what to tame and with what strategy, and the taming itself.
+  It is not a roguelike run.
+- **The idle layer keeps working while the player is away:** colonies auto-harvest, foragers forage the Caverns, and
+  scouts gather intel. A session starts by collecting what they brought back.
+- **Taming is the one hands-on game** inside the idle frame.
 - **Idle escapes the antipattern when what piles up is quantity, not complexity.** More of the familiar and bigger
-  numbers make coming back a reward, not a burden. New rules entering the draw would still be the antipattern.
-- **It dissolves the time tension from the other side:** the simulation gets all the time it needs, because it runs
-  while the player is away. Coming back to see what the ecosystem did on its own is surprise from discovery.
-- **It doesn't compete with runs: prestige is a run.** The question between the candidates is what survives the
-  reset.
+  numbers make coming back a reward, not a burden. Unlocked items that keep entering every choice would make later
+  sessions more complex even after the player has forgotten much of the game (Magicraft's spells and trinkets);
+  unlocked mechanics a player can ignore cost nothing. The variant that escapes it: the player curates the pool
+  (Vampire Survivors' "seal").
+- **The simulation gets all the time it needs,** because it runs while the player is away. Coming back to see what the
+  ecosystem did on its own is surprise from discovery.
 
-| | A: short run, knowledge only | B: idle with prestige |
-|---|---|---|
-| What carries over | only what the player learned | multipliers or unlocks, plus knowledge |
-| Where Power lives | inside the run | across resets (the idle genre's main pull) |
-| Simulation time | must fit inside the run | free: it runs while away |
-| Risk | the simulation's arc too slow for a run | complexity piling up across resets (the Magicraft antipattern) |
-
-With 20% Power in the audience, B has the more natural home for it.
+Prestige is not decided.
 
 ## Open questions
 

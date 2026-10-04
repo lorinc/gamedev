@@ -174,3 +174,19 @@ Quotes are the user's, with spelling lightly fixed.
   skills that complement each other and have cooldowns", with the snare-and-charm example now in
   idea-taming-and-breach.md. On Claude's worry that a snare is coercion against the peaceful pull: "This does not
   have to be a Disney tale, coercion is not brutal violence. Sometimes a vet does coerce a pet to save it."
+
+## 2026-10-04: the game shape (D188)
+
+- Two candidates stood for the game's shape: A, a short run that keeps only knowledge (Noita, Super Auto Pets), and B,
+  idle with prestige. The user settled it: "it is an incremental idle game, where you come in, move the needle, reap
+  the rewards: resources, lore, unlocks, and play the taming game." "Each session can be 1 or more runs, and a run can
+  be anything that pushes the needle: levelling up pets, changing and testing teams, reviewing new info on scouted
+  animals, deciding on what to tame with what strategy." The idle layer, as the user amended it: "colonies
+  (auto-harvest), foragers (caverns foraging) and scouts (intel gathering) keep working".
+- Candidate A's reasoning, dropped from build-principles.md: complexity does not carry over, only knowledge; Power
+  would have had to live inside each run; and the simulated world would have had to fit its arc inside one run
+  (compress time, shrink the space, or set up and watch it play out).
+- On the systems: "The food chain: the system has a working prototype, and the rest is creating and balancing
+  procedural content. The colony: same as the food chain, just auto-harvests. Teams: needs polishing, but we have much
+  better guesses now than when we drew the map first."
+
