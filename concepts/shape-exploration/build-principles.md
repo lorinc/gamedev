@@ -209,10 +209,21 @@ other, the player, the environment and the enemy.
 - **The kit is built before the taming, not during it.** The player arrives with the knowledge scouting brought back.
 - **Failure is not death:** the animal got away, and some bait was consumed.
 
-**The animal's card (agreed).** Each animal has a card of its rules and moves. Scouting fills it by observation; a
-taming fills it through the engagement. Failed attempts reveal what scouting can't, so players are expected to try a
-new animal several times, and every attempt buys knowledge. Attempts cost consumables, some from earlier
-tiers, but not in a punitive way.
+**The animal's card (agreed).** Each animal has a card of its rules and moves. Learning stays abstract, for a
+simpler game, not a realistic one:
+
+- **Observation can fill everything.** Scouting fills the card's lines, even for things that didn't happen in front
+  of the scouts. When there wasn't enough time to observe everything, the card keeps gaps, and that is fine, even fun.
+- **Engagements put the numbers on.** A taming fills in thresholds and cooldowns, and fills the gaps scouting left on
+  the first attempt. Failed attempts reveal what scouting can't, so players are expected to try a new animal several
+  times, and every attempt buys knowledge. Attempts cost consumables, some from earlier tiers, but not in a punitive
+  way.
+- **Shown, not told.** A line fills when the animal does the thing, with a number where there is one. Gaps show as
+  blanks, so the player sees what is still unknown and can decide to try anyway. A failure says why it failed (it fled
+  when fear reached 7), which fills a line and points at the fix.
+- **Animals come in families that share rules,** so one animal teaches the next. The game is not scripted: a family is
+  a shared set of rules the generator draws animals from, and learning carries over because the rules repeat.
+- **Late game: an animal can bend its family's rules.** The card has taught the player to read, not to memorise.
 
 **Taming plays like a deck-builder's combat, with simpler UX (agreed):**
 

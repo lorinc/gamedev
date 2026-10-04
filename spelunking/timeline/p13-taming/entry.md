@@ -56,6 +56,7 @@ be read on screen.
 | D182 | Taming is the only engagement; scouting is team setup plus an automatic run; failure is the animal getting away and bait consumed |
 | D183 | Routes into a tame come from different pillars; taming without bait is as hard, in another pillar's shape |
 | D185 | The animal's card: scouting fills it by observation, taming through engagement; failed attempts reveal what scouting can't; attempts cost consumables, some from earlier tiers, never punitively (supersedes D184) |
+| D186 | Learning an animal, kept abstract: observation can fill the whole card, with gaps when time ran out; engagements add the numbers and fill the gaps; shown, not told; families share rules; late game, animals bend them |
 
 **The research** ([guides/game-design](../../../guides/game-design/README.md)): what makes the references' engagements
 work, and where they fail.
