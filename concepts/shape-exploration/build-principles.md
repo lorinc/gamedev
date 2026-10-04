@@ -161,7 +161,7 @@ They differ inside (one core loop, or two supporting loops, plus one or two side
 
 | Pillar | Where | Role |
 |---|---|---|
-| P1 The Unseen | around 1a, 2a, 1b, toward Challenge | Strategy, Power, Challenge: the pioneers wake an area never entered before; it becomes Wild. Difficulty scales with progress, at steps the player chooses |
+| P1 The Unseen | around 1a, 2a, 1b, toward Challenge | Strategy, Power, Challenge: scouts open an area never entered before, and beastmasters tame its fauna; it becomes Wild. Difficulty scales with progress, at steps the player chooses |
 | P2 Prospecting | 14's height, 25's column, on the line from the audience to Story | Discovery and Story, the most kinetic pillar: exploring the world, flagging new areas to wake, spending time in woken caverns to collect intel, and bringing flora and fauna home |
 | P3 Cultivation | around 2b, 17, 8, 3 | The simulation: natural enclosures for the living things, to farm resources, or to tame and level them for excursions |
 
@@ -178,18 +178,18 @@ Flows between the pillars (P3 is the hub):
 - **P2 → P1:** new areas to wake.
 - **P1 → P2:** the woken area, now Wild, for the foragers to study.
 - **P2 → P3:** flora, collected by the foragers on field trips.
-- **P1 → P3:** fauna, won by the pioneers.
+- **P1 → P3:** fauna, won by the beastmasters.
 - **P3 → P3:** resources to host and level the flora and fauna.
 - **P3 → P2:** foragers, the pets that catalogue a woken cavern and bring its flora home.
-- **P3 → P1:** pioneers, the pets that go first and wake an area.
+- **P3 → P1:** scouts, the pets that go first and open an area, and beastmasters, the pets that tame its fauna.
 
-**Three categories of pets:** economic, forager and pioneer.
+**Categories of pets:** economic, forager, scout and beastmaster.
 
 **Flora:** all of it plays a systemic role; the economic plants also generate resources.
 
-**Fauna is won by a peaceful pull, not a violent push.** The pioneers face an animal in a kind of battle; a win means
+**Fauna is won by a peaceful pull, not a violent push.** The beastmasters face an animal in a kind of battle; a win means
 the animal is tamed, a loss means it decided to stay. Coercion is allowed: it isn't brutal violence, the way a vet
-sometimes restrains an animal to save it. Nature is not romanticised. Killing stays out. To tame, the pioneers need:
+sometimes restrains an animal to save it. Nature is not romanticised. Killing stays out. To tame, the beastmasters need:
 
 - protection from the area's environment;
 - something that intrigues the animal;
@@ -290,7 +290,7 @@ The pattern behind it, and a worked example: [idea-taming-and-breach.md](idea-ta
 ambience, particle effects and shaders crossing the fog, never text or a symbol. Once woken, the foragers spend
 time there to collect intel; without it the player sees the visuals and nothing more.
 
-Beefing up, per pillar: P1 levels the pioneers longer; P2 brings more foragers, better matched; P3 runs more generations.
+Beefing up, per pillar: P1 levels the beastmasters longer; P2 brings more foragers, better matched; P3 runs more generations.
 
 **Tranquility lives in side loops,** around any pillar, not in a pillar of its own. Examples: a vivarium or zoo;
 rare, beautiful event sightings during exploration; a riskless strategy-testing loop.
@@ -302,7 +302,7 @@ own cost and challenge. Growth always has a clear frontier, so complexity does n
 colonies settle into stable idle play.
 
 - **The colony is not one place.** Biomes stay where they are; the player claims an area in place as a colony and does
-  the economic play there. Nothing is carried home and rebuilt. Pioneers and foragers leave from and return to any
+  the economic play there. Nothing is carried home and rebuilt. Scouts, beastmasters and foragers leave from and return to any
   colony area.
 - **Travel between colonies** is a teleport animation, or the mycelium travel network from the b-builds if it is kept
   and polished. No pathfinding either way.
@@ -322,17 +322,17 @@ colonies settle into stable idle play.
 ### How an area moves
 
 **Every living thing goes through five stages:** unseen → wild → studied → foraged → cultivated. Fauna is never
-foraged on its own: the pioneers tame it, with the player taking part, so its stages are unseen → wild → studied →
+foraged on its own: the beastmasters tame it, with the player taking part, so its stages are unseen → wild → studied →
 tamed → cultivated.
 
 **Terrain goes through the same stages:** its elements (ores, liquids, physical attributes) are studied and foraged by
 the foragers; taming the top predator turns it into Caverns, and a colony cultivates it.
 
-1. **Pioneers open an Unseen area:** everything in it goes from unseen to wild.
+1. **Scouts open an Unseen area:** everything in it goes from unseen to wild.
 2. **Foragers study the food chain bottom-up,** on their own.
 3. **Studied flora is foraged,** on its own.
 4. **What is foraged can be used in taming.** A creature can't be tamed until its natural diet is foraged.
-5. **Tamed animals are used to tame predators:** the pioneers must tame enough prey to capture a predator. A deep food
+5. **Tamed animals are used to tame predators:** the beastmasters must tame enough prey to capture a predator. A deep food
    chain needs exponentially more prey.
 6. **Taming the top predator turns the area into Caverns,** ready for a colony: a triggered outcome, not a decision.
 7. **The foragers build a colony there:** a player decision; its flora and fauna become cultivated.
@@ -342,7 +342,7 @@ the foragers; taming the top predator turns it into Caverns, and a colony cultiv
 
 | Decision | Condition |
 |---|---|
-| Send pioneers to open up an Unseen area | |
+| Send scouts to open up an Unseen area | |
 | Tame a creature | its natural diet is foraged |
 | Tame a predator | enough of its prey tamed; a deep food chain needs exponentially more |
 | Build a colony (foragers) | the area's top predator is tamed |
@@ -355,7 +355,7 @@ Studying and foraging run on their own, and a cultivated area harvests itself, s
 on autopilot, and it reads as natural.
 
 **The hands-on work is the pets.** Levelling the teams so they are strong enough for the next Unseen; balancing a food
-chain from minerals up to apex predators, across several biomes; keeping good forager and pioneer teams, probably with
+chain from minerals up to apex predators, across several biomes; keeping good forager, scout and beastmaster teams, probably with
 synergising traits.
 
 ### Why every biome gets a colony
@@ -366,26 +366,18 @@ synergising traits.
 - **Wonder:** awesome, powerful, spectacular tames; the unique mechanics of each biome; a chance at unique wonders (a
   breather loop).
 
-### Loops by pillar
+### Gameplay loops (agreed)
 
-| From → to | Mode | Loop |
-|---|---|---|
-| Colony → Colony | idle | grows crops and livestock the pioneers use as bait |
-| Colony → Colony | idle | grows crops and livestock to feed the pioneers and foragers |
-| Colony → Colony | active | capture new colony areas; tune the biosphere so that all colony loops work |
-| Colony → Colony | idle | the simulation is beautiful, increasingly diverse, but stable |
-| Colony → Unseen | active | send pioneer teams to open up an Unseen |
-| Colony → Unseen | active | send pioneer teams to tame animals |
-| Unseen → Unseen | | taming the top animal makes the area ready to colonize |
-| Colony → Caverns | active | set up forager teams for field trips |
-| Colony → Caverns | idle | forager teams go on their own trips |
-| Caverns → Caverns | idle | the simulation itself is beautiful and non-linear |
-| Caverns → Colony | idle | field trips bring flora unlocks and foraged goods |
-| Caverns → Colony | active | a breather: find unique, special things by hand near the foragers |
-| Caverns → Unseen | idle | lifting the fog within the caverns finds the boundaries of the Unseen |
+A loop is something the player directly controls. Passive things (colonies harvesting, foragers foraging, scouts
+gathering intel) are spectacle and lore, not loops.
 
-**The Unseen stays hands-on.** It is the messy, mysterious frontier and the game's kinetic challenge. Taming may run as
-a timed idle mission (like sending frigates in No Man's Sky), but not everything needs to be idle.
+| Loop | Role | Feels like | What the player does |
+|---|---|---|---|
+| Engagement | core | a card battle | engages an animal, whether the outcome is learning or taming; tests teams against the simulation |
+| Pet management | core | a management game | builds teams of foragers, scouts and beastmasters, levels pets, sends them on missions |
+| Resource management | support | idle farming | sees what is running low and steers the idle collection toward it: better forager teams, foragers split across the right biomes, more colonies in the right biomes |
+
+Open: whether pets level up by using their skills.
 
 ## Game shape: an incremental idle game (agreed)
 

@@ -73,6 +73,10 @@ a name; the hands-on game around them is levelling and combining the pet teams.
 colonies, foragers and scouts keep working while the player is away. Long-term progression climbs differently, not
 faster (D188, D189).
 
+**The loops** (2026-10-04): three loops the player controls (engagement and pet management at the core, resource
+management in support); passive things are spectacle and lore. Pioneers are replaced by scouts and beastmasters
+(D190).
+
 ## Feedback
 
 No play sessions: this is design work. The user's corrections, objections and choices are in the
@@ -84,4 +88,4 @@ Not concluded: reopened on 2026-10-04 for the game's shape. So far the phase wen
 game needs" to three pillars (The Unseen, Prospecting, Cultivation) placed around the audience's motivations, with
 every interaction an action, a condition and an outcome, and a lifecycle simple enough to code and natural enough to
 read. Complexity now comes from depth and lore, not from uninformed decisions. Decisions D173–D176, then D188 (an
-incremental idle game) and D189 (climb differently, not faster). Next: more work on the shape, alongside p13.
+incremental idle game), D189 (climb differently, not faster) and D190 (three loops, beastmasters). Next: more work on the shape, alongside p13.

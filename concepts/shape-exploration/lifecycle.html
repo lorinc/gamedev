@@ -14,7 +14,8 @@
         --line: #e1e0d9;
         --active: #c98a00;
         --dep: #2a78d6;
-        --pioneer: #b5338a;
+        --beastmaster: #b5338a;
+        --scout: #6b55c9;
         --forager: #2f7d32;
       }
       @media (prefers-color-scheme: dark) {
@@ -26,7 +27,8 @@
           --muted: #8f8d86;
           --line: #2c2c2a;
           --dep: #6aa6ec;
-          --pioneer: #e070b8;
+          --beastmaster: #e070b8;
+          --scout: #a294f0;
           --forager: #6cc070;
         }
       }
@@ -113,8 +115,11 @@
         text-transform: uppercase;
         letter-spacing: 0.05em;
       }
-      .who.pioneers {
-        fill: var(--pioneer);
+      .who.scouts {
+        fill: var(--scout);
+      }
+      .who.beastmasters {
+        fill: var(--beastmaster);
       }
       .who.foragers {
         fill: var(--forager);
@@ -203,7 +208,7 @@
         const t = el('text', { x: X[col], y: Y[lane] + 5 }, g)
         t.textContent = label
       }
-      // who does the work: the pioneers, the foragers, or the colony itself
+      // who does the work: the scouts, the beastmasters, the foragers, or the colony itself
       function who(x, y, actor) {
         text(x, y, actor, 'who ' + actor)
       }
@@ -238,7 +243,7 @@
       decision((X.unseen + X.wild) / 2, Y.area, 'Open up')
       text((X.unseen + X.wild) / 2 - 20, Y.area + 38, 'a boundary found:', 'cond')
       text((X.unseen + X.wild) / 2 - 20, Y.area + 52, 'foragers lift the fog', 'cond')
-      who((X.unseen + X.wild) / 2, Y.area + 22, 'pioneers')
+      who((X.unseen + X.wild) / 2, Y.area + 22, 'scouts')
       // not a decision: taming the top predator triggers it
       edge('area', 'wild', 'studied', 'idle', 'foragers')
       edge('area', 'studied', 'foraged', 'idle', 'foragers')
@@ -254,7 +259,7 @@
       node('flora', 'studied', 'Studied')
       node('flora', 'foraged', 'Foraged')
       node('flora', 'cultivated', 'Cultivated')
-      edge('flora', 'unseen', 'wild', 'idle', 'pioneers')
+      edge('flora', 'unseen', 'wild', 'idle', 'scouts')
       edge('flora', 'wild', 'studied', 'idle', 'foragers')
       edge('flora', 'studied', 'foraged', 'idle', 'foragers')
       edge('flora', 'foraged', 'cultivated', 'idle', 'colony')
@@ -265,12 +270,12 @@
       node('fauna', 'studied', 'Studied')
       node('fauna', 'tamed', 'Tamed')
       node('fauna', 'cultivated', 'Cultivated')
-      edge('fauna', 'unseen', 'wild', 'idle', 'pioneers')
+      edge('fauna', 'unseen', 'wild', 'idle', 'scouts')
       edge('fauna', 'wild', 'studied', 'idle', 'foragers')
-      // fauna is never foraged on its own: the pioneers tame it, with the player taking part
+      // fauna is never foraged on its own: the beastmasters tame it, with the player taking part
       edge('fauna', 'studied', 'tamed', 'active')
       decision((X.foraged + X.tamed) / 2, Y.fauna, 'Tame')
-      who((X.foraged + X.tamed) / 2, Y.fauna + 22, 'pioneers')
+      who((X.foraged + X.tamed) / 2, Y.fauna + 22, 'beastmasters')
       text((X.foraged + X.tamed) / 2, Y.fauna + 40, 'its natural diet is foraged', 'cond')
       text((X.foraged + X.tamed) / 2, Y.fauna + 55, 'a predator: enough prey tamed', 'cond')
       edge('fauna', 'tamed', 'cultivated', 'idle', 'colony')
