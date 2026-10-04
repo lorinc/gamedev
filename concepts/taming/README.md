@@ -6,3 +6,5 @@ on is in [build-principles.md](../shape-exploration/build-principles.md) → *Pi
 - [gauge-model.html](gauge-model.html): what each animal dimension (size, agility, intelligence, diet) does to each
   motivation's gauge (hunger, comfort, curiosity): share, default, inertia (calm ↔ jumpy). The data is in
   [gauge-model.js](gauge-model.js); every cell is a draft until it has been gone through with the user, cell by cell.
+  Since v10.4 it also has the motivations acting on each other, one extreme per sample animal, and scripted
+  encounters turn by turn; its top box says what changed and why.

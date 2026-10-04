@@ -16,6 +16,8 @@
         --comfort: #2f7d32;
         --curiosity: #2a64b8;
         --draft: #fff6d6;
+        --lo: #fbe0dc;
+        --hi: #dcf1dc;
       }
       @media (prefers-color-scheme: dark) {
         :root {
@@ -29,6 +31,8 @@
           --comfort: #6cc070;
           --curiosity: #7aa8f0;
           --draft: #2e2a1a;
+          --lo: #3a1f1c;
+          --hi: #1c3320;
         }
       }
       * {
@@ -96,6 +100,30 @@
       td.none {
         color: var(--muted);
       }
+      td.lo {
+        background: var(--lo);
+      }
+      td.hi {
+        background: var(--hi);
+      }
+      td.act {
+        font-size: 12px;
+      }
+      td.act small {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+      }
+      .why {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 8px 14px;
+        margin: 12px 0;
+      }
+      .why li {
+        margin: 6px 0;
+      }
       ul {
         color: var(--ink2);
         margin: 4px 0;
@@ -115,11 +143,41 @@
         properties. Every cell is a draft until it has been gone through. The data is in
         <code>gauge-model.js</code>.
       </p>
+      <div class="why">
+        <b>What changed in v10.4, and why</b>
+        <p>
+          In v10.3 the animals came out too alike: a snail and a flea had the same split and nearly the same starting
+          willingness. Three reasons, and a change for each:
+        </p>
+        <ol>
+          <li>
+            <b>The motivations didn't act on each other.</b> Each was a separate bar added into one total, and character
+            comes from how needs collide. Added: three interaction rules every kid knows (below): a scared animal is
+            neither hungry nor curious; a hungry animal takes risks; a curious animal stays to look.
+          </li>
+          <li>
+            <b>Averages erase character.</b> Willingness is a weighted average, so every trait is pulled toward the
+            middle. Added: one extreme per animal (Sonny's exaggerated rule), one property of one motivation pushed far:
+            the jumpiest flea, the most curious crow, the hungriest bear.
+          </li>
+          <li>
+            <b>A resting snapshot can't show behaviour.</b> What makes a flea a flea is the first wrong move, over turns.
+            Added: scripted encounters per animal (bottom), with the gauge's lines (flee, friendly, the flee clock) now
+            in the data, a trick that wears out when repeated, and the animal's reaction when it goes.
+          </li>
+        </ol>
+        <p>All of it is draft, to go through cell by cell; the demo actions are stand-ins for real pet skills.</p>
+      </div>
       <p class="legend">Highlighted cells change something; “·” means no effect (add 0, or multiply by 1).</p>
       <div id="props"></div>
       <div id="grids"></div>
+      <h2>The lines and the clock</h2>
+      <p id="lines"></p>
+      <h2>How the motivations act on each other</h2>
+      <p>A motivation is low below its zone line, high above it.</p>
+      <ul id="inter"></ul>
       <h2>Outside the grid</h2>
-      <p>Effects of the dimensions that are not one of the three properties.</p>
+      <p>Effects that are not in the model yet.</p>
       <ul id="outside"></ul>
       <h2>What the cells add up to</h2>
       <p>
@@ -128,6 +186,15 @@
         motivation's default weighted by its share.
       </p>
       <div class="wrap" id="examples"></div>
+      <h2>Encounters</h2>
+      <p>
+        Each sample animal against four scripted plays, turn by turn. The number is willingness after the turn, red
+        below the flee line, green at the friendly line; the small word is the action. A repeated action wears out
+        (by intelligence), needles drift back to their defaults, and the rules above apply. The play ends when the
+        animal is tamed, or when willingness stays below the flee line for the flee clock's turns: then it reacts by
+        its strongest stat and is gone.
+      </p>
+      <div id="encounters"></div>
     </main>
     <script src="gauge-model.js"></script>
     <script>
@@ -194,6 +261,11 @@
               else out[m][p] *= x
             }
         }
+        const x = a.extreme
+        if (x) {
+          if (M.properties[x.property].combine === 'add') out[x.motivation][x.property] += x.value
+          else out[x.motivation][x.property] *= x.value
+        }
         const total = M.motivations.reduce((s, m) => s + Math.max(0, out[m].share), 0) || 1
         for (const m of M.motivations) out[m].pct = (100 * Math.max(0, out[m].share)) / total
         out.rest = M.motivations.reduce((s, m) => s + (out[m].pct / 100) * out[m].default, 0)
@@ -201,7 +273,7 @@
       }
       const t = el('table')
       const h1 = el('tr')
-      h1.append(el('th', { rowspan: 2 }, 'animal'), el('th', { rowspan: 2 }, 'size · agility · intelligence · diet'))
+      h1.append(el('th', { rowspan: 2 }, 'animal'), el('th', { rowspan: 2 }, 'size · agility · intelligence · diet'), el('th', { rowspan: 2 }, 'extreme'))
       for (const m of M.motivations) h1.append(el('th', { colspan: 5, class: 'm-' + m }, m))
       h1.append(el('th', { rowspan: 2 }, 'willingness at rest'))
       const h2 = el('tr')
@@ -210,7 +282,7 @@
       for (const a of M.examples) {
         const r = animal(a)
         const tr = el('tr')
-        tr.append(el('th', { class: 'row' }, a.name), el('td', {}, [a.size, a.agility, a.intelligence, a.diet].join(' · ')))
+        tr.append(el('th', { class: 'row' }, a.name), el('td', {}, [a.size, a.agility, a.intelligence, a.diet].join(' · ')), el('td', {}, a.extreme ? `${a.extreme.motivation} ${a.extreme.property} ${fmt(a.extreme.property, a.extreme.value)}: ${a.extreme.why}` : '·'))
         for (const m of M.motivations) {
           const g = r[m]
           for (const v of [Math.round(g.pct) + '%', Math.round(g.default), +g.inertia.toFixed(2), +(1 / g.inertia).toFixed(2), +(M.drift / g.inertia).toFixed(1)])
@@ -220,6 +292,102 @@
         t.append(tr)
       }
       document.getElementById('examples').append(t)
+
+      // the lines and the clock, per dimension
+      const LB = M.lines.base
+      document.getElementById('lines').textContent =
+        `Flee line ${LB.flee}, friendly line ${LB.friendly} (the capture threshold), flee clock ${LB.clock} turns. ` +
+        Object.entries(M.lines)
+          .filter(([k]) => k !== 'base')
+          .map(([dim, vals]) => Object.entries(vals).map(([v, d]) => `${v}: ` + Object.entries(d).map(([k, n]) => `${k} ${n > 0 ? '+' : ''}${n}`).join(', ')).join('; '))
+          .join('; ') +
+        `. A repeated action keeps this much of its last effect, by intelligence: ` +
+        Object.entries(M.fill).map(([k, v]) => `${k} ${v}`).join(', ') + '.'
+      for (const r of M.interactions) document.getElementById('inter').append(el('li', {}, `${r.rule}: ${r.how}`))
+
+      function linesOf(a) {
+        const L = { ...M.lines.base }
+        for (const dim of ['size', 'agility']) for (const [k, n] of Object.entries(M.lines[dim]?.[a[dim]] ?? {})) L[k] += n
+        return L
+      }
+      const clamp = (v) => Math.max(0, Math.min(100, v))
+      function willingness(g, n) {
+        const scared = n.comfort < M.zones.low
+        let w = 0
+        for (const m of M.motivations) {
+          let c = (g[m].pct / 100) * n[m]
+          if (scared && m !== 'comfort' && !(m === 'hunger' && n.hunger > M.zones.high)) c /= 2
+          w += c
+        }
+        return w
+      }
+      function reaction(a) {
+        if (a.size === 'large') return 'charges'
+        if (a.agility === 'fast') return 'bolts'
+        return 'hides'
+      }
+      function encounter(a, sc) {
+        const g = animal(a)
+        const L = linesOf(a)
+        const fill = M.fill[a.intelligence]
+        const n = {}
+        for (const m of M.motivations) n[m] = g[m].default
+        const turns = []
+        let last = null
+        let streak = 0
+        let clock = 0
+        for (let t = 0; t < M.turns; t++) {
+          const act = sc.cycle ? sc.plan[t % sc.plan.length] : sc.plan[Math.min(t, sc.plan.length - 1)]
+          streak = act === last ? streak + 1 : 0
+          last = act
+          const pushed = M.actions[act]
+          for (const m of M.motivations) {
+            if (pushed[m]) n[m] = clamp(n[m] + (pushed[m] / g[m].inertia) * fill ** streak)
+            else {
+              const d = M.drift / g[m].inertia
+              n[m] = n[m] > g[m].default ? Math.max(g[m].default, n[m] - d) : Math.min(g[m].default, n[m] + d)
+            }
+          }
+          const w = willingness(g, n)
+          const looking = g.curiosity.pct > 0 && n.curiosity > M.zones.high
+          turns.push({ act, w, z: w >= L.friendly ? 'hi' : w < L.flee ? 'lo' : '' })
+          if (w >= L.friendly) return { turns, end: `tamed on turn ${t + 1}` }
+          clock = w < L.flee && !looking ? clock + 1 : 0
+          if (clock >= L.clock) return { turns, end: `${reaction(a)} on turn ${t + 1}` }
+        }
+        return { turns, end: 'still there' }
+      }
+      const enc = document.getElementById('encounters')
+      for (const a of M.examples) {
+        const L = linesOf(a)
+        enc.append(el('h2', {}, `${a.name}: flee line ${L.flee}, friendly line ${L.friendly}, flee clock ${L.clock}`))
+        const wrap = el('div', { class: 'wrap' })
+        const tb = el('table')
+        const hr = el('tr')
+        hr.append(el('th', {}, 'play'))
+        for (let t = 1; t <= M.turns; t++) hr.append(el('th', {}, String(t)))
+        hr.append(el('th', {}, 'end'))
+        tb.append(hr)
+        for (const sc of M.scripts) {
+          const r = encounter(a, sc)
+          const tr = el('tr')
+          tr.append(el('th', { class: 'row' }, sc.name))
+          for (let t = 0; t < M.turns; t++) {
+            const x = r.turns[t]
+            if (!x) {
+              tr.append(el('td', { class: 'none' }, ''))
+              continue
+            }
+            const td = el('td', { class: 'act ' + x.z }, String(Math.round(x.w)))
+            td.append(el('small', {}, x.act))
+            tr.append(td)
+          }
+          tr.append(el('td', {}, r.end))
+          tb.append(tr)
+        }
+        wrap.append(tb)
+        enc.append(wrap)
+      }
     </script>
   </body>
 </html>

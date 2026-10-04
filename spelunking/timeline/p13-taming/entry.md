@@ -8,6 +8,7 @@ from: p12
 build v10.1: 2026-10-04 · the taming gauge model: what each animal dimension does to each motivation's gauge, every cell a draft
 build v10.2: 2026-10-05 · decay and volatility merged into inertia (calm ↔ jumpy); comfort's default by size
 build v10.3: 2026-10-05 · curiosity by intelligence: smarter animals are more curious by default; the animals still come out too alike
+build v10.4: 2026-10-05 · the motivations act on each other, one extreme per animal, and scripted encounters turn by turn (Claude's recommendation, with its reasons on the page)
 ---
 
 # p13 · Taming
