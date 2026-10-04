@@ -27,6 +27,23 @@
         touch-action: none;
         display: block;
       }
+      #reset {
+        position: fixed;
+        right: max(8px, env(safe-area-inset-right));
+        bottom: max(8px, env(safe-area-inset-bottom));
+        padding: 4px 8px;
+        font: 11px monospace;
+        color: #888;
+        background: rgba(5, 5, 8, 0.6);
+        border: 1px solid #333;
+        border-radius: 4px;
+        touch-action: manipulation;
+      }
+      #reset.sure {
+        color: #fff;
+        background: #b3261e;
+        border-color: #e5484d;
+      }
       #panel {
         position: fixed;
         top: 0;
@@ -90,6 +107,7 @@
   <body>
     <canvas id="game"></canvas>
     <div id="panel"></div>
+    <button id="reset" type="button">reset</button>
     <script type="module" src="src/bundles/b4/main.js"></script>
   </body>
 </html>

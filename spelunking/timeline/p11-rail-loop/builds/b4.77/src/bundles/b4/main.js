@@ -81,6 +81,28 @@ function persist() {
 }
 addEventListener('pagehide', persist)
 document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && persist())
+/** Wipes the save and starts the sim over. */
+function reset() {
+  wiped = true
+  try {
+    localStorage.removeItem(SAVE_KEY)
+  } catch {}
+  location.reload()
+}
+// the reset button, bottom right (the user, b4.77): "reset", then a red "SURE??" that resets; it calms down after 3 s
+const resetBtn = /** @type {HTMLButtonElement} */ (document.getElementById('reset'))
+/** @type {ReturnType<typeof setTimeout> | undefined} */
+let resetTimer
+resetBtn.addEventListener('click', () => {
+  if (resetBtn.classList.contains('sure')) return reset()
+  resetBtn.classList.add('sure')
+  resetBtn.textContent = 'SURE??'
+  clearTimeout(resetTimer)
+  resetTimer = setTimeout(() => {
+    resetBtn.classList.remove('sure')
+    resetBtn.textContent = 'reset'
+  }, 3000)
+})
 /** @type {import('./render.js').Ui} */
 const ui = { select: null, refusedAt: -9 }
 const canvas = /** @type {HTMLCanvasElement} */ ($('game'))
@@ -214,13 +236,7 @@ const panel = createPanel(
     buttons: [
       [
         'new game',
-        () => {
-          wiped = true
-          try {
-            localStorage.removeItem(SAVE_KEY)
-          } catch {}
-          location.reload()
-        },
+        reset,
       ],
       ['next map', () => location.assign(urlFor(seed + 1))],
       ['random map', () => location.assign(urlFor(1 + Math.floor(Math.random() * 99999)))],
