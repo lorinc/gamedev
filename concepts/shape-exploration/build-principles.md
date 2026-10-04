@@ -227,6 +227,24 @@ other, the player, the environment and the enemy.
 
 Idea, not decided: real-time engagements unlocked in meta-progression.
 
+**Routes into a tame come from different pillars (agreed).** Taming wild bait one by one is a major pain point,
+worst with a food chain of two or more tiers, so the player gets several, very different routes. A different shape
+means a different pillar: each route is prepared in its own pillar and paid out in the taming, and taming without
+bait is as hard as with it, in another pillar's shape.
+
+| Pillar | Route |
+|---|---|
+| Cultivation | bait from the colonies: livestock and crops from colonies in the same tier. Recreating the prey's environment in a colony stays only if it is really simple, for the player and to build; otherwise it is dropped |
+| Prospecting | what the foragers and scouts bring back: flora that acts on the animal (psychoactive crops lower suspicion), and the knowledge that makes a taming without bait possible |
+| The Unseen (the taming itself) | team skills that use what is on the board: driving wild prey toward the predator is one skill to have in a team, not a route of its own; skills that make the animal accept something else as food |
+
+- **The gauges are where the routes meet.** Food fills hunger, Prospecting's finds act on suspicion and intrigue, and
+  team skills act on fear and position. Each animal makes one route expensive, so the player switches pillars.
+- **No breeding before a colony:** a biome's fauna breeds only in a colony there (see *Why every biome gets a colony*).
+
+First ideas for accept-something-else skills, not decided: "hunger", which makes everyone hungry; "smells like", which
+puts the local prey's smell on something else.
+
 The pattern behind it, and a worked example: [idea-taming-and-breach.md](idea-taming-and-breach.md).
 
 **Areas are asleep until woken.** Under the fog of war the simulation is suspended; an area looks alive only through
