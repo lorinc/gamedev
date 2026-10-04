@@ -257,6 +257,19 @@ about animals.
 - **Pet actions and consumables act on each motivation separately,** through their main and side effects. That is
   where the game's fun comes from.
 
+**Animals live in a trait space, not a list of families (agreed).** Readable because it has two kinds of dimension:
+
+1. **Behaviour axes:** a few discrete values, each value one rule the player can learn.
+   - **Diet:** plants, anything, meat.
+   - **When scared:** flee, hide, freeze, fight.
+   - **Social:** solitary, pair, group.
+2. **Stats:** numbers that tune within those rules.
+   - **Size and strength,** **agility,** **intelligence,** **nerve** (shy to curious).
+
+The values are a first set. Families are names for common corners of the space (herd prey: plants, flee, group). The
+direction: an animal's traits add up to its behaviour and stats, and, once tamed, to its skills as a pet. How they
+translate into animal behaviour and pet skills is to be decided.
+
 **The animal's behaviour (to test).** The animal acts, and its moves come from its motivations, not from a separate
 move list: hungry, it goes for the nearest food (maybe the bait); curious, it inspects a pet; scared, prey edges
 toward the exit and a predator goes for a pet; bored, it wanders off; friendly, it comes close. Its behaviour is the
