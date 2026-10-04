@@ -2,8 +2,7 @@
 id: p12
 title: Shape map (v9)
 started: 2026-10-02
-ended: 2026-10-03
-status: concluded
+status: building
 budget: 3d
 from: p11
 cover: media/cover.png
@@ -69,6 +68,11 @@ Cultivated. The pioneers open the Unseen and tame fauna up the food chain to the
 forage, and build a colony once the top predator is tamed. A colony harvests itself. Only those three decisions carry
 a name; the hands-on game around them is levelling and combining the pet teams.
 
+**The game shape** (2026-10-04, [build-principles](../../../concepts/shape-exploration/build-principles.md) →
+*Game shape*): an incremental idle game. A session is one or more runs, and a run is anything that pushes the needle;
+colonies, foragers and scouts keep working while the player is away. Long-term progression climbs differently, not
+faster (D188, D189).
+
 ## Feedback
 
 No play sessions: this is design work. The user's corrections, objections and choices are in the
@@ -76,7 +80,8 @@ No play sessions: this is design work. The user's corrections, objections and ch
 
 ## Conclusion → next
 
-Concluded. The phase went from "no clue what mechanics this game needs" to three pillars (The Unseen, Prospecting,
-Cultivation) placed around the audience's motivations, with every interaction an action, a condition and an outcome,
-and a lifecycle simple enough to code and natural enough to read. Complexity now comes from depth and lore, not from
-uninformed decisions. Decisions D173–D176. Next: the market part of stage 4, then a lean prototype of the lifecycle.
+Not concluded: reopened on 2026-10-04 for the game's shape. So far the phase went from "no clue what mechanics this
+game needs" to three pillars (The Unseen, Prospecting, Cultivation) placed around the audience's motivations, with
+every interaction an action, a condition and an outcome, and a lifecycle simple enough to code and natural enough to
+read. Complexity now comes from depth and lore, not from uninformed decisions. Decisions D173–D176, then D188 (an
+incremental idle game) and D189 (climb differently, not faster). Next: more work on the shape, alongside p13.
