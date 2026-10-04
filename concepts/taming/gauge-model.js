@@ -24,9 +24,9 @@ window.GAUGE_MODEL = {
     size: {
       values: ['small', 'medium', 'large'],
       cells: {
-        small: { hunger: { volatility: 1.2 }, comfort: { volatility: 1.2 } },
+        small: { hunger: { volatility: 1.2 }, comfort: { default: -10, volatility: 1.2 } },
         medium: {},
-        large: { hunger: { volatility: 0.7 }, comfort: { volatility: 0.7 } },
+        large: { hunger: { volatility: 0.7 }, comfort: { default: 10, volatility: 0.7 } },
       },
     },
     agility: {
