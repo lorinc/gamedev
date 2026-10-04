@@ -33,6 +33,8 @@
 // b4.75 (the user: "nodes, that have gas, should spawn their own moths every 30 seconds"; the hives of b4.73
 // are gone): every `mothTicks` each built node whose station holds gas hatches a moth there (`hatch`: +1 bug on
 // the ledger). Claude's call: built nodes only (the ledger's "nodes"); hatching takes no gas.
+// b4.77 fix (the user: "moths only spawn near nodes if there's less than 2 of them there, and only spawns 1"): a
+// node hatches its one moth only while fewer than `mothMax` (2) moths are within `crowd` px of it.
 
 import { isOpen, Tile } from '../../sim/gen/world.js'
 import { CRYSTAL } from './world.js'
@@ -73,6 +75,7 @@ export const SWARM = {
   upgradeCost: 16, // fruit for the first upgrade, doubling each time: 16, 32, 64… (the user, b4.13)
   fireStop: 6, // px: fire this close and a bug stands still (the user, b4.68; 0: never)
   mothTicks: 1800, // every 30 s each built node with gas hatches a moth (the user, b4.75; 0: never)
+  mothMax: 2, // a node hatches only while fewer moths than this are within `crowd` px of it, one at a time (the user, b4.77)
 }
 /** @typedef {typeof SWARM} Swarm */
 
@@ -177,6 +180,10 @@ export function updateSwarm(g) {
     g.railed.forEach((on, i) => {
       if (!on || !(g.gas[i] > 0)) return
       const n = g.map.nodes[i]
+      const c2 = s.crowd * s.crowd
+      let moths = 0
+      for (const b of g.swarm) if (b.moth && dist2(g, b, n) <= c2) moths++
+      if (moths >= s.mothMax) return
       hatch(g, n)
       g.events.push({ type: 'hatched', x: n.x, y: n.y })
     })
