@@ -1,7 +1,8 @@
 # Idea: taming and the breach
 
-Part of the [shape exploration](README.md). An idea, not a decision: a pattern from Sonny's fights, made general, and
-how it could shape taming and the breach of the Unseen.
+Part of the [shape exploration](README.md). An idea: a pattern from Sonny's fights, made general, and how it could
+shape taming and the breach of the Unseen. The encounter format is decided (cooldowns, no luck, telegraphs, moves with
+several effects; [build-principles.md](build-principles.md) → *Pillars*); the dials, actions and examples here are not.
 
 ## The pattern: promote a side effect
 
