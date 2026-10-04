@@ -14,6 +14,7 @@ build v9.5: 2026-10-03 · the taming game: The Unseen, Caverns and Colony, with 
 build v9.6: 2026-10-03 · one arrow per action (action, condition, outcome); the pillars The Unseen, Prospecting and Cultivation; and [the lifecycle page](builds/v9.6/lifecycle.html)
 build v9.7: 2026-10-04 · the three loops as pillars: Engagement (a card battle) and Pet management (a management game) at the core, Resources (idle farming) in support
 build v9.8: 2026-10-04 · a passive Simulation pillar between Discovery, Design and Story balances the active loops around the audience
+build v9.9: 2026-10-04 · Monster Sanctuary joins the reference games, for its pet levelling, team building and synergy
 ---
 
 # p12 · Shape map (v9)
@@ -66,6 +67,7 @@ then loop times. The map page is the assessment drawn: every shape on two axes, 
 | v9.6 | Every interaction as one arrow with an action, a condition and an outcome; the [lifecycle](builds/v9.6/lifecycle.html) of terrain, flora and fauna, with who does each step |
 | v9.7 | The three loops the player controls as pillars: Engagement between Strategy and Challenge, Pet management between Strategy and Power, Resources (smaller, support) beside the idle shapes; passive things are spectacle and lore, not drawn; Design read as building for aesthetics |
 | v9.8 | A passive Simulation pillar (dashed) between Discovery, Design and Story: the ecosystem running while the player is away, as spectacle and lore; with it, the pillars balance around the audience |
+| v9.9 | Monster Sanctuary as an eleventh reference game: its loops, and its audience from the store page, which lands next to this game's audience; [guide 16](../../../guides/game-design/16-monster-sanctuary-teams.md) on its levelling, team building and synergy |
 
 **Where it ended** ([build-principles](builds/v9.6/build-principles.md)): ground moves Unseen → Wild → Caverns →
 Cultivated. The pioneers open the Unseen and tame fauna up the food chain to the top predator. The foragers study and
