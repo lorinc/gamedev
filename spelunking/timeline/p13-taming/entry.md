@@ -1,0 +1,78 @@
+---
+id: p13
+title: Taming
+started: 2026-10-03
+status: building
+budget: 3d
+from: p12
+---
+
+# p13 · Taming
+
+p12 ended with a lifecycle and three pillars, and the plan to simulate the whole lifecycle at once. That plan was
+dropped: many co-dependent, vaguely defined mechanics with little content, run together, give results nobody can trace
+to a cause. The game is built one component at a time instead, and taming comes first: the engagement is the core
+gameplay and the most critical element of the game. This entry designs it, researches its references, and then builds
+a toy of the taming alone.
+
+## Question
+
+Can one taming engagement be as easy to start and as hard to master as Slay the Spire, as strategic and intriguing as
+Sonny, and as free as Noita's wand building, without luck and without killing?
+
+**Pass:** in a toy of the taming alone, played by hand, a first encounter makes sense within seconds, and later
+encounters are won by reading the animal and combining the kit in ways that weren't written as pairs.
+
+**Kill:** the encounters read as solved puzzles with one answer each, or the interactions turn into noise that can't
+be read on screen.
+
+## Assumptions
+
+1. [?] Full information and no luck still leave enough depth: the variety comes from scouting, the kit and procedurally generated animals, not from a draw.
+2. [?] Moves with several effects, on a shared visible state (the team, the animal, the cavern), make combinations nobody wrote as pairs, and stay readable turn by turn.
+3. [?] One engagement makes one game: scouting as team setup plus an automatic run in the simulation doesn't feel like a second, lesser game.
+4. [?] Routes into a tame from different pillars keep bait from becoming a grind, even with a food chain of two or more tiers.
+5. [?] Watchable replays let the user check that the simulator and its bot test the right thing.
+
+## Limitations
+
+- [constraint ?] No luck in the engagement: every encounter must be solvable by construction.
+- [constraint ?] Turn-based only; real-time engagements are an idea for meta-progression, not built.
+- [cut] The food chain, scouting and the colony: later components, in that order (D177).
+- [cut] Levelling, team size and slots: knobs or left out until the taming toy needs them.
+- [cut] The market part of stage 4 from p12: parked.
+
+## Built
+
+**The decisions so far** (design, no build yet):
+
+| Decision | What it settles |
+|---|---|
+| D177 | One component at a time: taming, the food chain, scouting, the colony |
+| D178 | Every simulated run can be watched: one rules core, replays from seed and actions, reports that link to runs |
+| D179 | Taming plays like a deck-builder's combat with simpler UX: cooldowns instead of a deck, no luck, telegraphs, moves with several effects |
+| D180 | The engagement is the core gameplay; the bar is Slay the Spire, Sonny and Noita's wand building |
+| D181 | Turn-based, no time pressure, all cards on the table, the player acts every turn |
+| D182 | Taming is the only engagement; scouting is team setup plus an automatic run; failure is the animal getting away and bait consumed |
+| D183 | Routes into a tame come from different pillars; taming without bait is as hard, in another pillar's shape |
+
+**The research** ([guides/game-design](../../../guides/game-design/README.md)): what makes the references' engagements
+work, and where they fail.
+
+- [11 · Slay the Spire](../../../guides/game-design/11-slay-the-spire-engagement.md): intents clicked only with numbers; full information on the opponent's side is not shallow.
+- [12 · Sonny](../../../guides/game-design/12-sonny-engagement.md): each boss is one exaggerated rule, answered from the existing kit, with more than one weakness.
+- [13 · Noita's wand building](../../../guides/game-design/13-noita-wand-building.md): freedom runs through one shared, visible world state.
+- [14 · Super Auto Pets](../../../guides/game-design/14-super-auto-pets-synergy.md): the cautionary case: synergy decided far from its result.
+- [15 · Into the Breach](../../../guides/game-design/15-into-the-breach-combat.md): full telegraphs need an undodgeable stake; pushing, not killing, can be the core.
+
+**Where it stands:** the design is in [build-principles](../../../concepts/shape-exploration/build-principles.md) →
+*Pillars* and *Building it: one component at a time*. Open: the gauges of the engagement and how they interact, and
+the animal's card.
+
+## Feedback
+
+No play sessions yet: this is design work.
+
+## Conclusion → next
+
+Not concluded. Next: the engagement's gauges and how they interact, then a toy of the taming alone.
