@@ -111,7 +111,7 @@
     <main>
       <h1>Taming gauge model</h1>
       <p>
-        What each animal dimension does to each motivation's gauge: 4 dimensions × 3 values × 3 motivations × 4
+        What each animal dimension does to each motivation's gauge: 4 dimensions × 3 values × 3 motivations × 3
         properties. Every cell is a draft until it has been gone through. The data is in
         <code>gauge-model.js</code>.
       </p>
@@ -119,12 +119,13 @@
       <div id="props"></div>
       <div id="grids"></div>
       <h2>Outside the grid</h2>
-      <p>Effects of the dimensions that are not one of the four properties.</p>
+      <p>Effects of the dimensions that are not one of the three properties.</p>
       <ul id="outside"></ul>
       <h2>What the cells add up to</h2>
       <p>
-        Sample animals, worked out from the base and the cells above. Willingness at rest is each motivation's default
-        weighted by its share.
+        Sample animals, worked out from the base and the cells above. Push is how far an action moves the needle
+        (1/inertia); drift is how many points a turn it falls back to its default. Willingness at rest is each
+        motivation's default weighted by its share.
       </p>
       <div class="wrap" id="examples"></div>
     </main>
@@ -147,7 +148,7 @@
       const pl = el('ul')
       for (const p of PROPS) pl.append(el('li', {}, `${p} (${M.properties[p].combine}): ${M.properties[p].what}`))
       const props = document.getElementById('props')
-      props.append(el('h2', {}, 'The four properties'), pl)
+      props.append(el('h2', {}, 'The three properties'), pl)
       const bl = el('p', {}, 'Base, before any dimension: ' + M.motivations.map((m) => `${m} ` + PROPS.map((p) => `${p} ${M.base[m][p]}`).join(', ')).join(' · '))
       props.append(bl)
 
@@ -201,10 +202,10 @@
       const t = el('table')
       const h1 = el('tr')
       h1.append(el('th', { rowspan: 2 }, 'animal'), el('th', { rowspan: 2 }, 'size · agility · intelligence · diet'))
-      for (const m of M.motivations) h1.append(el('th', { colspan: 4, class: 'm-' + m }, m))
+      for (const m of M.motivations) h1.append(el('th', { colspan: 5, class: 'm-' + m }, m))
       h1.append(el('th', { rowspan: 2 }, 'willingness at rest'))
       const h2 = el('tr')
-      for (const m of M.motivations) for (const p of ['%', 'default', 'decay', 'volatility']) h2.append(el('th', { class: 'm-' + m }, p))
+      for (const m of M.motivations) for (const p of ['%', 'default', 'inertia', 'push', 'drift']) h2.append(el('th', { class: 'm-' + m }, p))
       t.append(h1, h2)
       for (const a of M.examples) {
         const r = animal(a)
@@ -212,7 +213,7 @@
         tr.append(el('th', { class: 'row' }, a.name), el('td', {}, [a.size, a.agility, a.intelligence, a.diet].join(' · ')))
         for (const m of M.motivations) {
           const g = r[m]
-          for (const v of [Math.round(g.pct) + '%', Math.round(g.default), +g.decay.toFixed(2), +g.volatility.toFixed(2)])
+          for (const v of [Math.round(g.pct) + '%', Math.round(g.default), +g.inertia.toFixed(2), +(1 / g.inertia).toFixed(2), +(M.drift / g.inertia).toFixed(1)])
             tr.append(el('td', g.pct ? {} : { class: 'none' }, g.pct ? String(v) : '·'))
         }
         tr.append(el('td', {}, Math.round(r.rest) + ''))

@@ -6,6 +6,7 @@ status: building
 budget: 3d
 from: p12
 build v10.1: 2026-10-04 · the taming gauge model: what each animal dimension does to each motivation's gauge, every cell a draft
+build v10.2: 2026-10-05 · decay and volatility merged into inertia (calm ↔ jumpy); comfort's default by size
 ---
 
 # p13 · Taming
@@ -49,6 +50,7 @@ be read on screen.
 
 | Decision | What it settles |
 |---|---|
+| D196 | The gauge's properties are share, default and inertia (decay and volatility merged); small animals start less comfortable, large ones more |
 | D195 | Fight or flight depends on the animal's strength against the team's; strong pets hold out longer when attacked but scare animals away |
 | D194 | All models are wrong, but some are useful; "when scared" is no longer an axis: an animal fights, flees or hides by its strongest stat |
 | D193 | Animals live in a trait space: discrete behaviour axes (diet, when scared, social) and stats (size and strength, agility, intelligence, nerve); traits add up to behaviour and pet skills, how is open |
