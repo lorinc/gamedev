@@ -211,8 +211,8 @@ other, the player, the environment and the enemy.
 
 **The animal's card (agreed).** Each animal has a card of its rules and moves. Scouting fills it by observation; a
 taming fills it through the engagement. Failed attempts reveal what scouting can't, so players are expected to try a
-new animal several times, and every attempt buys knowledge. Attempts cost consumables from all tiers, but not in a
-punitive way.
+new animal several times, and every attempt buys knowledge. Attempts cost consumables, some from earlier
+tiers, but not in a punitive way.
 
 **Taming plays like a deck-builder's combat, with simpler UX (agreed):**
 
