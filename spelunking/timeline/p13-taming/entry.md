@@ -5,6 +5,7 @@ started: 2026-10-03
 status: building
 budget: 3d
 from: p12
+build v10.1: 2026-10-04 · the taming gauge model: what each animal dimension does to each motivation's gauge, every cell a draft
 ---
 
 # p13 · Taming

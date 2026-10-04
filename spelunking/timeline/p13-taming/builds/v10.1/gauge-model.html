@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Taming gauge model</title>
+    <style>
+      :root {
+        --page: #f9f9f7;
+        --surface: #fcfcfb;
+        --ink: #0b0b0b;
+        --ink2: #52514e;
+        --muted: #898781;
+        --line: #e1e0d9;
+        --hunger: #b35c00;
+        --comfort: #2f7d32;
+        --curiosity: #2a64b8;
+        --draft: #fff6d6;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --page: #0d0d0d;
+          --surface: #1a1a19;
+          --ink: #ffffff;
+          --ink2: #c3c2b7;
+          --muted: #8f8d86;
+          --line: #2c2c2a;
+          --hunger: #f0a050;
+          --comfort: #6cc070;
+          --curiosity: #7aa8f0;
+          --draft: #2e2a1a;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--page);
+        color: var(--ink);
+        font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 24px 16px 48px;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0 0 4px;
+      }
+      h2 {
+        font-size: 17px;
+        margin: 28px 0 8px;
+      }
+      p {
+        color: var(--ink2);
+        margin: 4px 0 12px;
+        max-width: 760px;
+      }
+      .wrap {
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        background: var(--surface);
+        font-variant-numeric: tabular-nums;
+      }
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 4px 8px;
+        text-align: center;
+        white-space: nowrap;
+      }
+      th {
+        font-weight: 600;
+        font-size: 13px;
+      }
+      th.row {
+        text-align: left;
+      }
+      .m-hunger {
+        color: var(--hunger);
+      }
+      .m-comfort {
+        color: var(--comfort);
+      }
+      .m-curiosity {
+        color: var(--curiosity);
+      }
+      td.set {
+        background: var(--draft);
+        font-weight: 600;
+      }
+      td.none {
+        color: var(--muted);
+      }
+      ul {
+        color: var(--ink2);
+        margin: 4px 0;
+        padding-left: 20px;
+      }
+      .legend {
+        font-size: 13px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Taming gauge model</h1>
+      <p>
+        What each animal dimension does to each motivation's gauge: 4 dimensions × 3 values × 3 motivations × 4
+        properties. Every cell is a draft until it has been gone through. The data is in
+        <code>gauge-model.js</code>.
+      </p>
+      <p class="legend">Highlighted cells change something; “·” means no effect (add 0, or multiply by 1).</p>
+      <div id="props"></div>
+      <div id="grids"></div>
+      <h2>Outside the grid</h2>
+      <p>Effects of the dimensions that are not one of the four properties.</p>
+      <ul id="outside"></ul>
+      <h2>What the cells add up to</h2>
+      <p>
+        Sample animals, worked out from the base and the cells above. Willingness at rest is each motivation's default
+        weighted by its share.
+      </p>
+      <div class="wrap" id="examples"></div>
+    </main>
+    <script src="gauge-model.js"></script>
+    <script>
+      const M = window.GAUGE_MODEL
+      const PROPS = Object.keys(M.properties)
+      const el = (tag, attrs = {}, text) => {
+        const e = document.createElement(tag)
+        for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v)
+        if (text !== undefined) e.textContent = text
+        return e
+      }
+      const fmt = (prop, v) => {
+        if (v === undefined) return '·'
+        return M.properties[prop].combine === 'add' ? (v >= 0 ? '+' : '') + v : '×' + v
+      }
+
+      // the properties and how they combine
+      const pl = el('ul')
+      for (const p of PROPS) pl.append(el('li', {}, `${p} (${M.properties[p].combine}): ${M.properties[p].what}`))
+      const props = document.getElementById('props')
+      props.append(el('h2', {}, 'The four properties'), pl)
+      const bl = el('p', {}, 'Base, before any dimension: ' + M.motivations.map((m) => `${m} ` + PROPS.map((p) => `${p} ${M.base[m][p]}`).join(', ')).join(' · '))
+      props.append(bl)
+
+      // one table per dimension: values down, motivation × property across
+      const grids = document.getElementById('grids')
+      for (const [dim, d] of Object.entries(M.dimensions)) {
+        grids.append(el('h2', {}, dim[0].toUpperCase() + dim.slice(1)))
+        const wrap = el('div', { class: 'wrap' })
+        const t = el('table')
+        const h1 = el('tr')
+        h1.append(el('th', { rowspan: 2 }, ''))
+        for (const m of M.motivations) h1.append(el('th', { colspan: PROPS.length, class: 'm-' + m }, m))
+        const h2 = el('tr')
+        for (const m of M.motivations) for (const p of PROPS) h2.append(el('th', { class: 'm-' + m }, p))
+        t.append(h1, h2)
+        for (const v of d.values) {
+          const tr = el('tr')
+          tr.append(el('th', { class: 'row' }, v))
+          for (const m of M.motivations)
+            for (const p of PROPS) {
+              const x = d.cells[v]?.[m]?.[p]
+              tr.append(el('td', { class: x === undefined ? 'none' : 'set' }, fmt(p, x)))
+            }
+          t.append(tr)
+        }
+        wrap.append(t)
+        grids.append(wrap)
+      }
+
+      for (const o of M.outside) document.getElementById('outside').append(el('li', {}, o))
+
+      // the examples: base + every dimension's cells, then shares scaled to 100%
+      function animal(a) {
+        const out = {}
+        for (const m of M.motivations) out[m] = { ...M.base[m] }
+        for (const [dim, d] of Object.entries(M.dimensions)) {
+          const cells = d.cells[a[dim]] ?? {}
+          for (const m of M.motivations)
+            for (const p of PROPS) {
+              const x = cells[m]?.[p]
+              if (x === undefined) continue
+              if (M.properties[p].combine === 'add') out[m][p] += x
+              else out[m][p] *= x
+            }
+        }
+        const total = M.motivations.reduce((s, m) => s + Math.max(0, out[m].share), 0) || 1
+        for (const m of M.motivations) out[m].pct = (100 * Math.max(0, out[m].share)) / total
+        out.rest = M.motivations.reduce((s, m) => s + (out[m].pct / 100) * out[m].default, 0)
+        return out
+      }
+      const t = el('table')
+      const h1 = el('tr')
+      h1.append(el('th', { rowspan: 2 }, 'animal'), el('th', { rowspan: 2 }, 'size · agility · intelligence · diet'))
+      for (const m of M.motivations) h1.append(el('th', { colspan: 4, class: 'm-' + m }, m))
+      h1.append(el('th', { rowspan: 2 }, 'willingness at rest'))
+      const h2 = el('tr')
+      for (const m of M.motivations) for (const p of ['%', 'default', 'decay', 'volatility']) h2.append(el('th', { class: 'm-' + m }, p))
+      t.append(h1, h2)
+      for (const a of M.examples) {
+        const r = animal(a)
+        const tr = el('tr')
+        tr.append(el('th', { class: 'row' }, a.name), el('td', {}, [a.size, a.agility, a.intelligence, a.diet].join(' · ')))
+        for (const m of M.motivations) {
+          const g = r[m]
+          for (const v of [Math.round(g.pct) + '%', Math.round(g.default), +g.decay.toFixed(2), +g.volatility.toFixed(2)])
+            tr.append(el('td', g.pct ? {} : { class: 'none' }, g.pct ? String(v) : '·'))
+        }
+        tr.append(el('td', {}, Math.round(r.rest) + ''))
+        t.append(tr)
+      }
+      document.getElementById('examples').append(t)
+    </script>
+  </body>
+</html>
