@@ -41,8 +41,8 @@ window.GAUGE_MODEL = {
       values: ['low', 'medium', 'high'],
       cells: {
         low: {},
-        medium: { curiosity: { share: 0.5 } },
-        high: { curiosity: { share: 1.5 } },
+        medium: { curiosity: { share: 0.5, default: 10 } },
+        high: { curiosity: { share: 1.5, default: 20 } },
       },
     },
     diet: {
