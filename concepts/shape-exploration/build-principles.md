@@ -65,6 +65,18 @@ pick and win rates).
 **What it can't see**: whether it is fun or readable. A bot doesn't mind a hidden consequence or a flat
 turn; those need the user, and players.
 
+**Every run can be watched (agreed).** A headless batch nobody can watch can't be verified to test the right thing,
+so:
+
+- **One core, two speeds:** the simulator and the playable view run the same rules core; headless is the same game
+  without drawing, at full speed.
+- **Every run replays:** a run is its seed plus the bot's actions, and the rules are deterministic, so any run from a
+  batch opens in the view and plays back exactly.
+- **The report links to runs:** every number comes with its runs (best, worst and a typical seed, and an example of
+  every flag), one click from watching it.
+- **The bot shows its intent** in the view before it acts, the way an animal telegraphs.
+- **Watch first, batch second:** batches start only after the bot has been watched on a few seeds and plays sensibly.
+
 **What its questions depend on**: the audience. "Never boring" for a Discovery-and-Strategy player is a
 different number than for a Challenge player.
 
