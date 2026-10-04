@@ -668,7 +668,8 @@
       // Pillars of this game (2026-10-04): the three loops the player controls, placed by the motivations they serve.
       // Radius in pixels of the 1200 px picture: the two core loops weigh the same, the support loop is smaller.
       // Passive things (colonies harvesting, foragers foraging, scouts gathering intel) are spectacle and lore, not
-      // loops, so they are not drawn. Only the rim and the label take clicks, so the shapes inside open their own cards.
+      // loops: they make one passive pillar, Simulation, drawn with a dashed rim. Only the rim and the label take clicks,
+      // so the shapes inside open their own cards.
       const PILLARS = [
         {
           id: 'P1', x: 0.32, y: 0.68, r: 72, // between Strategy and Challenge, nearer Strategy; beside 1a and 1b
@@ -700,6 +701,16 @@
             ['Beef up', 'more colonies, better forager teams'],
           ],
         },
+        {
+          id: 'P4', x: -0.62, y: 0.06, r: 64, passive: true, // between Discovery, Design and Story
+          name: 'Simulation',
+          mot: 'Discovery, Design, Story · passive · spectacle and lore',
+          lines: [
+            ['Watch', 'the ecosystem runs while you are away: colonies harvest, foragers forage the Caverns, scouts gather intel'],
+            ['Limit', 'under the fog of war the simulation is suspended: only woken areas live'],
+            ['Grows by', 'waking more areas and founding more colonies'],
+          ],
+        },
       ]
       // what flows from one pillar to the next
       // One arrow per action, from the pillar in the player's list to the pillar it acts on. mode: idle, active, or ''.
@@ -715,6 +726,12 @@
           condition: ['the top predator of an area'], outcome: ['the area turns into Caverns: room for a new colony'] },
         { from: 'P2', to: 'P3', mode: 'active', action: 'send forager teams to the right biomes',
           condition: ['forager teams that get through the area\'s conditions'], outcome: ['the idle collection shifts toward what runs low'] },
+        { from: 'P4', to: 'P1', mode: 'idle', action: 'scouts report',
+          condition: ['a scout team that can stay close to the animal'], outcome: ['the animal\'s card fills, with gaps if time ran out'] },
+        { from: 'P4', to: 'P3', mode: 'idle', action: 'colonies harvest, foragers bring goods home',
+          condition: ['colonies and forager teams at work'], outcome: ['resources, lore and unlocks waiting at the start of a session'] },
+        { from: 'P3', to: 'P4', mode: 'active', action: 'found a colony',
+          condition: ['an area turned into Caverns'], outcome: ['one more place where the simulation lives and harvests'] },
       ]
       const PILLAR_COLOR = '#c98a00'
       const FLOW_ALPHA = 0.45
@@ -800,7 +817,7 @@
             const cy = py(p.y)
             const r = (p.r ?? PILLAR_R) * K
             const g = el('g', { class: 'mark pillar', tabindex: 0, role: 'button', 'aria-label': 'Pillar ' + p.id }, plot)
-            el('circle', { class: 'prim', cx, cy, r, fill: PILLAR_COLOR, 'fill-opacity': 0.08, stroke: PILLAR_COLOR, 'stroke-width': 2, 'pointer-events': 'none' }, g)
+            el('circle', { class: 'prim', cx, cy, r, fill: PILLAR_COLOR, 'fill-opacity': p.passive ? 0.04 : 0.08, stroke: PILLAR_COLOR, 'stroke-width': 2, 'stroke-dasharray': p.passive ? '6 5' : 'none', 'pointer-events': 'none' }, g)
             el('circle', { cx, cy, r, fill: 'none', stroke: 'transparent', 'stroke-width': 12, 'pointer-events': 'stroke' }, g)
             const lx = cx + r * 0.72
             const ly = cy - r * 0.72

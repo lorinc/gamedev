@@ -377,6 +377,10 @@ gathering intel) are spectacle and lore, not loops.
 | Pet management | core | a management game | builds teams of foragers, scouts and beastmasters, levels pets, sends them on missions |
 | Resource management | support | idle farming | sees what is running low and steers the idle collection toward it: better forager teams, foragers split across the right biomes, more colonies in the right biomes |
 
+**The Simulation pillar (passive).** The passive things together make a fourth pillar on the map, between
+Discovery, Design and Story: the ecosystem running while the player is away, as spectacle and lore. The three active
+loops sit in a dense zone toward Strategy; Simulation balances the pillars around the audience.
+
 Open: whether pets level up by using their skills.
 
 ## Game shape: an incremental idle game (agreed)
