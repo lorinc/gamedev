@@ -468,4 +468,5 @@ rules), not multipliers that make the same climb faster. The player chooses when
 5. **What does levelling cost, and what does it raise?**
 6. **In a taming encounter, is the player mostly playing actions or building the set?** In Slay the Spire the deck is
    the mode and playing cards is the genre ([guide 17](../../guides/game-design/17-genre-mode-mood.md)). The answer
-   decides what the taming prototype has to prove fun.
+   decides what the taming prototype has to prove fun. [Guide 18](../../guides/game-design/18-deck-building-roguelikes.md)
+   defines deck-building by collected abilities used in turn-based encounters, with or without cards.

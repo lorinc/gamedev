@@ -102,3 +102,9 @@ refer to that video.
     is still unknown, a first guess at it plus cheap exploration of the structure can show where the real core is; the
     rule is to keep that exploration cheap, not to go strictly bottom-up
     ([game-design/17](game-design/17-genre-mode-mood.md)).
+18. **In a turn-based ability game, the twist is what sets it apart.** *(One player's opinion, from a video transcript
+    the user shared, 2026-10-05. Not measured.)* With no physics or real-time feel, the same effect plays the same in
+    every game, so a large pool of abilities without a twist is a clone. Make the commons simple and combinable and the
+    rares strong but situational; let players steer randomness (pick one of three, outcomes that are all usable); put
+    risk-and-reward decisions between encounters; and make the static screen immersive, because players stare at it
+    for minutes ([game-design/18](game-design/18-deck-building-roguelikes.md)).

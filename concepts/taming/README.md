@@ -22,6 +22,20 @@ The taming encounter is the game's base: what the player does over and over
   [guide 11](../../guides/game-design/11-slay-the-spire-engagement.md)).
 - **Open: playing actions or building the set** (build-principles.md, open question 6).
 
+## What the deck-building references say
+
+From [guide 18](../../guides/game-design/18-deck-building-roguelikes.md) (one player's opinion, over 30 games):
+
+- Without physics, the same effect plays the same in every game; a twist is what sets a turn-based ability game apart,
+  and abilities designed around the twist feel new even when familiar (Arcanium's Cleave).
+- Simple commons that combine (Sword Boomerang) and a few strong, situational rares (Grand Finale). A rare equally
+  strong in every build is boring (Judgment). No rarity makes builds hard to steer (Wildfrost).
+- Fun over balance: the best feeling is winning easily through a combination the player chose (Balatro).
+- Controlled randomness: pick one of three, every outcome usable (Astrea), random effects the player can steer.
+- Players stare at the encounter screen for minutes; it must not feel like staring at numbers.
+
+How these map onto taming is unverified inference, listed in the guide's last section.
+
 ## What v10.4's encounters show (2026-10-05)
 
 - **The animals now behave differently.** The deer bolts if you only wait, is tamed by turn 4 if you calm it first,

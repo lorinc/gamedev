@@ -208,3 +208,14 @@ Quotes are the user's, with spelling lightly fixed.
   very extensive exploration of the map." build-principles.md now says where it comes from (agreed); the mutual-cover
   reading stays a draft.
 
+## 2026-10-05: deck-building roguelikes (guide 18)
+
+- The user shared PepperHead's "What Makes A Good DECK BUILDING Roguelike?" ("it has a lot of insight into what makes
+  deck building game good"). Claude walked through it against taming in chat.
+- The user asked for it to be written up, with a rule for the record: "do not take your assessments as facts... I want
+  the video insights to dominate the record, and your inference to be flagged as unverified inference." The user found
+  some of the chat's insights shallower than usual.
+- Written up as guide 18 (the video's claims, with Claude's project readings in a closing section flagged as unverified
+  inference), game-strategy.md item 18, a pointer in build-principles.md open question 6, and the taming README
+  (*What the deck-building references say*, the video's points only).
+
