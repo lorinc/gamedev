@@ -190,3 +190,17 @@ Quotes are the user's, with spelling lightly fixed.
   procedural content. The colony: same as the food chain, just auto-harvests. Teams: needs polishing, but we have much
   better guesses now than when we drew the map first."
 
+## 2026-10-05: genre, mode and mood (guide 17)
+
+- The user shared Indie Game Clinic's "Game Genres - a Design Perspective" and asked for the lessons that apply here.
+  The video says to build the base (the 3C) before the middle (loops, progression). The user defended the project's
+  order: "Yes, we have built a 3C prototype, but a LOT of things in it will be dropped/changed, based on the
+  exploration we do in the middle. I think this is better than the linear bottom-up method he is proposing."
+- Claude agreed and added: in an idle game the moment-to-moment is the taming encounter, not the 3C, so the middle
+  exploration found the base rather than skipping it; the condition is that the middle stays cheap until taming is
+  fun once. Also raised: a reason for the idle + taming combination, genre versus mode, generators and content after
+  fun once, and animal tells as part of the base.
+- The user called these "genuine pitfalls and good principles" and asked for them to be woven into the materials:
+  guide 17, game-strategy.md item 17, build-principles.md (*The base is found, not chosen*, genre and mode, the
+  combination reason as a draft, open question 6), and the taming README (*What p13 has to prove*).
+

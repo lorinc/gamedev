@@ -106,6 +106,19 @@ run together, give results nobody can trace to a cause. Each component is fleshe
 The food chain and the colony are not new components: the ecosystem system already works in the b4 prototype, and a
 colony is the same simulation, auto-harvesting. What they need is procedural content and balancing.
 
+**The base is found, not chosen (agreed).** In the pyramid of [guide 17](../../guides/game-design/17-genre-mode-mood.md),
+the base is what the player does over and over. The b-thread built a 3C (walking, camera, swipe) as a first guess
+at that base; the exploration of loops and pillars then showed the base is the taming encounter, and the 3C is only
+the way in. Much of the b-thread will be dropped or changed by what the middle shows. That is the reason for exploring
+the middle before the base is final, rather than strictly bottom-up. What keeps it safe:
+
+- **The middle stays cheap** while the base is unproven: maps, pages, throwaway prototypes. No system or content is
+  built on it.
+- **Fun once before fun a hundred times.** One animal, one encounter, enjoyable as it stands, before the trait space,
+  families, the roster or more generators multiply it. The map generators are frozen for the same reason.
+- **Later components are unproven until taming is.** The food chain, the colony, the breach, biomes and quests wait
+  for it.
+
 ## Expectations of a good game (agreed)
 
 **Tension–release cadence**
@@ -427,6 +440,16 @@ You come in, move the needle, and reap the rewards: resources, lore, unlocks, an
 - **The simulation gets all the time it needs,** because it runs while the player is away. Coming back to see what the
   ecosystem did on its own is surprise from discovery.
 
+**Genre and mode** ([guide 17](../../guides/game-design/17-genre-mode-mood.md)). "Incremental idle" is the mode:
+it says how sessions are structured, not what the hands do. The genre, the moment-to-moment, is the taming encounter.
+
+**Why idle and taming belong together (draft).** A combination needs each half to fix a weakness of the other
+(Spelunky):
+
+- Taming fixes idle's weak point: thin moment-to-moment play with no skill to express.
+- Idle fixes encounter combat's weak points: punishing lost runs and long sessions. That fits "casual, not survival":
+  a failed taming attempt costs consumables, never progress.
+
 **Long-term progression: climb differently, not faster.** As in Slay the Spire, progress opens new, harder, more
 complex challenges that ask for more mastery (deeper tiers, animals with more motivations, families that bend their
 rules), not multipliers that make the same climb faster. The player chooses when to face them, as with Ascension.
@@ -440,3 +463,6 @@ rules), not multipliers that make the same climb faster. The player chooses when
    time spent in a woken area.
 4. **What is a team?** Its size, its slots, and how traits combine.
 5. **What does levelling cost, and what does it raise?**
+6. **In a taming encounter, is the player mostly playing actions or building the set?** In Slay the Spire the deck is
+   the mode and playing cards is the genre ([guide 17](../../guides/game-design/17-genre-mode-mood.md)). The answer
+   decides what the taming prototype has to prove fun.
