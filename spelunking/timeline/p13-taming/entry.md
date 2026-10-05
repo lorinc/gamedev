@@ -80,6 +80,9 @@ work, and where they fail.
 *Pillars* and *Building it: one component at a time*. Open: whether the motivation-driven animal is fun and simple enough, and how the animal's state is shown.
 The [gauge model](../../../concepts/taming/gauge-model.html) lays out what each animal dimension does to each
 motivation's gauge, to go through cell by cell.
+v10.4's encounters show the animals behaving differently, but jumpy animals are the easiest to tame: nothing
+pushes a needle down. Next: pressure downward (actions with side effects, animal moves that lower its own needles),
+then tune the lines ([findings](../../../concepts/taming/README.md)).
 
 ## Feedback
 
@@ -87,4 +90,4 @@ No play sessions yet: this is design work.
 
 ## Conclusion → next
 
-Not concluded. Next: a toy of the taming alone, played by hand, to check whether the motivation-driven animal is fun and simple enough.
+Not concluded. Next: pressure downward in the gauge model (actions with side effects, animal moves that lower its own needles) and the lines tuned; then a toy of the taming alone, played by hand.

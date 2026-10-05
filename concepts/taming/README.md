@@ -8,3 +8,17 @@ on is in [build-principles.md](../shape-exploration/build-principles.md) → *Pi
   [gauge-model.js](gauge-model.js); every cell is a draft until it has been gone through with the user, cell by cell.
   Since v10.4 it also has the motivations acting on each other, one extreme per sample animal, and scripted
   encounters turn by turn; its top box says what changed and why.
+
+## What v10.4's encounters show (2026-10-05)
+
+- **The animals now behave differently.** The deer bolts if you only wait, is tamed by turn 4 if you calm it first,
+  and stalls at 53 on bait alone. The bear's hunger stalls just below its high friendly line, and only the mixed play
+  wins (turn 8). A repeated trick visibly wears out.
+- **Jumpy animals are the easiest to tame, which is backwards.** The flea and the crow are tamed on turn 1:
+  jumpiness only multiplies how far actions push, and every demo action pushes up. Nothing in an encounter pushes a
+  needle down (no startles, no wrong moves, no side effects that cost another motivation).
+- **The small animals' friendly line (60) is too low,** which makes it worse.
+
+**Next: pressure downward,** so jumpiness is a risk again, not a free win. Two ways, both already in the design:
+actions with side effects (Sonny's two-effect moves, like the snare that frightens), and animal moves that lower its
+own needles (the motivation-driven animal, D187). Then tune the lines.
