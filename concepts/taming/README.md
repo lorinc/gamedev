@@ -9,7 +9,7 @@ on is in [build-principles.md](../shape-exploration/build-principles.md) → *Pi
   Since v10.4 it also has the motivations acting on each other, one extreme per sample animal, and scripted
   encounters turn by turn; its top box says what changed and why.
 
-## What p13 has to prove
+## What p13 has to prove (agreed)
 
 The taming encounter is the game's base: what the player does over and over
 ([build-principles.md](../shape-exploration/build-principles.md) → *The base is found, not chosen*). So:

@@ -219,3 +219,6 @@ Quotes are the user's, with spelling lightly fixed.
   inference), game-strategy.md item 18, a pointer in build-principles.md open question 6, and the taming README
   (*What the deck-building references say*, the video's points only).
 
+- The user agreed with guide 17's observations and the taming README's *What p13 has to prove*; both stay as written,
+  and that section is now marked agreed.
+
