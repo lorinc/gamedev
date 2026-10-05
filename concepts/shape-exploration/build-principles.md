@@ -443,11 +443,14 @@ You come in, move the needle, and reap the rewards: resources, lore, unlocks, an
 **Genre and mode** ([guide 17](../../guides/game-design/17-genre-mode-mood.md)). "Incremental idle" is the mode:
 it says how sessions are structured, not what the hands do. The genre, the moment-to-moment, is the taming encounter.
 
-**Why idle and taming belong together (draft).** A combination needs each half to fix a weakness of the other
-(Spelunky):
+**Where the combination comes from (agreed).** Idle farming, strategic taming and turn-based encounters were not
+picked as a mashup. They are where the shape exploration converged: the user's preferences and skills matched against
+the modelled audience, across many rounds on [map.html](map.html).
 
-- Taming fixes idle's weak point: thin moment-to-moment play with no skill to express.
-- Idle fixes encounter combat's weak points: punishing lost runs and long sessions. That fits "casual, not survival":
+**How the halves cover each other (draft),** read against guide 17's mashup check:
+
+- Taming covers idle's weak point: thin moment-to-moment play with no skill to express.
+- Idle covers encounter combat's weak points: punishing lost runs and long sessions. That fits "casual, not survival":
   a failed taming attempt costs consumables, never progress.
 
 **Long-term progression: climb differently, not faster.** As in Slay the Spire, progress opens new, harder, more

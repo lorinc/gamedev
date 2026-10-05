@@ -112,7 +112,9 @@ here is from the transcript unless marked.
   layer. The condition that keeps it safe is his own: the middle exploration stays cheap, and no content or
   generators are built on it until the found base is fun once. Not from the video.
 - **The mashup check as a review question.** For any combination: what weakness of A does B fix, and what weakness
-  of B does A fix? If neither answer exists, it is novelty.
+  of B does A fix? It catches combinations made for novelty or because the developer likes both. A combination that
+  came out of matching an audience against the developer's preferences and skills has its reason already; there the
+  check only shows how the halves cover each other. Not from the video.
 - **The genre/mode question for any card or deck design:** is the player mostly *playing* the set (deck as mode), or
   mostly *building* it (deck as genre)? The answer decides what the first prototype must prove fun.
 - **Readability can belong to the base.** When the core activity is reading another creature or system (telegraphs,

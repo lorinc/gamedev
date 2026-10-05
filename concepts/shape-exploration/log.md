@@ -198,9 +198,13 @@ Quotes are the user's, with spelling lightly fixed.
   exploration we do in the middle. I think this is better than the linear bottom-up method he is proposing."
 - Claude agreed and added: in an idle game the moment-to-moment is the taming encounter, not the 3C, so the middle
   exploration found the base rather than skipping it; the condition is that the middle stays cheap until taming is
-  fun once. Also raised: a reason for the idle + taming combination, genre versus mode, generators and content after
-  fun once, and animal tells as part of the base.
+  fun once. Also raised: how the idle and taming halves cover each other, genre versus mode, generators and content
+  after fun once, and animal tells as part of the base.
 - The user called these "genuine pitfalls and good principles" and asked for them to be woven into the materials:
   guide 17, game-strategy.md item 17, build-principles.md (*The base is found, not chosen*, genre and mode, the
   combination reason as a draft, open question 6), and the taming README (*What p13 has to prove*).
+- The user corrected the framing of the combination: "The idle farming + strategic taming + turn-based 'combat' was
+  not 'my idea', it was the culmination of my preferences, competences and modelled audience needs. It solidified via
+  very extensive exploration of the map." build-principles.md now says where it comes from (agreed); the mutual-cover
+  reading stays a draft.
 

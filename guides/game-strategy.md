@@ -96,7 +96,9 @@ refer to that video.
     transcript the user shared, 2026-10-05. Not measured.)* Genre is what the player does moment to moment, mode is the
     structure over sessions (roguelike, metroidvania), mood is the look and feel (cozy, horror). Each stands on the one
     below, so don't build generators or content until the core is fun once, and don't start from a mood or mode you
-    can't build yet. Combine two kinds of game only when each fixes a weakness of the other (Spelunky). Where the core
+    can't build yet. Don't combine two kinds of game just because you like both: the video's test is that each fixes a
+    weakness of the other (Spelunky); a combination that came out of matching the audience against your preferences
+    and skills has its reason already. Where the core
     is still unknown, a first guess at it plus cheap exploration of the structure can show where the real core is; the
     rule is to keep that exploration cheap, not to go strictly bottom-up
     ([game-design/17](game-design/17-genre-mode-mood.md)).
