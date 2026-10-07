@@ -228,3 +228,10 @@ Quotes are the user's, with spelling lightly fixed.
 - Guide 20 (systemic games and emergence) was read against the concept. The user: many of its frameworks reveal real
   gaps in the concept. The gaps went into [gaps.md](gaps.md) as a TBD list, to be extended and resolved until the
   parts converge into something coherent and good.
+- The user added: emergence needs a dense, deterministic, discernible interaction graph, and no ledger of interactions
+  exists, so the domain is out of view; no ledger of interesting decisions either (only info gathering is planned);
+  the simulation is a backdrop, not a place to test hypotheses; dynamics, topologies and paradigms were not used at
+  creation; lore without planned or emergent meaning; the three kinds of emergence and MDA against them were never
+  considered systematically; the same holds for almost every concept in the video. Frameworks show gaps and hint at
+  solutions. gaps.md was regrouped: missing views (A–C), emergence across kinds, the parts, meaning, and frameworks not
+  yet applied.
