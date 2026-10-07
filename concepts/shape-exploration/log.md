@@ -222,3 +222,9 @@ Quotes are the user's, with spelling lightly fixed.
 - The user agreed with guide 17's observations and the taming README's *What p13 has to prove*; both stay as written,
   and that section is now marked agreed.
 
+
+## 2026-10-07: gaps list
+
+- Guide 20 (systemic games and emergence) was read against the concept. The user: many of its frameworks reveal real
+  gaps in the concept. The gaps went into [gaps.md](gaps.md) as a TBD list, to be extended and resolved until the
+  parts converge into something coherent and good.
